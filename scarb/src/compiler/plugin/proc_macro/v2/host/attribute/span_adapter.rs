@@ -113,10 +113,10 @@ pub struct ExpandableAttrLocation {
 }
 
 impl ExpandableAttrLocation {
-    pub fn new<T: TypedSyntaxNode>(
+    pub fn new<'db, T: TypedSyntaxNode<'db>>(
         node: &T,
         item_span: CairoTextSpan,
-        db: &dyn SyntaxGroup,
+        db: &'db dyn SyntaxGroup,
     ) -> Self {
         let span_without_trivia = node.text_span(db);
         let span_with_trivia = node.as_syntax_node().span(db);
@@ -287,7 +287,7 @@ impl ExpandableAttrLocation {
     }
 }
 
-impl AttrExpansionFound {
+impl<'db> AttrExpansionFound<'db> {
     /// Move spans in the `TokenStream` for macro expansion input.
     pub fn adapt_token_stream(&self, token_stream: TokenStream) -> AdaptedTokenStream {
         match self {

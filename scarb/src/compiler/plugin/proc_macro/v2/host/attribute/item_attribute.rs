@@ -39,12 +39,12 @@ impl ProcMacroHostPlugin {
     /// built, it's no longer consecutive.
     ///
     /// See [`AttributeSpanAdapter`] for details.
-    pub(crate) fn parse_attribute(
+    pub(crate) fn parse_attribute<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        item_ast: ast::ModuleItem,
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
         ctx: &AllocationContext,
-    ) -> (AttrExpansionFound, AdaptedTokenStream) {
+    ) -> (AttrExpansionFound<'db>, AdaptedTokenStream) {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         let input = match item_ast.clone() {
             ast::ModuleItem::Trait(ast) => {
@@ -106,14 +106,14 @@ impl ProcMacroHostPlugin {
             .generate_code(item_name, call_site.into(), attr, token_stream.into())
     }
 
-    pub fn expand_attribute(
+    pub fn expand_attribute<'db>(
         &self,
-        db: &dyn SyntaxGroup,
+        db: &'db dyn SyntaxGroup,
         last: bool,
         args: TokenStream,
         token_stream: AdaptedTokenStream,
-        input: AttrExpansionArgs,
-    ) -> AttributePluginResult {
+        input: AttrExpansionArgs<'db>,
+    ) -> AttributePluginResult<'db> {
         let original = token_stream.to_string();
         let result = self.generate_attribute_code(
             input.id.package_id,
@@ -200,13 +200,13 @@ impl ProcMacroHostPlugin {
     }
 }
 
-fn parse_item<T: ItemWithAttributes + ChildNodesWithoutAttributes>(
+fn parse_item<'db, T: ItemWithAttributes<'db> + ChildNodesWithoutAttributes<'db>>(
     ast: &T,
-    db: &dyn SyntaxGroup,
+    db: &'db dyn SyntaxGroup,
     host: &ProcMacroHostPlugin,
-    token_stream_builder: &mut TokenStreamBuilder<'_>,
+    token_stream_builder: &mut TokenStreamBuilder<'db>,
     ctx: &AllocationContext,
-) -> AttrExpansionFound {
+) -> AttrExpansionFound<'db> {
     let span = ast.span_with_trivia(db);
     let attrs = ast.item_attributes(db);
     let expansion = host.parse_attrs(db, token_stream_builder, attrs, span, ctx);
@@ -214,20 +214,20 @@ fn parse_item<T: ItemWithAttributes + ChildNodesWithoutAttributes>(
     expansion
 }
 
-pub enum AttrExpansionFound {
-    Some(AttrExpansionArgs),
-    Last(AttrExpansionArgs),
+pub enum AttrExpansionFound<'db> {
+    Some(AttrExpansionArgs<'db>),
+    Last(AttrExpansionArgs<'db>),
     None,
 }
 
-pub struct AttrExpansionArgs {
+pub struct AttrExpansionArgs<'db> {
     pub id: ProcMacroId,
     pub args: TokenStream,
-    pub call_site: CallSiteLocation,
+    pub call_site: CallSiteLocation<'db>,
     pub attribute_location: ExpandableAttrLocation,
 }
 
-impl AttrExpansionFound {
+impl<'db> AttrExpansionFound<'db> {
     pub fn as_name(&self) -> Option<SmolStr> {
         match self {
             AttrExpansionFound::Some(args) | AttrExpansionFound::Last(args) => {

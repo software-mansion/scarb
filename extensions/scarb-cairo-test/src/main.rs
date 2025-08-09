@@ -107,7 +107,10 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn deserialize_test_compilation(target_dir: &Utf8PathBuf, name: String) -> Result<TestCompilation> {
+fn deserialize_test_compilation(
+    target_dir: &Utf8PathBuf,
+    name: String,
+) -> Result<TestCompilation<'_>> {
     let file_path = target_dir.join(format!("{name}.test.json"));
     let test_comp_metadata = serde_json::from_str::<TestCompilationMetadata>(
         &fs::read_to_string(file_path.clone())

@@ -12,14 +12,14 @@ use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{TypedSyntaxNode, ast};
 
 impl ProcMacroHostPlugin {
-    pub(crate) fn parse_attrs(
+    pub(crate) fn parse_attrs<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        builder: &mut TokenStreamBuilder<'_>,
-        item_attrs: Vec<ast::Attribute>,
+        db: &'db dyn SyntaxGroup,
+        builder: &mut TokenStreamBuilder<'db>,
+        item_attrs: Vec<ast::Attribute<'db>>,
         item_span: TextSpan,
         ctx: &AllocationContext,
-    ) -> AttrExpansionFound {
+    ) -> AttrExpansionFound<'db> {
         // This function parses attributes of the item,
         // checking if those attributes correspond to a procedural macro that should be fired.
         // The proc macro attribute found is removed from attributes list,
@@ -36,7 +36,7 @@ impl ProcMacroHostPlugin {
             if last {
                 let structured_attr = attr.clone().structurize(db);
                 let found = self.find_expansion(&ExpansionQuery::with_cairo_name(
-                    structured_attr.id.clone(),
+                    structured_attr.id,
                     ExpansionKind::Attr,
                 ));
                 if let Some(found) = found {

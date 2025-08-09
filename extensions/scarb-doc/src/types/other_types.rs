@@ -25,14 +25,14 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 #[derive(Debug, Serialize, Clone)]
-pub struct ItemData {
+pub struct ItemData<'db> {
     #[serde(skip_serializing)]
-    pub id: DocumentableItemId,
+    pub id: DocumentableItemId<'db>,
     #[serde(skip_serializing)]
     pub parent_full_path: Option<String>,
     pub name: String,
     #[serde(serialize_with = "documentation_serializer")]
-    pub doc: Option<Vec<DocumentationCommentToken>>,
+    pub doc: Option<Vec<DocumentationCommentToken<'db>>>,
     pub signature: Option<String>,
     pub full_path: String,
     #[serde(skip_serializing)]
@@ -40,11 +40,11 @@ pub struct ItemData {
     pub group: Option<String>,
 }
 
-impl ItemData {
+impl<'db> ItemData<'db> {
     pub fn new(
-        db: &ScarbDocDatabase,
-        id: impl TopLevelLanguageElementId,
-        documentable_item_id: DocumentableItemId,
+        db: &'db ScarbDocDatabase,
+        id: impl TopLevelLanguageElementId<'db>,
+        documentable_item_id: DocumentableItemId<'db>,
     ) -> Self {
         let (signature, doc_location_links) =
             db.get_item_signature_with_links(documentable_item_id);
@@ -66,9 +66,9 @@ impl ItemData {
     }
 
     pub fn new_without_signature(
-        db: &ScarbDocDatabase,
-        id: impl TopLevelLanguageElementId,
-        documentable_item_id: DocumentableItemId,
+        db: &'db ScarbDocDatabase,
+        id: impl TopLevelLanguageElementId<'db>,
+        documentable_item_id: DocumentableItemId<'db>,
     ) -> Self {
         Self {
             id: documentable_item_id,
@@ -82,11 +82,11 @@ impl ItemData {
         }
     }
 
-    pub fn new_crate(db: &ScarbDocDatabase, id: CrateId) -> Self {
+    pub fn new_crate(db: &'db ScarbDocDatabase, id: CrateId<'db>) -> Self {
         let documentable_id = DocumentableItemId::Crate(id);
         Self {
             id: documentable_id,
-            name: id.name(db).into(),
+            name: id.long(db).name().to_string(),
             doc: db.get_item_documentation_as_tokens(documentable_id),
             signature: None,
             full_path: ModuleId::CrateRoot(id).full_path(db),
@@ -117,17 +117,17 @@ where
 }
 
 #[derive(Serialize, Clone)]
-pub struct Constant {
+pub struct Constant<'db> {
     #[serde(skip)]
-    pub id: ConstantId,
+    pub id: ConstantId<'db>,
     #[serde(skip)]
-    pub node: ast::ItemConstantPtr,
+    pub node: ast::ItemConstantPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl Constant {
-    pub fn new(db: &ScarbDocDatabase, id: ConstantId) -> Self {
+impl<'db> Constant<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: ConstantId<'db>) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -142,17 +142,17 @@ impl Constant {
 }
 
 #[derive(Serialize, Clone)]
-pub struct FreeFunction {
+pub struct FreeFunction<'db> {
     #[serde(skip)]
-    pub id: FreeFunctionId,
+    pub id: FreeFunctionId<'db>,
     #[serde(skip)]
-    pub node: ast::FunctionWithBodyPtr,
+    pub node: ast::FunctionWithBodyPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl FreeFunction {
-    pub fn new(db: &ScarbDocDatabase, id: FreeFunctionId) -> Self {
+impl<'db> FreeFunction<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: FreeFunctionId<'db>) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -167,19 +167,23 @@ impl FreeFunction {
 }
 
 #[derive(Serialize, Clone)]
-pub struct Struct {
+pub struct Struct<'db> {
     #[serde(skip)]
-    pub id: StructId,
+    pub id: StructId<'db>,
     #[serde(skip)]
-    pub node: ast::ItemStructPtr,
+    pub node: ast::ItemStructPtr<'db>,
 
-    pub members: Vec<Member>,
+    pub members: Vec<Member<'db>>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl Struct {
-    pub fn new(db: &ScarbDocDatabase, id: StructId, include_private_items: bool) -> Maybe<Self> {
+impl<'db> Struct<'db> {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: StructId<'db>,
+        include_private_items: bool,
+    ) -> Maybe<Self> {
         let members = db.struct_members(id)?;
 
         let item_data = ItemData::new(
@@ -209,7 +213,7 @@ impl Struct {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
         self.members
             .iter()
             .map(|item| (item.item_data.id, &item.item_data))
@@ -218,17 +222,17 @@ impl Struct {
 }
 
 #[derive(Serialize, Clone)]
-pub struct Member {
+pub struct Member<'db> {
     #[serde(skip)]
-    pub id: MemberId,
+    pub id: MemberId<'db>,
     #[serde(skip)]
-    pub node: ast::MemberPtr,
+    pub node: ast::MemberPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl Member {
-    pub fn new(db: &ScarbDocDatabase, id: MemberId) -> Self {
+impl<'db> Member<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: MemberId<'db>) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -240,19 +244,19 @@ impl Member {
 }
 
 #[derive(Serialize, Clone)]
-pub struct Enum {
+pub struct Enum<'db> {
     #[serde(skip)]
-    pub id: EnumId,
+    pub id: EnumId<'db>,
     #[serde(skip)]
-    pub node: ast::ItemEnumPtr,
+    pub node: ast::ItemEnumPtr<'db>,
 
-    pub variants: Vec<Variant>,
+    pub variants: Vec<Variant<'db>>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl Enum {
-    pub fn new(db: &ScarbDocDatabase, id: EnumId) -> Maybe<Self> {
+impl<'db> Enum<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: EnumId<'db>) -> Maybe<Self> {
         let variants = db.enum_variants(id)?;
         let item_data = ItemData::new(
             db,
@@ -274,7 +278,7 @@ impl Enum {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
         self.variants
             .iter()
             .map(|item| (item.item_data.id, &item.item_data))
@@ -283,17 +287,17 @@ impl Enum {
 }
 
 #[derive(Serialize, Clone)]
-pub struct Variant {
+pub struct Variant<'db> {
     #[serde(skip)]
-    pub id: VariantId,
+    pub id: VariantId<'db>,
     #[serde(skip)]
-    pub node: ast::VariantPtr,
+    pub node: ast::VariantPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl Variant {
-    pub fn new(db: &ScarbDocDatabase, id: VariantId) -> Self {
+impl<'db> Variant<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: VariantId<'db>) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -305,17 +309,17 @@ impl Variant {
 }
 
 #[derive(Serialize, Clone)]
-pub struct TypeAlias {
+pub struct TypeAlias<'db> {
     #[serde(skip)]
-    pub id: ModuleTypeAliasId,
+    pub id: ModuleTypeAliasId<'db>,
     #[serde(skip)]
-    pub node: ast::ItemTypeAliasPtr,
+    pub node: ast::ItemTypeAliasPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl TypeAlias {
-    pub fn new(db: &ScarbDocDatabase, id: ModuleTypeAliasId) -> Self {
+impl<'db> TypeAlias<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: ModuleTypeAliasId<'db>) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -330,17 +334,17 @@ impl TypeAlias {
 }
 
 #[derive(Serialize, Clone)]
-pub struct ImplAlias {
+pub struct ImplAlias<'db> {
     #[serde(skip)]
-    pub id: ImplAliasId,
+    pub id: ImplAliasId<'db>,
     #[serde(skip)]
-    pub node: ast::ItemImplAliasPtr,
+    pub node: ast::ItemImplAliasPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl ImplAlias {
-    pub fn new(db: &ScarbDocDatabase, id: ImplAliasId) -> Self {
+impl<'db> ImplAlias<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: ImplAliasId<'db>) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -355,21 +359,21 @@ impl ImplAlias {
 }
 
 #[derive(Serialize, Clone)]
-pub struct Trait {
+pub struct Trait<'db> {
     #[serde(skip)]
-    pub id: TraitId,
+    pub id: TraitId<'db>,
     #[serde(skip)]
-    pub node: ast::ItemTraitPtr,
+    pub node: ast::ItemTraitPtr<'db>,
 
-    pub trait_constants: Vec<TraitConstant>,
-    pub trait_types: Vec<TraitType>,
-    pub trait_functions: Vec<TraitFunction>,
+    pub trait_constants: Vec<TraitConstant<'db>>,
+    pub trait_types: Vec<TraitType<'db>>,
+    pub trait_functions: Vec<TraitFunction<'db>>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl Trait {
-    pub fn new(db: &ScarbDocDatabase, id: TraitId) -> Maybe<Self> {
+impl<'db> Trait<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: TraitId<'db>) -> Maybe<Self> {
         let item_data = ItemData::new(
             db,
             id,
@@ -405,7 +409,7 @@ impl Trait {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
         let mut result: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
         self.trait_constants.iter().for_each(|item| {
             result.insert(item.item_data.id, &item.item_data);
@@ -421,17 +425,17 @@ impl Trait {
 }
 
 #[derive(Serialize, Clone)]
-pub struct TraitConstant {
+pub struct TraitConstant<'db> {
     #[serde(skip)]
-    pub id: TraitConstantId,
+    pub id: TraitConstantId<'db>,
     #[serde(skip)]
-    pub node: ast::TraitItemConstantPtr,
+    pub node: ast::TraitItemConstantPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl TraitConstant {
-    pub fn new(db: &ScarbDocDatabase, id: TraitConstantId) -> Self {
+impl<'db> TraitConstant<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: TraitConstantId<'db>) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -447,17 +451,17 @@ impl TraitConstant {
 }
 
 #[derive(Serialize, Clone)]
-pub struct TraitType {
+pub struct TraitType<'db> {
     #[serde(skip)]
-    pub id: TraitTypeId,
+    pub id: TraitTypeId<'db>,
     #[serde(skip)]
-    pub node: ast::TraitItemTypePtr,
+    pub node: ast::TraitItemTypePtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl TraitType {
-    pub fn new(db: &ScarbDocDatabase, id: TraitTypeId) -> Self {
+impl<'db> TraitType<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: TraitTypeId<'db>) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -473,17 +477,17 @@ impl TraitType {
 }
 
 #[derive(Serialize, Clone)]
-pub struct TraitFunction {
+pub struct TraitFunction<'db> {
     #[serde(skip)]
-    pub id: TraitFunctionId,
+    pub id: TraitFunctionId<'db>,
     #[serde(skip)]
-    pub node: ast::TraitItemFunctionPtr,
+    pub node: ast::TraitItemFunctionPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl TraitFunction {
-    pub fn new(db: &ScarbDocDatabase, id: TraitFunctionId) -> Self {
+impl<'db> TraitFunction<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: TraitFunctionId<'db>) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -499,21 +503,21 @@ impl TraitFunction {
 }
 
 #[derive(Serialize, Clone)]
-pub struct Impl {
+pub struct Impl<'db> {
     #[serde(skip)]
-    pub id: ImplDefId,
+    pub id: ImplDefId<'db>,
     #[serde(skip)]
-    pub node: ast::ItemImplPtr,
+    pub node: ast::ItemImplPtr<'db>,
 
-    pub impl_types: Vec<ImplType>,
-    pub impl_constants: Vec<ImplConstant>,
-    pub impl_functions: Vec<ImplFunction>,
+    pub impl_types: Vec<ImplType<'db>>,
+    pub impl_constants: Vec<ImplConstant<'db>>,
+    pub impl_functions: Vec<ImplFunction<'db>>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl Impl {
-    pub fn new(db: &ScarbDocDatabase, id: ImplDefId) -> Maybe<Self> {
+impl<'db> Impl<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: ImplDefId<'db>) -> Maybe<Self> {
         let item_data = ItemData::new(
             db,
             id,
@@ -549,7 +553,7 @@ impl Impl {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
         let mut result: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
         self.impl_constants.iter().for_each(|item| {
             result.insert(item.item_data.id, &item.item_data);
@@ -565,17 +569,17 @@ impl Impl {
 }
 
 #[derive(Serialize, Clone)]
-pub struct ImplType {
+pub struct ImplType<'db> {
     #[serde(skip)]
-    pub id: ImplTypeDefId,
+    pub id: ImplTypeDefId<'db>,
     #[serde(skip)]
-    pub node: ast::ItemTypeAliasPtr,
+    pub node: ast::ItemTypeAliasPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl ImplType {
-    pub fn new(db: &ScarbDocDatabase, id: ImplTypeDefId) -> Self {
+impl<'db> ImplType<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: ImplTypeDefId<'db>) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -587,17 +591,17 @@ impl ImplType {
 }
 
 #[derive(Serialize, Clone)]
-pub struct ImplConstant {
+pub struct ImplConstant<'db> {
     #[serde(skip)]
-    pub id: ImplConstantDefId,
+    pub id: ImplConstantDefId<'db>,
     #[serde(skip)]
-    pub node: ast::ItemConstantPtr,
+    pub node: ast::ItemConstantPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl ImplConstant {
-    pub fn new(db: &ScarbDocDatabase, id: ImplConstantDefId) -> Self {
+impl<'db> ImplConstant<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: ImplConstantDefId<'db>) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -613,17 +617,17 @@ impl ImplConstant {
 }
 
 #[derive(Serialize, Clone)]
-pub struct ImplFunction {
+pub struct ImplFunction<'db> {
     #[serde(skip)]
-    pub id: ImplFunctionId,
+    pub id: ImplFunctionId<'db>,
     #[serde(skip)]
-    pub node: ast::FunctionWithBodyPtr,
+    pub node: ast::FunctionWithBodyPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl ImplFunction {
-    pub fn new(db: &ScarbDocDatabase, id: ImplFunctionId) -> Self {
+impl<'db> ImplFunction<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: ImplFunctionId<'db>) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -639,17 +643,17 @@ impl ImplFunction {
 }
 
 #[derive(Serialize, Clone)]
-pub struct ExternType {
+pub struct ExternType<'db> {
     #[serde(skip)]
-    pub id: ExternTypeId,
+    pub id: ExternTypeId<'db>,
     #[serde(skip)]
-    pub node: ast::ItemExternTypePtr,
+    pub node: ast::ItemExternTypePtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl ExternType {
-    pub fn new(db: &ScarbDocDatabase, id: ExternTypeId) -> Self {
+impl<'db> ExternType<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: ExternTypeId<'db>) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -664,17 +668,17 @@ impl ExternType {
 }
 
 #[derive(Serialize, Clone)]
-pub struct ExternFunction {
+pub struct ExternFunction<'db> {
     #[serde(skip)]
-    pub id: ExternFunctionId,
+    pub id: ExternFunctionId<'db>,
     #[serde(skip)]
-    pub node: ast::ItemExternFunctionPtr,
+    pub node: ast::ItemExternFunctionPtr<'db>,
 
-    pub item_data: ItemData,
+    pub item_data: ItemData<'db>,
 }
 
-impl ExternFunction {
-    pub fn new(db: &ScarbDocDatabase, id: ExternFunctionId) -> Self {
+impl<'db> ExternFunction<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: ExternFunctionId<'db>) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
