@@ -567,7 +567,8 @@ pub(crate) fn get_ancestors_vector<'db>(
             ancestors.insert(0, module_id);
         }
         ModuleId::MacroCall { .. } => {
-            todo!("TODO(#2262): Correctly handle declarative macros.")
+            // TODO(#2262): Correctly handle declarative macros.
+            ancestors.insert(0, module_id);
         }
     }
     ancestors.clone()

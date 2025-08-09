@@ -188,16 +188,10 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                 .into_iter()
                 .filter_map(|compilation_unit| match compilation_unit {
                     CompilationUnit::ProcMacro(_) => None,
-                    CompilationUnit::Cairo(compilation_unit) => {
-                        ws.config()
-                            .ui()
-                            .print(Status::new("Linting", &compilation_unit.name()));
-
-                        Some(
-                            build_lint_database(compilation_unit, ws)
-                                .map(|db| (package, compilation_unit, db)),
-                        )
-                    }
+                    CompilationUnit::Cairo(compilation_unit) => Some(
+                        build_lint_database(compilation_unit, ws)
+                            .map(|db| (package, compilation_unit, db)),
+                    ),
                 })
                 .collect::<Result<Vec<_>>>()?,
         );
