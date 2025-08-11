@@ -1,7 +1,4 @@
-use crate::{
-    PackageInformation,
-    errors::{IODirectoryCreationError, IOWriteError, PackagesSerializationError},
-};
+use crate::errors::{IODirectoryCreationError, IOWriteError, PackagesSerializationError};
 use anyhow::Result;
 use camino::Utf8Path;
 use serde::Serialize;
@@ -10,13 +7,13 @@ use std::fs;
 const FORMAT_VERSION: u8 = 1;
 
 #[derive(Serialize)]
-pub struct VersionedJsonOutput<'db> {
+pub struct VersionedJsonOutput {
     format_version: u8,
-    packages_information: Vec<PackageInformation<'db>>,
+    packages_information: Vec<serde_json::Value>,
 }
 
-impl<'db> VersionedJsonOutput<'db> {
-    pub fn new(packages_information: Vec<PackageInformation<'db>>) -> Self {
+impl VersionedJsonOutput {
+    pub fn new(packages_information: Vec<serde_json::Value>) -> Self {
         Self {
             format_version: FORMAT_VERSION,
             packages_information,

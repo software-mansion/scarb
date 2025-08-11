@@ -55,63 +55,58 @@ pub struct PackageContext {
 
 pub fn generate_package_context(
     metadata: &Metadata,
-    metadata_for_packages: &[PackageMetadata],
+    package_metadata: &PackageMetadata,
     document_private_items: bool,
-) -> Result<Vec<PackageContext>> {
-    let mut packages_information = vec![];
-    for package_metadata in metadata_for_packages {
-        let authors = package_metadata.manifest_metadata.authors.clone();
-        let edition = package_metadata
-            .edition
-            .as_ref()
-            .map(|edition| edition_from_string(edition))
-            .transpose()?;
+) -> Result<PackageContext> {
+    let authors = package_metadata.manifest_metadata.authors.clone();
+    let edition = package_metadata
+        .edition
+        .as_ref()
+        .map(|edition| edition_from_string(edition))
+        .transpose()?;
 
-        let should_ignore_visibility = match edition {
-            Some(edition) => edition.ignore_visibility(),
-            None => Edition::default().ignore_visibility(),
-        };
+    let should_ignore_visibility = match edition {
+        Some(edition) => edition.ignore_visibility(),
+        None => Edition::default().ignore_visibility(),
+    };
 
-        let should_document_private_items = should_ignore_visibility || document_private_items;
+    let should_document_private_items = should_ignore_visibility || document_private_items;
 
-        let compilation_unit_metadata =
-            get_relevant_compilation_unit(metadata, package_metadata.id.clone())?;
-        let project_config =
-            get_project_config(metadata, package_metadata, compilation_unit_metadata)?;
-        let crates_with_starknet = crates_with_starknet(metadata, compilation_unit_metadata);
+    let compilation_unit_metadata =
+        get_relevant_compilation_unit(metadata, package_metadata.id.clone())?;
+    let project_config = get_project_config(metadata, package_metadata, compilation_unit_metadata)?;
+    let crates_with_starknet = crates_with_starknet(metadata, compilation_unit_metadata);
 
-        let db = ScarbDocDatabase::new(project_config, crates_with_starknet);
+    let db = ScarbDocDatabase::new(project_config, crates_with_starknet);
 
-        let main_component = compilation_unit_metadata
-            .components
-            .iter()
-            .find(|component| component.package == compilation_unit_metadata.package)
-            .expect("main component is guaranteed to exist in compilation unit");
+    let main_component = compilation_unit_metadata
+        .components
+        .iter()
+        .find(|component| component.package == compilation_unit_metadata.package)
+        .expect("main component is guaranteed to exist in compilation unit");
 
-        let package_compilation_unit = metadata
-            .compilation_units
-            .iter()
-            .find(|unit| unit.package == package_metadata.id)
-            .cloned();
+    let package_compilation_unit = metadata
+        .compilation_units
+        .iter()
+        .find(|unit| unit.package == package_metadata.id)
+        .cloned();
 
-        packages_information.push(PackageContext {
-            db,
-            should_document_private_items,
-            package_compilation_unit,
-            main_component: main_component.clone(),
-            metadata: AdditionalMetadata {
-                name: package_metadata.name.clone(),
-                authors,
-            },
-        })
-    }
-    Ok(packages_information)
+    Ok(PackageContext {
+        db,
+        should_document_private_items,
+        package_compilation_unit,
+        main_component: main_component.clone(),
+        metadata: AdditionalMetadata {
+            name: package_metadata.name.clone(),
+            authors,
+        },
+    })
 }
 
-pub fn generate_package_information<'db>(
-    context: &'db PackageContext,
+pub fn generate_package_information(
+    context: &'_ PackageContext,
     ui: Ui,
-) -> Result<PackageInformation<'db>> {
+) -> Result<PackageInformation<'_>> {
     let db = &context.db;
 
     let main_crate_id = db.intern_crate(CrateLongId::Real {
