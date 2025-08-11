@@ -111,10 +111,6 @@ impl ProjectBuilder {
         self.dev_dep(name, Dep.version(CAIRO_VERSION))
     }
 
-    pub fn dep_cairo_run(self) -> Self {
-        self.dep_builtin("cairo_run")
-    }
-
     pub fn dep_starknet(self) -> Self {
         self.dep_builtin("starknet")
     }

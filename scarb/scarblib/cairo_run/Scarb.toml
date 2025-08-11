@@ -1,8 +1,0 @@
-[package]
-name = "cairo_run"
-version = "{{ CAIRO_VERSION }}"
-
-no-core = true
-
-[cairo-plugin]
-builtin = true

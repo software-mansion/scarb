@@ -290,12 +290,6 @@ pub fn resolve_workspace_with_opts(
                         .source_id(SourceId::for_std())
                         .build(),
                     ManifestDependency::builder()
-                        .kind(DepKind::Target(TargetKind::LIB))
-                        .name(PackageName::CAIRO_RUN_PLUGIN)
-                        .version_req(version_req.clone())
-                        .source_id(SourceId::for_std())
-                        .build(),
-                    ManifestDependency::builder()
                         .kind(DepKind::Target(TargetKind::TEST))
                         .name(PackageName::TEST_ASSERTS_PLUGIN)
                         .version_req(version_req.clone())

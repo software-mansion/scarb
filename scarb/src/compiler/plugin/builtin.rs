@@ -1,10 +1,7 @@
 use anyhow::Result;
-use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
 use cairo_lang_executable::plugin::executable_plugin_suite;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_starknet::starknet_plugin_suite;
-use cairo_lang_syntax::node::ast::ModuleItem;
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_test_plugin::{test_assert_suite, test_plugin_suite};
 
 use crate::compiler::plugin::{CairoPlugin, CairoPluginInstance};
@@ -80,56 +77,6 @@ struct BuiltinTestPluginInstance;
 impl CairoPluginInstance for BuiltinTestPluginInstance {
     fn plugin_suite(&self) -> PluginSuite {
         test_plugin_suite()
-    }
-}
-
-pub struct BuiltinCairoRunPlugin;
-
-impl CairoPlugin for BuiltinCairoRunPlugin {
-    fn id(&self) -> PackageId {
-        PackageId::new(
-            PackageName::CAIRO_RUN_PLUGIN,
-            crate::version::get().cairo.version.to_version().unwrap(),
-            SourceId::for_std(),
-        )
-    }
-
-    fn instantiate(&self) -> Result<Box<dyn CairoPluginInstance>> {
-        Ok(Box::new(BuiltinCairoRunPluginInstance))
-    }
-}
-
-struct BuiltinCairoRunPluginInstance;
-
-impl CairoPluginInstance for BuiltinCairoRunPluginInstance {
-    fn plugin_suite(&self) -> PluginSuite {
-        let mut suite = PluginSuite::default();
-        suite.add_plugin::<CairoRunPlugin>();
-        suite
-    }
-}
-
-const CAIRO_RUN_EXECUTABLE: &str = "main";
-
-/// A plugin that defines an executable attribute for cairo-run.
-/// No code generation is performed.
-#[derive(Debug, Default)]
-struct CairoRunPlugin {}
-
-impl MacroPlugin for CairoRunPlugin {
-    fn generate_code<'db>(
-        &self,
-        _db: &'db dyn SyntaxGroup,
-        _item_ast: ModuleItem<'db>,
-        _metadata: &MacroPluginMetadata<'_>,
-    ) -> PluginResult<'db> {
-        PluginResult::default()
-    }
-    fn declared_attributes(&self) -> Vec<String> {
-        vec![CAIRO_RUN_EXECUTABLE.to_string()]
-    }
-    fn executable_attributes(&self) -> Vec<String> {
-        self.declared_attributes()
     }
 }
 

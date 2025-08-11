@@ -182,8 +182,8 @@ fn validate_compiler_config(
 ) {
     let main_crate_id = unit.main_component().crate_id(db);
 
-    // Generally, lib target compilation should be driven by a certain objective (e.g. cairo-run,
-    // test framework, etc.), expressed by the plugin set with executables definition.
+    // Generally, lib target compilation should be driven by a certain objective (e.g. test
+    // framework, etc.), expressed by the plugin set with executables definition.
     // This does not apply to debug build (expressed by `replace_ids` flag),
     // which is a goal by itself.
     // See starkware-libs/cairo#5440 for more context.

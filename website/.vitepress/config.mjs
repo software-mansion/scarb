@@ -38,7 +38,6 @@ const sidebar = {
         p("Testing", "/docs/extensions/testing"),
         p("Execute", "/docs/extensions/execute"),
         p("Prove and verify", "/docs/extensions/prove-and-verify"),
-        p("Cairo runner", "/docs/extensions/cairo-run"),
         {
           text: "Starknet",
           items: [
