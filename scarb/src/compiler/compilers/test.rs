@@ -2,19 +2,18 @@ use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
+use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId};
 use cairo_lang_sierra::program::VersionedProgram;
+use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_test_plugin::{TestsCompilationConfig, compile_test_prepared_db};
 use itertools::Itertools;
-use smol_str::ToSmolStr;
-use tracing::trace_span;
+use tracing::{trace, trace_span};
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
 use crate::compiler::compilers::{
-    Artifacts, ArtifactsWriter, CompiledContracts, ContractSelector, ensure_gas_enabled,
-    find_project_contracts, get_compiled_contracts,
+    Artifacts, ArtifactsWriter, ContractSelector, ensure_gas_enabled, find_project_contracts,
 };
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
@@ -32,7 +31,7 @@ impl Compiler for TestCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateId],
+        cached_crates: &[CrateInput],
         offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
@@ -81,7 +80,16 @@ impl Compiler for TestCompiler {
                 executable_crate_ids: None,
                 contract_declarations: starknet.then_some(contracts.clone()),
             };
-            compile_test_prepared_db(db, config, test_crate_ids.clone(), diagnostics_reporter)?
+            compile_test_prepared_db(
+                db,
+                config,
+                test_crate_ids
+                    .clone()
+                    .into_iter()
+                    .map(|c| c.long(db).clone().into_crate_input(db))
+                    .collect_vec(),
+                diagnostics_reporter,
+            )?
         };
 
         let span = trace_span!("serialize_test");
@@ -137,19 +145,19 @@ impl Compiler for TestCompiler {
     }
 }
 
-struct ContractsCompilationArgs {
-    main_crate_ids: Vec<CrateId>,
-    cached_crates: Vec<CrateId>,
-    contracts: Vec<ContractDeclaration>,
+struct ContractsCompilationArgs<'db> {
+    main_crate_ids: Vec<CrateId<'db>>,
+    cached_crates: Vec<CrateInput>,
+    contracts: Vec<ContractDeclaration<'db>>,
     build_external_contracts: Option<Vec<ContractSelector>>,
 }
 
-fn compile_contracts(
-    args: ContractsCompilationArgs,
+fn compile_contracts<'db>(
+    args: ContractsCompilationArgs<'db>,
     target_dir: Filesystem,
     unit: &CairoCompilationUnit,
     offloader: &Offloader<'_>,
-    db: &mut RootDatabase,
+    db: &'db RootDatabase,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let ContractsCompilationArgs {
@@ -169,11 +177,16 @@ fn compile_contracts(
     compiler_config.diagnostics_reporter = DiagnosticsReporter::ignoring()
         .allow_warnings()
         .with_crates(&[]);
-    let CompiledContracts {
-        contract_paths,
-        contracts,
-        classes,
-    } = get_compiled_contracts(contracts, compiler_config, db)?;
+    let contract_paths = contracts
+        .iter()
+        .map(|decl| decl.module_id().full_path(db))
+        .collect::<Vec<_>>();
+    trace!(contracts = ?contract_paths);
+    let span = trace_span!("compile_starknet");
+    let classes = {
+        let _guard = span.enter();
+        compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
+    };
     let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props)
         .with_extension_prefix("test".to_string());
     let casm_classes: Vec<Option<CasmContractClass>> = classes.iter().map(|_| None).collect();
@@ -200,12 +213,12 @@ fn external_contracts_selectors(
         .map(|contracts| contracts.into_iter().map(ContractSelector).collect_vec()))
 }
 
-fn get_contract_crate_ids(
+fn get_contract_crate_ids<'db>(
     build_external_contracts: &Option<Vec<ContractSelector>>,
-    test_crate_ids: Vec<CrateId>,
+    test_crate_ids: Vec<CrateId<'db>>,
     unit: &CairoCompilationUnit,
-    db: &mut RootDatabase,
-) -> Vec<CrateId> {
+    db: &'db RootDatabase,
+) -> Vec<CrateId<'db>> {
     let mut all_crate_ids = build_external_contracts
         .as_ref()
         .map(|external_contracts| {
@@ -220,7 +233,7 @@ fn get_contract_crate_ids(
                         .iter()
                         .find(|component| component.package.id.name == package_name)
                         .and_then(|component| component.id.to_discriminator());
-                    let name = package_name.to_smolstr();
+                    let name = package_name.to_string();
                     db.intern_crate(CrateLongId::Real {
                         name,
                         discriminator,

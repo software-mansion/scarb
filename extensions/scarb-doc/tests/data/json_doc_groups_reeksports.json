@@ -3,141 +3,141 @@
   "packages_information": [
     {
       "crate_": {
-        "root_module": {
-          "item_data": {
-            "name": "hello_world",
-            "doc": null,
-            "signature": null,
-            "full_path": "hello_world",
-            "group": null
-          },
-          "submodules": [
-            {
-              "item_data": {
-                "name": "inner_module",
-                "doc": null,
-                "signature": null,
-                "full_path": "hello_world::inner_module",
-                "group": null
-              },
-              "submodules": [],
-              "constants": [],
-              "free_functions": [
-                {
-                  "item_data": {
-                    "name": "visible_in_reeksports",
-                    "doc": null,
-                    "signature": "pub fn visible_in_reeksports()",
-                    "full_path": "hello_world::inner_module::visible_in_reeksports",
-                    "group": null
-                  }
-                }
-              ],
-              "structs": [],
-              "enums": [],
-              "type_aliases": [],
-              "impl_aliases": [],
-              "traits": [],
-              "impls": [],
-              "extern_types": [],
-              "extern_functions": [],
-              "pub_uses": {
-                "use_constants": [],
-                "use_free_functions": [],
-                "use_structs": [],
-                "use_enums": [],
-                "use_module_type_aliases": [],
-                "use_impl_aliases": [],
-                "use_traits": [],
-                "use_impl_defs": [],
-                "use_extern_types": [],
-                "use_extern_functions": [],
-                "use_submodules": []
-              }
-            }
-          ],
-          "constants": [],
-          "free_functions": [],
-          "structs": [],
-          "enums": [],
-          "type_aliases": [],
-          "impl_aliases": [],
-          "traits": [],
-          "impls": [],
-          "extern_types": [],
-          "extern_functions": [],
-          "pub_uses": {
-            "use_constants": [],
-            "use_free_functions": [
-              {
-                "item_data": {
-                  "name": "visible_in_reeksports",
-                  "doc": null,
-                  "signature": "pub fn visible_in_reeksports()",
-                  "full_path": "hello_world::inner_module::visible_in_reeksports",
-                  "group": null
-                }
-              },
-              {
-                "item_data": {
-                  "name": "inner_function_visible_in_group",
-                  "doc": null,
-                  "signature": "pub fn inner_function_visible_in_group()",
-                  "full_path": "hello_world::inner_module::inner_function_visible_in_group",
-                  "group": "visible"
-                }
-              }
-            ],
-            "use_structs": [],
-            "use_enums": [],
-            "use_module_type_aliases": [],
-            "use_impl_aliases": [],
-            "use_traits": [],
-            "use_impl_defs": [],
-            "use_extern_types": [],
-            "use_extern_functions": [],
-            "use_submodules": []
-          }
-        },
         "groups": [
           {
-            "name": "visible",
-            "submodules": [],
             "constants": [],
+            "enums": [],
+            "extern_functions": [],
+            "extern_types": [],
             "free_functions": [
               {
                 "item_data": {
-                  "name": "top_level_fn_visible_in_group",
                   "doc": null,
-                  "signature": "pub fn top_level_fn_visible_in_group()",
                   "full_path": "hello_world::top_level_fn_visible_in_group",
-                  "group": "visible"
+                  "group": "visible",
+                  "name": "top_level_fn_visible_in_group",
+                  "signature": "pub fn top_level_fn_visible_in_group()"
                 }
               },
               {
                 "item_data": {
-                  "name": "inner_function_visible_in_group",
                   "doc": null,
-                  "signature": "pub fn inner_function_visible_in_group()",
                   "full_path": "hello_world::inner_module::inner_function_visible_in_group",
-                  "group": "visible"
+                  "group": "visible",
+                  "name": "inner_function_visible_in_group",
+                  "signature": "pub fn inner_function_visible_in_group()"
                 }
               }
             ],
-            "structs": [],
-            "enums": [],
-            "type_aliases": [],
             "impl_aliases": [],
-            "traits": [],
             "impls": [],
-            "extern_types": [],
-            "extern_functions": []
+            "name": "visible",
+            "structs": [],
+            "submodules": [],
+            "traits": [],
+            "type_aliases": []
           }
-        ]
+        ],
+        "root_module": {
+          "constants": [],
+          "enums": [],
+          "extern_functions": [],
+          "extern_types": [],
+          "free_functions": [],
+          "impl_aliases": [],
+          "impls": [],
+          "item_data": {
+            "doc": null,
+            "full_path": "hello_world",
+            "group": null,
+            "name": "hello_world",
+            "signature": null
+          },
+          "pub_uses": {
+            "use_constants": [],
+            "use_enums": [],
+            "use_extern_functions": [],
+            "use_extern_types": [],
+            "use_free_functions": [
+              {
+                "item_data": {
+                  "doc": null,
+                  "full_path": "hello_world::inner_module::visible_in_reeksports",
+                  "group": null,
+                  "name": "visible_in_reeksports",
+                  "signature": "pub fn visible_in_reeksports()"
+                }
+              },
+              {
+                "item_data": {
+                  "doc": null,
+                  "full_path": "hello_world::inner_module::inner_function_visible_in_group",
+                  "group": "visible",
+                  "name": "inner_function_visible_in_group",
+                  "signature": "pub fn inner_function_visible_in_group()"
+                }
+              }
+            ],
+            "use_impl_aliases": [],
+            "use_impl_defs": [],
+            "use_module_type_aliases": [],
+            "use_structs": [],
+            "use_submodules": [],
+            "use_traits": []
+          },
+          "structs": [],
+          "submodules": [
+            {
+              "constants": [],
+              "enums": [],
+              "extern_functions": [],
+              "extern_types": [],
+              "free_functions": [
+                {
+                  "item_data": {
+                    "doc": null,
+                    "full_path": "hello_world::inner_module::visible_in_reeksports",
+                    "group": null,
+                    "name": "visible_in_reeksports",
+                    "signature": "pub fn visible_in_reeksports()"
+                  }
+                }
+              ],
+              "impl_aliases": [],
+              "impls": [],
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::inner_module",
+                "group": null,
+                "name": "inner_module",
+                "signature": null
+              },
+              "pub_uses": {
+                "use_constants": [],
+                "use_enums": [],
+                "use_extern_functions": [],
+                "use_extern_types": [],
+                "use_free_functions": [],
+                "use_impl_aliases": [],
+                "use_impl_defs": [],
+                "use_module_type_aliases": [],
+                "use_structs": [],
+                "use_submodules": [],
+                "use_traits": []
+              },
+              "structs": [],
+              "submodules": [],
+              "traits": [],
+              "type_aliases": []
+            }
+          ],
+          "traits": [],
+          "type_aliases": []
+        }
       },
       "metadata": {
-        "name": "hello_world",
-        "authors": null
+        "authors": null,
+        "name": "hello_world"
       }
     }
   ]

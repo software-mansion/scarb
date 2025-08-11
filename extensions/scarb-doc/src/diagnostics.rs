@@ -19,10 +19,11 @@ impl ScarbDocDiagnostics {
     }
 
     fn print_messages(&self, ui: &Ui) {
-        let messages = self.messages.lock().unwrap();
+        let mut messages = self.messages.lock().unwrap();
         for message in messages.iter() {
             ui.warn(message);
         }
+        messages.clear();
     }
 }
 

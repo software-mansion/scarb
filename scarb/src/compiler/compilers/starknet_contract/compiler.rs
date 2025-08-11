@@ -1,9 +1,8 @@
 use anyhow::{Context, Result, ensure};
-use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleId, NamedLanguageElementId};
-use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
+use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId};
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::Visibility;
@@ -11,12 +10,10 @@ use cairo_lang_semantic::resolve::ResolvedGenericItem::Module;
 use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::{ContractDeclaration, find_contracts, module_contract};
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
-use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_syntax::node::TypedSyntaxNode;
 use cairo_lang_syntax::node::ast::OptionAliasClause;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use smol_str::SmolStr;
 use std::collections::HashSet;
 use std::iter::zip;
 use tracing::{debug, trace, trace_span};
@@ -78,7 +75,7 @@ impl Compiler for StarknetContractCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateId],
+        cached_crates: &[CrateInput],
         offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
@@ -117,11 +114,16 @@ impl Compiler for StarknetContractCompiler {
             props.build_external_contracts.clone(),
         )?;
 
-        let CompiledContracts {
-            contract_paths,
-            contracts,
-            classes,
-        } = get_compiled_contracts(contracts, compiler_config, db)?;
+        let contract_paths = contracts
+            .iter()
+            .map(|decl| decl.module_id().full_path(db))
+            .collect::<Vec<_>>();
+        trace!(contracts = ?contract_paths);
+        let span = trace_span!("compile_starknet");
+        let classes = {
+            let _guard = span.enter();
+            compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
+        };
 
         check_allowed_libfuncs(&props, &contracts, &classes, db, unit, ws)?;
 
@@ -166,42 +168,13 @@ impl Compiler for StarknetContractCompiler {
     }
 }
 
-pub struct CompiledContracts {
-    pub contract_paths: Vec<String>,
-    pub contracts: Vec<ContractDeclaration>,
-    pub classes: Vec<ContractClass>,
-}
-
-pub fn get_compiled_contracts(
-    contracts: Vec<ContractDeclaration>,
-    compiler_config: CompilerConfig<'_>,
-    db: &mut RootDatabase,
-) -> Result<CompiledContracts> {
-    let contract_paths = contracts
-        .iter()
-        .map(|decl| decl.module_id().full_path(db))
-        .collect::<Vec<_>>();
-    trace!(contracts = ?contract_paths);
-
-    let span = trace_span!("compile_starknet");
-    let classes = {
-        let _guard = span.enter();
-        compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
-    };
-    Ok(CompiledContracts {
-        contract_paths,
-        contracts,
-        classes,
-    })
-}
-
-pub fn find_project_contracts(
-    db: &dyn SemanticGroup,
+pub fn find_project_contracts<'db>(
+    db: &'db dyn SemanticGroup,
     ui: Ui,
     unit: &CairoCompilationUnit,
-    main_crate_ids: Vec<CrateId>,
+    main_crate_ids: Vec<CrateId<'db>>,
     external_contracts: Option<Vec<ContractSelector>>,
-) -> Result<Vec<ContractDeclaration>> {
+) -> Result<Vec<ContractDeclaration<'db>>> {
     let span = trace_span!("find_internal_contracts");
     let internal_contracts = {
         let _guard = span.enter();
@@ -209,7 +182,7 @@ pub fn find_project_contracts(
     };
 
     let span = trace_span!("find_external_contracts");
-    let external_contracts: Vec<ContractDeclaration> = if let Some(external_contracts) =
+    let external_contracts: Vec<ContractDeclaration<'db>> = if let Some(external_contracts) =
         external_contracts
     {
         let _guard = span.enter();
@@ -217,13 +190,13 @@ pub fn find_project_contracts(
 
         let crate_ids = external_contracts
             .iter()
-            .map(|selector| selector.package().into())
+            .map(|selector| selector.package().to_string())
             .unique()
-            .map(|name: SmolStr| {
+            .map(|name: String| {
                 let discriminator = unit
                     .components()
                     .iter()
-                    .find(|component| component.package.id.name.to_smol_str() == name)
+                    .find(|component| component.package.id.name.to_string() == name)
                     .and_then(|component| component.id.to_discriminator());
                 db.intern_crate(CrateLongId::Real {
                     name,
@@ -232,7 +205,7 @@ pub fn find_project_contracts(
             })
             .collect::<Vec<_>>();
         let contracts = find_contracts(db, crate_ids.as_ref());
-        let mut filtered_contracts: Vec<ContractDeclaration> = contracts
+        let mut filtered_contracts: Vec<ContractDeclaration<'db>> = contracts
             .into_iter()
             .filter(|decl| {
                 let contract_path = decl.module_id().full_path(db.upcast());
@@ -264,17 +237,17 @@ pub fn find_project_contracts(
                 let matched_contracts = module_uses
                     .iter()
                     .filter_map(|(use_id, use_path)| {
-                        let use_alias = match use_path.alias_clause(db.upcast()) {
+                        let use_alias = match use_path.alias_clause(db) {
                             OptionAliasClause::Empty(_) => None,
                             OptionAliasClause::AliasClause(alias_clause) => Some(
                                 alias_clause
-                                    .alias(db.upcast())
+                                    .alias(db)
                                     .as_syntax_node()
-                                    .get_text_without_trivia(db.upcast()),
+                                    .get_text_without_trivia(db),
                             ),
                         };
                         let visibility = db
-                            .module_item_info_by_name(*module_id, use_id.name(db.upcast()))
+                            .module_item_info_by_name(*module_id, use_id.name(db.upcast()).into())
                             .ok()??
                             .visibility;
                         if visibility == Visibility::Public {
@@ -293,7 +266,7 @@ pub fn find_project_contracts(
                     .flat_map(|(module_id, use_alias)| {
                         let exported_module_path = module_id.full_path(db.upcast());
                         let exported_module_name =
-                            use_alias.unwrap_or_else(|| module_id.name(db.upcast()).to_string());
+                            use_alias.unwrap_or_else(|| module_id.name(db.upcast()));
                         let mut submodules = Vec::new();
                         collect_modules_under(db.upcast(), &mut submodules, module_id);
                         submodules
@@ -361,7 +334,11 @@ pub fn find_project_contracts(
         .collect())
 }
 
-fn collect_modules_under(db: &dyn DefsGroup, modules: &mut Vec<ModuleId>, module_id: ModuleId) {
+fn collect_modules_under<'db>(
+    db: &'db dyn DefsGroup,
+    modules: &mut Vec<ModuleId<'db>>,
+    module_id: ModuleId<'db>,
+) {
     modules.push(module_id);
     if let Ok(submodule_ids) = db.module_submodules_ids(module_id) {
         for submodule_module_id in submodule_ids.iter().copied() {

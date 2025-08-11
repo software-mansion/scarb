@@ -24,7 +24,11 @@ impl ProcMacroHostPlugin {
     /// Handle `#[derive(...)]` attribute.
     ///
     /// Returns a list of expansions that this plugin should apply.
-    fn parse_derive(&self, db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> Vec<DeriveFound> {
+    fn parse_derive<'db>(
+        &self,
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
+    ) -> Vec<DeriveFound<'db>> {
         let attrs = match item_ast {
             ast::ModuleItem::Struct(struct_ast) => {
                 Some(struct_ast.query_attr(db, DERIVE_ATTR).collect_vec())
@@ -67,12 +71,12 @@ impl ProcMacroHostPlugin {
             .collect_vec()
     }
 
-    pub fn expand_derives(
+    pub fn expand_derives<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        item_ast: ast::ModuleItem,
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
         stream_metadata: TokenStreamMetadata,
-    ) -> Option<PluginResult> {
+    ) -> Option<PluginResult<'db>> {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         token_stream_builder.add_node(item_ast.as_syntax_node());
         token_stream_builder.with_metadata(stream_metadata.clone());
@@ -172,12 +176,12 @@ impl ProcMacroHostPlugin {
     }
 }
 
-struct DeriveFound {
+struct DeriveFound<'db> {
     id: ProcMacroId,
-    call_site: CallSiteLocation,
+    call_site: CallSiteLocation<'db>,
 }
 
-impl Debug for DeriveFound {
+impl<'db> Debug for DeriveFound<'db> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("DeriveFound").field("id", &self.id).finish()
     }

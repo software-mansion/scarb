@@ -7,9 +7,9 @@ use cairo_lang_syntax::node::ast::Expr;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 
 /// Extracts string group information from the "doc" attributes of a node.
-pub fn find_groups_from_attributes(
-    db: &ScarbDocDatabase,
-    id: &impl TopLevelLanguageElementId,
+pub fn find_groups_from_attributes<'db>(
+    db: &'db ScarbDocDatabase,
+    id: &impl TopLevelLanguageElementId<'db>,
 ) -> Option<String> {
     let node = id.stable_location(db).syntax_node(db);
 

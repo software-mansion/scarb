@@ -7,22 +7,22 @@ use serde::Serialize;
 use std::collections::HashMap;
 
 #[derive(Serialize, Clone)]
-pub struct Group {
+pub struct Group<'db> {
     pub name: String,
-    pub submodules: Vec<Module>,
-    pub constants: Vec<Constant>,
-    pub free_functions: Vec<FreeFunction>,
-    pub structs: Vec<Struct>,
-    pub enums: Vec<Enum>,
-    pub type_aliases: Vec<TypeAlias>,
-    pub impl_aliases: Vec<ImplAlias>,
-    pub traits: Vec<Trait>,
-    pub impls: Vec<Impl>,
-    pub extern_types: Vec<ExternType>,
-    pub extern_functions: Vec<ExternFunction>,
+    pub submodules: Vec<Module<'db>>,
+    pub constants: Vec<Constant<'db>>,
+    pub free_functions: Vec<FreeFunction<'db>>,
+    pub structs: Vec<Struct<'db>>,
+    pub enums: Vec<Enum<'db>>,
+    pub type_aliases: Vec<TypeAlias<'db>>,
+    pub impl_aliases: Vec<ImplAlias<'db>>,
+    pub traits: Vec<Trait<'db>>,
+    pub impls: Vec<Impl<'db>>,
+    pub extern_types: Vec<ExternType<'db>>,
+    pub extern_functions: Vec<ExternFunction<'db>>,
 }
 
-impl Group {
+impl<'db> Group<'db> {
     pub fn filename(&self) -> String {
         format!("{}.md", self.get_name_normalized())
     }
@@ -33,9 +33,9 @@ impl Group {
 
 macro_rules! aggregate_groups {
     ($fn_name:ident, $items_type:ty, $group_field:ident) => {
-        pub fn $fn_name(
+        pub fn $fn_name<'db>(
             items: &[$items_type],
-            groups_map: &mut HashMap<String, Group>,
+            groups_map: &mut HashMap<String, Group<'db>>,
         ) -> Vec<$items_type> {
             let mut remaining_items = Vec::new();
 
@@ -68,29 +68,29 @@ macro_rules! aggregate_groups {
     };
 }
 
-aggregate_groups!(aggregate_constants_groups, Constant, constants);
+aggregate_groups!(aggregate_constants_groups, Constant<'db>, constants);
 aggregate_groups!(
     aggregate_free_functions_groups,
-    FreeFunction,
+    FreeFunction<'db>,
     free_functions
 );
-aggregate_groups!(aggregate_structs_groups, Struct, structs);
-aggregate_groups!(aggregate_enums_groups, Enum, enums);
-aggregate_groups!(aggregate_type_aliases_groups, TypeAlias, type_aliases);
-aggregate_groups!(aggregate_impl_aliases_groups, ImplAlias, impl_aliases);
-aggregate_groups!(aggregate_traits_groups, Trait, traits);
-aggregate_groups!(aggregate_impls_groups, Impl, impls);
-aggregate_groups!(aggregate_extern_types_groups, ExternType, extern_types);
+aggregate_groups!(aggregate_structs_groups, Struct<'db>, structs);
+aggregate_groups!(aggregate_enums_groups, Enum<'db>, enums);
+aggregate_groups!(aggregate_type_aliases_groups, TypeAlias<'db>, type_aliases);
+aggregate_groups!(aggregate_impl_aliases_groups, ImplAlias<'db>, impl_aliases);
+aggregate_groups!(aggregate_traits_groups, Trait<'db>, traits);
+aggregate_groups!(aggregate_impls_groups, Impl<'db>, impls);
+aggregate_groups!(aggregate_extern_types_groups, ExternType<'db>, extern_types);
 aggregate_groups!(
     aggregate_extern_functions_groups,
-    ExternFunction,
+    ExternFunction<'db>,
     extern_functions
 );
-aggregate_groups!(aggregate_modules_groups, Module, submodules);
+aggregate_groups!(aggregate_modules_groups, Module<'db>, submodules);
 
-pub fn aggregate_pub_uses_groups(
-    module_pubuses: &ModulePubUses,
-    group_map: &mut HashMap<String, Group>,
+pub fn aggregate_pub_uses_groups<'db>(
+    module_pubuses: &ModulePubUses<'db>,
+    group_map: &mut HashMap<String, Group<'db>>,
 ) {
     aggregate_constants_groups(&module_pubuses.use_constants, group_map);
     aggregate_free_functions_groups(&module_pubuses.use_free_functions, group_map);

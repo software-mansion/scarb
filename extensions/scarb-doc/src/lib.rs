@@ -17,10 +17,11 @@ use cairo_lang_filesystem::{
 };
 use errors::DiagnosticError;
 use itertools::Itertools;
-use scarb_metadata::{CompilationUnitMetadata, Metadata, PackageMetadata};
+use scarb_metadata::{
+    CompilationUnitComponentMetadata, CompilationUnitMetadata, Metadata, PackageMetadata,
+};
 use scarb_ui::Ui;
 use serde::Serialize;
-use smol_str::ToSmolStr;
 
 pub mod attributes;
 pub mod db;
@@ -33,8 +34,8 @@ pub mod types;
 pub mod versioned_json_output;
 
 #[derive(Serialize, Clone)]
-pub struct PackageInformation {
-    pub crate_: Crate,
+pub struct PackageInformation<'db> {
+    pub crate_: Crate<'db>,
     pub metadata: AdditionalMetadata,
 }
 
@@ -44,91 +45,113 @@ pub struct AdditionalMetadata {
     pub authors: Option<Vec<String>>,
 }
 
-pub fn generate_packages_information(
+pub struct PackageContext {
+    pub db: ScarbDocDatabase,
+    pub should_document_private_items: bool,
+    pub metadata: AdditionalMetadata,
+    package_compilation_unit: Option<CompilationUnitMetadata>,
+    main_component: CompilationUnitComponentMetadata,
+}
+
+pub fn generate_package_context(
     metadata: &Metadata,
-    metadata_for_packages: &[PackageMetadata],
+    package_metadata: &PackageMetadata,
     document_private_items: bool,
+) -> Result<PackageContext> {
+    let authors = package_metadata.manifest_metadata.authors.clone();
+    let edition = package_metadata
+        .edition
+        .as_ref()
+        .map(|edition| edition_from_string(edition))
+        .transpose()?;
+
+    let should_ignore_visibility = match edition {
+        Some(edition) => edition.ignore_visibility(),
+        None => Edition::default().ignore_visibility(),
+    };
+
+    let should_document_private_items = should_ignore_visibility || document_private_items;
+
+    let compilation_unit_metadata =
+        get_relevant_compilation_unit(metadata, package_metadata.id.clone())?;
+    let project_config = get_project_config(metadata, package_metadata, compilation_unit_metadata)?;
+    let crates_with_starknet = crates_with_starknet(metadata, compilation_unit_metadata);
+
+    let db = ScarbDocDatabase::new(project_config, crates_with_starknet);
+
+    let main_component = compilation_unit_metadata
+        .components
+        .iter()
+        .find(|component| component.package == compilation_unit_metadata.package)
+        .expect("main component is guaranteed to exist in compilation unit");
+
+    let package_compilation_unit = metadata
+        .compilation_units
+        .iter()
+        .find(|unit| unit.package == package_metadata.id)
+        .cloned();
+
+    Ok(PackageContext {
+        db,
+        should_document_private_items,
+        package_compilation_unit,
+        main_component: main_component.clone(),
+        metadata: AdditionalMetadata {
+            name: package_metadata.name.clone(),
+            authors,
+        },
+    })
+}
+
+pub fn generate_package_information(
+    context: &'_ PackageContext,
     ui: Ui,
-) -> Result<Vec<PackageInformation>> {
-    let mut packages_information = vec![];
-    for package_metadata in metadata_for_packages {
-        let authors = package_metadata.manifest_metadata.authors.clone();
-        let edition = package_metadata
-            .edition
+) -> Result<PackageInformation<'_>> {
+    let db = &context.db;
+
+    let main_crate_id = db.intern_crate(CrateLongId::Real {
+        name: context.main_component.name.to_string(),
+        discriminator: context
+            .main_component
+            .discriminator
             .as_ref()
-            .map(|edition| edition_from_string(edition))
-            .transpose()?;
+            .map(ToString::to_string),
+    });
 
-        let should_ignore_visibility = match edition {
-            Some(edition) => edition.ignore_visibility(),
-            None => Edition::default().ignore_visibility(),
-        };
+    let mut diagnostics_reporter =
+        setup_diagnostics_reporter(db, main_crate_id, &context.package_compilation_unit, &ui)
+            .skip_lowering_diagnostics();
 
-        let should_document_private_items = should_ignore_visibility || document_private_items;
+    let crate_ = Crate::new_with_virtual_modules_and_groups(
+        db,
+        main_crate_id,
+        context.should_document_private_items,
+    )
+    .map_err(|_| DiagnosticError(context.metadata.name.clone()));
 
-        let compilation_unit_metadata =
-            get_relevant_compilation_unit(metadata, package_metadata.id.clone())?;
-        let project_config =
-            get_project_config(metadata, package_metadata, compilation_unit_metadata)?;
-        let crates_with_starknet = crates_with_starknet(metadata, compilation_unit_metadata);
-
-        let db = ScarbDocDatabase::new(project_config, crates_with_starknet);
-
-        let main_component = compilation_unit_metadata
-            .components
-            .iter()
-            .find(|component| component.package == compilation_unit_metadata.package)
-            .expect("main component is guaranteed to exist in compilation unit");
-
-        let main_crate_id = db.intern_crate(CrateLongId::Real {
-            name: main_component.name.to_smolstr(),
-            discriminator: main_component
-                .discriminator
-                .as_ref()
-                .map(ToSmolStr::to_smolstr),
-        });
-
-        let package_compilation_unit = metadata
-            .compilation_units
-            .iter()
-            .find(|unit| unit.package == package_metadata.id);
-
-        let mut diagnostics_reporter =
-            setup_diagnostics_reporter(&db, main_crate_id, package_compilation_unit, &ui)
-                .skip_lowering_diagnostics();
-
-        let crate_ = Crate::new_with_virtual_modules_and_groups(
-            &db,
-            main_crate_id,
-            should_document_private_items,
-        )
-        .map_err(|_| DiagnosticError(package_metadata.name.clone()));
-
-        if crate_.is_err() {
-            diagnostics_reporter.ensure(&db)?;
-        }
-
-        packages_information.push(PackageInformation {
-            crate_: crate_?,
-            metadata: AdditionalMetadata {
-                name: package_metadata.name.clone(),
-                authors,
-            },
-        });
+    if crate_.is_err() {
+        diagnostics_reporter.ensure(db)?;
     }
-    Ok(packages_information)
+
+    let crate_ = crate_?;
+
+    Ok(PackageInformation {
+        crate_,
+        metadata: context.metadata.clone(),
+    })
 }
 
 fn setup_diagnostics_reporter<'a>(
     db: &ScarbDocDatabase,
     main_crate_id: CrateId,
-    package_compilation_unit: Option<&CompilationUnitMetadata>,
+    package_compilation_unit: &Option<CompilationUnitMetadata>,
     ui: &'a Ui,
 ) -> DiagnosticsReporter<'a> {
     let ignore_warnings_crates = db
         .crates()
         .into_iter()
         .filter(|crate_id| crate_id != &main_crate_id)
+        .map(|c| c.long(db).clone().into_crate_input(db))
         .collect_vec();
 
     let diagnostics_reporter = DiagnosticsReporter::callback({
