@@ -70,7 +70,7 @@ cairo-lang-test-plugin = "*"
 cairo-lang-test-runner = "*"
 cairo-lang-utils = { version = "*", features = ["env_logger"] }
 cairo-language-server = "*"
-cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "f13e10031bcf26a17d21fe06b9a47d63b7f1abe7" }
+cairo-lint = "*"
 cairo-vm = "2.3.1"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
