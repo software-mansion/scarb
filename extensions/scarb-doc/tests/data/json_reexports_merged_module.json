@@ -3,268 +3,268 @@
   "packages_information": [
     {
       "crate_": {
+        "groups": [],
         "root_module": {
-          "item_data": {
-            "name": "hello_world",
-            "doc": null,
-            "signature": null,
-            "full_path": "hello_world",
-            "group": null
-          },
-          "submodules": [
-            {
-              "item_data": {
-                "name": "Alejandro",
-                "doc": null,
-                "signature": null,
-                "full_path": "hello_world::Alejandro",
-                "group": null
-              },
-              "submodules": [],
-              "constants": [],
-              "free_functions": [],
-              "structs": [],
-              "enums": [],
-              "type_aliases": [],
-              "impl_aliases": [],
-              "traits": [],
-              "impls": [],
-              "extern_types": [],
-              "extern_functions": [],
-              "pub_uses": {
-                "use_constants": [],
-                "use_free_functions": [],
-                "use_structs": [],
-                "use_enums": [],
-                "use_module_type_aliases": [],
-                "use_impl_aliases": [],
-                "use_traits": [],
-                "use_impl_defs": [],
-                "use_extern_types": [],
-                "use_extern_functions": [],
-                "use_submodules": [
-                  {
-                    "item_data": {
-                      "name": "Rodrigo",
-                      "doc": null,
-                      "signature": null,
-                      "full_path": "hello_world::Rodrigo",
-                      "group": null
-                    },
-                    "submodules": [
-                      {
-                        "item_data": {
-                          "name": "Valentina",
-                          "doc": null,
-                          "signature": null,
-                          "full_path": "hello_world::Rodrigo::Valentina",
-                          "group": null
-                        },
-                        "submodules": [],
-                        "constants": [],
-                        "free_functions": [],
-                        "structs": [],
-                        "enums": [],
-                        "type_aliases": [],
-                        "impl_aliases": [],
-                        "traits": [],
-                        "impls": [],
-                        "extern_types": [],
-                        "extern_functions": [],
-                        "pub_uses": {
-                          "use_constants": [],
-                          "use_free_functions": [],
-                          "use_structs": [],
-                          "use_enums": [],
-                          "use_module_type_aliases": [],
-                          "use_impl_aliases": [],
-                          "use_traits": [],
-                          "use_impl_defs": [],
-                          "use_extern_types": [],
-                          "use_extern_functions": [],
-                          "use_submodules": []
-                        }
-                      }
-                    ],
-                    "constants": [],
-                    "free_functions": [],
-                    "structs": [],
-                    "enums": [],
-                    "type_aliases": [],
-                    "impl_aliases": [],
-                    "traits": [],
-                    "impls": [],
-                    "extern_types": [],
-                    "extern_functions": [],
-                    "pub_uses": {
-                      "use_constants": [],
-                      "use_free_functions": [],
-                      "use_structs": [],
-                      "use_enums": [],
-                      "use_module_type_aliases": [],
-                      "use_impl_aliases": [],
-                      "use_traits": [],
-                      "use_impl_defs": [],
-                      "use_extern_types": [],
-                      "use_extern_functions": [],
-                      "use_submodules": []
-                    }
-                  }
-                ]
-              }
-            },
-            {
-              "item_data": {
-                "name": "Isabella",
-                "doc": null,
-                "signature": null,
-                "full_path": "hello_world::Isabella",
-                "group": null
-              },
-              "submodules": [],
-              "constants": [],
-              "free_functions": [],
-              "structs": [],
-              "enums": [],
-              "type_aliases": [],
-              "impl_aliases": [],
-              "traits": [],
-              "impls": [],
-              "extern_types": [],
-              "extern_functions": [],
-              "pub_uses": {
-                "use_constants": [],
-                "use_free_functions": [],
-                "use_structs": [
-                  {
-                    "members": [],
-                    "item_data": {
-                      "name": "Mariana",
-                      "doc": null,
-                      "signature": "struct Mariana {}",
-                      "full_path": "hello_world::Rodrigo::Mariana",
-                      "group": null
-                    }
-                  }
-                ],
-                "use_enums": [],
-                "use_module_type_aliases": [],
-                "use_impl_aliases": [],
-                "use_traits": [],
-                "use_impl_defs": [],
-                "use_extern_types": [],
-                "use_extern_functions": [],
-                "use_submodules": []
-              }
-            },
-            {
-              "item_data": {
-                "name": "Rodrigo",
-                "doc": null,
-                "signature": null,
-                "full_path": "hello_world::Rodrigo",
-                "group": null
-              },
-              "submodules": [
-                {
-                  "item_data": {
-                    "name": "Valentina",
-                    "doc": null,
-                    "signature": null,
-                    "full_path": "hello_world::Rodrigo::Valentina",
-                    "group": null
-                  },
-                  "submodules": [],
-                  "constants": [],
-                  "free_functions": [],
-                  "structs": [],
-                  "enums": [],
-                  "type_aliases": [],
-                  "impl_aliases": [],
-                  "traits": [],
-                  "impls": [],
-                  "extern_types": [],
-                  "extern_functions": [],
-                  "pub_uses": {
-                    "use_constants": [],
-                    "use_free_functions": [],
-                    "use_structs": [],
-                    "use_enums": [],
-                    "use_module_type_aliases": [],
-                    "use_impl_aliases": [],
-                    "use_traits": [],
-                    "use_impl_defs": [],
-                    "use_extern_types": [],
-                    "use_extern_functions": [],
-                    "use_submodules": []
-                  }
-                }
-              ],
-              "constants": [],
-              "free_functions": [],
-              "structs": [
-                {
-                  "members": [],
-                  "item_data": {
-                    "name": "Mariana",
-                    "doc": null,
-                    "signature": "struct Mariana {}",
-                    "full_path": "hello_world::Rodrigo::Mariana",
-                    "group": null
-                  }
-                }
-              ],
-              "enums": [],
-              "type_aliases": [],
-              "impl_aliases": [],
-              "traits": [],
-              "impls": [],
-              "extern_types": [],
-              "extern_functions": [],
-              "pub_uses": {
-                "use_constants": [],
-                "use_free_functions": [],
-                "use_structs": [],
-                "use_enums": [],
-                "use_module_type_aliases": [],
-                "use_impl_aliases": [],
-                "use_traits": [],
-                "use_impl_defs": [],
-                "use_extern_types": [],
-                "use_extern_functions": [],
-                "use_submodules": []
-              }
-            }
-          ],
           "constants": [],
-          "free_functions": [],
-          "structs": [],
           "enums": [],
-          "type_aliases": [],
-          "impl_aliases": [],
-          "traits": [],
-          "impls": [],
-          "extern_types": [],
           "extern_functions": [],
+          "extern_types": [],
+          "free_functions": [],
+          "impl_aliases": [],
+          "impls": [],
+          "item_data": {
+            "doc": null,
+            "full_path": "hello_world",
+            "group": null,
+            "name": "hello_world",
+            "signature": null
+          },
           "pub_uses": {
             "use_constants": [],
-            "use_free_functions": [],
-            "use_structs": [],
             "use_enums": [],
-            "use_module_type_aliases": [],
-            "use_impl_aliases": [],
-            "use_traits": [],
-            "use_impl_defs": [],
-            "use_extern_types": [],
             "use_extern_functions": [],
-            "use_submodules": []
-          }
-        },
-        "groups": []
+            "use_extern_types": [],
+            "use_free_functions": [],
+            "use_impl_aliases": [],
+            "use_impl_defs": [],
+            "use_module_type_aliases": [],
+            "use_structs": [],
+            "use_submodules": [],
+            "use_traits": []
+          },
+          "structs": [],
+          "submodules": [
+            {
+              "constants": [],
+              "enums": [],
+              "extern_functions": [],
+              "extern_types": [],
+              "free_functions": [],
+              "impl_aliases": [],
+              "impls": [],
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::Alejandro",
+                "group": null,
+                "name": "Alejandro",
+                "signature": null
+              },
+              "pub_uses": {
+                "use_constants": [],
+                "use_enums": [],
+                "use_extern_functions": [],
+                "use_extern_types": [],
+                "use_free_functions": [],
+                "use_impl_aliases": [],
+                "use_impl_defs": [],
+                "use_module_type_aliases": [],
+                "use_structs": [],
+                "use_submodules": [
+                  {
+                    "constants": [],
+                    "enums": [],
+                    "extern_functions": [],
+                    "extern_types": [],
+                    "free_functions": [],
+                    "impl_aliases": [],
+                    "impls": [],
+                    "item_data": {
+                      "doc": null,
+                      "full_path": "hello_world::Rodrigo",
+                      "group": null,
+                      "name": "Rodrigo",
+                      "signature": null
+                    },
+                    "pub_uses": {
+                      "use_constants": [],
+                      "use_enums": [],
+                      "use_extern_functions": [],
+                      "use_extern_types": [],
+                      "use_free_functions": [],
+                      "use_impl_aliases": [],
+                      "use_impl_defs": [],
+                      "use_module_type_aliases": [],
+                      "use_structs": [],
+                      "use_submodules": [],
+                      "use_traits": []
+                    },
+                    "structs": [],
+                    "submodules": [
+                      {
+                        "constants": [],
+                        "enums": [],
+                        "extern_functions": [],
+                        "extern_types": [],
+                        "free_functions": [],
+                        "impl_aliases": [],
+                        "impls": [],
+                        "item_data": {
+                          "doc": null,
+                          "full_path": "hello_world::Rodrigo::Valentina",
+                          "group": null,
+                          "name": "Valentina",
+                          "signature": null
+                        },
+                        "pub_uses": {
+                          "use_constants": [],
+                          "use_enums": [],
+                          "use_extern_functions": [],
+                          "use_extern_types": [],
+                          "use_free_functions": [],
+                          "use_impl_aliases": [],
+                          "use_impl_defs": [],
+                          "use_module_type_aliases": [],
+                          "use_structs": [],
+                          "use_submodules": [],
+                          "use_traits": []
+                        },
+                        "structs": [],
+                        "submodules": [],
+                        "traits": [],
+                        "type_aliases": []
+                      }
+                    ],
+                    "traits": [],
+                    "type_aliases": []
+                  }
+                ],
+                "use_traits": []
+              },
+              "structs": [],
+              "submodules": [],
+              "traits": [],
+              "type_aliases": []
+            },
+            {
+              "constants": [],
+              "enums": [],
+              "extern_functions": [],
+              "extern_types": [],
+              "free_functions": [],
+              "impl_aliases": [],
+              "impls": [],
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::Isabella",
+                "group": null,
+                "name": "Isabella",
+                "signature": null
+              },
+              "pub_uses": {
+                "use_constants": [],
+                "use_enums": [],
+                "use_extern_functions": [],
+                "use_extern_types": [],
+                "use_free_functions": [],
+                "use_impl_aliases": [],
+                "use_impl_defs": [],
+                "use_module_type_aliases": [],
+                "use_structs": [
+                  {
+                    "item_data": {
+                      "doc": null,
+                      "full_path": "hello_world::Rodrigo::Mariana",
+                      "group": null,
+                      "name": "Mariana",
+                      "signature": "struct Mariana {}"
+                    },
+                    "members": []
+                  }
+                ],
+                "use_submodules": [],
+                "use_traits": []
+              },
+              "structs": [],
+              "submodules": [],
+              "traits": [],
+              "type_aliases": []
+            },
+            {
+              "constants": [],
+              "enums": [],
+              "extern_functions": [],
+              "extern_types": [],
+              "free_functions": [],
+              "impl_aliases": [],
+              "impls": [],
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::Rodrigo",
+                "group": null,
+                "name": "Rodrigo",
+                "signature": null
+              },
+              "pub_uses": {
+                "use_constants": [],
+                "use_enums": [],
+                "use_extern_functions": [],
+                "use_extern_types": [],
+                "use_free_functions": [],
+                "use_impl_aliases": [],
+                "use_impl_defs": [],
+                "use_module_type_aliases": [],
+                "use_structs": [],
+                "use_submodules": [],
+                "use_traits": []
+              },
+              "structs": [
+                {
+                  "item_data": {
+                    "doc": null,
+                    "full_path": "hello_world::Rodrigo::Mariana",
+                    "group": null,
+                    "name": "Mariana",
+                    "signature": "struct Mariana {}"
+                  },
+                  "members": []
+                }
+              ],
+              "submodules": [
+                {
+                  "constants": [],
+                  "enums": [],
+                  "extern_functions": [],
+                  "extern_types": [],
+                  "free_functions": [],
+                  "impl_aliases": [],
+                  "impls": [],
+                  "item_data": {
+                    "doc": null,
+                    "full_path": "hello_world::Rodrigo::Valentina",
+                    "group": null,
+                    "name": "Valentina",
+                    "signature": null
+                  },
+                  "pub_uses": {
+                    "use_constants": [],
+                    "use_enums": [],
+                    "use_extern_functions": [],
+                    "use_extern_types": [],
+                    "use_free_functions": [],
+                    "use_impl_aliases": [],
+                    "use_impl_defs": [],
+                    "use_module_type_aliases": [],
+                    "use_structs": [],
+                    "use_submodules": [],
+                    "use_traits": []
+                  },
+                  "structs": [],
+                  "submodules": [],
+                  "traits": [],
+                  "type_aliases": []
+                }
+              ],
+              "traits": [],
+              "type_aliases": []
+            }
+          ],
+          "traits": [],
+          "type_aliases": []
+        }
       },
       "metadata": {
-        "name": "hello_world",
-        "authors": null
+        "authors": null,
+        "name": "hello_world"
       }
     }
   ]
