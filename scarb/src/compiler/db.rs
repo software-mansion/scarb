@@ -95,12 +95,12 @@ fn apply_plugins(
     plugins_for_components: HashMap<CompilationUnitComponentId, PluginSuite>,
 ) {
     for (component_id, suite) in plugins_for_components {
-        let crate_id = (CrateLongId::Real {
+        let crate_input = (CrateLongId::Real {
             name: component_id.cairo_package_name(),
             discriminator: component_id.to_discriminator(),
         })
         .into_crate_input(db);
-        set_override_crate_plugins_from_suite(db, crate_id, suite);
+        set_override_crate_plugins_from_suite(db, crate_input, suite);
     }
 }
 

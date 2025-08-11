@@ -67,12 +67,12 @@ impl ScarbDocDatabase {
                     acc.add(suite);
                     acc
                 });
-            let crate_id = CrateLongId::Real {
+            let crate_input = CrateLongId::Real {
                 name: component.name.to_string(),
                 discriminator: component.discriminator.as_ref().map(ToString::to_string),
             }
             .into_crate_input(self);
-            self.set_override_crate_plugins_from_suite(crate_id, plugin_suite);
+            self.set_override_crate_plugins_from_suite(crate_input, plugin_suite);
         }
     }
 
