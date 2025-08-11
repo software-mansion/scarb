@@ -11,7 +11,7 @@ use toml_edit::{DocumentMut, Item, Value};
 use scarb_build_metadata::CAIRO_VERSION;
 use to_version::ToVersion;
 
-use crate::fsx::PathUtf8Ext;
+use crate::fsx::{PathUtf8Ext, make_executable};
 use crate::gitx::GitProject;
 
 #[path = "../../../scarb/src/internal/to_version.rs"]
@@ -198,6 +198,10 @@ impl ProjectBuilder {
     pub fn just_code(&self, t: &impl PathChild) {
         for (path, source) in &self.src {
             t.child(path).write_str(source).unwrap();
+        }
+
+        for path in &self.executable_files {
+            make_executable(t.child(path).path());
         }
     }
 
