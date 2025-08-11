@@ -11,7 +11,7 @@ use toml_edit::{DocumentMut, Item, Value};
 use scarb_build_metadata::CAIRO_VERSION;
 use to_version::ToVersion;
 
-use crate::fsx::PathUtf8Ext;
+use crate::fsx::{PathUtf8Ext, make_executable};
 use crate::gitx::GitProject;
 
 #[path = "../../../scarb/src/internal/to_version.rs"]
@@ -27,6 +27,7 @@ pub struct ProjectBuilder {
     dev_deps: Vec<(String, Value)>,
     manifest_package_extra: String,
     manifest_extra: String,
+    executable_files: Vec<Utf8PathBuf>,
 }
 
 impl ProjectBuilder {
@@ -48,6 +49,7 @@ impl ProjectBuilder {
             dev_deps: Vec::new(),
             manifest_package_extra: String::new(),
             manifest_extra: String::new(),
+            executable_files: Vec::new(),
         }
     }
 
@@ -127,6 +129,10 @@ impl ProjectBuilder {
         self.dev_dep_builtin("cairo_test")
     }
 
+    pub fn dep_oracle_asserts(self) -> Self {
+        self.dep("oracle_asserts", resource("oracle_asserts"))
+    }
+
     pub fn manifest_package_extra(mut self, extra: impl ToString) -> Self {
         self.manifest_package_extra = extra.to_string();
         self
@@ -135,6 +141,17 @@ impl ProjectBuilder {
     pub fn manifest_extra(mut self, extra: impl ToString) -> Self {
         self.manifest_extra = extra.to_string();
         self
+    }
+
+    pub fn make_executable(mut self, path: impl Into<Utf8PathBuf>) -> Self {
+        self.executable_files.push(path.into());
+        self
+    }
+
+    pub fn cp_test_oracle(self, path: impl Into<Utf8PathBuf>) -> Self {
+        let path = path.into();
+        self.cp(resource("src/test_oracle.py"), &path)
+            .make_executable(path)
     }
 
     pub fn render_manifest(&self) -> String {
@@ -181,6 +198,10 @@ impl ProjectBuilder {
     pub fn just_code(&self, t: &impl PathChild) {
         for (path, source) in &self.src {
             t.child(path).write_str(source).unwrap();
+        }
+
+        for path in &self.executable_files {
+            make_executable(t.child(path).path());
         }
     }
 
@@ -300,4 +321,8 @@ impl<T: DepBuilder + ?Sized> DepBuilder for DepWith<'_, T> {
             .insert(self.key.clone(), self.value.clone());
         table
     }
+}
+
+fn resource(path: &str) -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join(path)
 }
