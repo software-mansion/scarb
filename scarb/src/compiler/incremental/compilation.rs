@@ -182,7 +182,7 @@ pub fn save_incremental_artifacts(
 }
 
 #[tracing::instrument(skip_all, level = "trace")]
-fn save_component_cache(
+pub(crate) fn save_component_cache(
     fingerprint: &Fingerprint,
     db: &dyn LoweringGroup,
     unit: &CairoCompilationUnit,
@@ -235,7 +235,7 @@ fn save_component_cache(
     Ok(())
 }
 
-trait IncrementalArtifactsProvider {
+pub(crate) trait IncrementalArtifactsProvider {
     fn fingerprint_dirname(&self, fingerprint: &Fingerprint) -> String;
 
     fn cache_filename(&self, fingerprint: &Fingerprint) -> String;

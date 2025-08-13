@@ -1,5 +1,5 @@
-mod compilation;
-mod fingerprint;
+pub(crate) mod compilation;
+pub(crate) mod fingerprint;
 mod source;
 
 pub use compilation::{load_incremental_artifacts, save_incremental_artifacts};
