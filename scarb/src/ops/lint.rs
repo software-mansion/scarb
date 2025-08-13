@@ -28,8 +28,7 @@ use cairo_lang_semantic::{
     SemanticDiagnostic, db::SemanticGroup, diagnostic::SemanticDiagnosticKind, plugin::PluginSuite,
 };
 use cairo_lint::{
-    CAIRO_LINT_TOOL_NAME, CorelibContext, LinterAnalysisDatabase, LinterDiagnosticParams,
-    LinterGroup,
+    CAIRO_LINT_TOOL_NAME, LinterAnalysisDatabase, LinterDiagnosticParams, LinterGroup,
 };
 use cairo_lint::{
     CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
@@ -197,8 +196,6 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
             .ui()
             .print(Status::new("Linting", &compilation_unit.name()));
 
-        let corelib_context = CorelibContext::new(&db);
-
         let main_component = compilation_unit.main_component();
         let crate_id = main_component.crate_id(&db);
 
@@ -209,7 +206,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
             .iter()
             .flat_map(|module_id| {
                 let linter_diags = db
-                    .linter_diagnostics(corelib_context.clone(), linter_params.clone(), *module_id)
+                    .linter_diagnostics(linter_params.clone(), *module_id)
                     .into_iter()
                     .map(|diag| {
                         SemanticDiagnostic::new(
@@ -282,7 +279,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         }
 
         if opts.fix {
-            let fixes = get_fixes(&db, &corelib_context, &linter_params, diagnostics);
+            let fixes = get_fixes(&db, &linter_params, diagnostics);
             for (file_id, fixes) in fixes.into_iter() {
                 ws.config()
                     .ui()
