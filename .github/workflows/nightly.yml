@@ -119,11 +119,28 @@ jobs:
         shell: bash
         env:
           IS_SCARB_DEV: ${{ !!inputs.is_dev }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NIGHTLY_TAG=$(cargo xtask get-nightly-version --tag)
           NIGHTLY_VERSION=$(cargo xtask get-nightly-version)
-          NIGHTLY_BRANCH="nightly/tmp/$NIGHTLY_TAG"
 
+          if [ "${{ inputs.is_dev }}" = "true" ]; then
+            EXISTING_TAGS=$(gh api repos/software-mansion/scarb-nightlies/tags --jq '.[] | select(.name | startswith("'"$NIGHTLY_TAG"'")) | .name')
+
+            if [[ -n "$EXISTING_TAGS" ]]; then
+              HIGHEST_TAG=$(echo "$EXISTING_TAGS" | sort -V | tail -n 1)
+              if [[ "$HIGHEST_TAG" =~ \.[0-9]+$ ]]; then
+                HIGHEST_SUFFIX=$(echo "$HIGHEST_TAG" | grep -oE '\.[0-9]+$' | tr -d '.')
+              else
+                HIGHEST_SUFFIX=0
+              fi
+              NEXT_SUFFIX=$((HIGHEST_SUFFIX + 1))
+              NIGHTLY_TAG="${NIGHTLY_TAG}.${NEXT_SUFFIX}"
+              NIGHTLY_VERSION="${NIGHTLY_VERSION}.${NEXT_SUFFIX}"
+            fi
+          fi
+
+          NIGHTLY_BRANCH="nightly/tmp/$NIGHTLY_TAG"
           echo "NIGHTLY_TAG=$NIGHTLY_TAG" >> $GITHUB_ENV
           echo "NIGHTLY_VERSION=$NIGHTLY_VERSION" >> $GITHUB_ENV
           echo "NIGHTLY_BRANCH=$NIGHTLY_BRANCH" >> $GITHUB_ENV
@@ -263,7 +280,7 @@ jobs:
             {
               "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             }
-  
+
 
   notify_failed_check:
     runs-on: ubuntu-latest
