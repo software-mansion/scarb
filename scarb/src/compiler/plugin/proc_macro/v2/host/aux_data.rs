@@ -72,7 +72,7 @@ impl ProcMacroHostPlugin {
     ) -> HashMap<PackageId, Vec<ProcMacroAuxData>> {
         let mut data = Vec::new();
         for crate_id in db.crates() {
-            let crate_modules = db.crate_modules(crate_id);
+            let crate_modules = db.crate_modules(*crate_id);
             for module in crate_modules.iter() {
                 let file_infos = db.module_generated_file_aux_data(*module);
                 if let Ok(file_infos) = file_infos {

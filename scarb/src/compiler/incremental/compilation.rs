@@ -5,7 +5,7 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_filesystem::db::{FilesGroup, FilesGroupEx};
+use cairo_lang_filesystem::db::{CrateConfiguration, FilesGroup, FilesGroupEx};
 use cairo_lang_filesystem::ids::{BlobLongId, CrateInput};
 use cairo_lang_filesystem::set_crate_config;
 use cairo_lang_lowering::cache::generate_crate_cache;
@@ -122,9 +122,16 @@ fn load_component_cache(
         let cache_file = cache_dir.join(component.cache_filename(fingerprint));
         let crate_id = component.crate_id(db);
         let blob_id = db.intern_blob(BlobLongId::OnDisk(cache_file.as_std_path().to_path_buf()));
-        if let Some(mut core_conf) = db.crate_config(crate_id) {
-            core_conf.cache_file = Some(blob_id);
-            set_crate_config!(db, crate_id, Some(core_conf));
+        if let Some(core_conf) = db.crate_config(crate_id) {
+            set_crate_config!(
+                db,
+                crate_id,
+                Some(CrateConfiguration {
+                    root: core_conf.root.clone(),
+                    settings: core_conf.settings.clone(),
+                    cache_file: Some(blob_id),
+                })
+            );
         }
         Ok(true)
     } else {

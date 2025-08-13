@@ -76,7 +76,7 @@ impl Compiler for TestCompiler {
                 add_statements_code_locations: unit
                     .compiler_config
                     .unstable_add_statements_code_locations_debug_info,
-                contract_crate_ids: starknet.then_some(all_crate_ids),
+                contract_crate_ids: starknet.then_some(&all_crate_ids),
                 executable_crate_ids: None,
                 contract_declarations: starknet.then_some(contracts.clone()),
             };
