@@ -53,15 +53,16 @@ where
 {
     let ignore_warnings_crates = db
         .crates()
-        .into_iter()
+        .iter()
         .filter(|crate_id| !main_crate_ids.contains(crate_id))
         .map(|c| c.long(db).clone().into_crate_input(db))
         .collect_vec();
     let crates_to_check: HashSet<CrateId<'db>> = db
         .crates()
-        .into_iter()
+        .iter()
         .filter(|crate_id| !cached_crates.contains(&crate_id.long(db).clone().into_crate_input(db)))
-        .chain(main_crate_ids.iter().cloned())
+        .chain(main_crate_ids)
+        .copied()
         .collect();
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
