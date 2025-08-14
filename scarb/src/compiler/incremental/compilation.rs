@@ -1,10 +1,10 @@
+use crate::common::VirtualDatabaseWrapper;
 use crate::compiler::incremental::fingerprint::{
     ComponentFingerprint, Fingerprint, UnitFingerprint, is_fresh,
 };
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
 use anyhow::{Context, Result};
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::db::{FilesGroup, FilesGroupEx};
 use cairo_lang_filesystem::ids::{BlobLongId, CrateInput};
 use cairo_lang_filesystem::set_crate_config;
@@ -41,9 +41,9 @@ impl IncrementalContext {
 }
 
 #[tracing::instrument(skip_all, level = "info")]
-pub fn load_incremental_artifacts(
+pub fn load_incremental_artifacts<T: VirtualDatabaseWrapper + FilesGroup>(
     unit: &CairoCompilationUnit,
-    db: &mut RootDatabase,
+    db: &mut T,
     ws: &Workspace<'_>,
 ) -> Result<IncrementalContext> {
     if !incremental_allowed(unit) {
@@ -98,9 +98,9 @@ pub fn load_incremental_artifacts(
 /// Returns `Ok(true)` if the cache was loaded successfully, or `Ok(false)` if the component
 /// is not fresh and no cache was loaded.
 #[tracing::instrument(skip_all, level = "trace")]
-fn load_component_cache(
+fn load_component_cache<T: VirtualDatabaseWrapper + FilesGroup>(
     fingerprint: &Fingerprint,
-    db: &mut RootDatabase,
+    db: &mut T,
     unit: &CairoCompilationUnit,
     component: &CompilationUnitComponent,
     ws: &Workspace<'_>,
@@ -121,7 +121,10 @@ fn load_component_cache(
         let cache_dir = cache_dir.path_unchecked();
         let cache_file = cache_dir.join(component.cache_filename(fingerprint));
         let crate_id = component.crate_id(db);
-        let blob_id = db.intern_blob(BlobLongId::OnDisk(cache_file.as_std_path().to_path_buf()));
+        let blob_id = FilesGroup::intern_blob(
+            db,
+            BlobLongId::OnDisk(cache_file.as_std_path().to_path_buf()),
+        );
         if let Some(mut core_conf) = db.crate_config(crate_id) {
             core_conf.cache_file = Some(blob_id);
             set_crate_config!(db, crate_id, Some(core_conf));
@@ -133,9 +136,12 @@ fn load_component_cache(
 }
 
 #[tracing::instrument(skip_all, level = "info")]
-pub fn save_incremental_artifacts(
+pub fn save_incremental_artifacts<
+    'a,
+    T: VirtualDatabaseWrapper + Clone + LoweringGroup + Upcast<'a, dyn LoweringGroup>,
+>(
     unit: &CairoCompilationUnit,
-    db: &RootDatabase,
+    db: &mut T,
     ctx: IncrementalContext,
     ws: &Workspace<'_>,
 ) -> Result<()> {
@@ -158,9 +164,8 @@ pub fn save_incremental_artifacts(
         })
         .collect_vec();
 
-    let db = Box::new(db.clone());
+    let group = db.as_lowering_group();
 
-    let group: &dyn LoweringGroup = db.as_ref().upcast();
     let results: Vec<Result<()>> =
         par_map(group, components, move |group, (component, fingerprint)| {
             let fingerprint = match fingerprint.deref() {
@@ -182,7 +187,7 @@ pub fn save_incremental_artifacts(
 }
 
 #[tracing::instrument(skip_all, level = "trace")]
-pub(crate) fn save_component_cache(
+fn save_component_cache(
     fingerprint: &Fingerprint,
     db: &dyn LoweringGroup,
     unit: &CairoCompilationUnit,
@@ -235,7 +240,7 @@ pub(crate) fn save_component_cache(
     Ok(())
 }
 
-pub(crate) trait IncrementalArtifactsProvider {
+trait IncrementalArtifactsProvider {
     fn fingerprint_dirname(&self, fingerprint: &Fingerprint) -> String;
 
     fn cache_filename(&self, fingerprint: &Fingerprint) -> String;

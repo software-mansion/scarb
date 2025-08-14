@@ -1,6 +1,7 @@
 use super::plugin::collection::PluginsForComponents;
 use super::{CompilationUnitComponentId, ComponentTarget};
 use crate::DEFAULT_MODULE_MAIN_FILE;
+use crate::common::VirtualDatabaseWrapper;
 use crate::compiler::plugin::proc_macro::ProcMacroHostPlugin;
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
@@ -13,6 +14,7 @@ use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfig
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId, ModuleId};
 use cairo_lang_defs::plugin::MacroPlugin;
+use cairo_lang_filesystem::db::ExternalFiles;
 use cairo_lang_filesystem::db::{
     CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
 };
@@ -146,7 +148,10 @@ pub fn set_override_crate_plugins_from_suite(
 /// This approach allows compiling crates that do not define `lib.cairo` file.
 /// For example, single file crates can be created this way.
 /// The actual single file modules are defined as `mod` items in created lib file.
-fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit) -> Result<()> {
+pub fn inject_virtual_wrapper_lib<T: VirtualDatabaseWrapper + ExternalFiles>(
+    db: &mut T,
+    unit: &CairoCompilationUnit,
+) -> Result<()> {
     let components: Vec<&CompilationUnitComponent> = unit
         .components
         .iter()
@@ -190,7 +195,7 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
             .collect::<Result<Vec<_>>>()?;
         let content = file_stems.join("\n");
         let module_id = ModuleId::CrateRoot(crate_id);
-        let file_id = db.module_main_file(module_id).unwrap();
+        let file_id = db.module_main_file(module_id)?;
         // Inject virtual lib file wrapper.
         override_file_content!(db, file_id, Some(Arc::from(content.as_str())));
     }

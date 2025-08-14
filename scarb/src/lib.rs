@@ -12,6 +12,7 @@ use camino::Utf8PathBuf;
 use std::sync::LazyLock;
 pub use subcommands::EXTERNAL_CMD_PREFIX;
 
+pub mod common;
 pub mod compiler;
 pub mod core;
 pub mod flock;
