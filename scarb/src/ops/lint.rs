@@ -28,8 +28,7 @@ use cairo_lang_semantic::{
     plugin::PluginSuite,
 };
 use cairo_lint::{
-    CAIRO_LINT_TOOL_NAME, CorelibContext, LinterAnalysisDatabase, LinterDiagnosticParams,
-    LinterGroup,
+    CAIRO_LINT_TOOL_NAME, LinterAnalysisDatabase, LinterDiagnosticParams, LinterGroup,
 };
 use cairo_lint::{
     CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
@@ -47,7 +46,6 @@ use super::{
 
 struct CompilationUnitDiagnostics {
     pub db: LinterAnalysisDatabase,
-    pub corelib_context: CorelibContext,
     pub linter_params: LinterDiagnosticParams,
     pub diagnostics: Vec<SemanticDiagnostic>,
     pub formatter_config: FormatterConfig,
@@ -196,7 +194,6 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .print(Status::new("Linting", &compilation_unit.name()));
 
                     let db = build_lint_database(compilation_unit, ws)?;
-                    let corelib_context = CorelibContext::new(&db);
 
                     let main_component = compilation_unit.main_component();
                     let crate_id = main_component.crate_id(&db);
@@ -208,11 +205,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .iter()
                         .flat_map(|module_id| {
                             let linter_diags = db
-                                .linter_diagnostics(
-                                    corelib_context.clone(),
-                                    linter_params.clone(),
-                                    *module_id,
-                                )
+                                .linter_diagnostics(linter_params.clone(), *module_id)
                                 .into_iter()
                                 .map(|diag| {
                                     SemanticDiagnostic::new(
@@ -285,7 +278,6 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                     }
                     diagnostics_per_cu.push(CompilationUnitDiagnostics {
                         db,
-                        corelib_context,
                         linter_params: linter_params.clone(),
                         diagnostics,
                         formatter_config: formatter_config.clone(),
@@ -321,13 +313,12 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     if opts.fix {
         for CompilationUnitDiagnostics {
             db,
-            corelib_context,
             linter_params,
             diagnostics,
             formatter_config,
         } in diagnostics_per_cu.into_iter()
         {
-            let fixes = get_fixes(&db, &corelib_context, &linter_params, diagnostics);
+            let fixes = get_fixes(&db, &linter_params, diagnostics);
             for (file_id, fixes) in fixes.into_iter() {
                 ws.config()
                     .ui()
