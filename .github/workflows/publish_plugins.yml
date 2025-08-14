@@ -36,7 +36,6 @@ jobs:
         run: |
           set -eo pipefail
           echo "assert_macros_exists=$(curl -s https://scarbs.xyz/api/v1/index/as/se/assert_macros.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
-          echo "cairo_run_exists=$(curl -s https://scarbs.xyz/api/v1/index/ca/ir/cairo_run.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
           echo "starknet_exists=$(curl -s https://scarbs.xyz/api/v1/index/st/ar/starknet.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
           echo "cairo_test_exists=$(curl -s https://scarbs.xyz/api/v1/index/ca/ir/cairo_test.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
 
@@ -44,12 +43,6 @@ jobs:
         if: steps.check-plugins.outputs.starknet_exists != 'true'
         run: |
           pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/starknet
-          scarb publish
-
-      - name: Publish cairo_run
-        if: steps.check-plugins.outputs.cairo_run_exists != 'true'
-        run: |
-          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/cairo_run
           scarb publish
 
       - name: Publish cairo_test
@@ -69,7 +62,6 @@ jobs:
         run: |
           set -eo pipefail
           echo "assert_macros_exists=$(curl -s ${DEV_REGISTRY_URL}api/v1/index/as/se/assert_macros.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
-          echo "cairo_run_exists=$(curl -s ${DEV_REGISTRY_URL}api/v1/index/ca/ir/cairo_run.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
           echo "starknet_exists=$(curl -s ${DEV_REGISTRY_URL}api/v1/index/st/ar/starknet.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
           echo "cairo_test_exists=$(curl -s ${DEV_REGISTRY_URL}api/v1/index/ca/ir/cairo_test.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
 
@@ -77,14 +69,6 @@ jobs:
         if: steps.check-plugins-dev.outputs.starknet_exists != 'true'
         run: |
           pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/starknet
-          scarb publish --index=$DEV_REGISTRY_URL
-        env:
-          SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_DEV_REGISTRY_AUTH_TOKEN }}
-
-      - name: Publish cairo_run (dev registry)
-        if: steps.check-plugins-dev.outputs.cairo_run_exists != 'true'
-        run: |
-          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/cairo_run
           scarb publish --index=$DEV_REGISTRY_URL
         env:
           SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_DEV_REGISTRY_AUTH_TOKEN }}

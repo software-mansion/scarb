@@ -10,7 +10,3 @@ scarb build
 ```shell
 scarb test
 ```
-
-```shell
-scarb cairo-run --available-gas 200000
-```

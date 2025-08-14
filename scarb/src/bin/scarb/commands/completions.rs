@@ -6,7 +6,6 @@ use indoc::indoc;
 use scarb::core::Config;
 use scarb::ops::{ExternalSubcommand, SubcommandDirs, list_external_subcommands};
 use scarb_extensions_cli::cairo_language_server as cairo_language_server_args;
-use scarb_extensions_cli::cairo_run as cairo_run_args;
 use scarb_extensions_cli::cairo_test as cairo_test_args;
 use scarb_extensions_cli::doc as doc_args;
 use scarb_extensions_cli::execute;
@@ -49,7 +48,6 @@ fn build_command(config: &Config) -> Result<Command> {
             (true, cairo_language_server_args::COMMAND_NAME) => {
                 cairo_language_server_args::Args::command()
             }
-            (true, cairo_run_args::COMMAND_NAME) => cairo_run_args::Args::command(),
             (true, cairo_test_args::COMMAND_NAME) => cairo_test_args::Args::command(),
             (true, doc_args::COMMAND_NAME) => doc_args::Args::command(),
             (true, execute::COMMAND_NAME) => execute::Args::command(),

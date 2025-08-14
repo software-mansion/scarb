@@ -39,7 +39,6 @@ static GLOBAL_OPTIONS: &[&str] = &[
 // Currently, `prove` and `verify` are not built when running tests on CI, so we cannot check for them.
 static EXTERNAL_COMMANDS: &[&str] = &[
     "cairo-language-server",
-    "cairo-run",
     "cairo-test",
     "doc",
     "execute",

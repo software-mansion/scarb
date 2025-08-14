@@ -6553,26 +6553,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scarb-cairo-run"
-version = "2.12.0"
-dependencies = [
- "anyhow",
- "assert_fs",
- "cairo-lang-runner",
- "cairo-lang-sierra",
- "camino",
- "clap",
- "indoc",
- "scarb-extensions-cli",
- "scarb-metadata 1.15.1",
- "scarb-test-support",
- "scarb-ui",
- "serde",
- "serde_json",
- "snapbox",
-]
-
-[[package]]
 name = "scarb-cairo-test"
 version = "2.12.0"
 dependencies = [
@@ -6662,16 +6642,10 @@ name = "scarb-extensions-cli"
 version = "2.12.0"
 dependencies = [
  "anyhow",
- "cairo-lang-runner",
  "cairo-vm 2.3.1",
  "camino",
  "clap",
- "num-bigint",
  "scarb-ui",
- "serde",
- "serde_json",
- "starknet-types-core",
- "thiserror 2.0.14",
 ]
 
 [[package]]
