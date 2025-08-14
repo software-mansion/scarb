@@ -1,3 +1,4 @@
+use crate::compiler::syntax::SyntaxNodeExt;
 use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{
     AllocationContext, TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree,
@@ -30,16 +31,13 @@ impl<'db> TokenStreamBuilder<'db> {
     }
 
     pub fn build(&self, ctx: &AllocationContext) -> TokenStream {
-        let result: Vec<TokenTree> = self
-            .nodes
-            .iter()
-            .flat_map(|node| {
-                let leaves = node.tokens(self.db);
-                leaves
-                    .flat_map(|node| self.token_from_syntax_node(node, ctx))
-                    .map(TokenTree::Ident)
-            })
-            .collect();
+        let mut result: Vec<TokenTree> = Default::default();
+
+        for node in &self.nodes {
+            node.for_each_terminal(self.db, |terminal| {
+                self.token_from_syntax_node(*terminal, ctx, &mut result)
+            });
+        }
 
         match self.metadata.as_ref() {
             Some(metadata) => TokenStream::new(result).with_metadata(metadata.clone()),
@@ -51,46 +49,45 @@ impl<'db> TokenStreamBuilder<'db> {
         &self,
         node: SyntaxNode<'db>,
         ctx: &AllocationContext,
-    ) -> Vec<Token> {
+        result: &mut Vec<TokenTree>,
+    ) {
         let span_without_trivia = node.span_without_trivia(self.db);
         let span_with_trivia = node.span(self.db);
         let text = node.get_text(self.db);
-        let mut result = Vec::new();
         let prefix_len = span_without_trivia.start - span_with_trivia.start;
         let (prefix, rest) = text.split_at(prefix_len.as_u32() as usize);
         if prefix_len > TextWidth::ZERO {
-            result.push(Token::new_in(
+            result.push(TokenTree::Ident(Token::new_in(
                 prefix,
                 TextSpan {
                     start: span_with_trivia.start.as_u32(),
                     end: span_without_trivia.start.as_u32(),
                 },
                 ctx,
-            ))
+            )))
         }
         let suffix_len = span_with_trivia.end - span_without_trivia.end;
         let (content, suffix) = rest.split_at(rest.len() - suffix_len.as_u32() as usize);
         if !content.is_empty() {
-            result.push(Token::new_in(
+            result.push(TokenTree::Ident(Token::new_in(
                 content,
                 TextSpan {
                     start: span_without_trivia.start.as_u32(),
                     end: span_without_trivia.end.as_u32(),
                 },
                 ctx,
-            ));
+            )));
         }
         if suffix_len > TextWidth::ZERO {
-            result.push(Token::new_in(
+            result.push(TokenTree::Ident(Token::new_in(
                 suffix,
                 TextSpan {
                     start: span_without_trivia.end.as_u32(),
                     end: span_with_trivia.end.as_u32(),
                 },
                 ctx,
-            ));
+            )));
         }
-        result
     }
 }
 
