@@ -1565,8 +1565,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "178ddcd8d487d35ff123db644f9b78293a7766b3ac844f2ec3a4493a21dd2862"
+source = "git+https://github.com/software-mansion/cairols?rev=3b69afc9b193af5737762792fe8fbcc3c88ad9eb#3b69afc9b193af5737762792fe8fbcc3c88ad9eb"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1620,8 +1619,7 @@ dependencies = [
 [[package]]
 name = "cairo-lint"
 version = "2.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5ab4035219bdc0b79e1ff61103229aa3bce55636ca91187ab5d03b8ed7c4e2e"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=a96fba1705e7df567b775157f7d7975d7bdff6c8#a96fba1705e7df567b775157f7d7975d7bdff6c8"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1629,8 +1627,10 @@ dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
  "cairo-lang-formatter",
+ "cairo-lang-lowering",
  "cairo-lang-parser",
  "cairo-lang-semantic",
+ "cairo-lang-sierra-generator",
  "cairo-lang-syntax",
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
