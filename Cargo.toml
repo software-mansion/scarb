@@ -172,5 +172,5 @@ strip = "debuginfo"
 opt-level = 3
 
 [patch.crates-io]
-cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "3b69afc9b193af5737762792fe8fbcc3c88ad9eb" }
-cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "a96fba1705e7df567b775157f7d7975d7bdff6c8" }
+cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "67a473c2cf8c542123084721c092808e950e8639" }
+cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "117d8f3b3903f2f28c35691d23fe775dcea0ef28" }
