@@ -159,7 +159,6 @@ struct PluginSuiteAssembler {
     base: PluginSuite,
     builtin: PluginSuite,
     proc_macro: PluginSuite,
-    post_proc_macros: PluginSuite,
 }
 
 impl Default for PluginSuiteAssembler {
@@ -168,31 +167,24 @@ impl Default for PluginSuiteAssembler {
             base: get_default_plugin_suite(),
             builtin: Default::default(),
             proc_macro: Default::default(),
-            post_proc_macros: Default::default(),
         }
     }
 }
 
 impl PluginSuiteAssembler {
     pub fn add_builtin(&mut self, plugin: &dyn CairoPlugin) -> Result<()> {
-        let post_proc_macros = plugin.post_proc_macros();
         let instance = plugin.instantiate()?;
         let suite = instance.plugin_suite();
-        if post_proc_macros {
-            self.post_proc_macros.add(suite);
-        } else {
-            self.builtin.add(suite);
-        }
+        self.builtin.add(suite);
         Ok(())
     }
     pub fn add_proc_macro(&mut self, suite: PluginSuite) {
         self.proc_macro.add(suite);
     }
     pub fn assemble(self) -> PluginSuite {
-        let mut suite = self.base;
+        let mut suite = self.proc_macro;
+        suite.add(self.base);
         suite.add(self.builtin);
-        suite.add(self.proc_macro);
-        suite.add(self.post_proc_macros);
         suite
     }
 }
