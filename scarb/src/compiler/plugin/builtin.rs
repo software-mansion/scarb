@@ -43,10 +43,6 @@ impl CairoPlugin for BuiltinExecutablePlugin {
     fn instantiate(&self) -> Result<Box<dyn CairoPluginInstance>> {
         Ok(Box::new(BuiltinExecutablePluginInstance))
     }
-
-    fn post_proc_macros(&self) -> bool {
-        true
-    }
 }
 
 struct BuiltinExecutablePluginInstance;

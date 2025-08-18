@@ -45,9 +45,6 @@ pub fn fetch_cairo_plugin(package: &Package, ws: &Workspace<'_>) -> Result<()> {
 pub trait CairoPlugin: Sync {
     fn id(&self) -> PackageId;
     fn instantiate(&self) -> Result<Box<dyn CairoPluginInstance>>;
-    fn post_proc_macros(&self) -> bool {
-        false
-    }
 }
 
 pub trait CairoPluginInstance {
