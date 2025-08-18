@@ -36,31 +36,35 @@ pub const SCARB_CORELIB_LOCAL_PATH: Option<&str> = option_env!("SCARB_CORELIB_LO
 
 #[cfg(test)]
 mod tests {
-    use semver::{BuildMetadata, Prerelease, Version};
+    use semver::Version;
 
-    /// Checks that package version in [`Scarb.toml`] is exactly the same as the version of Cairo,
+    /// Checks that package version in [`Scarb.toml`] is (almost) the same as the version of Cairo,
     /// because this project is tightly coupled with it.
+    ///
+    /// Things we mandate:
+    /// 1. Major and minor parts **must** be the same.
+    /// 2. Patch part **must** be greater than (in rare occasions) or equal to (usually)
+    ///    the patch part of Cairo.
+    /// 3. Pre-release part **must** be greater than or equal to the pre-release part of Cairo,
+    ///    **unless** it is a nightly Scarb build or patch part is strictly greater than the patch
+    ///    part of Cairo.
+    /// 4. Build parts are ignored.
     #[test]
     fn scarb_version_is_bound_to_cairo_version() {
-        let mut scarb = Version::parse(crate::SCARB_VERSION).unwrap();
-        let mut cairo = Version::parse(crate::CAIRO_VERSION).unwrap();
+        let scarb = Version::parse(crate::SCARB_VERSION).unwrap();
+        let cairo = Version::parse(crate::CAIRO_VERSION).unwrap();
 
-        scarb.build = BuildMetadata::EMPTY;
-        cairo.build = BuildMetadata::EMPTY;
-
-        if scarb.pre.contains("nightly") {
-            scarb.pre = Prerelease::EMPTY;
-            cairo.pre = Prerelease::EMPTY;
-        }
+        let msg = format!("versions not in sync:\nscarb {scarb}\ncairo {cairo}");
 
         assert_eq!(
-            (scarb.major, scarb.minor, scarb.patch),
-            (cairo.major, cairo.minor, cairo.patch),
-            "versions not in sync:\nscarb {scarb}\ncairo {cairo}"
+            (scarb.major, scarb.minor),
+            (cairo.major, cairo.minor),
+            "{msg}"
         );
+        assert!(scarb.patch >= cairo.patch, "{msg}");
         assert!(
-            scarb.pre >= cairo.pre,
-            "versions not in sync:\nscarb {scarb}\ncairo {cairo}"
+            scarb.pre.contains("nightly") || scarb.patch > cairo.patch || scarb.pre >= cairo.pre,
+            "{msg}"
         );
     }
 }
