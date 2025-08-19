@@ -62,7 +62,8 @@ A structure of an example `foo` package index file looks like this:
       }
     ],
     "cksum": "sha256:5917642282d772423e8120a013b4796607a3b860f35f55738360ff5ddb9e3f89",
-    "yanked": true
+    "yanked": true,
+    "audited": true
   }
 ]
 ```
@@ -73,6 +74,7 @@ As you can see, it is a JSON array with each entry representing a version of the
 - `deps` - array describing each version's dependency requirements.
 - `cksum` - a `sha256` hash used to verify integrity.
 - `yanked` - optional boolean indicating if this version has been deprecated (yanked), and should no longer be used for new installations.
+- `audited` - optional boolean indicating if the registry auditors have performed an audit on this version of the package.
 
 ### Package archive
 
