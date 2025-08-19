@@ -1,7 +1,7 @@
 use crate::command::Scarb;
 use anyhow::Result;
 use assert_fs::TempDir;
-use serde::{Deserialize, Serialize};
+use scarb::core::registry::index::{IndexRecord, IndexRecords};
 use std::io::{Read, Write};
 use std::path::Path;
 use std::{fmt, fs};
@@ -53,23 +53,34 @@ impl fmt::Display for LocalRegistry {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-struct Package {
-    pub v: String,
-    pub deps: Vec<String>,
-    pub cksum: String,
-    pub yanked: Option<bool>,
+pub fn yank(file_path: &Path, version: &str) -> Result<()> {
+    with_package(file_path, version, |pkg| pkg.yanked = true)
 }
 
-/// Marks test package yanked. Warning: does not modify cache.
-pub fn yank(file_path: &Path, version: &str) -> Result<()> {
+pub fn audit(file_path: &Path, version: &str) -> Result<()> {
+    with_package(file_path, version, |pkg| pkg.audited = true)
+}
+
+pub fn unaudit(file_path: &Path, version: &str) -> Result<()> {
+    with_package(file_path, version, |pkg| pkg.audited = false)
+}
+
+/// Apply an arbitrary change to a test package version.
+/// Warning: does not modify cache.
+fn with_package<F>(file_path: &Path, version: &str, op: F) -> Result<()>
+where
+    F: FnOnce(&mut IndexRecord),
+{
     let mut file = fs::File::open(file_path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    let mut packages: Vec<Package> = serde_json::from_str(&contents)
+    let mut packages: IndexRecords = serde_json::from_str(&contents)
         .map_err(|e| anyhow::anyhow!("Failed to deserialize JSON: {}", e))?;
-    match packages.iter_mut().find(|package| package.v == version) {
-        Some(package) => package.yanked = Some(true),
+    match packages
+        .iter_mut()
+        .find(|package| package.version.to_string() == version)
+    {
+        Some(pkg) => op(pkg),
         None => panic!("Package with version '{version}' not found."),
     }
     let modified_contents = serde_json::to_string_pretty(&packages)
