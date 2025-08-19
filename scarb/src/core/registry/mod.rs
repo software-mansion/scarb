@@ -35,6 +35,7 @@ pub(crate) mod mock {
 
     use crate::core::package::PackageName;
     use crate::core::registry::Registry;
+    pub use crate::core::registry::index;
     use crate::core::{ManifestBuilder, ManifestDependency, Package, PackageId, SourceId, Summary};
 
     #[derive(Debug, Default)]
