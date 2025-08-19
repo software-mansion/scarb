@@ -56,6 +56,30 @@ fn error_on_virtual_manifest_with_dependencies() {
 }
 
 #[test]
+fn error_on_virtual_manifest_with_security() {
+    let t = TempDir::new().unwrap();
+    WorkspaceBuilder::start()
+        .manifest_extra(indoc! {r#"
+            [security]
+            require-audits.workspace = true
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: failed to parse manifest at: [..]
+
+            Caused by:
+                this virtual manifest specifies a [security] section, which is not allowed
+                help: use [workspace.security] instead
+        "#});
+}
+
+#[test]
 fn unify_target_dir() {
     let t = TempDir::new().unwrap();
     let pkg1 = t.child("first");
