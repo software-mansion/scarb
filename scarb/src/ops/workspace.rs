@@ -59,14 +59,20 @@ fn read_workspace_impl<'c>(
 
 fn validate_virtual_manifest(manifest_path: &Utf8Path, manifest: &TomlManifest) -> Result<()> {
     if manifest.dependencies.is_some() {
-        Err(anyhow!(indoc! {r#"
+        return Err(anyhow!(indoc! {r#"
             this virtual manifest specifies a [dependencies] section, which is not allowed
             help: use [workspace.dependencies] instead
         "#}))
-        .with_context(|| format!("failed to parse manifest at: {manifest_path}"))
-    } else {
-        Ok(())
+        .with_context(|| format!("failed to parse manifest at: {manifest_path}"));
     }
+    if manifest.security.is_some() {
+        return Err(anyhow!(indoc! {r#"
+            this virtual manifest specifies a [security] section, which is not allowed
+            help: use [workspace.security] instead
+        "#}))
+        .with_context(|| format!("failed to parse manifest at: {manifest_path}"));
+    }
+    Ok(())
 }
 
 fn read_workspace_root<'c>(
