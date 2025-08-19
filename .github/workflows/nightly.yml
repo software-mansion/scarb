@@ -125,7 +125,10 @@ jobs:
           NIGHTLY_VERSION=$(cargo xtask get-nightly-version)
 
           if [ "${{ inputs.is_dev }}" = "true" ]; then
-            EXISTING_TAGS=$(gh api repos/software-mansion/scarb-nightlies/tags --jq '.[] | select(.name | startswith("'"$NIGHTLY_TAG"'")) | .name')
+            EXISTING_TAGS=$(gh api repos/software-mansion/scarb-nightlies/tags \
+            --paginate \
+            --jq '.[] | select(.name | startswith("'"$NIGHTLY_TAG"'")) | .name'
+            )
 
             if [[ -n "$EXISTING_TAGS" ]]; then
               HIGHEST_TAG=$(echo "$EXISTING_TAGS" | sort -V | tail -n 1)
