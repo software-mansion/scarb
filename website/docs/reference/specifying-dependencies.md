@@ -31,6 +31,25 @@ To use a custom, non-official registry you need to specify its url address as we
 alexandria_math = { registry = "https://example.com/", version = "0.1.0" }
 ```
 
+### Security and audits
+
+Scarbs supports filtering packages from the registry based on whether they have been audited.
+
+> [!WARNING]
+> Note: package version being audited does not mean there are no bugs or vulnerabilities in the package, just that the process has been undergone by the entity that is considered the authority in the registry.
+
+You can enable this feature by specifying the `require-audits` key in the `[security]` section:
+
+```toml
+[security]
+require-audits = true
+```
+
+Setting this field to `true` will cause Scarb to, upon build, to exit with an error if any versions in the dependency tree are not marked as audited.
+If unable to resolve dependencies due to this, Scarb will exit with an error.
+By default, this field is set to `false`.
+
+
 ## Specifying dependencies from Git repositories
 
 To depend on a package located in a Git repository, the minimum information needed to specify is the location of the
