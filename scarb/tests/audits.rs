@@ -309,3 +309,80 @@ fn require_audits_workspace_normal_and_dev_dep() {
         .assert()
         .failure();
 }
+
+#[test]
+fn will_update_to_audited_version_only() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("1.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+    let t = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("hello_world")
+        .version("1.0.0")
+        .dep("foo", Dep.version("1.0.0").registry(&registry))
+        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .manifest_extra(
+            r#"
+            [security]
+            require-audits = true
+        "#,
+        )
+        .build(&t);
+
+    audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lockfile = t.child("Scarb.lock");
+    lockfile.assert(predicates::str::contains(indoc! {r#"
+        [[package]]
+        name = "foo"
+        version = "1.0.0"
+    "#}));
+
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("1.1.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+
+    // Locked version should not change since the new version is not audited.
+    Scarb::quick_snapbox()
+        .arg("update")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    lockfile.assert(predicates::str::contains(indoc! {r#"
+        [[package]]
+        name = "foo"
+        version = "1.0.0"
+    "#}));
+
+    audit(registry.t.child("index/3/f/foo.json").path(), "1.1.0").unwrap();
+
+    // Update should now pick the audited version.
+    Scarb::quick_snapbox()
+        .arg("update")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    lockfile.assert(predicates::str::contains(indoc! {r#"
+        [[package]]
+        name = "foo"
+        version = "1.1.0"
+    "#}));
+}
