@@ -136,6 +136,11 @@ fn read_workspace_root<'c>(
             packages.push(p.clone());
             p.id
         });
+        let require_audits = workspace
+            .security
+            .map(|s| s.require_audits)
+            .unwrap_or(Some(false))
+            .unwrap();
         Workspace::new(
             manifest_path.into(),
             packages.as_ref(),
@@ -144,6 +149,7 @@ fn read_workspace_root<'c>(
             profiles,
             scripts,
             patch,
+            require_audits,
         )
     } else {
         // Read single package workspace

@@ -28,6 +28,7 @@ pub struct Workspace<'c> {
     root_package: Option<PackageId>,
     target_dir: Filesystem,
     patch: BTreeMap<CanonicalUrl, Vec<ManifestDependency>>,
+    require_audits: bool,
 }
 
 impl<'c> Workspace<'c> {
@@ -39,6 +40,7 @@ impl<'c> Workspace<'c> {
         profiles: Vec<Profile>,
         scripts: BTreeMap<SmolStr, ScriptDefinition>,
         patch: BTreeMap<CanonicalUrl, Vec<ManifestDependency>>,
+        require_audits: bool,
     ) -> Result<Self> {
         let targets = packages
             .iter()
@@ -66,6 +68,7 @@ impl<'c> Workspace<'c> {
             members: packages,
             scripts,
             patch,
+            require_audits,
         })
     }
 
@@ -77,7 +80,7 @@ impl<'c> Workspace<'c> {
     ) -> Result<Self> {
         let manifest_path = package.manifest_path().to_path_buf();
         let root_package = Some(package.id);
-
+        let require_audits = package.manifest.summary.require_audits;
         Self::new(
             manifest_path,
             vec![package].as_ref(),
@@ -86,6 +89,7 @@ impl<'c> Workspace<'c> {
             profiles,
             BTreeMap::new(),
             patch,
+            require_audits,
         )
     }
 
@@ -110,6 +114,10 @@ impl<'c> Workspace<'c> {
 
     pub fn target_dir(&self) -> &Filesystem {
         &self.target_dir
+    }
+
+    pub fn require_audits(&self) -> bool {
+        self.require_audits
     }
 
     /// Returns the current package of this workspace.
