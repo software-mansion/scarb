@@ -317,7 +317,12 @@ pub fn resolve_workspace_with_opts(
                 (lockfile, yanked_whitelist)
             };
 
-            let source_map = SourceMap::preloaded(ws.members(), ws.config(), yanked_whitelist);
+            let source_map = SourceMap::preloaded(
+                ws.members(),
+                ws.config(),
+                yanked_whitelist,
+                ws.require_audits(),
+            );
             let cached = RegistryCache::new(&source_map);
             let patched = RegistryPatcher::new(&cached, &patch_map);
 

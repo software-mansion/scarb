@@ -47,6 +47,7 @@ pub struct TomlManifest {
     pub workspace: Option<TomlWorkspace>,
     pub dependencies: Option<BTreeMap<PackageName, MaybeWorkspaceTomlDependency>>,
     pub dev_dependencies: Option<BTreeMap<PackageName, MaybeWorkspaceTomlDependency>>,
+    pub security: Option<MaybeWorkspaceTomlSecurity>,
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
     pub executable: Option<TomlTarget<TomlExecutableTargetParams>>,
     pub cairo_plugin: Option<TomlTarget<TomlCairoPluginTargetParams>>,
@@ -105,6 +106,7 @@ pub struct TomlWorkspace {
     pub package: Option<PackageInheritableFields>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub dev_dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
+    pub security: Option<TomlSecurity>,
     pub scripts: Option<BTreeMap<SmolStr, ScriptDefinition>>,
     pub tool: Option<TomlToolsDefinition>,
 }
@@ -415,6 +417,32 @@ pub struct DetailedTomlDependency {
     pub features: Option<Vec<SmolStr>>,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct TomlWorkspaceSecurity {
+    pub workspace: bool,
+}
+
+impl WorkspaceInherit for TomlWorkspaceSecurity {
+    fn inherit_toml_table(&self) -> &str {
+        "security"
+    }
+    fn workspace(&self) -> bool {
+        self.workspace
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct MaybeWorkspaceTomlSecurity {
+    pub require_audits: Option<MaybeWorkspaceField<bool>>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TomlSecurity {
+    pub require_audits: Option<bool>,
+}
+
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlTarget<P> {
@@ -661,6 +689,21 @@ impl TomlManifest {
         );
         let all_deps = toml_deps.chain(toml_dev_deps);
 
+        let require_audits: bool = match self
+            .security
+            .as_ref()
+            .and_then(|s| s.require_audits.as_ref())
+        {
+            Some(MaybeWorkspace::Defined(req)) => *req,
+            Some(MaybeWorkspace::Workspace(_)) => workspace
+                .security
+                .as_ref()
+                .and_then(|ws_security| ws_security.require_audits)
+                .ok_or_else(|| {
+                    anyhow!("`require-audits` not found in workspace `[security]` section")
+                })?,
+            None => false,
+        };
         for ((name, toml_dep), kind) in all_deps {
             let inherit_ws = || {
                 let ws_dep = workspace
@@ -732,6 +775,7 @@ impl TomlManifest {
             .dependencies(dependencies)
             .re_export_cairo_plugins(re_export_cairo_plugins)
             .no_core(no_core)
+            .require_audits(require_audits)
             .build();
 
         let scripts = self.scripts.clone().unwrap_or_default();

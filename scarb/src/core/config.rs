@@ -323,6 +323,7 @@ pub struct ConfigBuilder {
     profile: Option<Profile>,
     load_proc_macros: bool,
     load_prebuilt_proc_macros: bool,
+    require_audits: bool,
 }
 
 impl ConfigBuilder {
@@ -344,6 +345,7 @@ impl ConfigBuilder {
             profile: None,
             load_proc_macros: true,
             load_prebuilt_proc_macros: true,
+            require_audits: false,
         }
     }
 
@@ -435,6 +437,11 @@ impl ConfigBuilder {
 
     pub fn load_prebuilt_proc_macros(mut self, load_prebuilt_proc_macros: bool) -> Self {
         self.load_prebuilt_proc_macros = load_prebuilt_proc_macros;
+        self
+    }
+
+    pub fn require_audits(mut self, require_audits: bool) -> Self {
+        self.require_audits = require_audits;
         self
     }
 }
