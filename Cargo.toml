@@ -147,7 +147,7 @@ tokio = { version = "1", features = ["macros", "io-util", "process", "rt", "rt-m
 tokio-stream = "0.1"
 toml = "0.9"
 toml_edit = { version = "0.23", features = ["serde"] }
-tower-http = { version = "0.4", features = ["fs"] }
+tower-http = { version = "0.6", features = ["fs"] }
 tracing = "0.1"
 tracing-chrome = "0.7"
 tracing-core = "0.1"
