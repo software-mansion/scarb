@@ -137,6 +137,8 @@ fn read_workspace_root<'c>(
             p.id
         });
         let require_audits = workspace.require_audits.unwrap_or(false);
+        let allow_no_audits = workspace.allow_no_audits.unwrap_or_default();
+
         Workspace::new(
             manifest_path.into(),
             packages.as_ref(),
@@ -146,6 +148,7 @@ fn read_workspace_root<'c>(
             scripts,
             patch,
             require_audits,
+            allow_no_audits,
         )
     } else {
         // Read single package workspace
