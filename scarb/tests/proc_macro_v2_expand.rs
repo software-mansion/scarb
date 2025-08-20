@@ -1265,7 +1265,7 @@ fn code_mappings_preserve_derive_error_locations() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-            use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
+            use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream, TokenTree, Token};
 
             #[derive_macro]
             pub fn custom_derive(token_stream: TokenStream) -> ProcMacroResult {
@@ -1290,12 +1290,12 @@ fn code_mappings_preserve_derive_error_locations() {
                     }}
                 "#};
 
+                let second_token_span = match &token_stream.tokens[1] {
+                    TokenTree::Ident(t) => t.span.clone(),
+                };
+
                 let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
-                  code.clone(),
-                    TextSpan {
-                        start: 0,
-                        end: code.len() as u32,
-                    },
+                  code.clone(), second_token_span
                 ))]);
 
                 ProcMacroResult::new(token_stream)
@@ -1337,21 +1337,15 @@ fn code_mappings_preserve_derive_error_locations() {
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: The value does not fit within the range of type core::integer::u8.
-             --> [..]lib.cairo:1:1-8:1
-              trait Hello<T> {
-             _^
-            | ...
-            | #[derive(CustomDerive, Drop)]
-            |_^
+             --> [..]lib.cairo:5:1
+            #[derive(CustomDerive, Drop)]
+            ^
             note: this error originates in the derive macro: `CustomDerive`
 
             error: The value does not fit within the range of type core::integer::u8.
-             --> [..]lib.cairo:1:1-8:10
-              trait Hello<T> {
-             _^
-            | ...
-            | #[derive(CustomDerive, Drop)]
-            |__________^
+             --> [..]lib.cairo:8:1
+            #[derive(CustomDerive, Drop)]
+            ^
             note: this error originates in the derive macro: `CustomDerive`
 
             error: could not compile `hello` due to previous error
@@ -2296,4 +2290,129 @@ fn zero_width_diags_mapped_correctly_at_token_starts() {
             
             error: could not compile `hello` due to previous error
        "#});
+}
+
+#[test]
+fn can_use_two_derive_macros() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
+
+            #[derive_macro]
+            pub fn custom_derive_v2(token_stream: TokenStream) -> ProcMacroResult {
+                let name = token_stream
+                    .clone()
+                    .to_string()
+                    .lines()
+                    .find(|l| l.starts_with("struct"))
+                    .unwrap()
+                    .to_string()
+                    .replace("struct", "")
+                    .replace("}", "")
+                    .replace("{", "")
+                    .trim()
+                    .to_string();
+
+                let code = indoc::formatdoc!{r#"
+                    impl SomeImpl{name} of CustomTrait<{name}> {{
+                        fn custom(self: @{name}) -> u32 {{
+                            32
+                        }}
+                    }}
+                "#};
+
+                let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                  code.clone(),
+                  TextSpan::call_site(),
+                ))]);
+
+                ProcMacroResult::new(token_stream)
+            }
+
+            #[derive_macro]
+            pub fn my_derive_v2(token_stream: TokenStream) -> ProcMacroResult {
+                let name = token_stream
+                    .clone()
+                    .to_string()
+                    .lines()
+                    .find(|l| l.starts_with("struct"))
+                    .unwrap()
+                    .to_string()
+                    .replace("struct", "")
+                    .replace("}", "")
+                    .replace("{", "")
+                    .trim()
+                    .to_string();
+
+                let code = indoc::formatdoc!{r#"
+                    impl MyImpl{name} of MyTrait<{name}> {{
+                        fn my(self: @{name}) -> u32 {{
+                            32
+                        }}
+                    }}
+                "#};
+
+                let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                  code.clone(),
+                  TextSpan::call_site(),
+                ))]);
+
+                ProcMacroResult::new(token_stream)
+            }
+        "##})
+        .add_dep(r#"indoc = "*""#)
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            trait CustomTrait<T> {
+              fn custom(self: @T) -> u32;
+            }
+
+            #[derive(CustomDeriveV2, MyDeriveV2, Drop)]
+            struct SomeStruct {}
+
+            trait MyTrait<T> {
+              fn my(self: @T) -> u32;
+            }
+
+            #[executable]
+            fn main() -> u32 {
+                let a = SomeStruct {};
+                assert(a.custom() == a.my(), '');
+                a.custom()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing hello
+            Program output:
+            32
+            Saving output to: target/execute/hello/execution1
+        "#});
 }

@@ -1,5 +1,6 @@
 use crate::compiler::plugin::proc_macro::ExpansionQuery;
 use crate::compiler::plugin::proc_macro::expansion::ExpansionKind;
+use crate::compiler::plugin::proc_macro::v2::derive::span_adapter::DeriveAdapter;
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
 use crate::compiler::plugin::proc_macro::v2::host::conversion::{
     CallSiteLocation, into_cairo_diagnostics,
@@ -19,6 +20,8 @@ use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::{Terminal, TypedSyntaxNode, ast};
 use itertools::Itertools;
 use std::fmt::{Debug, Formatter};
+
+mod span_adapter;
 
 impl ProcMacroHostPlugin {
     /// Handle `#[derive(...)]` attribute.
@@ -95,23 +98,25 @@ impl ProcMacroHostPlugin {
         let mut code_mappings = Vec::new();
         let mut current_width = TextWidth::default();
 
+        let token_stream = token_stream_builder.build(&ctx);
+        let (adapter, adapted_token_stream) = DeriveAdapter::adapt_token_stream(token_stream);
+
         for derive in derives.iter() {
-            let call_site = &derive.call_site;
+            let call_site = adapter.adapted_call_site(&derive.call_site.span);
             let derive = &derive.id;
-            let token_stream = token_stream_builder.build(&ctx);
             let result = self
                 .instance(derive.package_id)
                 .try_v2()
                 .expect("procedural macro using v1 api used in a context expecting v2 api")
                 .generate_code(
                     derive.expansion.expansion_name.clone(),
-                    call_site.span.clone(),
+                    call_site.clone(),
                     TokenStream::empty(),
-                    token_stream,
+                    adapted_token_stream.clone(),
                 );
 
             // Register diagnostics.
-            all_diagnostics.extend(result.diagnostics);
+            all_diagnostics.extend(adapter.adapt_diagnostics(result.diagnostics));
 
             // Register aux data.
             if let Some(new_aux_data) = result.aux_data {
@@ -127,13 +132,16 @@ impl ProcMacroHostPlugin {
                 continue;
             }
 
-            code_mappings.extend(generate_code_mappings_with_offset(
-                &result.token_stream,
-                call_site.span.clone(),
-                current_width,
-            ));
-            current_width = current_width + TextWidth::from_str(&result.token_stream.to_string());
-            derived_code.push_str(&result.token_stream.to_string());
+            code_mappings.extend(
+                adapter.adapt_code_mappings(generate_code_mappings_with_offset(
+                    &result.token_stream,
+                    call_site,
+                    current_width,
+                )),
+            );
+            let ts_string = result.token_stream.to_string();
+            current_width = current_width + TextWidth::from_str(&ts_string);
+            derived_code.push_str(&ts_string);
         }
 
         Some(PluginResult {
