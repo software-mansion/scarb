@@ -103,6 +103,7 @@ type TomlToolsDefinition = BTreeMap<SmolStr, toml::Value>;
 pub struct TomlWorkspace {
     pub members: Option<Vec<String>>,
     pub require_audits: Option<bool>,
+    pub allow_no_audits: Option<Vec<PackageName>>,
     pub package: Option<PackageInheritableFields>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub dev_dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
@@ -663,6 +664,7 @@ impl TomlManifest {
         let all_deps = toml_deps.chain(toml_dev_deps);
 
         let require_audits = workspace.require_audits.unwrap_or(false);
+        let allow_no_audits = workspace.allow_no_audits.unwrap_or_default();
 
         for ((name, toml_dep), kind) in all_deps {
             let inherit_ws = || {
@@ -736,6 +738,7 @@ impl TomlManifest {
             .re_export_cairo_plugins(re_export_cairo_plugins)
             .no_core(no_core)
             .require_audits(require_audits)
+            .allow_no_audits(allow_no_audits)
             .build();
 
         let scripts = self.scripts.clone().unwrap_or_default();
