@@ -118,7 +118,7 @@ fn will_not_use_non_audited_version_transitive() {
     ProjectBuilder::start()
         .name("hello_world")
         .version("1.0.0")
-        .dep("bar", Dep.version("1.0.0").registry(&registry))
+        .dep("bar", Dep.version("1.0.0").registry(&registry_url))
         .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
         .manifest_extra(
             r#"
