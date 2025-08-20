@@ -202,7 +202,7 @@ impl PubGrubDependencyProvider {
             blocking_send(dependency);
 
             let dependency =
-                rewrite_path_dependency_source_id(summary.package_id, original_dependency);
+                rewrite_path_dependency_source_id(summary.package_id, &original_dependency);
             let dependency = lock_dependency(&self.lockfile, dependency)?;
             blocking_send(dependency);
         }
