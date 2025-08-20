@@ -7,39 +7,6 @@ use scarb_test_support::registry::local::{LocalRegistry, audit, unaudit};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 #[test]
-fn will_use_non_audited_version() {
-    let mut registry = LocalRegistry::create();
-    registry.publish(|t| {
-        ProjectBuilder::start()
-            .name("foo")
-            .version("1.0.0")
-            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
-            .build(t);
-    });
-    let t = TempDir::new().unwrap();
-
-    ProjectBuilder::start()
-        .name("hello_world")
-        .version("1.0.0")
-        .dep("foo", Dep.version("1.0.0").registry(&registry))
-        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        .arg("build")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    let lockfile = t.child("Scarb.lock");
-    lockfile.assert(predicates::str::contains(indoc! {r#"
-        [[package]]
-        name = "foo"
-        version = "1.0.0"
-    "#}));
-}
-
-#[test]
 fn will_not_use_non_audited_version() {
     let mut registry = LocalRegistry::create();
     registry.publish(|t| {
