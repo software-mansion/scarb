@@ -11,7 +11,7 @@ use tracing::trace;
 use crate::core::Workspace;
 use crate::core::registry::Registry;
 use crate::core::source::Source;
-use crate::core::{Config, ManifestDependency, Package, PackageId, SourceId, Summary};
+use crate::core::{Config, ManifestDependency, Package, PackageId, PackageName, SourceId, Summary};
 use crate::sources::PathSource;
 
 /// Source of information about a group of packages.
@@ -20,6 +20,7 @@ pub struct SourceMap<'c> {
     sources: RwLock<HashMap<SourceId, Arc<dyn Source + 'c>>>,
     yanked_whitelist: HashSet<PackageId>,
     require_audits: bool,
+    non_audited_whitelist: HashSet<PackageName>,
 }
 
 impl<'c> SourceMap<'c> {
@@ -34,6 +35,7 @@ impl<'c> SourceMap<'c> {
         config: &'c Config,
         yanked_whitelist: HashSet<PackageId>,
         require_audits: bool,
+        non_audited_whitelist: HashSet<PackageName>,
     ) -> Self {
         let sources = packages
             .sorted_by_key(|pkg| pkg.id.source_id)
@@ -50,6 +52,7 @@ impl<'c> SourceMap<'c> {
             sources,
             yanked_whitelist,
             require_audits,
+            non_audited_whitelist,
         }
     }
 
@@ -60,7 +63,12 @@ impl<'c> SourceMap<'c> {
         } else {
             trace!("loading source: {source_id}");
             let source = source_id
-                .load(self.config, &self.yanked_whitelist, self.require_audits)
+                .load(
+                    self.config,
+                    &self.yanked_whitelist,
+                    self.require_audits,
+                    &self.non_audited_whitelist,
+                )
                 .with_context(|| format!("failed to load source: {source_id}"))?;
             self.sources.write().await.insert(source_id, source.clone());
             Ok(source)

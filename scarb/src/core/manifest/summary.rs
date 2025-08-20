@@ -32,6 +32,8 @@ pub struct SummaryInner {
     pub checksum: Option<Checksum>,
     #[builder(default = false)]
     pub require_audits: bool,
+    #[builder(default)]
+    pub allow_no_audits: Vec<PackageName>,
 }
 
 impl Deref for Summary {
