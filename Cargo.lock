@@ -1619,7 +1619,7 @@ dependencies = [
 [[package]]
 name = "cairo-lint"
 version = "2.12.0"
-source = "git+https://github.com/software-mansion/cairo-lint?rev=a96fba1705e7df567b775157f7d7975d7bdff6c8#a96fba1705e7df567b775157f7d7975d7bdff6c8"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=117d8f3b3903f2f28c35691d23fe775dcea0ef28#117d8f3b3903f2f28c35691d23fe775dcea0ef28"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -6468,7 +6468,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "2.12.1-rc.0"
+version = "2.12.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6581,7 +6581,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-build-metadata"
-version = "2.12.1-rc.0"
+version = "2.12.0"
 dependencies = [
  "cargo_metadata",
  "semver 1.0.26",
@@ -6589,7 +6589,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "2.12.1-rc.0"
+version = "2.12.0"
 dependencies = [
  "assert_fs",
  "cairo-language-server",
@@ -6601,7 +6601,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-run"
-version = "2.12.1-rc.0"
+version = "2.12.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6621,7 +6621,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-test"
-version = "2.12.1-rc.0"
+version = "2.12.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6642,7 +6642,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-doc"
-version = "2.12.1-rc.0"
+version = "2.12.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6676,7 +6676,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-execute"
-version = "2.12.1-rc.0"
+version = "2.12.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6707,7 +6707,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-extensions-cli"
-version = "2.12.1-rc.0"
+version = "2.12.0"
 dependencies = [
  "anyhow",
  "cairo-lang-runner",
@@ -6724,7 +6724,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-mdbook"
-version = "2.12.1-rc.0"
+version = "2.12.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6788,7 +6788,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-prove"
-version = "2.12.1-rc.0"
+version = "2.12.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6875,7 +6875,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-verify"
-version = "2.12.1-rc.0"
+version = "2.12.0"
 dependencies = [
  "anyhow",
  "assert_fs",
