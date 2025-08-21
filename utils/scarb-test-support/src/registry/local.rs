@@ -63,25 +63,25 @@ impl fmt::Display for LocalRegistry {
 /// Marks test package version yanked. Warning: does not modify cache.
 #[cfg(feature = "scarb-config")]
 pub fn yank(file_path: &Path, version: &str) -> Result<()> {
-    with_package(file_path, version, |pkg| pkg.yanked = true)
+    modify_version_record(file_path, version, |pkg| pkg.yanked = true)
 }
 
 /// Marks test package version as audited. Warning: does not modify cache.
 #[cfg(feature = "scarb-config")]
 pub fn audit(file_path: &Path, version: &str) -> Result<()> {
-    with_package(file_path, version, |pkg| pkg.audited = true)
+    modify_version_record(file_path, version, |pkg| pkg.audited = true)
 }
 
 /// Unmarks test package version as audited. Warning: does not modify cache.
 #[cfg(feature = "scarb-config")]
 pub fn unaudit(file_path: &Path, version: &str) -> Result<()> {
-    with_package(file_path, version, |pkg| pkg.audited = false)
+    modify_version_record(file_path, version, |pkg| pkg.audited = false)
 }
 
 /// Apply an arbitrary change to a test package version.
 /// Warning: does not modify cache.
 #[cfg(feature = "scarb-config")]
-fn with_package<F>(file_path: &Path, version: &str, op: F) -> Result<()>
+fn modify_version_record<F>(file_path: &Path, version: &str, op: F) -> Result<()>
 where
     F: FnOnce(&mut IndexRecord),
 {
