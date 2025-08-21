@@ -7,7 +7,7 @@ use scarb_test_support::registry::local::{LocalRegistry, audit, unaudit};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 #[test]
-fn will_not_use_non_audited_version() {
+fn require_audits_disallows_non_audited_version() {
     let mut registry = LocalRegistry::create();
     registry.publish(|t| {
         ProjectBuilder::start()
@@ -58,7 +58,7 @@ fn will_not_use_non_audited_version() {
 }
 
 #[test]
-fn will_not_use_non_audited_version_transitive() {
+fn require_audits_disallows_non_audited_version_transitive() {
     let mut registry = LocalRegistry::create();
 
     registry.publish(|t| {
@@ -122,7 +122,7 @@ fn will_not_use_non_audited_version_transitive() {
 }
 
 #[test]
-fn will_use_audited_version() {
+fn require_audits_allows_audited_version() {
     let mut registry = LocalRegistry::create();
     registry.publish(|t| {
         ProjectBuilder::start()
@@ -174,7 +174,7 @@ fn will_use_audited_version() {
 }
 
 #[test]
-fn will_not_use_unaudited_version_workspace() {
+fn require_audits_workspace() {
     let mut registry = LocalRegistry::create();
     registry.publish(|t| {
         ProjectBuilder::start()
