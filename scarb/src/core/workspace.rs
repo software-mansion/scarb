@@ -32,6 +32,7 @@ pub struct Workspace<'c> {
 }
 
 impl<'c> Workspace<'c> {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         manifest_path: Utf8PathBuf,
         packages: &[Package],
