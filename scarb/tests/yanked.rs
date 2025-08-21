@@ -21,7 +21,7 @@ fn will_use_yanked_if_already_present_in_lockfile() {
         .name("hello_world")
         .version("1.0.0")
         .dep("foo", Dep.version("1.0.0").registry(&registry))
-        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -70,7 +70,7 @@ fn will_not_use_yanked_version() {
         .name("hello_world")
         .version("1.0.0")
         .dep("foo", Dep.version("1.0.0").registry(&registry))
-        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .build(&t);
 
     Scarb::quick_snapbox()
