@@ -1,8 +1,8 @@
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::patch_map::PatchMap;
 use crate::core::{
-    DepKind, DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId,
-    Summary,
+    DepKind, DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, PackageName,
+    SourceId, Summary,
 };
 use crate::resolver::in_memory_index::VersionsResponse;
 use crate::resolver::{Request, ResolverState};
@@ -163,8 +163,17 @@ impl PubGrubDependencyProvider {
     pub fn fetch_summary(&self, package_id: PackageId) -> Result<Summary, DependencyProviderError> {
         let summary = self.packages.read().unwrap().get(&package_id).cloned();
         let summary = summary.map(Ok).unwrap_or_else(|| {
-            let package = PubGrubPackage { name: package_id.name.clone(), source_id: package_id.source_id };
-            let kind = self.kinds.read().unwrap().get(&package).cloned().unwrap_or_default();
+            let package = PubGrubPackage {
+                name: package_id.name.clone(),
+                source_id: package_id.source_id,
+            };
+            let kind = self
+                .kinds
+                .read()
+                .unwrap()
+                .get(&package)
+                .cloned()
+                .unwrap_or_default();
             let dependency = ManifestDependency::builder()
                 .name(package_id.name.clone())
                 .source_id(package_id.source_id)
@@ -219,7 +228,10 @@ impl PubGrubDependencyProvider {
     }
 
     fn save_kind(&self, dep: &ManifestDependency) {
-        let package = PubGrubPackage { name: dep.name.clone(), source_id: dep.source_id };
+        let package = PubGrubPackage {
+            name: dep.name.clone(),
+            source_id: dep.source_id,
+        };
         let mut write_lock = self.kinds.write().unwrap();
         match write_lock.get(&package) {
             None => {
@@ -232,7 +244,6 @@ impl PubGrubDependencyProvider {
             }
         }
     }
-
 
     #[tracing::instrument(level = "trace", skip_all)]
     fn wait_for_summaries(
@@ -274,7 +285,13 @@ impl DependencyProvider for PubGrubDependencyProvider {
 
     #[tracing::instrument(level = "trace", skip_all)]
     fn prioritize(&self, package: &Self::P, range: &Self::VS) -> Self::Priority {
-        let kind = self.kinds.read().unwrap().get(package).cloned().unwrap_or_default();
+        let kind = self
+            .kinds
+            .read()
+            .unwrap()
+            .get(package)
+            .cloned()
+            .unwrap_or_default();
         let dependency = package.to_dependency(range.clone(), kind);
         if self
             .state
@@ -305,7 +322,13 @@ impl DependencyProvider for PubGrubDependencyProvider {
         range: &Self::VS,
     ) -> Result<Option<Self::V>, Self::Err> {
         // Query available versions.
-        let kind = self.kinds.read().unwrap().get(package).cloned().unwrap_or_default();
+        let kind = self
+            .kinds
+            .read()
+            .unwrap()
+            .get(package)
+            .cloned()
+            .unwrap_or_default();
         let dependency = package.to_dependency(range.clone(), kind);
         let summaries = self.wait_for_summaries(dependency)?;
         let summaries = summaries
