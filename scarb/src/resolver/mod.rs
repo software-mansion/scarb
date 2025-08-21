@@ -210,9 +210,9 @@ fn format_error(err: PubGrubError<PubGrubDependencyProvider>) -> Error {
         }) => {
             format_err!("cannot find package `{name} {version}`")
         }
-        PubGrubError::ErrorChoosingPackageVersion(DependencyProviderError::PackageQueryFailed(
-            err,
-        )) => format_err!("{}", err).context("dependency query failed"),
+        PubGrubError::ErrorChoosingPackageVersion(
+            DependencyProviderError::PackageQueryFailed { cause: err },
+        ) => format_err!("{}", err).context("dependency query failed"),
         PubGrubError::ErrorRetrievingDependencies {
             package,
             version,

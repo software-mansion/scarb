@@ -306,6 +306,9 @@ impl DependencyProvider for PubGrubDependencyProvider {
             .packages()
             .register(dependency.clone().into())
         {
+            // let _ = self
+            //     .request_sink
+            //     .blocking_send(Request::Package(dependency.clone()));
             self.request_sink
                 .blocking_send(Request::Package(dependency.clone()))
                 .unwrap();
@@ -532,9 +535,18 @@ pub enum DependencyProviderError {
         version: DependencyVersionReq,
     },
     /// Package query failed.
-    #[error("{0}")]
-    PackageQueryFailed(#[from] anyhow::Error),
+    #[error("dependency query failed")]
+    PackageQueryFailed {
+        #[source]
+        cause: anyhow::Error,
+    },
     /// Channel closed.
     #[error("channel closed")]
     ChannelClosed,
+}
+
+impl From<anyhow::Error> for DependencyProviderError {
+    fn from(e: anyhow::Error) -> Self {
+        DependencyProviderError::PackageQueryFailed { cause: e }
+    }
 }
