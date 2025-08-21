@@ -394,8 +394,18 @@ impl SourceId {
     ) -> Result<Arc<dyn Source + 'c>> {
         use crate::sources::*;
         match self.kind {
-            SourceKind::Path => Ok(Arc::new(PathSource::new(self, config))),
-            SourceKind::Git(_) => Ok(Arc::new(GitSource::new(self, config)?)),
+            SourceKind::Path => Ok(Arc::new(PathSource::new(
+                self,
+                config,
+                require_audits,
+                non_audited_whitelist,
+            ))),
+            SourceKind::Git(_) => Ok(Arc::new(GitSource::new(
+                self,
+                config,
+                require_audits,
+                non_audited_whitelist,
+            )?)),
             SourceKind::Registry => Ok(Arc::new(RegistrySource::new(
                 self,
                 config,
