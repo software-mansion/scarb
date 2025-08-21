@@ -1,6 +1,6 @@
 use std::{fmt, mem};
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 use async_trait::async_trait;
 use tokio::sync::OnceCell;
 use tokio::task::spawn_blocking;
@@ -12,9 +12,12 @@ use scarb_ui::components::Status;
 
 use crate::core::source::Source;
 use crate::core::{
-    Config, GitReference, ManifestDependency, Package, PackageId, SourceId, Summary,
+    Config, DepKind, GitReference, ManifestDependency, Package, PackageId, PackageName, SourceId,
+    Summary,
 };
 use crate::sources::git::client::GitDatabase;
+use indoc::formatdoc;
+use std::collections::HashSet;
 
 use super::PathSource;
 
@@ -28,6 +31,8 @@ pub struct GitSource<'c> {
     requested_reference: GitReference,
     locked_rev: Option<Rev>,
     inner: OnceCell<InnerState<'c>>,
+    require_audits: bool,
+    non_audited_whitelist: HashSet<PackageName>,
 }
 
 struct InnerState<'c> {
@@ -36,12 +41,19 @@ struct InnerState<'c> {
 }
 
 impl<'c> GitSource<'c> {
-    pub fn new(source_id: SourceId, config: &'c Config) -> Result<Self> {
+    pub fn new(
+        source_id: SourceId,
+        config: &'c Config,
+        require_audits: bool,
+        non_audited_whitelist: &HashSet<PackageName>,
+    ) -> Result<Self> {
         Self::with_custom_repo(
             &source_id.url,
             source_id.git_reference().unwrap(),
             source_id,
             config,
+            require_audits,
+            non_audited_whitelist.clone(),
         )
     }
 
@@ -50,6 +62,8 @@ impl<'c> GitSource<'c> {
         requested_reference: GitReference,
         source_id: SourceId,
         config: &'c Config,
+        require_audits: bool,
+        non_audited_whitelist: HashSet<PackageName>,
     ) -> Result<Self> {
         let canonical_url = CanonicalUrl::new(repo_url)?;
         let locked_rev: Option<Rev> = source_id
@@ -64,6 +78,8 @@ impl<'c> GitSource<'c> {
             requested_reference,
             locked_rev,
             inner: OnceCell::new(),
+            require_audits,
+            non_audited_whitelist,
         })
     }
 
@@ -152,6 +168,21 @@ impl<'c> GitSource<'c> {
 #[async_trait]
 impl Source for GitSource<'_> {
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
+        if self.require_audits
+            && dependency.kind == DepKind::Normal
+            && !self.non_audited_whitelist.contains(&dependency.name)
+        {
+            return Err(anyhow!(formatdoc! { r#"
+                    dependency `{dep_name}` from `git` source is not allowed when audit requirement is enabled
+                    help: depend on a registry package
+                    alternatively, consider whitelisting dependency in package manifest
+                     --> Scarb.toml
+                        [security]
+                        allow-no-audits = ["{dep_name}"]
+                "#,
+            dep_name = dependency.name,
+            }));
+        }
         self.ensure_loaded()
             .await?
             .path_source
