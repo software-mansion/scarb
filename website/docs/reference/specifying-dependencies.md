@@ -45,10 +45,9 @@ You can enable this feature by specifying the `require-audits` key in the `[secu
 require-audits = true
 ```
 
-Setting this field to `true` will cause Scarb to, upon build, to exit with an error if any versions in the dependency tree are not marked as audited.
-If unable to resolve dependencies due to this, Scarb will exit with an error.
+Setting this field to `true` will cause Scarb to ignore any versions of dependencies, including transitive ones, that are not marked as audited.
+If unable to resolve dependency tree due to this, Scarb will exit with an error.
 By default, this field is set to `false`.
-
 
 ## Specifying dependencies from Git repositories
 
