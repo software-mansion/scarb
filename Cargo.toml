@@ -28,7 +28,7 @@ members = [
 "resolver" = "2"
 
 [workspace.package]
-version = "2.12.1-rc.0"
+version = "2.12.0"
 edition = "2024"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
@@ -173,4 +173,4 @@ opt-level = 3
 
 [patch.crates-io]
 cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "43741a930155661cf6fec7cd0e393f85cc66a4cc" }
-cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "a96fba1705e7df567b775157f7d7975d7bdff6c8" }
+cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "117d8f3b3903f2f28c35691d23fe775dcea0ef28" }
