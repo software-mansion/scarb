@@ -143,11 +143,11 @@ fn read_workspace_root<'c>(
             p.id
         });
         let security = workspace.security.as_ref();
-        let require_audits: bool = security
-            .and_then(|s| s.require_audits)
-            .unwrap_or(false);
+        let require_audits = security.and_then(|s| s.require_audits).unwrap_or(false);
 
-        let allow_no_audits = security.and_then(|s| s.allow_no_audits.clone()).unwrap_or_default();
+        let allow_no_audits = security
+            .and_then(|s| s.allow_no_audits.clone())
+            .unwrap_or_default();
 
         Workspace::new(
             manifest_path.into(),
