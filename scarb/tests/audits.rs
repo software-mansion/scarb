@@ -22,7 +22,7 @@ fn will_not_use_non_audited_version() {
         .name("hello_world")
         .version("1.0.0")
         .dep("foo", Dep.version("1.0.0").registry(&registry))
-        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .manifest_extra(
             r#"
             [security]
@@ -86,7 +86,7 @@ fn will_not_use_non_audited_version_transitive() {
         .name("hello_world")
         .version("1.0.0")
         .dep("bar", Dep.version("1.0.0").registry(&registry_url))
-        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .manifest_extra(
             r#"
             [security]
@@ -138,7 +138,7 @@ fn will_use_audited_version() {
         .name("hello_world")
         .version("1.0.0")
         .dep("foo", Dep.version("1.0.0").registry(&registry))
-        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .manifest_extra(
             r#"
             [security]
@@ -191,7 +191,7 @@ fn will_not_use_unaudited_version_workspace() {
         .name("first")
         .version("1.0.0")
         .dep("foo", Dep.version("1.0.0").registry(&registry))
-        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .manifest_extra(
             r#"
             [security]
@@ -203,7 +203,7 @@ fn will_not_use_unaudited_version_workspace() {
     ProjectBuilder::start()
         .name("second")
         .version("1.0.0")
-        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .build(&second);
 
     WorkspaceBuilder::start()
