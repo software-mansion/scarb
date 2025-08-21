@@ -1,3 +1,10 @@
+use crate::compiler::incremental::compilation::{
+    IncrementalArtifactsProvider, save_component_cache,
+};
+use crate::compiler::incremental::compilation::{IncrementalContext, incremental_allowed};
+use crate::compiler::incremental::fingerprint::{
+    ComponentFingerprint, Fingerprint, UnitFingerprint, is_fresh,
+};
 use crate::{
     DEFAULT_MODULE_MAIN_FILE,
     compiler::{
@@ -9,24 +16,23 @@ use crate::{
     core::{PackageId, PackageName, Target, TargetKind},
     ops,
 };
-use std::ops::Deref;
-use std::{collections::HashMap, sync::Arc, vec};
-
 use anyhow::anyhow;
 use anyhow::{Context, Result};
 use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId};
 use cairo_lang_defs::{db::DefsGroup, diagnostic_utils::StableLocation, ids::ModuleId};
 use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
-use cairo_lang_filesystem::ids::CrateInput;
+use cairo_lang_filesystem::ids::{BlobLongId, CrateInput};
 use cairo_lang_filesystem::{
     db::{FilesGroup, FilesGroupEx},
     ids::CrateLongId,
-    override_file_content,
+    override_file_content, set_crate_config,
 };
+use cairo_lang_lowering::db::LoweringGroup;
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::{
     SemanticDiagnostic, db::SemanticGroup, diagnostic::SemanticDiagnosticKind, plugin::PluginSuite,
 };
+use cairo_lang_utils::Upcast;
 use cairo_lint::{
     CAIRO_LINT_TOOL_NAME, CorelibContext, LinterAnalysisDatabase, LinterDiagnosticParams,
     LinterGroup,
@@ -36,7 +42,11 @@ use cairo_lint::{
 };
 use camino::Utf8PathBuf;
 use itertools::Itertools;
+use salsa::par_map;
 use scarb_ui::components::Status;
+use std::ops::Deref;
+use std::{collections::HashMap, sync::Arc, vec};
+use tracing::debug;
 
 use crate::core::{Package, Workspace};
 use crate::internal::fsx::canonicalize;
@@ -87,7 +97,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     }
 
     // We store the state of the workspace diagnostics, so we can decide upon throwing an error later on.
-    // Also we want to apply fixes only if there were no previous errors.
+    // Also, we want to apply fixes only if there were no previous errors.
     let mut packages_with_error: Vec<PackageName> = Default::default();
 
     let mut cus_to_lint: Vec<(&Package, &CairoCompilationUnit)> = vec![];
@@ -185,7 +195,10 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     }
 
     for (package, compilation_unit) in cus_to_lint.iter() {
-        let db = build_lint_database(compilation_unit, ws)?;
+        let mut db = build_lint_database(compilation_unit, ws)?;
+        let ctx = load_incremental_artifacts(compilation_unit, &mut db, ws)?;
+        save_incremental_artifacts(compilation_unit, &mut db, ctx, ws)?;
+
         let linter_params = LinterDiagnosticParams {
             only_generated_files: false,
             tool_metadata: cairo_lint_tool_metadata(package)?,
@@ -483,9 +496,151 @@ fn inject_virtual_wrapper_lib(
         let content = file_stems.join("\n");
         let module_id = ModuleId::CrateRoot(crate_id);
         let file_id = db.module_main_file(module_id).unwrap();
-        // Inject virtual lib file wrapper.
+        // Inject a virtual lib file wrapper.
         override_file_content!(db, file_id, Some(Arc::from(content.as_str())));
     }
+
+    Ok(())
+}
+
+#[tracing::instrument(skip_all, level = "info")]
+fn load_incremental_artifacts(
+    unit: &CairoCompilationUnit,
+    db: &mut LinterAnalysisDatabase,
+    ws: &Workspace<'_>,
+) -> Result<IncrementalContext> {
+    if !incremental_allowed(unit) {
+        return Ok(IncrementalContext::Disabled);
+    }
+
+    let fingerprints = ws
+        .config()
+        .tokio_handle()
+        .block_on(UnitFingerprint::new(unit, ws));
+
+    let mut cached_crates = Vec::new();
+
+    let loaded_components = unit
+        .components
+        .iter()
+        .map(|component| {
+            let fingerprint = fingerprints
+                .get(&component.id)
+                .expect("component fingerprint must exist in unit fingerprints");
+            let fingerprint = match fingerprint.deref() {
+                ComponentFingerprint::Library(lib) => lib,
+                ComponentFingerprint::Plugin(_plugin) => {
+                    unreachable!("we iterate through components not plugins");
+                }
+            };
+
+            let loaded =
+                load_component_cache(fingerprint, db, unit, component, ws).with_context(|| {
+                    format!(
+                        "failed to load cache for `{}` component",
+                        component.package.id.name
+                    )
+                })?;
+            Ok((component, loaded))
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    for (component, loaded) in loaded_components.into_iter() {
+        if loaded {
+            cached_crates.push(component.crate_input(db));
+        }
+    }
+
+    Ok(IncrementalContext::Enabled {
+        fingerprints,
+        cached_crates,
+    })
+}
+
+/// Loads the cache for a specific component if it is fresh.
+///
+/// Returns `Ok(true)` if the cache was loaded successfully, or `Ok(false)` if the component
+/// is not fresh and no cache was loaded.
+#[tracing::instrument(skip_all, level = "trace")]
+fn load_component_cache(
+    fingerprint: &Fingerprint,
+    db: &mut LinterAnalysisDatabase,
+    unit: &CairoCompilationUnit,
+    component: &CompilationUnitComponent,
+    ws: &Workspace<'_>,
+) -> Result<bool> {
+    let fingerprint_digest = fingerprint.digest();
+    if is_fresh(
+        &unit
+            .fingerprint_dir(ws)
+            .child(component.fingerprint_dirname(fingerprint)),
+        &component.target_name(),
+        &fingerprint_digest,
+    )? {
+        debug!(
+            "component `{}` is fresh, loading cache artifacts",
+            component.target_name()
+        );
+        let cache_dir = unit.incremental_cache_dir(ws);
+        let cache_dir = cache_dir.path_unchecked();
+        let cache_file = cache_dir.join(component.cache_filename(fingerprint));
+        let crate_id = component.crate_id(db);
+        let blob_id = db.intern_blob(BlobLongId::OnDisk(cache_file.as_std_path().to_path_buf()));
+        if let Some(mut core_conf) = db.crate_config(crate_id) {
+            core_conf.cache_file = Some(blob_id);
+            set_crate_config!(db, crate_id, Some(core_conf));
+        }
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
+
+#[tracing::instrument(skip_all, level = "info")]
+fn save_incremental_artifacts(
+    unit: &CairoCompilationUnit,
+    db: &mut LinterAnalysisDatabase,
+    ctx: IncrementalContext,
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    let IncrementalContext::Enabled {
+        fingerprints,
+        cached_crates: _,
+    } = ctx
+    else {
+        return Ok(());
+    };
+
+    let components = unit
+        .components
+        .iter()
+        .map(|component| {
+            let fingerprint = fingerprints
+                .get(&component.id)
+                .expect("component fingerprint must exist in unit fingerprints");
+            (component, fingerprint)
+        })
+        .collect_vec();
+
+    let db = Box::new(db.clone());
+
+    let group: &dyn LoweringGroup = db.as_ref().upcast();
+    let results: Vec<Result<()>> =
+        par_map(group, components, move |group, (component, fingerprint)| {
+            let fingerprint = match fingerprint.deref() {
+                ComponentFingerprint::Library(lib) => lib,
+                ComponentFingerprint::Plugin(_plugin) => {
+                    unreachable!("we iterate through components not plugins");
+                }
+            };
+            save_component_cache(fingerprint, group, unit, component, ws).with_context(|| {
+                format!(
+                    "failed to save cache for `{}` component",
+                    component.target_name()
+                )
+            })
+        });
+    results.into_iter().collect::<Result<Vec<_>>>()?;
 
     Ok(())
 }
