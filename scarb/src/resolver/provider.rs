@@ -515,18 +515,9 @@ pub enum DependencyProviderError {
         version: DependencyVersionReq,
     },
     /// Package query failed.
-    #[error("dependency query failed")]
-    PackageQueryFailed {
-        #[source]
-        cause: anyhow::Error,
-    },
+    #[error("{0}")]
+    PackageQueryFailed(#[from] anyhow::Error),
     /// Channel closed.
     #[error("channel closed")]
     ChannelClosed,
-}
-
-impl From<anyhow::Error> for DependencyProviderError {
-    fn from(e: anyhow::Error) -> Self {
-        DependencyProviderError::PackageQueryFailed { cause: e }
-    }
 }

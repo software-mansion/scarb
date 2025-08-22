@@ -184,15 +184,15 @@ fn require_audits_disallows_git_dep() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: dependency query failed
+            error: dependency `foo` from `git` source is not allowed when audit requirement is enabled
 
             Caused by:
-                dependency `foo` from `git` source is not allowed when audit requirement is enabled
-                help: depend on a registry package
-                alternatively, consider whitelisting dependency in package manifest
-                 --> Scarb.toml
-                    [security]
-                    allow-no-audits = ["foo"]
+                0: dependency `foo` from `git` source is not allowed when audit requirement is enabled
+                1: help: depend on a registry package
+                   alternatively, consider whitelisting dependency in package manifest
+                    --> Scarb.toml
+                       [security]
+                       allow-no-audits = ["foo"]
         "#});
 }
 
@@ -226,15 +226,15 @@ fn require_audits_disallows_path_dep() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: dependency query failed
+            error: dependency `foo` from `path` source is not allowed when audit requirement is enabled
 
             Caused by:
-                dependency `foo` from `path` source is not allowed when audit requirement is enabled
-                help: depend on a registry package
-                alternatively, consider whitelisting dependency in package manifest
-                 --> Scarb.toml
-                    [security]
-                    allow-no-audits = ["foo"]
+                0: dependency `foo` from `path` source is not allowed when audit requirement is enabled
+                1: help: depend on a registry package
+                   alternatively, consider whitelisting dependency in package manifest
+                    --> Scarb.toml
+                       [security]
+                       allow-no-audits = ["foo"]
         "#});
 }
 
