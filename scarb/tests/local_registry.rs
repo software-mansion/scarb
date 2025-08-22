@@ -69,7 +69,6 @@ fn update() {
         version = "1.0.0"
     "#}));
 
-    // Publish a new version of bar.
     registry.publish(|t| {
         ProjectBuilder::start()
             .name("bar")
