@@ -435,12 +435,14 @@ impl WorkspaceInherit for TomlWorkspaceSecurity {
 #[serde(rename_all = "kebab-case")]
 pub struct MaybeWorkspaceTomlSecurity {
     pub require_audits: Option<MaybeWorkspaceField<bool>>,
+    pub allow_no_audits: Option<MaybeWorkspaceField<Vec<PackageName>>>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlSecurity {
     pub require_audits: Option<bool>,
+    pub allow_no_audits: Option<Vec<PackageName>>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -689,11 +691,8 @@ impl TomlManifest {
         );
         let all_deps = toml_deps.chain(toml_dev_deps);
 
-        let require_audits: bool = match self
-            .security
-            .as_ref()
-            .and_then(|s| s.require_audits.as_ref())
-        {
+        let security = self.security.as_ref();
+        let require_audits = match security.and_then(|s| s.require_audits.as_ref()) {
             Some(MaybeWorkspace::Defined(req)) => *req,
             Some(MaybeWorkspace::Workspace(_)) => workspace
                 .security
@@ -703,6 +702,17 @@ impl TomlManifest {
                     anyhow!("`require-audits` not found in workspace `[security]` section")
                 })?,
             None => false,
+        };
+        let allow_no_audits = match security.and_then(|s| s.allow_no_audits.as_ref()) {
+            Some(MaybeWorkspace::Defined(allow)) => allow.clone(),
+            Some(MaybeWorkspace::Workspace(_)) => workspace
+                .security
+                .as_ref()
+                .and_then(|ws_security| ws_security.allow_no_audits.clone())
+                .ok_or_else(|| {
+                    anyhow!("`require-audits` not found in workspace `[security]` section")
+                })?,
+            None => Vec::new(),
         };
         for ((name, toml_dep), kind) in all_deps {
             let inherit_ws = || {
@@ -776,6 +786,7 @@ impl TomlManifest {
             .re_export_cairo_plugins(re_export_cairo_plugins)
             .no_core(no_core)
             .require_audits(require_audits)
+            .allow_no_audits(allow_no_audits)
             .build();
 
         let scripts = self.scripts.clone().unwrap_or_default();

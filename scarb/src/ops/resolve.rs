@@ -322,6 +322,7 @@ pub fn resolve_workspace_with_opts(
                 ws.config(),
                 yanked_whitelist,
                 ws.require_audits(),
+                ws.allow_no_audits(),
             );
             let cached = RegistryCache::new(&source_map);
             let patched = RegistryPatcher::new(&cached, &patch_map);
