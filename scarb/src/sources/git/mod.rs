@@ -173,7 +173,6 @@ impl Source for GitSource<'_> {
             && !self.non_audited_whitelist.contains(&dependency.name)
         {
             return Err(anyhow!(formatdoc! { r#"
-                    dependency `{dep_name}` from `git` source is not allowed when audit requirement is enabled
                     help: depend on a registry package
                     alternatively, consider whitelisting dependency in package manifest
                      --> Scarb.toml
@@ -181,7 +180,11 @@ impl Source for GitSource<'_> {
                         allow-no-audits = ["{dep_name}"]
                 "#,
             dep_name = dependency.name,
-            }));
+            }))
+            .context(format!(
+                "dependency `{}` from `git` source is not allowed when audit requirement is enabled",
+                dependency.name
+            ));
         }
         self.ensure_loaded()
             .await?
