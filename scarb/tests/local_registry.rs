@@ -38,6 +38,59 @@ fn usage() {
 }
 
 #[test]
+fn update() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("bar")
+            .version("1.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("0.1.0")
+        .dep("bar", Dep.version("1").registry(&registry))
+        .lib_cairo(r#"fn f() -> felt252 { bar::f() }"#)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lockfile = t.child("Scarb.lock");
+    lockfile.assert(predicates::str::contains(indoc! {r#"
+        [[package]]
+        name = "bar"
+        version = "1.0.0"
+    "#}));
+
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("bar")
+            .version("1.1.0")
+            .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
+            .build(t);
+    });
+
+    Scarb::quick_snapbox()
+        .arg("update")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    lockfile.assert(predicates::str::contains(indoc! {r#"
+        [[package]]
+        name = "bar"
+        version = "1.1.0"
+    "#}));
+}
+
+#[test]
 fn not_found() {
     let mut registry = LocalRegistry::create();
     registry.publish(|t| {
