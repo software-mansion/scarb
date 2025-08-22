@@ -19,7 +19,7 @@ use crate::sources::git::client::GitDatabase;
 use indoc::formatdoc;
 use std::collections::HashSet;
 
-use super::PathSource;
+use super::{PathSource, ensure_audit_requirement_allowed};
 
 pub mod canonical_url;
 pub mod client;
@@ -168,23 +168,8 @@ impl<'c> GitSource<'c> {
 #[async_trait]
 impl Source for GitSource<'_> {
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
-        if self.require_audits
-            && dependency.kind == DepKind::Normal
-            && !self.non_audited_whitelist.contains(&dependency.name)
-        {
-            return Err(anyhow!(formatdoc! { r#"
-                    help: depend on a registry package
-                    alternatively, consider whitelisting dependency in package manifest
-                     --> Scarb.toml
-                        [security]
-                        allow-no-audits = ["{dep_name}"]
-                "#,
-            dep_name = dependency.name,
-            }))
-            .context(format!(
-                "dependency `{}` from `git` source is not allowed when audit requirement is enabled",
-                dependency.name
-            ));
+        if self.require_audits {
+            ensure_audit_requirement_allowed(dependency, &self.non_audited_whitelist)?;
         }
         self.ensure_loaded()
             .await?
