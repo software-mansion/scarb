@@ -233,15 +233,12 @@ impl PubGrubDependencyProvider {
             source_id: dep.source_id,
         };
         let mut write_lock = self.kinds.write().unwrap();
-        match write_lock.get(&package) {
-            None => {
-                write_lock.insert(package, dep.kind.clone());
+        if let Some(kind) = write_lock.get(&package) {
+            if !dep.kind.is_test() && kind.is_test() {
+                write_lock.insert(package, DepKind::Normal);
             }
-            Some(prev) => {
-                if !dep.kind.is_test() && prev.is_test() {
-                    write_lock.insert(package, DepKind::Normal);
-                }
-            }
+        } else {
+            write_lock.insert(package, dep.kind.clone());
         }
     }
 
