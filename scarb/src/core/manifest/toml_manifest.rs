@@ -689,7 +689,7 @@ impl TomlManifest {
         );
         let all_deps = toml_deps.chain(toml_dev_deps);
 
-        let require_audits: bool = match self
+        let require_audits = match self
             .security
             .as_ref()
             .and_then(|s| s.require_audits.as_ref())
