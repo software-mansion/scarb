@@ -692,7 +692,7 @@ impl TomlManifest {
         let all_deps = toml_deps.chain(toml_dev_deps);
 
         let security = self.security.as_ref();
-        let require_audits: bool = match security.and_then(|s| s.require_audits.as_ref()) {
+        let require_audits = match security.and_then(|s| s.require_audits.as_ref()) {
             Some(MaybeWorkspace::Defined(req)) => *req,
             Some(MaybeWorkspace::Workspace(_)) => workspace
                 .security
