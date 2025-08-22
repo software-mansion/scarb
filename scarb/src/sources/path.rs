@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 use async_trait::async_trait;
 use camino::Utf8Path;
 use indoc::formatdoc;
@@ -114,7 +114,6 @@ impl Source for PathSource<'_> {
             && !self.non_audited_whitelist.contains(&dependency.name)
         {
             return Err(anyhow!(formatdoc! { r#"
-                    dependency `{dep_name}` from `path` source is not allowed when audit requirement is enabled
                     help: depend on a registry package
                     alternatively, consider whitelisting dependency in package manifest
                      --> Scarb.toml
@@ -122,7 +121,12 @@ impl Source for PathSource<'_> {
                         allow-no-audits = ["{dep_name}"]
                 "#,
             dep_name = dependency.name,
-            }));
+            }))
+                .context(format!(
+                "dependency `{}` from `path` source is not allowed when audit requirement is enabled",
+                dependency.name
+            ))
+            ;
         }
 
         Ok(self
