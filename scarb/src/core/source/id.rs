@@ -389,6 +389,7 @@ impl SourceId {
         self,
         config: &'c Config,
         yanked_whitelist: &HashSet<PackageId>,
+        require_audits: bool,
     ) -> Result<Arc<dyn Source + 'c>> {
         use crate::sources::*;
         match self.kind {
@@ -398,6 +399,7 @@ impl SourceId {
                 self,
                 config,
                 yanked_whitelist,
+                require_audits,
             )?)),
             SourceKind::Std => Ok(Arc::new(StandardLibSource::new(config))),
         }

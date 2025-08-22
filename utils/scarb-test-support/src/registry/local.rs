@@ -1,11 +1,18 @@
 use crate::command::Scarb;
-use anyhow::Result;
 use assert_fs::TempDir;
-use serde::{Deserialize, Serialize};
-use std::io::{Read, Write};
-use std::path::Path;
-use std::{fmt, fs};
+use std::fmt;
 use url::Url;
+
+#[cfg(feature = "scarb-config")]
+use anyhow::Result;
+#[cfg(feature = "scarb-config")]
+use scarb::core::registry::index::{IndexRecord, IndexRecords};
+#[cfg(feature = "scarb-config")]
+use std::fs;
+#[cfg(feature = "scarb-config")]
+use std::io::{Read, Write};
+#[cfg(feature = "scarb-config")]
+use std::path::Path;
 
 pub struct LocalRegistry {
     pub t: TempDir,
@@ -53,23 +60,41 @@ impl fmt::Display for LocalRegistry {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-struct Package {
-    pub v: String,
-    pub deps: Vec<String>,
-    pub cksum: String,
-    pub yanked: Option<bool>,
+/// Marks test package version yanked. Warning: does not modify cache.
+#[cfg(feature = "scarb-config")]
+pub fn yank(file_path: &Path, version: &str) -> Result<()> {
+    modify_version_record(file_path, version, |pkg| pkg.yanked = true)
 }
 
-/// Marks test package yanked. Warning: does not modify cache.
-pub fn yank(file_path: &Path, version: &str) -> Result<()> {
+/// Marks test package version as audited. Warning: does not modify cache.
+#[cfg(feature = "scarb-config")]
+pub fn audit(file_path: &Path, version: &str) -> Result<()> {
+    modify_version_record(file_path, version, |pkg| pkg.audited = true)
+}
+
+/// Unmarks test package version as audited. Warning: does not modify cache.
+#[cfg(feature = "scarb-config")]
+pub fn unaudit(file_path: &Path, version: &str) -> Result<()> {
+    modify_version_record(file_path, version, |pkg| pkg.audited = false)
+}
+
+/// Apply an arbitrary change to a test package version.
+/// Warning: does not modify cache.
+#[cfg(feature = "scarb-config")]
+fn modify_version_record<F>(file_path: &Path, version: &str, op: F) -> Result<()>
+where
+    F: FnOnce(&mut IndexRecord),
+{
     let mut file = fs::File::open(file_path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    let mut packages: Vec<Package> = serde_json::from_str(&contents)
+    let mut packages: IndexRecords = serde_json::from_str(&contents)
         .map_err(|e| anyhow::anyhow!("Failed to deserialize JSON: {}", e))?;
-    match packages.iter_mut().find(|package| package.v == version) {
-        Some(package) => package.yanked = Some(true),
+    match packages
+        .iter_mut()
+        .find(|package| package.version.to_string() == version)
+    {
+        Some(pkg) => op(pkg),
         None => panic!("Package with version '{version}' not found."),
     }
     let modified_contents = serde_json::to_string_pretty(&packages)

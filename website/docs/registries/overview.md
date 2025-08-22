@@ -15,7 +15,11 @@ To learn more about publishing packages to the registry, please visit section de
 
 ## Adding dependencies
 
-If you want to add a package from the official registry as a dependency, you can read about it [here](./../reference/specifying-dependencies#specifying-dependencies-from-official-registry).
+If you want to add a package from the official registry as a dependency, you can read about it [here](./../reference/specifying-dependencies#specifying-dependencies-from-registries).
+
+## Security and audits
+
+If you want to ensure that the packages you use have been audited, you can read about it [here](./../reference/specifying-dependencies#security-and-audits).
 
 ## Packaging and publishing
 
