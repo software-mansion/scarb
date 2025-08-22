@@ -299,9 +299,6 @@ impl DependencyProvider for PubGrubDependencyProvider {
             .packages()
             .register(dependency.clone().into())
         {
-            // let _ = self
-            //     .request_sink
-            //     .blocking_send(Request::Package(dependency.clone()));
             self.request_sink
                 .blocking_send(Request::Package(dependency.clone()))
                 .unwrap();
