@@ -1,6 +1,8 @@
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 use async_trait::async_trait;
 use camino::Utf8Path;
+use indoc::formatdoc;
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::{fmt, mem};
 use tokio::sync::OnceCell;
@@ -9,7 +11,9 @@ use crate::core::config::Config;
 use crate::core::manifest::{ManifestDependency, Summary};
 use crate::core::package::{Package, PackageId};
 use crate::core::source::{Source, SourceId};
+use crate::core::{DepKind, PackageName};
 use crate::ops;
+use crate::sources::ensure_audit_requirement_allowed;
 
 /// This source will only return the package at precisely the `path` specified,
 /// and it will be an error if there is not a package at `path`.
@@ -17,10 +21,17 @@ pub struct PathSource<'c> {
     source_id: SourceId,
     config: &'c Config,
     packages: PackagesCell,
+    require_audits: bool,
+    non_audited_whitelist: HashSet<PackageName>,
 }
 
 impl<'c> PathSource<'c> {
-    pub fn new(source_id: SourceId, config: &'c Config) -> Self {
+    pub fn new(
+        source_id: SourceId,
+        config: &'c Config,
+        require_audits: bool,
+        non_audited_whitelist: &HashSet<PackageName>,
+    ) -> Self {
         let root = source_id.to_path().expect("path sources cannot be remote");
 
         Self {
@@ -29,6 +40,8 @@ impl<'c> PathSource<'c> {
             packages: PackagesCell::new(move |source_id, config| {
                 Self::fetch_workspace_at_root(&root, source_id, config)
             }),
+            require_audits,
+            non_audited_whitelist: non_audited_whitelist.clone(),
         }
     }
 
@@ -53,6 +66,8 @@ impl<'c> PathSource<'c> {
             source_id,
             config,
             packages: PackagesCell::preloaded(packages.to_vec()),
+            require_audits: false,
+            non_audited_whitelist: Default::default(),
         }
     }
 
@@ -64,6 +79,8 @@ impl<'c> PathSource<'c> {
                 let path = path.to_path_buf();
                 move |source_id, config| Self::find_packages_recursive(&path, source_id, config)
             }),
+            require_audits: false,
+            non_audited_whitelist: Default::default(),
         }
     }
 
@@ -93,6 +110,9 @@ impl<'c> PathSource<'c> {
 impl Source for PathSource<'_> {
     #[tracing::instrument(level = "trace", skip(self))]
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
+        if self.require_audits {
+            ensure_audit_requirement_allowed(dependency, &self.non_audited_whitelist)?;
+        }
         Ok(self
             .packages()
             .await?
