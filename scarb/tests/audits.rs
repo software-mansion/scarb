@@ -22,7 +22,7 @@ fn require_audits_allows_non_audited_dev_dep() {
         .name("hello_world")
         .version("1.0.0")
         .dev_dep("foo", Dep.version("1.0.0").registry(&registry))
-        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .manifest_extra(
             r#"
             [workspace]
@@ -326,7 +326,7 @@ fn will_update_to_audited_version_only() {
         .name("hello_world")
         .version("1.0.0")
         .dep("foo", Dep.version("1.0.0").registry(&registry))
-        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .manifest_extra(
             r#"
             [security]
