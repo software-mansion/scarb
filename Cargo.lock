@@ -1245,7 +1245,7 @@ dependencies = [
  "rand 0.9.2",
  "serde",
  "sha2",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
  "thiserror 2.0.14",
 ]
 
@@ -1295,7 +1295,7 @@ dependencies = [
  "serde_json",
  "sha3",
  "smol_str",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
  "thiserror 2.0.14",
  "vector-map",
 ]
@@ -1370,7 +1370,7 @@ dependencies = [
  "itertools 0.14.0",
  "num-bigint",
  "num-traits",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
  "thiserror 2.0.14",
 ]
 
@@ -1408,7 +1408,7 @@ dependencies = [
  "itertools 0.14.0",
  "serde",
  "serde_json",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
  "thiserror 2.0.14",
  "typetag",
 ]
@@ -1432,7 +1432,7 @@ dependencies = [
  "serde_json",
  "sha3",
  "smol_str",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
  "thiserror 2.0.14",
 ]
 
@@ -1486,7 +1486,7 @@ dependencies = [
  "num-bigint",
  "num-traits",
  "serde",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
 ]
 
 [[package]]
@@ -1509,7 +1509,7 @@ dependencies = [
  "itertools 0.14.0",
  "num-traits",
  "rayon",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
 ]
 
 [[package]]
@@ -1667,7 +1667,7 @@ dependencies = [
  "sha2",
  "sha3",
  "starknet-crypto 0.7.4",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
  "thiserror-no-std",
  "wasm-bindgen",
  "zip",
@@ -1700,7 +1700,7 @@ dependencies = [
  "sha2",
  "sha3",
  "starknet-crypto 0.7.4",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
  "thiserror 2.0.14",
  "zip",
 ]
@@ -7380,9 +7380,9 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
 name = "starknet-core"
-version = "0.14.0"
+version = "0.16.0-rc.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc2091a08ebfc65c5a6b8bd2c66e32780739854b813af0b4348b6dbf3a887865"
+checksum = "53b4736424cdc1cee7b667c665855d11afd8856e87a2e724ab0fe02bc37bb3fa"
 dependencies = [
  "base64 0.21.7",
  "crypto-bigint",
@@ -7397,8 +7397,8 @@ dependencies = [
  "serde_with",
  "sha3",
  "starknet-core-derive",
- "starknet-crypto 0.7.4",
- "starknet-types-core",
+ "starknet-crypto 0.8.0",
+ "starknet-types-core 0.2.0",
 ]
 
 [[package]]
@@ -7447,7 +7447,26 @@ dependencies = [
  "rfc6979",
  "sha2",
  "starknet-curve 0.5.1",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
+ "zeroize",
+]
+
+[[package]]
+name = "starknet-crypto"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f2ca44b93bd42b743256c4063de76a1dc3ac8240cf05059ca9e0106f2284f24"
+dependencies = [
+ "crypto-bigint",
+ "hex",
+ "hmac",
+ "num-bigint",
+ "num-integer",
+ "num-traits",
+ "rfc6979",
+ "sha2",
+ "starknet-curve 0.6.0",
+ "starknet-types-core 0.2.0",
  "zeroize",
 ]
 
@@ -7477,7 +7496,16 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bcde6bd74269b8161948190ace6cf069ef20ac6e79cd2ba09b320efa7500b6de"
 dependencies = [
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
+]
+
+[[package]]
+name = "starknet-curve"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22c898ae81b6409532374cf237f1bd752d068b96c6ad500af9ebbd0d9bb712f6"
+dependencies = [
+ "starknet-types-core 0.2.0",
 ]
 
 [[package]]
@@ -7508,6 +7536,23 @@ dependencies = [
  "num-traits",
  "serde",
  "size-of",
+ "zeroize",
+]
+
+[[package]]
+name = "starknet-types-core"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5fa3d91e38f091dbc543d33589eb7716bed2a8eb1c20879e484561977832b60a"
+dependencies = [
+ "blake2",
+ "digest 0.10.7",
+ "lambdaworks-crypto",
+ "lambdaworks-math",
+ "num-bigint",
+ "num-integer",
+ "num-traits",
+ "serde",
  "zeroize",
 ]
 
@@ -7601,7 +7646,7 @@ dependencies = [
  "ruint",
  "serde",
  "starknet-ff",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
  "stwo-cairo-serialize",
  "stwo-prover",
  "stwo_cairo_utils",
@@ -7666,7 +7711,7 @@ dependencies = [
  "serde_json",
  "starknet-curve 0.5.1",
  "starknet-ff",
- "starknet-types-core",
+ "starknet-types-core 0.1.8",
  "stwo-air-utils",
  "stwo-air-utils-derive",
  "stwo-cairo-adapter",
