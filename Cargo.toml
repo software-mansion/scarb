@@ -131,8 +131,7 @@ similar-asserts = { version = "1", features = ["serde"] }
 smallvec = "1"
 smol_str = { version = "0.3", features = ["serde"] }
 snapbox = { version = "0.4", features = ["cmd", "path"] }
-starknet-core = "0.14.0"
-starknet-types-core = "0.1"
+starknet-core = "0.16.0-rc.4"
 stwo-cairo-adapter = { version = "*", features = ["std"] }
 stwo_cairo_prover = "*"
 syn = "2"
