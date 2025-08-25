@@ -346,9 +346,7 @@ impl<'db> Module<'db> {
                 })
                 .unwrap_or(false);
 
-            let trait_is_hidden = item_trait
-                .map(|item_trait| is_doc_hidden_attr(db, &item_trait.as_syntax_node()))
-                .unwrap_or(false);
+            let trait_is_hidden = is_doc_hidden_attr(db, &item_trait.as_syntax_node());
 
             !(all_generic_args_are_hidden || trait_is_hidden)
         };

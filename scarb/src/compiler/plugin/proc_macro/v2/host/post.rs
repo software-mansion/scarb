@@ -72,7 +72,7 @@ impl ProcMacroHostPlugin {
     fn collect_full_path_markers(&self, db: &dyn SemanticGroup) -> HashMap<String, String> {
         let mut markers: HashMap<String, String> = HashMap::new();
         for crate_id in db.crates() {
-            let modules = db.crate_modules(crate_id);
+            let modules = db.crate_modules(*crate_id);
             for module_id in modules.iter() {
                 let Ok(module_items) = db.module_items(*module_id) else {
                     continue;

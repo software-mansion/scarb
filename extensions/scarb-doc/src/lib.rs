@@ -149,8 +149,8 @@ fn setup_diagnostics_reporter<'a>(
 ) -> DiagnosticsReporter<'a> {
     let ignore_warnings_crates = db
         .crates()
-        .into_iter()
-        .filter(|crate_id| crate_id != &main_crate_id)
+        .iter()
+        .filter(|&&crate_id| crate_id != main_crate_id)
         .map(|c| c.long(db).clone().into_crate_input(db))
         .collect_vec();
 
