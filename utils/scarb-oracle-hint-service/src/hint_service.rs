@@ -10,7 +10,10 @@ pub struct OracleHintService {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub enum OracleCheatcodeSelector {
+pub struct OracleCheatcodeSelector(OracleCheatcodeSelectorInner);
+
+#[derive(Copy, Clone, Debug)]
+enum OracleCheatcodeSelectorInner {
     OracleInvoke,
 }
 
@@ -25,7 +28,9 @@ impl OracleHintService {
     /// Checks whether this service handles this cheatcode selector.
     pub fn accept_cheatcode(&self, selector: &[u8]) -> Option<OracleCheatcodeSelector> {
         match selector {
-            b"oracle_invoke" => Some(OracleCheatcodeSelector::OracleInvoke),
+            b"oracle_invoke" => Some(OracleCheatcodeSelector(
+                OracleCheatcodeSelectorInner::OracleInvoke,
+            )),
             _ => None,
         }
     }
@@ -39,8 +44,8 @@ impl OracleHintService {
         selector: OracleCheatcodeSelector,
         inputs: &[Felt],
     ) -> Vec<Felt> {
-        match selector {
-            OracleCheatcodeSelector::OracleInvoke => self.execute_invoke(inputs),
+        match selector.0 {
+            OracleCheatcodeSelectorInner::OracleInvoke => self.execute_invoke(inputs),
         }
     }
 
