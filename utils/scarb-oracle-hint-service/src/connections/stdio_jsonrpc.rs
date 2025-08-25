@@ -1,5 +1,5 @@
 use crate::connection::Connection;
-use crate::jsonrpc;
+use crate::{Protocol, jsonrpc};
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use serde::Serialize;
 use serde_json::Value::Null;
@@ -16,14 +16,16 @@ struct InvokeParams {
     calldata: Vec<Felt>,
 }
 
-pub struct StdioJsonRpcConnection {
+pub struct StdioJsonRpc {
     io: Io,
     mf: jsonrpc::MessageFactory,
 }
 
-impl StdioJsonRpcConnection {
+impl Protocol for StdioJsonRpc {
+    const SCHEME: &'static str = "stdio";
+
     #[tracing::instrument]
-    pub fn connect(command: &str) -> Result<Self> {
+    fn connect(command: &str) -> Result<Box<dyn Connection + 'static>> {
         let command_words =
             shell_words::split(command).context("failed to parse oracle command")?;
         let (command, args) = command_words
@@ -39,9 +41,11 @@ impl StdioJsonRpcConnection {
 
         connection.initialize()?;
 
-        Ok(connection)
+        Ok(Box::new(connection))
     }
+}
 
+impl StdioJsonRpc {
     fn initialize(&mut self) -> Result<()> {
         // Read the first byte to ensure this is JSON-RPC protocol.
         // This is future-proofing to enable introducing other over-stdio transports
@@ -107,7 +111,7 @@ impl StdioJsonRpcConnection {
     }
 }
 
-impl Connection for StdioJsonRpcConnection {
+impl Connection for StdioJsonRpc {
     #[tracing::instrument(skip(self, calldata))]
     fn call(&mut self, selector: &str, calldata: &[Felt]) -> Result<Vec<Felt>> {
         let invoke_request = self.mf.request(
@@ -144,7 +148,7 @@ impl Connection for StdioJsonRpcConnection {
     }
 }
 
-impl Drop for StdioJsonRpcConnection {
+impl Drop for StdioJsonRpc {
     fn drop(&mut self) {
         if let Err(err) = self.shutdown().context("failed to shutdown oracle") {
             warn!("{err:?}")

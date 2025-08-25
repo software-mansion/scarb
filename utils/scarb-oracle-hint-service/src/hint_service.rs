@@ -1,12 +1,15 @@
-use crate::connection::ConnectionManager;
+use crate::connection::Connections;
+use crate::connections::stdio_jsonrpc::StdioJsonRpc;
+use crate::protocol::{Protocol, Protocols};
 use anyhow::Context;
 use starknet_core::codec::{Decode, Encode};
 use starknet_core::types::{ByteArray, Felt};
 use starknet_core::utils::parse_cairo_short_string;
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct OracleHintService {
-    connections: ConnectionManager,
+    connections: Connections,
+    protocols: Protocols,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -17,14 +20,50 @@ enum OracleCheatcodeSelectorInner {
     OracleInvoke,
 }
 
+impl Default for OracleHintService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Constructors.
 impl OracleHintService {
-    /// Creates a new `OracleHintService`.
+    /// Creates a new `OracleHintService` with all builtin protocols enabled.
     pub fn new() -> Self {
+        let mut this = Self::bare();
+        this.add_protocol::<StdioJsonRpc>();
+        this
+    }
+
+    /// Creates a new `OracleHintService` with no builtin protocols enabled.
+    pub fn bare() -> Self {
         Self {
-            connections: ConnectionManager::new(),
+            connections: Connections::default(),
+            protocols: Protocols::default(),
         }
     }
 
+    /// Adds a new protocol to the internal collection of protocols.
+    ///
+    /// All protocols must use distinct schemas. If a protocol with the same schema is already
+    /// registered, this method will overwrite it with the new one.
+    pub fn add_protocol<P: Protocol>(&mut self) -> &mut Self {
+        self.protocols.add::<P>();
+        self
+    }
+
+    /// Adds a new protocol to the internal collection of protocols and returns the modified instance.
+    ///
+    /// This method works identically to [`OracleHintService::add_protocol`], just works on owned
+    /// instances.
+    pub fn with_protocol<P: Protocol>(mut self) -> Self {
+        self.add_protocol::<P>();
+        self
+    }
+}
+
+/// Execution methods.
+impl OracleHintService {
     /// Checks whether this service handles this cheatcode selector.
     pub fn accept_cheatcode(&self, selector: &[u8]) -> Option<OracleCheatcodeSelector> {
         match selector {
@@ -62,7 +101,7 @@ impl OracleHintService {
             let calldata = inputs_iter.as_slice();
 
             self.connections
-                .connect(&connection_string)?
+                .connect(&connection_string, &self.protocols)?
                 .call(&selector, calldata)
         };
 

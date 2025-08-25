@@ -11,5 +11,8 @@ mod connection;
 mod connections;
 mod hint_service;
 mod jsonrpc;
+mod protocol;
 
+pub use connection::Connection;
 pub use hint_service::OracleHintService;
+pub use protocol::Protocol;
