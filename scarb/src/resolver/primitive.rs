@@ -87,20 +87,20 @@ pub async fn resolve(
                 let dep_kind = dep.kind.clone();
                 let dep = dep_summary.package_id;
 
-                if let Some(existing) = packages.get(dep.name.as_ref()) {
-                    if existing.source_id != dep.source_id {
-                        bail!(
-                            indoc! {"
-                            found dependencies on the same package `{}` coming from incompatible \
+                if let Some(existing) = packages.get(dep.name.as_ref())
+                    && existing.source_id != dep.source_id
+                {
+                    bail!(
+                        indoc! {"
+                        found dependencies on the same package `{}` coming from incompatible \
                             sources:
                             source 1: {}
                             source 2: {}
                             "},
-                            dep.name,
-                            existing.source_id,
-                            dep.source_id
-                        );
-                    }
+                        dep.name,
+                        existing.source_id,
+                        dep.source_id
+                    );
                 }
 
                 let weight = graph.edge_weight_mut(summary.package_id, dep);
