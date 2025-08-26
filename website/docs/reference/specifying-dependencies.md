@@ -46,7 +46,7 @@ require-audits = true
 ```
 
 Setting this field to `true` will cause Scarb to ignore any versions of dependencies, including transitive ones, that are not marked as audited.
-If unable to resolve dependency tree due to this, Scarb will exit with an error.
+If unable to resolve the dependency tree due to this, Scarb will exit with an error.
 By default, this field is set to `false`.
 
 ## Specifying dependencies from Git repositories
