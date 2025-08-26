@@ -1,5 +1,5 @@
 use crate::connection::Connection;
-use crate::{Protocol, jsonrpc};
+use crate::protocol::Protocol;
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use serde::Serialize;
 use serde_json::Value::Null;
@@ -9,6 +9,8 @@ use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdout, Command, Stdio};
 use std::thread;
 use tracing::{debug, debug_span, trace, warn};
+
+mod jsonrpc;
 
 #[derive(Serialize)]
 struct InvokeParams {
