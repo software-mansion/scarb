@@ -3,15 +3,10 @@ use assert_fs::TempDir;
 use std::fmt;
 use url::Url;
 
-#[cfg(feature = "scarb-config")]
 use anyhow::Result;
-#[cfg(feature = "scarb-config")]
 use scarb::core::registry::index::{IndexRecord, IndexRecords};
-#[cfg(feature = "scarb-config")]
 use std::fs;
-#[cfg(feature = "scarb-config")]
 use std::io::{Read, Write};
-#[cfg(feature = "scarb-config")]
 use std::path::Path;
 
 pub struct LocalRegistry {
@@ -61,26 +56,22 @@ impl fmt::Display for LocalRegistry {
 }
 
 /// Marks test package version yanked. Warning: does not modify cache.
-#[cfg(feature = "scarb-config")]
 pub fn yank(file_path: &Path, version: &str) -> Result<()> {
     modify_version_record(file_path, version, |pkg| pkg.yanked = true)
 }
 
 /// Marks test package version as audited. Warning: does not modify cache.
-#[cfg(feature = "scarb-config")]
 pub fn audit(file_path: &Path, version: &str) -> Result<()> {
     modify_version_record(file_path, version, |pkg| pkg.audited = true)
 }
 
 /// Unmarks test package version as audited. Warning: does not modify cache.
-#[cfg(feature = "scarb-config")]
 pub fn unaudit(file_path: &Path, version: &str) -> Result<()> {
     modify_version_record(file_path, version, |pkg| pkg.audited = false)
 }
 
 /// Apply an arbitrary change to a test package version.
 /// Warning: does not modify cache.
-#[cfg(feature = "scarb-config")]
 fn modify_version_record<F>(file_path: &Path, version: &str, op: F) -> Result<()>
 where
     F: FnOnce(&mut IndexRecord),
