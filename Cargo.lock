@@ -6485,6 +6485,7 @@ dependencies = [
  "cairo-lang-macro-stable 1.0.0",
  "cairo-lang-macro-stable 2.0.0",
  "cairo-lang-parser",
+ "cairo-lang-plugins",
  "cairo-lang-semantic",
  "cairo-lang-sierra",
  "cairo-lang-sierra-generator",
