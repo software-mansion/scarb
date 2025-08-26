@@ -55,6 +55,7 @@ cairo-lang-formatter = "*"
 cairo-lang-lowering = "*"
 cairo-lang-macro-v1 = { version = "0.1", package = "cairo-lang-macro", features = ["serde"] }
 cairo-lang-parser = "*"
+cairo-lang-plugins = "*"
 cairo-lang-primitive-token = "1"
 cairo-lang-runner = "*"
 cairo-lang-semantic = "*"

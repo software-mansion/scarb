@@ -28,6 +28,7 @@ cairo-lang-macro-stable = { path = "../plugins/cairo-lang-macro-stable" }
 cairo-lang-macro-stable-v1 = { version = "1", package = "cairo-lang-macro-stable" }
 cairo-lang-macro-v1.workspace = true
 cairo-lang-parser.workspace = true
+cairo-lang-plugins.workspace = true
 cairo-lang-semantic.workspace = true
 cairo-lang-sierra-generator.workspace = true
 cairo-lang-sierra-to-casm.workspace = true
