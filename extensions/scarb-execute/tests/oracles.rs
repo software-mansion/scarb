@@ -153,7 +153,7 @@ fn oracle_invoke_unknown_scheme() {
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
             Result::Err("unsupported connection scheme: "unknown:///test"
-            note: supported schemes are: `stdio`")
+            note: supported schemes are: "stdio"")
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -178,7 +178,7 @@ fn oracle_invoke_missing_connection_scheme() {
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
             Result::Err("unsupported connection scheme: "no scheme"
-            note: supported schemes are: `stdio`")
+            note: supported schemes are: "stdio"")
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();

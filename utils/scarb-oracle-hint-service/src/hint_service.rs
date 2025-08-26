@@ -1,5 +1,4 @@
 use crate::connection::Connections;
-use crate::connections::stdio_jsonrpc::StdioJsonRpc;
 use crate::protocol::{Protocol, Protocols};
 use anyhow::Context;
 use starknet_core::codec::{Decode, Encode};
@@ -31,7 +30,7 @@ impl OracleHintService {
     /// Creates a new `OracleHintService` with all builtin protocols enabled.
     pub fn new() -> Self {
         let mut this = Self::bare();
-        this.add_protocol::<StdioJsonRpc>();
+        crate::connections::add_builtin_protocols(&mut this);
         this
     }
 
