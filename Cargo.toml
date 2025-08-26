@@ -55,6 +55,7 @@ cairo-lang-formatter = "2.12.1"
 cairo-lang-lowering = "2.12.1"
 cairo-lang-macro-v1 = { version = "0.1", package = "cairo-lang-macro", features = ["serde"] }
 cairo-lang-parser = "2.12.1"
+cairo-lang-plugins = "2.12.1"
 cairo-lang-primitive-token = "1"
 cairo-lang-runner = "2.12.1"
 cairo-lang-semantic = "2.12.1"
@@ -172,5 +173,5 @@ strip = "debuginfo"
 opt-level = 3
 
 [patch.crates-io]
-cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "2f4bce10ca7b2fa63bcdfcd2a51ab066134cbb50" }
+cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "e35f08526e0d7d28ffcc88b0822aad46be10827c" }
 cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "117d8f3b3903f2f28c35691d23fe775dcea0ef28" }

@@ -1,6 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use anyhow::{Result, ensure};
+use cairo_lang_plugins::plugins::ConfigPlugin;
 use cairo_lang_semantic::{inline_macros::get_default_plugin_suite, plugin::PluginSuite};
 use itertools::Itertools;
 use scarb_proc_macro_server_types::scope::CompilationUnitComponent;
@@ -155,44 +156,33 @@ fn collect_builtin_plugins(
     Ok(plugin_suites)
 }
 
+#[derive(Default)]
 struct PluginSuiteAssembler {
-    base: PluginSuite,
     builtin: PluginSuite,
     proc_macro: PluginSuite,
-    post_proc_macros: PluginSuite,
-}
-
-impl Default for PluginSuiteAssembler {
-    fn default() -> Self {
-        Self {
-            base: get_default_plugin_suite(),
-            builtin: Default::default(),
-            proc_macro: Default::default(),
-            post_proc_macros: Default::default(),
-        }
-    }
 }
 
 impl PluginSuiteAssembler {
     pub fn add_builtin(&mut self, plugin: &dyn CairoPlugin) -> Result<()> {
-        let post_proc_macros = plugin.post_proc_macros();
         let instance = plugin.instantiate()?;
         let suite = instance.plugin_suite();
-        if post_proc_macros {
-            self.post_proc_macros.add(suite);
-        } else {
-            self.builtin.add(suite);
-        }
+        self.builtin.add(suite);
         Ok(())
     }
     pub fn add_proc_macro(&mut self, suite: PluginSuite) {
         self.proc_macro.add(suite);
     }
     pub fn assemble(self) -> PluginSuite {
-        let mut suite = self.base;
-        suite.add(self.builtin);
-        suite.add(self.proc_macro);
-        suite.add(self.post_proc_macros);
+        let mut suite = PluginSuite::default();
+        suite
+            // Config plugin must be first, as it removes items from the AST,
+            // and other plugins may add items prior to the removal of the original.
+            .add_plugin::<ConfigPlugin>()
+            .add(self.proc_macro)
+            // The default plugin suite also contains `ConfigPlugin`, but running it twice
+            // has negligible performance cost.
+            .add(get_default_plugin_suite())
+            .add(self.builtin);
         suite
     }
 }

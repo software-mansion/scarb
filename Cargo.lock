@@ -1565,7 +1565,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.12.0"
-source = "git+https://github.com/software-mansion/cairols?rev=2f4bce10ca7b2fa63bcdfcd2a51ab066134cbb50#2f4bce10ca7b2fa63bcdfcd2a51ab066134cbb50"
+source = "git+https://github.com/software-mansion/cairols?rev=e35f08526e0d7d28ffcc88b0822aad46be10827c#e35f08526e0d7d28ffcc88b0822aad46be10827c"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1580,6 +1580,7 @@ dependencies = [
  "cairo-lang-macro 0.1.1",
  "cairo-lang-macro 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-lang-parser",
+ "cairo-lang-plugins",
  "cairo-lang-project",
  "cairo-lang-semantic",
  "cairo-lang-starknet",
@@ -6485,6 +6486,7 @@ dependencies = [
  "cairo-lang-macro-stable 1.0.0",
  "cairo-lang-macro-stable 2.0.0",
  "cairo-lang-parser",
+ "cairo-lang-plugins",
  "cairo-lang-semantic",
  "cairo-lang-sierra",
  "cairo-lang-sierra-generator",
