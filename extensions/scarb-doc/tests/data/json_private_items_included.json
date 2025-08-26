@@ -255,8 +255,10 @@
                     "use_impl_defs": [],
                     "use_extern_types": [],
                     "use_extern_functions": [],
-                    "use_submodules": []
-                  }
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
                 },
                 {
                   "item_data": {
@@ -492,8 +494,10 @@
                     "use_impl_defs": [],
                     "use_extern_types": [],
                     "use_extern_functions": [],
-                    "use_submodules": []
-                  }
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
                 },
                 {
                   "item_data": {
@@ -729,8 +733,10 @@
                     "use_impl_defs": [],
                     "use_extern_types": [],
                     "use_extern_functions": [],
-                    "use_submodules": []
-                  }
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
                 }
               ],
               "constants": [],
@@ -958,8 +964,10 @@
                 "use_impl_defs": [],
                 "use_extern_types": [],
                 "use_extern_functions": [],
-                "use_submodules": []
-              }
+                "use_submodules": [],
+                "use_macro_declarations": []
+              },
+              "macro_declarations": []
             },
             {
               "item_data": {
@@ -1204,8 +1212,10 @@
                     "use_impl_defs": [],
                     "use_extern_types": [],
                     "use_extern_functions": [],
-                    "use_submodules": []
-                  }
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
                 },
                 {
                   "item_data": {
@@ -1441,8 +1451,10 @@
                     "use_impl_defs": [],
                     "use_extern_types": [],
                     "use_extern_functions": [],
-                    "use_submodules": []
-                  }
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
                 },
                 {
                   "item_data": {
@@ -1678,8 +1690,10 @@
                     "use_impl_defs": [],
                     "use_extern_types": [],
                     "use_extern_functions": [],
-                    "use_submodules": []
-                  }
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
                 }
               ],
               "constants": [],
@@ -1907,8 +1921,10 @@
                 "use_impl_defs": [],
                 "use_extern_types": [],
                 "use_extern_functions": [],
-                "use_submodules": []
-              }
+                "use_submodules": [],
+                "use_macro_declarations": []
+              },
+              "macro_declarations": []
             },
             {
               "item_data": {
@@ -2153,8 +2169,10 @@
                     "use_impl_defs": [],
                     "use_extern_types": [],
                     "use_extern_functions": [],
-                    "use_submodules": []
-                  }
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
                 },
                 {
                   "item_data": {
@@ -2390,8 +2408,10 @@
                     "use_impl_defs": [],
                     "use_extern_types": [],
                     "use_extern_functions": [],
-                    "use_submodules": []
-                  }
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
                 },
                 {
                   "item_data": {
@@ -2627,8 +2647,10 @@
                     "use_impl_defs": [],
                     "use_extern_types": [],
                     "use_extern_functions": [],
-                    "use_submodules": []
-                  }
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
                 }
               ],
               "constants": [],
@@ -2856,8 +2878,10 @@
                 "use_impl_defs": [],
                 "use_extern_types": [],
                 "use_extern_functions": [],
-                "use_submodules": []
-              }
+                "use_submodules": [],
+                "use_macro_declarations": []
+              },
+              "macro_declarations": []
             }
           ],
           "constants": [],
@@ -3094,8 +3118,29 @@
             "use_impl_defs": [],
             "use_extern_types": [],
             "use_extern_functions": [],
-            "use_submodules": []
-          }
+            "use_submodules": [],
+            "use_macro_declarations": []
+          },
+          "macro_declarations": [
+            {
+              "item_data": {
+                "name": "public_macro_declaration",
+                "doc": "Public macro declaration",
+                "signature": "macro public_macro_declaration {\n    [$x:ident] => { ... };\n}",
+                "full_path": "hello_world::public_macro_declaration",
+                "group": null
+              }
+            },
+            {
+              "item_data": {
+                "name": "private_macro_declaration",
+                "doc": "Private macro declaration",
+                "signature": "macro private_macro_declaration {\n    [$x:ident] => { ... };\n}",
+                "full_path": "hello_world::private_macro_declaration",
+                "group": null
+              }
+            }
+          ]
         },
         "groups": []
       },

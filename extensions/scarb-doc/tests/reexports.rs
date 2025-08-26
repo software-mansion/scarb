@@ -46,6 +46,16 @@ fn test_reexports() {
             pub extern type ExternalType;
   
             pub mod inside_sub_module {}
+
+            pub mod macro_module {
+                pub macro macro_definition {
+                    ($name:ident) => {
+                        fn $name() {
+                            println!(name);
+                        }
+                    };
+                }
+            }
           "#})
         .build(&child_dir);
 
@@ -107,6 +117,7 @@ fn test_reexports() {
           pub use inner_module::extern_function;
           pub use inner_module::ExternalType;
           pub use inner_module::inside_inner_module;
+          pub use macro_module::macro_definition;
         "#},
         );
 

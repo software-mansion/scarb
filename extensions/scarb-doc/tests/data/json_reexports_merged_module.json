@@ -82,8 +82,10 @@
                           "use_impl_defs": [],
                           "use_extern_types": [],
                           "use_extern_functions": [],
-                          "use_submodules": []
-                        }
+                          "use_submodules": [],
+                          "use_macro_declarations": []
+                        },
+                        "macro_declarations": []
                       }
                     ],
                     "constants": [],
@@ -107,11 +109,15 @@
                       "use_impl_defs": [],
                       "use_extern_types": [],
                       "use_extern_functions": [],
-                      "use_submodules": []
-                    }
+                      "use_submodules": [],
+                      "use_macro_declarations": []
+                    },
+                    "macro_declarations": []
                   }
-                ]
-              }
+                ],
+                "use_macro_declarations": []
+              },
+              "macro_declarations": []
             },
             {
               "item_data": {
@@ -154,8 +160,10 @@
                 "use_impl_defs": [],
                 "use_extern_types": [],
                 "use_extern_functions": [],
-                "use_submodules": []
-              }
+                "use_submodules": [],
+                "use_macro_declarations": []
+              },
+              "macro_declarations": []
             },
             {
               "item_data": {
@@ -196,8 +204,10 @@
                     "use_impl_defs": [],
                     "use_extern_types": [],
                     "use_extern_functions": [],
-                    "use_submodules": []
-                  }
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
                 }
               ],
               "constants": [],
@@ -232,8 +242,10 @@
                 "use_impl_defs": [],
                 "use_extern_types": [],
                 "use_extern_functions": [],
-                "use_submodules": []
-              }
+                "use_submodules": [],
+                "use_macro_declarations": []
+              },
+              "macro_declarations": []
             }
           ],
           "constants": [],
@@ -257,8 +269,10 @@
             "use_impl_defs": [],
             "use_extern_types": [],
             "use_extern_functions": [],
-            "use_submodules": []
-          }
+            "use_submodules": [],
+            "use_macro_declarations": []
+          },
+          "macro_declarations": []
         },
         "groups": []
       },

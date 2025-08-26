@@ -2,8 +2,8 @@ use crate::location_links::DocLocationLink;
 use crate::types::module_type::Module;
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
-    ImplFunction, ImplType, Member, Struct, Trait, TraitConstant, TraitFunction, TraitType,
-    TypeAlias, Variant,
+    ImplFunction, ImplType, MacroDeclaration, Member, Struct, Trait, TraitConstant, TraitFunction,
+    TraitType, TypeAlias, Variant,
 };
 use cairo_lang_doc::parser::DocumentationCommentToken;
 
@@ -22,6 +22,7 @@ struct TopLevelItems<'a, 'db> {
     pub impls: Vec<&'a Impl<'db>>,
     pub extern_types: Vec<&'a ExternType<'db>>,
     pub extern_functions: Vec<&'a ExternFunction<'db>>,
+    pub macro_declarations: Vec<&'a MacroDeclaration<'db>>,
 }
 
 // Trait for items with no descendants.
@@ -46,6 +47,7 @@ impl SubPathDocItem for ImplType<'_> {}
 impl SubPathDocItem for ImplConstant<'_> {}
 impl SubPathDocItem for TraitConstant<'_> {}
 impl SubPathDocItem for TraitType<'_> {}
+impl SubPathDocItem for MacroDeclaration<'_> {}
 
 // Trait for items that have their own documentation page.
 // Used to enforce constraints on generic implementations of traits like `TopLevelMarkdownDocItem`.
@@ -62,6 +64,7 @@ impl TopLevelDocItem for Module<'_> {}
 impl TopLevelDocItem for Struct<'_> {}
 impl TopLevelDocItem for Trait<'_> {}
 impl TopLevelDocItem for TypeAlias<'_> {}
+impl TopLevelDocItem for MacroDeclaration<'_> {}
 
 // Wrapper trait over a documentable item to hide implementation details of the item type.
 trait DocItem {
@@ -131,3 +134,4 @@ impl_doc_item!(TraitType<'_>, "Trait types");
 impl_doc_item!(TraitFunction<'_>, "Trait functions");
 impl_doc_item!(TypeAlias<'_>, "Type aliases");
 impl_doc_item!(Variant<'_>, "Variants");
+impl_doc_item!(MacroDeclaration<'_>, "Macro declarations");

@@ -43,8 +43,10 @@
             "use_impl_defs": [],
             "use_extern_types": [],
             "use_extern_functions": [],
-            "use_submodules": []
-          }
+            "use_submodules": [],
+            "use_macro_declarations": []
+          },
+          "macro_declarations": []
         },
         "groups": [
           {
@@ -69,7 +71,8 @@
             "traits": [],
             "impls": [],
             "extern_types": [],
-            "extern_functions": []
+            "extern_functions": [],
+            "macro_declarations": []
           },
           {
             "name": "test2",
@@ -93,7 +96,8 @@
             "traits": [],
             "impls": [],
             "extern_types": [],
-            "extern_functions": []
+            "extern_functions": [],
+            "macro_declarations": []
           }
         ]
       },
