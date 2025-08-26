@@ -1,6 +1,6 @@
 use std::{fmt, mem};
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use tokio::sync::OnceCell;
 use tokio::task::spawn_blocking;
@@ -12,11 +12,10 @@ use scarb_ui::components::Status;
 
 use crate::core::source::Source;
 use crate::core::{
-    Config, DepKind, GitReference, ManifestDependency, Package, PackageId, PackageName, SourceId,
+    Config, GitReference, ManifestDependency, Package, PackageId, PackageName, SourceId,
     Summary,
 };
 use crate::sources::git::client::GitDatabase;
-use indoc::formatdoc;
 use std::collections::HashSet;
 
 use super::{PathSource, ensure_audit_requirement_allowed};
