@@ -9,8 +9,8 @@ use crate::types::groups::Group;
 use crate::types::module_type::{Module, ModulePubUses};
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
-    ImplFunction, ImplType, ItemData, Member, Struct, Trait, TraitConstant, TraitFunction,
-    TraitType, TypeAlias, Variant,
+    ImplFunction, ImplType, ItemData, MacroDeclaration, Member, Struct, Trait, TraitConstant,
+    TraitFunction, TraitType, TypeAlias, Variant,
 };
 use anyhow::Result;
 use cairo_lang_doc::parser::{CommentLinkToken, DocumentationCommentToken};
@@ -66,6 +66,7 @@ impl_top_level_markdown_doc_item!(Module<'_>, "modules.md");
 impl_top_level_markdown_doc_item!(Struct<'_>, "structs.md");
 impl_top_level_markdown_doc_item!(Trait<'_>, "traits.md");
 impl_top_level_markdown_doc_item!(TypeAlias<'_>, "type_aliases.md");
+impl_top_level_markdown_doc_item!(MacroDeclaration<'_>, "macro_declarations.md");
 
 macro_rules! impl_markdown_doc_item {
     ($ty:ty) => {
@@ -101,6 +102,7 @@ impl_markdown_doc_item!(Variant<'_>);
 impl_markdown_doc_item!(ImplConstant<'_>);
 impl_markdown_doc_item!(TraitConstant<'_>);
 impl_markdown_doc_item!(TraitType<'_>);
+impl_markdown_doc_item!(MacroDeclaration<'_>);
 
 pub trait MarkdownDocItem: DocItem {
     fn generate_markdown(
@@ -335,6 +337,12 @@ fn generate_pub_use_item_markdown(
     )
     .unwrap_or("".to_string());
 
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_macro_declarations.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
     if !buff.is_empty() {
         return format!("{RE_EXPORTS_CHAPTER}{buff}");
     }
@@ -418,7 +426,12 @@ impl<'db> MarkdownDocItem for Module<'db> {
             &self.markdown_formatted_path(),
             BASE_MODULE_CHAPTER_PREFIX,
         )?;
-
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
+            &self.macro_declarations.iter().collect_vec(),
+            context,
+            &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
+        )?;
         markdown += &generate_pub_use_item_markdown(&self.pub_uses, context);
 
         if !self.groups.is_empty() {

@@ -130,7 +130,8 @@ impl<'db> Crate<'db> {
             (use_traits, insert_trait),
             (use_impl_defs, insert_impl),
             (use_extern_types, insert_extern_type),
-            (use_extern_functions, insert_extern_function)
+            (use_extern_functions, insert_extern_function),
+            (use_macro_declarations, insert_macro_declaration)
         );
 
         for item in all_pub_ues.use_submodules.into_iter() {
@@ -188,6 +189,7 @@ impl<'db> Crate<'db> {
                     impls: vec![],
                     extern_types: vec![],
                     extern_functions: vec![],
+                    macro_declarations: vec![],
                 });
 
             collect_items!(

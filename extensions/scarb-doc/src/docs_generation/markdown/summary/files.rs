@@ -9,8 +9,8 @@ use crate::docs_generation::markdown::{
 use crate::docs_generation::{DocItem, TopLevelItems};
 use crate::types::module_type::Module;
 use crate::types::other_types::{
-    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Struct, Trait,
-    TypeAlias,
+    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, MacroDeclaration,
+    Struct, Trait, TypeAlias,
 };
 use anyhow::Result;
 use itertools::chain;
@@ -51,6 +51,7 @@ pub fn generate_modules_summary_files(
         impls,
         extern_types,
         extern_functions,
+        macro_declarations,
         ..
     } = &module;
 
@@ -65,6 +66,9 @@ pub fn generate_modules_summary_files(
     top_level_items.impls.extend(impls);
     top_level_items.extern_types.extend(extern_types);
     top_level_items.extern_functions.extend(extern_functions);
+    top_level_items
+        .macro_declarations
+        .extend(macro_declarations);
 
     let mut doc_files = generate_summary_files_for_module_items(
         &top_level_items,
@@ -127,7 +131,8 @@ pub fn generate_summary_files_for_module_items(
         Trait => traits,
         Impl => impls,
         ExternType => extern_types,
-        ExternFunction => extern_functions
+        ExternFunction => extern_functions,
+        MacroDeclaration => macro_declarations
     ])
     .into_iter()
     .filter(|(_filename, content)| !content.is_empty())
@@ -168,6 +173,11 @@ pub fn generate_doc_files_for_module_items(
         )?,
         generate_top_level_docs_contents(
             &top_level_items.extern_functions,
+            context,
+            summary_index_map,
+        )?,
+        generate_top_level_docs_contents(
+            &top_level_items.macro_declarations,
             context,
             summary_index_map,
         )?,

@@ -1,7 +1,7 @@
 use crate::types::module_type::{Module, ModulePubUses};
 use crate::types::other_types::{
-    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Struct, Trait,
-    TypeAlias,
+    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, MacroDeclaration,
+    Struct, Trait, TypeAlias,
 };
 use serde::Serialize;
 use std::collections::HashMap;
@@ -20,6 +20,7 @@ pub struct Group<'db> {
     pub impls: Vec<Impl<'db>>,
     pub extern_types: Vec<ExternType<'db>>,
     pub extern_functions: Vec<ExternFunction<'db>>,
+    pub macro_declarations: Vec<MacroDeclaration<'db>>,
 }
 
 impl<'db> Group<'db> {
@@ -56,6 +57,7 @@ macro_rules! aggregate_groups {
                             impls: vec![],
                             extern_types: vec![],
                             extern_functions: vec![],
+                            macro_declarations: vec![],
                         });
 
                     group.$group_field.push(item.clone());

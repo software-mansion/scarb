@@ -19,6 +19,7 @@
             "name": "hello_world",
             "signature": null
           },
+          "macro_declarations": [],
           "pub_uses": {
             "use_constants": [],
             "use_enums": [],
@@ -27,6 +28,7 @@
             "use_free_functions": [],
             "use_impl_aliases": [],
             "use_impl_defs": [],
+            "use_macro_declarations": [],
             "use_module_type_aliases": [],
             "use_structs": [],
             "use_submodules": [
@@ -129,6 +131,7 @@
                   "name": "sub_package",
                   "signature": null
                 },
+                "macro_declarations": [],
                 "pub_uses": {
                   "use_constants": [],
                   "use_enums": [],
@@ -137,6 +140,7 @@
                   "use_free_functions": [],
                   "use_impl_aliases": [],
                   "use_impl_defs": [],
+                  "use_macro_declarations": [],
                   "use_module_type_aliases": [],
                   "use_structs": [],
                   "use_submodules": [],
@@ -170,6 +174,7 @@
                       "name": "inside_sub_module",
                       "signature": null
                     },
+                    "macro_declarations": [],
                     "pub_uses": {
                       "use_constants": [],
                       "use_enums": [],
@@ -178,6 +183,52 @@
                       "use_free_functions": [],
                       "use_impl_aliases": [],
                       "use_impl_defs": [],
+                      "use_macro_declarations": [],
+                      "use_module_type_aliases": [],
+                      "use_structs": [],
+                      "use_submodules": [],
+                      "use_traits": []
+                    },
+                    "structs": [],
+                    "submodules": [],
+                    "traits": [],
+                    "type_aliases": []
+                  },
+                  {
+                    "constants": [],
+                    "enums": [],
+                    "extern_functions": [],
+                    "extern_types": [],
+                    "free_functions": [],
+                    "impl_aliases": [],
+                    "impls": [],
+                    "item_data": {
+                      "doc": null,
+                      "full_path": "sub_package::macro_module",
+                      "group": null,
+                      "name": "macro_module",
+                      "signature": null
+                    },
+                    "macro_declarations": [
+                      {
+                        "item_data": {
+                          "doc": null,
+                          "full_path": "sub_package::macro_module::macro_definition",
+                          "group": null,
+                          "name": "macro_definition",
+                          "signature": "macro macro_definition {\n    ($name:ident) => { ... };\n} => { ... }"
+                        }
+                      }
+                    ],
+                    "pub_uses": {
+                      "use_constants": [],
+                      "use_enums": [],
+                      "use_extern_functions": [],
+                      "use_extern_types": [],
+                      "use_free_functions": [],
+                      "use_impl_aliases": [],
+                      "use_impl_defs": [],
+                      "use_macro_declarations": [],
                       "use_module_type_aliases": [],
                       "use_structs": [],
                       "use_submodules": [],
@@ -329,6 +380,7 @@
                 "name": "sub_package",
                 "signature": null
               },
+              "macro_declarations": [],
               "pub_uses": {
                 "use_constants": [],
                 "use_enums": [],
@@ -337,6 +389,7 @@
                 "use_free_functions": [],
                 "use_impl_aliases": [],
                 "use_impl_defs": [],
+                "use_macro_declarations": [],
                 "use_module_type_aliases": [],
                 "use_structs": [],
                 "use_submodules": [],
@@ -370,6 +423,7 @@
                     "name": "inside_sub_module",
                     "signature": null
                   },
+                  "macro_declarations": [],
                   "pub_uses": {
                     "use_constants": [],
                     "use_enums": [],
@@ -378,6 +432,52 @@
                     "use_free_functions": [],
                     "use_impl_aliases": [],
                     "use_impl_defs": [],
+                    "use_macro_declarations": [],
+                    "use_module_type_aliases": [],
+                    "use_structs": [],
+                    "use_submodules": [],
+                    "use_traits": []
+                  },
+                  "structs": [],
+                  "submodules": [],
+                  "traits": [],
+                  "type_aliases": []
+                },
+                {
+                  "constants": [],
+                  "enums": [],
+                  "extern_functions": [],
+                  "extern_types": [],
+                  "free_functions": [],
+                  "impl_aliases": [],
+                  "impls": [],
+                  "item_data": {
+                    "doc": null,
+                    "full_path": "sub_package::macro_module",
+                    "group": null,
+                    "name": "macro_module",
+                    "signature": null
+                  },
+                  "macro_declarations": [
+                    {
+                      "item_data": {
+                        "doc": null,
+                        "full_path": "sub_package::macro_module::macro_definition",
+                        "group": null,
+                        "name": "macro_definition",
+                        "signature": "macro macro_definition {\n    ($name:ident) => { ... };\n} => { ... }"
+                      }
+                    }
+                  ],
+                  "pub_uses": {
+                    "use_constants": [],
+                    "use_enums": [],
+                    "use_extern_functions": [],
+                    "use_extern_types": [],
+                    "use_free_functions": [],
+                    "use_impl_aliases": [],
+                    "use_impl_defs": [],
+                    "use_macro_declarations": [],
                     "use_module_type_aliases": [],
                     "use_structs": [],
                     "use_submodules": [],
