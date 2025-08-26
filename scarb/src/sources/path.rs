@@ -1,7 +1,6 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use camino::Utf8Path;
-use indoc::formatdoc;
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::{fmt, mem};
@@ -11,7 +10,7 @@ use crate::core::config::Config;
 use crate::core::manifest::{ManifestDependency, Summary};
 use crate::core::package::{Package, PackageId};
 use crate::core::source::{Source, SourceId};
-use crate::core::{DepKind, PackageName};
+use crate::core::PackageName;
 use crate::ops;
 use crate::sources::ensure_audit_requirement_allowed;
 
