@@ -114,7 +114,7 @@ pubgrub = { git = "https://github.com/software-mansion-labs/pubgrub.git", branch
 quote = "1"
 ra_ap_toolchain = "0.0.218"
 rayon = "1.10"
-redb = "2.6.2"
+redb = "2.6.3"
 reqwest = { version = "0.11", features = ["gzip", "brotli", "deflate", "json", "stream", "multipart"], default-features = false }
 salsa = "=0.22"
 semver = { version = "1", features = ["serde"] }
