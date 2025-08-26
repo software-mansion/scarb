@@ -7,9 +7,9 @@ use crate::types::module_type::is_doc_hidden_attr;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LanguageElementId,
-    LookupItemId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, StructId,
-    TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId,
-    VariantId,
+    LookupItemId, MacroDeclarationId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId,
+    StructId, TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId,
+    TraitTypeId, VariantId,
 };
 use cairo_lang_diagnostics::Maybe;
 use cairo_lang_doc::db::DocGroup;
@@ -690,6 +690,30 @@ impl<'db> ExternFunction<'db> {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ExternFunction(id)).into(),
+            ),
+        }
+    }
+}
+
+#[derive(Serialize, Clone)]
+pub struct MacroDeclaration<'db> {
+    #[serde(skip)]
+    pub id: MacroDeclarationId<'db>,
+    #[serde(skip)]
+    pub node: ast::ItemMacroDeclarationPtr<'db>,
+    pub item_data: ItemData<'db>,
+}
+
+impl<'db> MacroDeclaration<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: MacroDeclarationId<'db>) -> Self {
+        let node = id.stable_ptr(db);
+        Self {
+            id,
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                LookupItemId::ModuleItem(ModuleItemId::MacroDeclaration(id)).into(),
             ),
         }
     }

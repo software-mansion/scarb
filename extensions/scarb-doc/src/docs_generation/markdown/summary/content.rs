@@ -42,6 +42,7 @@ pub fn generate_module_summary_content(
         impls,
         extern_types,
         extern_functions,
+        macro_declarations,
         ..
     } = &module;
 
@@ -56,6 +57,9 @@ pub fn generate_module_summary_content(
     top_level_items.impls.extend(impls);
     top_level_items.extern_types.extend(extern_types);
     top_level_items.extern_functions.extend(extern_functions);
+    top_level_items
+        .macro_declarations
+        .extend(macro_declarations);
 
     nesting_level += 1;
     if !top_level_items.modules.is_empty() {
@@ -90,7 +94,8 @@ pub fn generate_module_summary_content(
             traits,
             impls,
             extern_types,
-            extern_functions
+            extern_functions,
+            macro_declarations
         ]
     );
 }

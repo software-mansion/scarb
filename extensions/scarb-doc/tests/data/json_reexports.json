@@ -51,8 +51,55 @@
                     "use_impl_defs": [],
                     "use_extern_types": [],
                     "use_extern_functions": [],
-                    "use_submodules": []
-                  }
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
+                },
+                {
+                  "item_data": {
+                    "name": "macro_module",
+                    "doc": null,
+                    "signature": null,
+                    "full_path": "sub_package::macro_module",
+                    "group": null
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [],
+                  "structs": [],
+                  "enums": [],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": [],
+                  "pub_uses": {
+                    "use_constants": [],
+                    "use_free_functions": [],
+                    "use_structs": [],
+                    "use_enums": [],
+                    "use_module_type_aliases": [],
+                    "use_impl_aliases": [],
+                    "use_traits": [],
+                    "use_impl_defs": [],
+                    "use_extern_types": [],
+                    "use_extern_functions": [],
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": [
+                    {
+                      "item_data": {
+                        "name": "macro_definition",
+                        "doc": null,
+                        "signature": "macro macro_definition {\n    ($name:ident) => { ... };\n}",
+                        "full_path": "sub_package::macro_module::macro_definition",
+                        "group": null
+                      }
+                    }
+                  ]
                 }
               ],
               "constants": [
@@ -204,8 +251,10 @@
                 "use_impl_defs": [],
                 "use_extern_types": [],
                 "use_extern_functions": [],
-                "use_submodules": []
-              }
+                "use_submodules": [],
+                "use_macro_declarations": []
+              },
+              "macro_declarations": []
             }
           ],
           "constants": [],
@@ -269,8 +318,55 @@
                       "use_impl_defs": [],
                       "use_extern_types": [],
                       "use_extern_functions": [],
-                      "use_submodules": []
-                    }
+                      "use_submodules": [],
+                      "use_macro_declarations": []
+                    },
+                    "macro_declarations": []
+                  },
+                  {
+                    "item_data": {
+                      "name": "macro_module",
+                      "doc": null,
+                      "signature": null,
+                      "full_path": "sub_package::macro_module",
+                      "group": null
+                    },
+                    "submodules": [],
+                    "constants": [],
+                    "free_functions": [],
+                    "structs": [],
+                    "enums": [],
+                    "type_aliases": [],
+                    "impl_aliases": [],
+                    "traits": [],
+                    "impls": [],
+                    "extern_types": [],
+                    "extern_functions": [],
+                    "pub_uses": {
+                      "use_constants": [],
+                      "use_free_functions": [],
+                      "use_structs": [],
+                      "use_enums": [],
+                      "use_module_type_aliases": [],
+                      "use_impl_aliases": [],
+                      "use_traits": [],
+                      "use_impl_defs": [],
+                      "use_extern_types": [],
+                      "use_extern_functions": [],
+                      "use_submodules": [],
+                      "use_macro_declarations": []
+                    },
+                    "macro_declarations": [
+                      {
+                        "item_data": {
+                          "name": "macro_definition",
+                          "doc": null,
+                          "signature": "macro macro_definition {\n    ($name:ident) => { ... };\n}",
+                          "full_path": "sub_package::macro_module::macro_definition",
+                          "group": null
+                        }
+                      }
+                    ]
                   }
                 ],
                 "constants": [
@@ -422,11 +518,15 @@
                   "use_impl_defs": [],
                   "use_extern_types": [],
                   "use_extern_functions": [],
-                  "use_submodules": []
-                }
+                  "use_submodules": [],
+                  "use_macro_declarations": []
+                },
+                "macro_declarations": []
               }
-            ]
-          }
+            ],
+            "use_macro_declarations": []
+          },
+          "macro_declarations": []
         },
         "groups": []
       },

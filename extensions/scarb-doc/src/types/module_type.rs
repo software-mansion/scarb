@@ -6,8 +6,8 @@ use crate::types::groups::{
     aggregate_structs_groups, aggregate_traits_groups, aggregate_type_aliases_groups,
 };
 use crate::types::other_types::{
-    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData, Struct,
-    Trait, TypeAlias,
+    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData,
+    MacroDeclaration, Struct, Trait, TypeAlias,
 };
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
@@ -48,6 +48,7 @@ pub struct Module<'db> {
     pub extern_types: Vec<ExternType<'db>>,
     pub extern_functions: Vec<ExternFunction<'db>>,
     pub pub_uses: ModulePubUses<'db>,
+    pub macro_declarations: Vec<MacroDeclaration<'db>>,
     #[serde(skip_serializing)]
     pub groups: Vec<Group<'db>>,
 }
@@ -65,6 +66,7 @@ pub struct ModulePubUses<'db> {
     pub use_extern_types: Vec<ExternType<'db>>,
     pub use_extern_functions: Vec<ExternFunction<'db>>,
     pub use_submodules: Vec<Module<'db>>,
+    pub use_macro_declarations: Vec<MacroDeclaration<'db>>,
 }
 
 impl<'db> ModulePubUses<'db> {
@@ -102,6 +104,7 @@ impl<'db> ModulePubUses<'db> {
         let mut use_extern_types = Vec::new();
         let mut use_extern_functions = Vec::new();
         let mut use_submodules = Vec::new();
+        let mut use_macro_declarations = Vec::new();
 
         for item in module_use_items {
             match item {
@@ -137,6 +140,9 @@ impl<'db> ModulePubUses<'db> {
                 ResolvedGenericItem::Module(ModuleId::CrateRoot(id)) => use_submodules.push(
                     Module::new(db, ModuleId::CrateRoot(id), include_private_items)?,
                 ),
+                ResolvedGenericItem::Macro(id) => {
+                    use_macro_declarations.push(MacroDeclaration::new(db, id))
+                }
                 _ => (),
             }
         }
@@ -153,6 +159,7 @@ impl<'db> ModulePubUses<'db> {
             use_extern_types,
             use_extern_functions,
             use_submodules,
+            use_macro_declarations,
         })
     }
 
@@ -168,6 +175,7 @@ impl<'db> ModulePubUses<'db> {
             && self.use_extern_types.is_empty()
             && self.use_extern_functions.is_empty()
             && self.use_submodules.is_empty()
+            && self.use_macro_declarations.is_empty()
     }
 }
 
@@ -215,6 +223,7 @@ macro_rules! define_insert_function {
                         impls: vec![],
                         extern_types: vec![],
                         extern_functions: vec![],
+                        macro_declarations: vec![],
                     };
                     group.$field_name.push(item);
                     self.groups.push(group);
@@ -239,7 +248,8 @@ impl<'db> Module<'db> {
         insert_trait, traits, Trait<'db>;
         insert_impl, impls, Impl<'db>;
         insert_extern_type, extern_types, ExternType<'db>;
-        insert_extern_function, extern_functions, ExternFunction<'db>
+        insert_extern_function, extern_functions, ExternFunction<'db>;
+        insert_macro_declaration, macro_declarations, MacroDeclaration<'db>
     );
 
     pub fn new(
@@ -377,6 +387,12 @@ impl<'db> Module<'db> {
                 Module::new(db, ModuleId::Submodule(*id), include_private_items)
             })?;
 
+        let macro_declarations = module_data.macro_declarations(db);
+        let macro_declarations: Vec<MacroDeclaration> =
+            filter_map_item_id_to_item(macro_declarations.keys(), should_include_item, |id| {
+                Ok(MacroDeclaration::new(db, *id))
+            })?;
+
         let mut group_map: HashMap<String, Group> = HashMap::new();
         constants = aggregate_constants_groups(&constants, &mut group_map);
         free_functions = aggregate_free_functions_groups(&free_functions, &mut group_map);
@@ -410,6 +426,7 @@ impl<'db> Module<'db> {
             extern_types,
             extern_functions,
             pub_uses: module_pubuses,
+            macro_declarations,
             groups,
         })
     }
@@ -441,6 +458,7 @@ impl<'db> Module<'db> {
             extern_types: Default::default(),
             extern_functions: Default::default(),
             pub_uses: Default::default(),
+            macro_declarations: Default::default(),
             groups: vec![],
         }
     }
@@ -471,27 +489,25 @@ impl<'db> Module<'db> {
         self.extern_functions.iter().for_each(|item| {
             ids.insert(item.item_data.id, &item.item_data);
         });
-
+        self.macro_declarations.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
         self.structs.iter().for_each(|struct_| {
             ids.insert(struct_.item_data.id, &struct_.item_data);
             struct_.get_all_item_ids();
         });
-
         self.enums.iter().for_each(|enum_| {
             ids.insert(enum_.item_data.id, &enum_.item_data);
             ids.extend(enum_.get_all_item_ids());
         });
-
         self.traits.iter().for_each(|trait_| {
             ids.insert(trait_.item_data.id, &trait_.item_data);
             ids.extend(trait_.get_all_item_ids());
         });
-
         self.impls.iter().for_each(|impl_| {
             ids.insert(impl_.item_data.id, &impl_.item_data);
             ids.extend(impl_.get_all_item_ids());
         });
-
         self.submodules.iter().for_each(|sub_module| {
             ids.extend(sub_module.get_all_item_ids());
         });
@@ -535,6 +551,9 @@ pub(crate) fn merge_modules<'a, 'db>(
     }
     for extern_function in virtual_module.extern_functions {
         documented_module.insert_extern_function(extern_function);
+    }
+    for macro_declaration in virtual_module.macro_declarations {
+        documented_module.insert_macro_declaration(macro_declaration);
     }
     for submodule2 in virtual_module.submodules {
         if let Some(submodule_index) = documented_module
@@ -606,6 +625,9 @@ pub(crate) fn collect_pubuses<'db>(
     all_pub_uses
         .use_submodules
         .extend(module.pub_uses.use_submodules);
+    all_pub_uses
+        .use_macro_declarations
+        .extend(module.pub_uses.use_macro_declarations);
 
     for submodule in module.submodules {
         collect_pubuses(all_pub_uses, submodule);
