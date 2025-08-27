@@ -1,6 +1,4 @@
 use crate::core::{Checksum, PackageName};
-use dialoguer::console::Style;
-use scarb_ui::Message;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
