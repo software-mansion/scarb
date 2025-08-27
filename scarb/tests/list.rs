@@ -29,6 +29,9 @@ fn list_package_versions() {
         publish_package("foo", version, &mut registry);
     }
 
+    yank(registry.t.child("index/3/f/foo.json").path(), "1.2.4-beta").unwrap();
+    audit(registry.t.child("index/3/f/foo.json").path(), "1.5.0").unwrap();
+
     Scarb::quick_snapbox()
         .arg("list")
         .arg("foo")
@@ -40,55 +43,8 @@ fn list_package_versions() {
             VERSION          AUDIT    STATUS
             2.0.0+build.1    x        -[..]
             2.0.0-alpha.1    x        -[..]
-            1.5.0            x        -[..]
-            1.2.4-beta       x        -[..]
+            1.5.0            ✓        -[..]
+            1.2.4-beta       x        yanked[..]
             1.2.3            x        -
-        "#});
-}
-
-fn list_package_versions_yanked() {
-    let mut registry = LocalRegistry::create();
-    let versions = vec!["1.0.0", "1.1.0", "2.0.0"];
-    for version in &versions {
-        publish_package("foo", version, &mut registry);
-    }
-    yank(registry.t.child("index/3/f/foo.json").path(), "1.1.0").unwrap();
-
-    Scarb::quick_snapbox()
-        .arg("list")
-        .arg("foo")
-        .arg("--index")
-        .arg(&registry.url)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-            VERSION    AUDIT    STATUS
-            2.0.0      x        -[..]
-            1.1.0      x        yanked[..]
-            1.0.0      x        -
-        "#});
-}
-
-#[test]
-fn list_package_versions_audited() {
-    let mut registry = LocalRegistry::create();
-    let versions = vec!["1.0.0", "1.1.0", "2.0.0"];
-    for version in &versions {
-        publish_package("foo", version, &mut registry);
-    }
-    audit(registry.t.child("index/3/f/foo.json").path(), "1.1.0").unwrap();
-
-    Scarb::quick_snapbox()
-        .arg("list")
-        .arg("foo")
-        .arg("--index")
-        .arg(&registry.url)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-            VERSION    AUDIT    STATUS
-            2.0.0      x        -[..]
-            1.1.0      ✓        -[..]
-            1.0.0      x        -
         "#});
 }
