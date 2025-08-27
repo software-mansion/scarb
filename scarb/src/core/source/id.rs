@@ -12,7 +12,7 @@ use url::Url;
 
 use crate::core::registry::DEFAULT_REGISTRY_INDEX;
 use crate::core::source::Source;
-use crate::core::{Config, PackageId};
+use crate::core::{Config, PackageId, PackageName};
 use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::static_hash_cache::StaticHashCache;
 use crate::sources::canonical_url::CanonicalUrl;
@@ -390,6 +390,7 @@ impl SourceId {
         config: &'c Config,
         yanked_whitelist: &HashSet<PackageId>,
         require_audits: bool,
+        non_audited_whitelist: &HashSet<PackageName>,
     ) -> Result<Arc<dyn Source + 'c>> {
         use crate::sources::*;
         match self.kind {
@@ -400,6 +401,7 @@ impl SourceId {
                 config,
                 yanked_whitelist,
                 require_audits,
+                non_audited_whitelist,
             )?)),
             SourceKind::Std => Ok(Arc::new(StandardLibSource::new(config))),
         }

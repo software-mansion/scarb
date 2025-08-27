@@ -15,7 +15,7 @@ use crate::core::registry::package_source_store::PackageSourceStore;
 use crate::core::source::Source;
 use crate::core::{
     Checksum, Config, DepKind, DependencyVersionReq, ManifestDependency, Package, PackageId,
-    SourceId, Summary,
+    PackageName, SourceId, Summary,
 };
 use crate::flock::LockedFile;
 use crate::sources::PathSource;
@@ -28,6 +28,7 @@ pub struct RegistrySource<'c> {
     package_sources: PackageSourceStore<'c>,
     yanked_whitelist: HashSet<PackageId>,
     require_audits: bool,
+    non_audited_whitelist: HashSet<PackageName>,
 }
 
 impl<'c> RegistrySource<'c> {
@@ -36,6 +37,7 @@ impl<'c> RegistrySource<'c> {
         config: &'c Config,
         yanked_whitelist: &HashSet<PackageId>,
         require_audits: bool,
+        non_audited_whitelist: &HashSet<PackageName>,
     ) -> Result<Self> {
         let client = Self::create_client(source_id, config)?;
         let client = RegistryClientCache::new(source_id, client, config)?;
@@ -49,6 +51,7 @@ impl<'c> RegistrySource<'c> {
             package_sources,
             yanked_whitelist: yanked_whitelist.clone(),
             require_audits,
+            non_audited_whitelist: non_audited_whitelist.clone(),
         })
     }
 
@@ -102,7 +105,11 @@ impl Source for RegistrySource<'_> {
             if record.yanked && !self.yanked_whitelist.contains(&package_id) {
                 return None;
             }
-            if self.require_audits && dependency.kind == DepKind::Normal && !record.audited {
+            if self.require_audits
+                && dependency.kind == DepKind::Normal
+                && !record.audited
+                && !self.non_audited_whitelist.contains(&package_id.name)
+            {
                 return None;
             }
             let dependencies = record

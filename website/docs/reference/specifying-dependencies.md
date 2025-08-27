@@ -53,7 +53,15 @@ If unable to resolve the dependency tree due to this, Scarb will exit with an er
 
 By default, this field is set to `false`.
 
-## Specifying dependencies from Git repositories
+You may whitelist specific packages to ignore the `require-audits` setting by specifying them in the `allow-no-audits` key:
+
+```toml
+[security]
+allow-no-audits = ["alexandria_math"]
+```
+
+> [!WARNING]
+> This setting is not transitive, meaning that dependencies of the whitelisted packages will still be filtered based on the `require-audits` setting, unless they are also explicitly whitelisted.
 
 To depend on a package located in a Git repository, the minimum information needed to specify is the location of the
 repository with the `git` key:
