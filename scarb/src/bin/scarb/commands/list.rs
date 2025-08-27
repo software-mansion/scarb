@@ -1,10 +1,16 @@
 use crate::args::ListCommandArgs;
 use anyhow::{Context, Result};
+use dialoguer::console::Style;
+use itertools::Itertools;
 use scarb::core::ManifestDependency;
 use scarb::core::registry::DEFAULT_REGISTRY_INDEX;
 use scarb::core::registry::client::cache::RegistryClientCache;
+use scarb::core::registry::index::IndexRecords;
 use scarb::core::{Config, DependencyVersionReq, SourceId};
 use scarb::sources::RegistrySource;
+use scarb_ui::Message;
+use serde::{Serialize, Serializer};
+use std::collections::BTreeMap;
 use std::str::FromStr;
 use url::Url;
 
@@ -34,9 +40,34 @@ fn list_versions(args: ListCommandArgs, config: &Config) -> Result<()> {
                 source_id
             )
         })?;
-
-    for record in records.into_iter().rev() {
-        config.ui().print(record);
-    }
+    let list = VersionsList { versions: records };
+    config.ui().print(list);
     Ok(())
+}
+
+#[derive(Serialize, Debug)]
+struct VersionsList {
+    versions: IndexRecords,
+}
+
+impl Message for VersionsList {
+    fn text(self) -> String {
+        self.versions
+            .into_iter()
+            .rev()
+            .map(|record| {
+                if record.yanked {
+                    Style::from_dotted_str("red")
+                        .apply_to(format!("{} (yanked)", record.version))
+                        .to_string()
+                } else {
+                    record.version.to_string()
+                }
+            })
+            .join("\n")
+    }
+
+    fn structured<S: Serializer>(self, ser: S) -> Result<S::Ok, S::Error> {
+        self.versions.serialize(ser)
+    }
 }

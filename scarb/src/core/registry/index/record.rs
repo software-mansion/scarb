@@ -22,19 +22,6 @@ pub struct IndexRecord {
     pub audited: bool,
 }
 
-// TODO: replace with impl for IndexRecords with proper formatting for yank / audit status
-impl Message for IndexRecord {
-    fn text(self) -> String {
-        if self.yanked {
-            Style::from_dotted_str("red")
-                .apply_to(format!("{} (yanked)", self.version))
-                .to_string()
-        } else {
-            format!("{}", self.version)
-        }
-    }
-}
-
 pub type IndexDependencies = Vec<IndexDependency>;
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
