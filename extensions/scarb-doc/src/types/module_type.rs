@@ -71,8 +71,9 @@ impl<'db> ModulePubUses<'db> {
         module_id: ModuleId<'db>,
         include_private_items: bool,
     ) -> Maybe<Self> {
-        let module_use_items: Vec<ResolvedGenericItem> = db
-            .module_uses(module_id)?
+        let module_use_items: Vec<ResolvedGenericItem> = module_id
+            .module_data(db)?
+            .uses(db)
             .iter()
             .filter_map(|(use_id, _)| {
                 let visibility = db
@@ -265,50 +266,50 @@ impl<'db> Module<'db> {
 
         let module_pubuses = ModulePubUses::new(db, module_id, include_private_items)?;
 
-        let module_constants = db.module_constants(module_id)?;
+        let module_data = module_id.module_data(db)?;
+        let module_constants = module_data.constants(db);
         let mut constants =
             filter_map_item_id_to_item(module_constants.keys(), should_include_item, |id| {
                 Ok(Constant::new(db, *id))
             })?;
 
-        let module_free_functions = db.module_free_functions(module_id)?;
-
+        let module_free_functions = module_data.free_functions(db);
         let mut free_functions =
             filter_map_item_id_to_item(module_free_functions.keys(), should_include_item, |id| {
                 Ok(FreeFunction::new(db, *id))
             })?;
 
-        let module_structs = db.module_structs(module_id)?;
+        let module_structs = module_data.structs(db);
         let mut structs =
             filter_map_item_id_to_item(module_structs.keys(), should_include_item, |id| {
                 Struct::new(db, *id, include_private_items)
             })?;
 
-        let module_enums = db.module_enums(module_id)?;
+        let module_enums = module_data.enums(db);
         let mut enums =
             filter_map_item_id_to_item(module_enums.keys(), should_include_item, |id| {
                 Enum::new(db, *id)
             })?;
 
-        let module_type_aliases = db.module_type_aliases(module_id)?;
+        let module_type_aliases = module_data.type_aliases(db);
         let mut type_aliases =
             filter_map_item_id_to_item(module_type_aliases.keys(), should_include_item, |id| {
                 Ok(TypeAlias::new(db, *id))
             })?;
 
-        let module_impl_aliases = db.module_impl_aliases(module_id)?;
+        let module_impl_aliases = module_data.impl_aliases(db);
         let mut impl_aliases =
             filter_map_item_id_to_item(module_impl_aliases.keys(), should_include_item, |id| {
                 Ok(ImplAlias::new(db, *id))
             })?;
 
-        let module_traits = db.module_traits(module_id)?;
+        let module_traits = module_data.traits(db);
         let mut traits =
             filter_map_item_id_to_item(module_traits.keys(), should_include_item, |id| {
                 Trait::new(db, *id)
             })?;
 
-        let module_impls = db.module_impls(module_id)?;
+        let module_impls = module_data.impls(db);
         let hide_impls_for_hidden_traits = |impl_def_id: &&ImplDefId| {
             // Hide impls for hidden traits and hidden trait generic args.
             // Example: `HiddenTrait<*>` or `NotHiddenTrait<HiddenStruct>` (e.g. Drop<HiddenStruct>).
@@ -356,19 +357,19 @@ impl<'db> Module<'db> {
             |id| Impl::new(db, *id),
         )?;
 
-        let module_extern_types = db.module_extern_types(module_id)?;
+        let module_extern_types = module_data.extern_types(db);
         let mut extern_types =
             filter_map_item_id_to_item(module_extern_types.keys(), should_include_item, |id| {
                 Ok(ExternType::new(db, *id))
             })?;
 
-        let module_extern_functions = db.module_extern_functions(module_id)?;
+        let module_extern_functions = module_data.extern_functions(db);
         let mut extern_functions = filter_map_item_id_to_item(
             module_extern_functions.keys(),
             should_include_item,
             |id| Ok(ExternFunction::new(db, *id)),
         )?;
-        let module_submodules = db.module_submodules(module_id)?;
+        let module_submodules = module_data.submodules(db);
         let mut submodules: Vec<Module> =
             filter_map_item_id_to_item(module_submodules.keys(), should_include_item, |id| {
                 Module::new(db, ModuleId::Submodule(*id), include_private_items)

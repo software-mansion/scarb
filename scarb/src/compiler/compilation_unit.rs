@@ -1,9 +1,11 @@
 use anyhow::{Result, anyhow, ensure};
 use cairo_lang_filesystem::cfg::CfgSet;
-use cairo_lang_filesystem::db::{CrateIdentifier, FilesGroup};
+use cairo_lang_filesystem::db::CrateIdentifier;
 use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId};
+use cairo_lang_utils::Intern;
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
+use salsa::Database;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::fmt::Write;
@@ -108,7 +110,7 @@ pub struct CompilationUnitComponent {
 
 impl CompilationUnitComponent {
     /// Returns a [`CrateInput`] of a crate associated with the [`CompilationUnitComponent`].
-    pub fn crate_input(&self, db: &dyn FilesGroup) -> CrateInput {
+    pub fn crate_input(&self, db: &dyn Database) -> CrateInput {
         CrateLongId::Real {
             name: self.cairo_package_name(),
             discriminator: self.id.to_discriminator(),
@@ -117,11 +119,12 @@ impl CompilationUnitComponent {
     }
 
     /// Returns a [`CrateId`] of a crate associated with the [`CompilationUnitComponent`].
-    pub fn crate_id<'db>(&self, db: &'db dyn FilesGroup) -> CrateId<'db> {
-        db.intern_crate(CrateLongId::Real {
+    pub fn crate_id<'db>(&self, db: &'db dyn Database) -> CrateId<'db> {
+        CrateLongId::Real {
             name: self.cairo_package_name(),
             discriminator: self.id.to_discriminator(),
-        })
+        }
+        .intern(db)
     }
 }
 

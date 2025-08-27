@@ -8,13 +8,13 @@ use crate::compiler::plugin::proc_macro::{ExpansionKind, ExpansionQuery};
 use cairo_lang_filesystem::span::TextSpan;
 use cairo_lang_macro::AllocationContext;
 use cairo_lang_syntax::attribute::structured::AttributeStructurize;
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{TypedSyntaxNode, ast};
+use salsa::Database;
 
 impl ProcMacroHostPlugin {
     pub(crate) fn parse_attrs<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         builder: &mut TokenStreamBuilder<'db>,
         item_attrs: Vec<ast::Attribute<'db>>,
         item_span: TextSpan,

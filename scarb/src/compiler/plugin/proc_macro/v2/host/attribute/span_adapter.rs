@@ -48,7 +48,7 @@ use cairo_lang_macro::{
     Diagnostic, TextOffset, TextSpan, TokenStream, TokenStreamMetadata, TokenTree,
 };
 use cairo_lang_syntax::node::TypedSyntaxNode;
-use cairo_lang_syntax::node::db::SyntaxGroup;
+use salsa::Database;
 use std::fmt::Display;
 
 /// [`TokenStream`] with token spans adapted for expansion input.
@@ -116,7 +116,7 @@ impl ExpandableAttrLocation {
     pub fn new<'db, T: TypedSyntaxNode<'db>>(
         node: &T,
         item_span: CairoTextSpan,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
     ) -> Self {
         let span_without_trivia = node.text_span(db);
         let span_with_trivia = node.as_syntax_node().span(db);

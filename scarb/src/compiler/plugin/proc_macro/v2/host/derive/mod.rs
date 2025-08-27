@@ -15,10 +15,10 @@ use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{AllocationContext, Diagnostic, TextSpan, TokenStream, TokenStreamMetadata};
 use cairo_lang_syntax::attribute::structured::{AttributeArgVariant, AttributeStructurize};
 use cairo_lang_syntax::node::ast::{Expr, PathSegment};
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::{Terminal, TypedSyntaxNode, ast};
 use itertools::Itertools;
+use salsa::Database;
 use std::fmt::{Debug, Formatter};
 
 mod span_adapter;
@@ -29,7 +29,7 @@ impl ProcMacroHostPlugin {
     /// Returns a list of expansions that this plugin should apply.
     fn parse_derive<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
     ) -> Vec<DeriveFound<'db>> {
         let attrs = match item_ast {
@@ -76,7 +76,7 @@ impl ProcMacroHostPlugin {
 
     pub fn expand_derives<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
         stream_metadata: TokenStreamMetadata,
     ) -> Option<PluginResult<'db>> {

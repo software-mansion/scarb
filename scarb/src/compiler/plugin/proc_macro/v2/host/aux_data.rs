@@ -1,15 +1,19 @@
 use crate::compiler::plugin::proc_macro::v2::{ProcMacroHostPlugin, ProcMacroId};
 use crate::core::PackageId;
+use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::GeneratedFileAuxData;
+use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_macro::AuxData;
 use cairo_lang_semantic::db::SemanticGroup;
 use itertools::Itertools;
+use scarb_stable_hash::StableHasher;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::vec::IntoIter;
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ProcMacroAuxData {
     value: Vec<u8>,
     macro_id: ProcMacroId,
@@ -38,6 +42,14 @@ impl GeneratedFileAuxData for EmittedAuxData {
 
     fn eq(&self, other: &dyn GeneratedFileAuxData) -> bool {
         self.0 == other.as_any().downcast_ref::<Self>().unwrap().0
+    }
+
+    fn hash_value(&self) -> u64 {
+        let mut hasher = StableHasher::new();
+        for aux_data in &self.0 {
+            aux_data.hash(&mut hasher);
+        }
+        hasher.finish()
     }
 }
 
@@ -74,9 +86,8 @@ impl ProcMacroHostPlugin {
         for crate_id in db.crates() {
             let crate_modules = db.crate_modules(*crate_id);
             for module in crate_modules.iter() {
-                let file_infos = db.module_generated_file_aux_data(*module);
-                if let Ok(file_infos) = file_infos {
-                    for file_info in file_infos.iter() {
+                if let Ok(module_data) = module.module_data(db) {
+                    for file_info in module_data.generated_file_aux_data(db).iter() {
                         let aux_data = file_info
                             .as_ref()
                             .and_then(|ad| ad.as_any().downcast_ref::<EmittedAuxData>());

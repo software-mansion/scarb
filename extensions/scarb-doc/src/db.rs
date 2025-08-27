@@ -1,19 +1,22 @@
 use cairo_lang_compiler::project::{ProjectConfig, update_crate_roots_from_project_config};
-use cairo_lang_defs::db::{DefsGroup, init_defs_group, try_ext_as_virtual_impl};
+use cairo_lang_defs::db::{DefsGroup, defs_group_input, init_defs_group, init_external_files};
 use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId};
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
-use cairo_lang_filesystem::db::{ExternalFiles, FilesGroup, init_files_group};
-use cairo_lang_filesystem::ids::{CrateInput, CrateLongId, VirtualFile};
+use cairo_lang_filesystem::db::{FilesGroup, init_files_group};
+use cairo_lang_filesystem::ids::{CrateInput, CrateLongId};
 use cairo_lang_lowering::db::{LoweringGroup, UseApproxCodeSizeEstimator};
 use cairo_lang_parser::db::ParserGroup;
-use cairo_lang_semantic::db::{Elongate, PluginSuiteInput, SemanticGroup, init_semantic_group};
+use cairo_lang_semantic::db::{
+    Elongate, PluginSuiteInput, SemanticGroup, init_semantic_group, semantic_group_input,
+};
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::inline_macros::get_default_plugin_suite;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_utils::Upcast;
+use salsa::Setter;
 use std::sync::Arc;
 
 use salsa;
@@ -40,11 +43,10 @@ impl ScarbDocDatabase {
         init_files_group(&mut db);
         init_defs_group(&mut db);
         init_semantic_group(&mut db);
+        init_external_files(&mut db);
 
-        db.set_cfg_set(Self::initial_cfg_set().into());
-
+        db.use_cfg(&Self::initial_cfg_set());
         db.set_default_plugins_from_suite(get_default_plugin_suite());
-
         db.apply_project_config(project_config);
         db.apply_starknet_plugin(crates_with_starknet);
 
@@ -81,14 +83,16 @@ impl ScarbDocDatabase {
         crate_input: CrateInput,
         plugins: PluginSuite,
     ) {
-        let mut overrides = self.macro_plugin_overrides_input().as_ref().clone();
+        let mut overrides = self.macro_plugin_overrides_input().clone();
         overrides.insert(
             crate_input.clone(),
             plugins.plugins.into_iter().map(MacroPluginLongId).collect(),
         );
-        self.set_macro_plugin_overrides_input(overrides.into());
+        defs_group_input(self)
+            .set_macro_plugin_overrides(self)
+            .to(Some(overrides));
 
-        let mut overrides = self.analyzer_plugin_overrides_input().as_ref().clone();
+        let mut overrides = self.analyzer_plugin_overrides_input().clone();
         overrides.insert(
             crate_input.clone(),
             plugins
@@ -97,9 +101,11 @@ impl ScarbDocDatabase {
                 .map(AnalyzerPluginLongId)
                 .collect(),
         );
-        self.set_analyzer_plugin_overrides_input(overrides.into());
+        semantic_group_input(self)
+            .set_analyzer_plugin_overrides(self)
+            .to(Some(overrides));
 
-        let mut overrides = self.inline_macro_plugin_overrides_input().as_ref().clone();
+        let mut overrides = self.inline_macro_plugin_overrides_input().clone();
         overrides.insert(
             crate_input,
             Arc::new(
@@ -110,17 +116,13 @@ impl ScarbDocDatabase {
                     .collect(),
             ),
         );
-        self.set_inline_macro_plugin_overrides_input(overrides.into());
+        defs_group_input(self)
+            .set_inline_macro_plugin_overrides(self)
+            .to(Some(overrides));
     }
 }
 
 impl salsa::Database for ScarbDocDatabase {}
-
-impl ExternalFiles for ScarbDocDatabase {
-    fn try_ext_as_virtual(&self, external_id: salsa::Id) -> Option<VirtualFile<'_>> {
-        try_ext_as_virtual_impl(self.upcast(), external_id)
-    }
-}
 
 impl<'db> Upcast<'db, dyn FilesGroup> for ScarbDocDatabase {
     fn upcast(&self) -> &(dyn FilesGroup + 'static) {
@@ -166,6 +168,12 @@ impl<'db> Upcast<'db, dyn LoweringGroup> for ScarbDocDatabase {
 
 impl Elongate for ScarbDocDatabase {
     fn elongate(&self) -> &(dyn SemanticGroup + 'static) {
+        self
+    }
+}
+
+impl<'db> Upcast<'db, dyn salsa::Database> for ScarbDocDatabase {
+    fn upcast(&self) -> &(dyn salsa::Database + 'static) {
         self
     }
 }

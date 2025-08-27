@@ -1,13 +1,13 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
-use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId};
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_test_plugin::{TestsCompilationConfig, compile_test_prepared_db};
+use cairo_lang_utils::Intern;
 use itertools::Itertools;
 use tracing::{trace, trace_span};
 
@@ -234,10 +234,11 @@ fn get_contract_crate_ids<'db>(
                         .find(|component| component.package.id.name == package_name)
                         .and_then(|component| component.id.to_discriminator());
                     let name = package_name.to_string();
-                    db.intern_crate(CrateLongId::Real {
+                    CrateLongId::Real {
                         name,
                         discriminator,
-                    })
+                    }
+                    .intern(db)
                 })
                 .collect_vec()
         })

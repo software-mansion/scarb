@@ -10,18 +10,17 @@ use crate::core::{Target, Workspace};
 use anyhow::{Result, anyhow};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
-use cairo_lang_defs::db::DefsGroup;
+use cairo_lang_defs::db::{DefsGroup, defs_group_input};
 use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId, ModuleId};
 use cairo_lang_defs::plugin::MacroPlugin;
-use cairo_lang_filesystem::db::{
-    CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
-};
+use cairo_lang_filesystem::db::{CrateIdentifier, CrateSettings, DependencySettings, FilesGroup};
 use cairo_lang_filesystem::ids::{CrateInput, CrateLongId};
 use cairo_lang_filesystem::override_file_content;
-use cairo_lang_semantic::db::SemanticGroup;
+use cairo_lang_semantic::db::{SemanticGroup, semantic_group_input};
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
+use salsa::Setter;
 use smol_str::SmolStr;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -109,14 +108,16 @@ pub fn set_override_crate_plugins_from_suite(
     crate_input: CrateInput,
     plugins: PluginSuite,
 ) {
-    let mut overrides = db.macro_plugin_overrides_input().as_ref().clone();
+    let mut overrides = db.macro_plugin_overrides_input().clone();
     overrides.insert(
         crate_input.clone(),
         plugins.plugins.into_iter().map(MacroPluginLongId).collect(),
     );
-    db.set_macro_plugin_overrides_input(overrides.into());
+    defs_group_input(db)
+        .set_macro_plugin_overrides(db)
+        .to(Some(overrides));
 
-    let mut overrides = db.analyzer_plugin_overrides_input().as_ref().clone();
+    let mut overrides = db.analyzer_plugin_overrides_input().clone();
     overrides.insert(
         crate_input.clone(),
         plugins
@@ -125,9 +126,11 @@ pub fn set_override_crate_plugins_from_suite(
             .map(AnalyzerPluginLongId)
             .collect(),
     );
-    db.set_analyzer_plugin_overrides_input(overrides.into());
+    semantic_group_input(db)
+        .set_analyzer_plugin_overrides(db)
+        .to(Some(overrides));
 
-    let mut overrides = db.inline_macro_plugin_overrides_input().as_ref().clone();
+    let mut overrides = db.inline_macro_plugin_overrides_input().clone();
     overrides.insert(
         crate_input,
         Arc::new(
@@ -138,7 +141,9 @@ pub fn set_override_crate_plugins_from_suite(
                 .collect(),
         ),
     );
-    db.set_inline_macro_plugin_overrides_input(overrides.into());
+    defs_group_input(db)
+        .set_inline_macro_plugin_overrides(db)
+        .to(Some(overrides));
 }
 
 /// Generates a wrapper lib file for appropriate compilation units.
@@ -289,7 +294,7 @@ pub(crate) fn has_plugin(
 
     db.crate_macro_plugins(crate_id)
         .iter()
-        .any(|plugin_id| predicate(&*db.lookup_intern_macro_plugin(*plugin_id).0))
+        .any(|plugin_id| predicate(&*plugin_id.long(db).0))
 }
 
 pub(crate) fn is_starknet_plugin(plugin: &dyn MacroPlugin) -> bool {
