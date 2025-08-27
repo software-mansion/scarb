@@ -20,7 +20,7 @@ pub mod manifest_editor;
 pub mod ops;
 pub mod process;
 mod resolver;
-mod sources;
+pub mod sources;
 mod subcommands;
 pub mod version;
 
