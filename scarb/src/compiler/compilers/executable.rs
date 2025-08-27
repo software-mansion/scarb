@@ -12,7 +12,7 @@ use cairo_lang_executable::compile::{
     CompiledFunction, ExecutableConfig, compile_executable_function_in_prepared_db,
 };
 use cairo_lang_executable::executable::Executable;
-use cairo_lang_executable::plugin::{EXECUTABLE_PREFIX, EXECUTABLE_RAW_ATTR};
+use cairo_lang_executable_plugin::{EXECUTABLE_PREFIX, EXECUTABLE_RAW_ATTR};
 use cairo_lang_filesystem::ids::{CrateId, CrateInput};
 use cairo_lang_lowering::ids::ConcreteFunctionWithBodyId;
 use cairo_lang_sierra_generator::executables::find_executable_function_ids;

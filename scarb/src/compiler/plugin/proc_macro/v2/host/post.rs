@@ -2,8 +2,10 @@ use crate::compiler::plugin::proc_macro::FULL_PATH_MARKER_KEY;
 use crate::compiler::plugin::proc_macro::v2::ProcMacroHostPlugin;
 use crate::core::PackageId;
 use anyhow::Result;
+use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
 use cairo_lang_diagnostics::ToOption;
+use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_macro::FullPathMarker;
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
@@ -74,9 +76,10 @@ impl ProcMacroHostPlugin {
         for crate_id in db.crates() {
             let modules = db.crate_modules(*crate_id);
             for module_id in modules.iter() {
-                let Ok(module_items) = db.module_items(*module_id) else {
+                let Ok(module_data) = module_id.module_data(db) else {
                     continue;
                 };
+                let module_items = module_data.items(db);
                 for item_id in module_items.iter() {
                     let attr = match item_id {
                         ModuleItemId::Struct(id) => {

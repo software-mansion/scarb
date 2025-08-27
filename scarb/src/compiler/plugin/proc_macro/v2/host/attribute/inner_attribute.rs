@@ -13,10 +13,10 @@ use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_macro::{AllocationContext, ProcMacroResult, TokenStream};
 use cairo_lang_syntax::node::ast::{ImplItem, MaybeImplBody, MaybeTraitBody};
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::{SyntaxNode, TypedSyntaxNode, ast};
 use itertools::Itertools;
+use salsa::Database;
 use smol_str::SmolStr;
 use std::collections::HashSet;
 
@@ -37,7 +37,7 @@ pub struct InnerAttrExpansionContext<'a, 'db> {
 impl<'a, 'db> InnerAttrExpansionContext<'a, 'db> {
     pub fn new(
         host: &'a ProcMacroHostPlugin,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: &ast::ModuleItem<'db>,
     ) -> Self {
         Self {
@@ -55,7 +55,7 @@ impl<'a, 'db> InnerAttrExpansionContext<'a, 'db> {
 
     fn register_diagnotics(
         &mut self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         diagnostics: Vec<AdaptedDiagnostic>,
         stable_ptr: SyntaxStablePtrId<'db>,
     ) {
@@ -66,7 +66,7 @@ impl<'a, 'db> InnerAttrExpansionContext<'a, 'db> {
 
     pub fn register_result_metadata(
         &mut self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         input: &AttrExpansionArgs<'db>,
         original: String,
         result: ProcMacroResult,
@@ -134,7 +134,7 @@ fn rewrite_node_patch_from_expansion_result<'db>(
 impl ProcMacroHostPlugin {
     pub(crate) fn expand_inner_attr<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
     ) -> InnerAttrExpansionResult<'db> {
         let mut context = InnerAttrExpansionContext::new(self, db, &item_ast);
@@ -276,7 +276,7 @@ impl ProcMacroHostPlugin {
 
     fn do_expand_inner_attr<'a, 'db>(
         &'a self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         context: &mut InnerAttrExpansionContext<'a, 'db>,
         found: AttrExpansionFound<'db>,
         func: &impl TypedSyntaxNode<'db>,

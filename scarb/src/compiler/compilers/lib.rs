@@ -187,11 +187,10 @@ fn validate_compiler_config(
     // This does not apply to debug build (expressed by `replace_ids` flag),
     // which is a goal by itself.
     // See starkware-libs/cairo#5440 for more context.
-    let executable_plugin = db.crate_macro_plugins(main_crate_id).iter().any(|&plugin| {
-        !db.lookup_intern_macro_plugin(plugin)
-            .executable_attributes()
-            .is_empty()
-    });
+    let executable_plugin = db
+        .crate_macro_plugins(main_crate_id)
+        .iter()
+        .any(|&plugin| !plugin.long(db).executable_attributes().is_empty());
     if !executable_plugin && !compiler_config.replace_ids {
         ws.config().ui().warn(formatdoc! {r#"
             artefacts produced by this build may be hard to utilize due to the build configuration

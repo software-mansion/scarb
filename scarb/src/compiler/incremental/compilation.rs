@@ -5,12 +5,12 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_filesystem::db::{CrateConfiguration, FilesGroup, FilesGroupEx};
+use cairo_lang_filesystem::db::{CrateConfiguration, FilesGroup};
 use cairo_lang_filesystem::ids::{BlobLongId, CrateInput};
 use cairo_lang_filesystem::set_crate_config;
 use cairo_lang_lowering::cache::generate_crate_cache;
 use cairo_lang_lowering::db::LoweringGroup;
-use cairo_lang_utils::Upcast;
+use cairo_lang_utils::{Intern, Upcast};
 use itertools::Itertools;
 use salsa::par_map;
 use std::env;
@@ -121,7 +121,7 @@ fn load_component_cache(
         let cache_dir = cache_dir.path_unchecked();
         let cache_file = cache_dir.join(component.cache_filename(fingerprint));
         let crate_id = component.crate_id(db);
-        let blob_id = db.intern_blob(BlobLongId::OnDisk(cache_file.as_std_path().to_path_buf()));
+        let blob_id = BlobLongId::OnDisk(cache_file.as_std_path().to_path_buf()).intern(db);
         if let Some(core_conf) = db.crate_config(crate_id) {
             set_crate_config!(
                 db,

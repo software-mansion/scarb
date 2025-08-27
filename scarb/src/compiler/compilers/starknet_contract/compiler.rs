@@ -12,7 +12,9 @@ use cairo_lang_starknet::contract::{ContractDeclaration, find_contracts, module_
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_syntax::node::TypedSyntaxNode;
 use cairo_lang_syntax::node::ast::OptionAliasClause;
+use cairo_lang_utils::Intern;
 use itertools::Itertools;
+use salsa::Database;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::iter::zip;
@@ -198,10 +200,11 @@ pub fn find_project_contracts<'db>(
                     .iter()
                     .find(|component| component.package.id.name.to_string() == name)
                     .and_then(|component| component.id.to_discriminator());
-                db.intern_crate(CrateLongId::Real {
+                CrateLongId::Real {
                     name,
                     discriminator,
-                })
+                }
+                .intern(db)
             })
             .collect::<Vec<_>>();
         let contracts = find_contracts(db, crate_ids.as_ref());
@@ -230,9 +233,10 @@ pub fn find_project_contracts<'db>(
         for crate_id in crate_ids {
             let modules = db.crate_modules(crate_id);
             for module_id in modules.iter() {
-                let Ok(module_uses) = db.module_uses(*module_id) else {
+                let Ok(module_data) = module_id.module_data(db) else {
                     continue;
                 };
+                let module_uses = module_data.uses(db);
                 let module_with_reexport = module_id.full_path(db.upcast());
                 let matched_contracts = module_uses
                     .iter()
@@ -268,7 +272,7 @@ pub fn find_project_contracts<'db>(
                         let exported_module_name =
                             use_alias.unwrap_or_else(|| module_id.name(db.upcast()));
                         let mut submodules = Vec::new();
-                        collect_modules_under(db.upcast(), &mut submodules, module_id);
+                        collect_modules_under(db, &mut submodules, module_id);
                         submodules
                             .iter()
                             .filter_map(|module_id| {
@@ -335,7 +339,7 @@ pub fn find_project_contracts<'db>(
 }
 
 fn collect_modules_under<'db>(
-    db: &'db dyn DefsGroup,
+    db: &'db dyn Database,
     modules: &mut Vec<ModuleId<'db>>,
     module_id: ModuleId<'db>,
 ) {

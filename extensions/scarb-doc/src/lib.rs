@@ -15,6 +15,7 @@ use cairo_lang_filesystem::{
     db::{Edition, FilesGroup},
     ids::{CrateId, CrateLongId},
 };
+use cairo_lang_utils::Intern;
 use errors::DiagnosticError;
 use itertools::Itertools;
 use scarb_metadata::{
@@ -109,14 +110,15 @@ pub fn generate_package_information(
 ) -> Result<PackageInformation<'_>> {
     let db = &context.db;
 
-    let main_crate_id = db.intern_crate(CrateLongId::Real {
+    let main_crate_id = CrateLongId::Real {
         name: context.main_component.name.to_string(),
         discriminator: context
             .main_component
             .discriminator
             .as_ref()
             .map(ToString::to_string),
-    });
+    }
+    .intern(db);
 
     let mut diagnostics_reporter =
         setup_diagnostics_reporter(db, main_crate_id, &context.package_compilation_unit, &ui)

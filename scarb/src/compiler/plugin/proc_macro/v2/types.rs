@@ -3,18 +3,19 @@ use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{
     AllocationContext, TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree,
 };
-use cairo_lang_syntax::node::{SyntaxNode, db::SyntaxGroup};
+use cairo_lang_syntax::node::SyntaxNode;
+use salsa::Database;
 
 /// Helps creating TokenStream based on multiple SyntaxNodes,
 /// which aren't descendants or ascendants of each other inside the SyntaxTree.
 pub struct TokenStreamBuilder<'db> {
-    db: &'db dyn SyntaxGroup,
+    db: &'db dyn Database,
     nodes: Vec<SyntaxNode<'db>>,
     metadata: Option<TokenStreamMetadata>,
 }
 
 impl<'db> TokenStreamBuilder<'db> {
-    pub fn new(db: &'db dyn SyntaxGroup) -> Self {
+    pub fn new(db: &'db dyn Database) -> Self {
         Self {
             db,
             nodes: Vec::default(),
