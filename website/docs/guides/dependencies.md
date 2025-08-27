@@ -14,12 +14,14 @@ To add a dependency, simply declare it in your `Scarb.toml`.
 ## Adding a dependency
 
 If your `Scarb.toml` doesn't already have a `[dependencies]` section, add it, then list the package name and the version
-required. You can search for packages to use through the [scarbs.xyz registry website](https://scarbs.xyz/).
+required.
+You can search for packages to use through the [scarbs.xyz registry website](https://scarbs.xyz/).
+
 This example adds a dependency on the [`openzeppelin_merkle_tree`](https://github.com/OpenZeppelin/cairo-contracts)
-package (note that OpenZeppelin is a collection of multiple packages, and we will use only one of them as an example in
-this guide). To see all available versions of some package, you can see the versions pane on the package's
-[registry page](https://scarbs.xyz/packages/openzeppelin_merkle_tree). At the time of writing this guide, the latest
-version of the `openzeppelin_merkle_tree` package is `0.17.0`, which is the version we will use.
+package (note that OpenZeppelin is a collection of multiple packages, and we will use only one of them as an example in this guide).
+To see all available versions of some package, use [`scarb list`](#listing-available-versions-of-the-package) command, or visit the "Versions" pane on the package's [registry page](https://scarbs.xyz/packages/openzeppelin_merkle_tree).
+
+At the time of writing this guide, the latest version of the `openzeppelin_merkle_tree` package is `0.17.0`, which is the version we will use.
 
 ```toml
 [dependencies]
@@ -111,4 +113,12 @@ Removing development dependencies, like in `scarb add`, requires passing `--dev`
 
 ```shell
 scarb rm --dev openzeppelin_merkle_tree
+```
+
+## Listing available versions of the package via `scarb list`
+
+To list all versions of some package available in the registry, you can use `scarb list` command:
+
+```shell
+scarb list openzeppelin_merkle_tree
 ```
