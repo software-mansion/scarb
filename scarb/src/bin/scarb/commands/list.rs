@@ -16,10 +16,11 @@ use url::Url;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: ListCommandArgs, config: &Config) -> Result<()> {
-    list_versions(args, config)
+    config.ui().print(list_versions(args, config)?);
+    Ok(())
 }
 
-fn list_versions(args: ListCommandArgs, config: &Config) -> Result<()> {
+fn list_versions(args: ListCommandArgs, config: &Config) -> Result<VersionsList> {
     let package_name = args.package_name;
     let index = args.index.unwrap_or(Url::from_str(DEFAULT_REGISTRY_INDEX)?);
 
@@ -40,9 +41,7 @@ fn list_versions(args: ListCommandArgs, config: &Config) -> Result<()> {
                 source_id
             )
         })?;
-    let list = VersionsList { versions: records };
-    config.ui().print(list);
-    Ok(())
+    VersionsList { versions: records }
 }
 
 #[derive(Serialize, Debug)]
