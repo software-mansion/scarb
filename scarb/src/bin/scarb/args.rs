@@ -642,6 +642,9 @@ pub struct ListCommandArgs {
     /// Registry index URL to query package versions from.
     #[arg(long, value_name = "URL")]
     pub index: Option<Url>,
+
+    #[arg(short, long, default_value_t = false)]
+    pub all: bool,
 }
 
 /// Git reference specification arguments.
