@@ -107,6 +107,7 @@ impl Message for VersionsList {
             .unwrap();
         }
 
+        // Trim any trailing whitespace in-place.
         out.truncate(out.trim_end().len());
         out
     }
