@@ -1,4 +1,3 @@
-use assert_fs::TempDir;
 use assert_fs::prelude::PathChild;
 use indoc::indoc;
 use scarb_test_support::command::Scarb;
