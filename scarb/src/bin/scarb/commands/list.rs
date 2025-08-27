@@ -1,0 +1,42 @@
+use crate::args::ListCommandArgs;
+use anyhow::{Context, Result};
+use scarb::core::ManifestDependency;
+use scarb::core::registry::DEFAULT_REGISTRY_INDEX;
+use scarb::core::registry::client::cache::RegistryClientCache;
+use scarb::core::{Config, DependencyVersionReq, SourceId};
+use scarb::sources::RegistrySource;
+use std::str::FromStr;
+use url::Url;
+
+#[tracing::instrument(skip_all, level = "info")]
+pub fn run(args: ListCommandArgs, config: &Config) -> Result<()> {
+    list_versions(args, config)
+}
+
+fn list_versions(args: ListCommandArgs, config: &Config) -> Result<()> {
+    let package_name = args.package_name;
+    let index = args.index.unwrap_or(Url::from_str(DEFAULT_REGISTRY_INDEX)?);
+
+    let source_id = SourceId::for_registry(&index)?;
+    let registry_client = RegistrySource::create_client(source_id, config)?;
+    let registry_client = RegistryClientCache::new(source_id, registry_client, config)?;
+
+    let dependency = ManifestDependency::builder()
+        .name(package_name)
+        .version_req(DependencyVersionReq::Any)
+        .build();
+    let records = config
+        .tokio_handle()
+        .block_on(registry_client.get_records_with_cache(&dependency))
+        .with_context(|| {
+            format!(
+                "failed to lookup for `{dependency}` in registry: {}",
+                source_id
+            )
+        })?;
+
+    for record in records.into_iter().rev() {
+        config.ui().print(record);
+    }
+    Ok(())
+}
