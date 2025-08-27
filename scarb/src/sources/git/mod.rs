@@ -12,8 +12,7 @@ use scarb_ui::components::Status;
 
 use crate::core::source::Source;
 use crate::core::{
-    Config, GitReference, ManifestDependency, Package, PackageId, PackageName, SourceId,
-    Summary,
+    Config, GitReference, ManifestDependency, Package, PackageId, PackageName, SourceId, Summary,
 };
 use crate::sources::git::client::GitDatabase;
 use std::collections::HashSet;
