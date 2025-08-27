@@ -6,11 +6,11 @@ use std::sync::Arc;
 use std::{fmt, mem};
 use tokio::sync::OnceCell;
 
+use crate::core::PackageName;
 use crate::core::config::Config;
 use crate::core::manifest::{ManifestDependency, Summary};
 use crate::core::package::{Package, PackageId};
 use crate::core::source::{Source, SourceId};
-use crate::core::PackageName;
 use crate::ops;
 use crate::sources::ensure_audit_requirement_allowed;
 
