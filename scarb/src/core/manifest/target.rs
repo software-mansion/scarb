@@ -1,4 +1,4 @@
-use crate::core::{TargetKind, TomlExternalTargetParams};
+use crate::core::{TargetDefaults, TargetKind, TomlExternalTargetParams};
 use crate::internal::restricted_names;
 use crate::internal::serdex::toml_merge;
 use anyhow::{Result, bail};
@@ -69,9 +69,18 @@ impl Target {
         source_path: impl Into<Utf8PathBuf> + Clone,
         group_id: Option<SmolStr>,
         params: impl Serialize,
+        target_defaults: Option<TargetDefaults>,
     ) -> Result<Self> {
         Self::validate_test_target_file_stem(source_path.clone().into())?;
         let params = toml::Value::try_from(params)?;
+
+        let params = target_defaults
+            .map(toml::Value::try_from)
+            .transpose()?
+            .map(|defaults| toml_merge(&defaults, &params))
+            .transpose()?
+            .unwrap_or(params);
+
         Ok(Self::new(kind, name, source_path, group_id, params))
     }
 

@@ -74,6 +74,7 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
         tool,
         features,
         patch: None,
+        target_defaults: None,
     })
 }
 

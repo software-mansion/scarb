@@ -277,6 +277,16 @@ See [Specifying Dependencies](./specifying-dependencies) page.
 
 See [Targets](./targets) page.
 
+## `[target-defaults.test]`
+
+Default keys that will be inherited by all test targets unless overwritten in the target definition.
+
+Keys that are supported:
+
+- `build-external-contracts`
+
+See [Targets](./targets) for more information.
+
 ## `[cairo]`
 
 Adjust Cairo compiler configuration parameters when compiling this package.
