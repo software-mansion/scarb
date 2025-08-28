@@ -1,16 +1,18 @@
 use assert_fs::TempDir;
 use derive_builder::Builder;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[derive(Builder)]
 struct Check {
-    lib_cairo: &'static str,
+    #[builder(setter(into))]
+    lib_cairo: String,
 
     #[builder(default, setter(custom))]
     failure: bool,
-    stdout_matches: &'static str,
+    #[builder(setter(into))]
+    stdout_matches: String,
 
     #[builder(default = "true")]
     enable_experimental_oracles_flag: bool,
@@ -153,7 +155,7 @@ fn oracle_invoke_unknown_scheme() {
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
             Result::Err("unsupported connection scheme: "unknown:///test"
-            note: supported schemes are: "stdio"")
+            note: supported schemes are: [..]")
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -178,7 +180,7 @@ fn oracle_invoke_missing_connection_scheme() {
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
             Result::Err("unsupported connection scheme: "no scheme"
-            note: supported schemes are: "stdio"")
+            note: supported schemes are: [..]")
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -298,4 +300,69 @@ fn oracle_invoke_test_oracle() {
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
+}
+
+fn check_shell(selector: &str, command: &str, output_type: &str, expected_output: &str) {
+    CheckBuilder::default()
+        .lib_cairo(formatdoc! {r#"
+            #[executable]
+            fn main() {{
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "shell:";
+                connection_string.serialize(ref inputs);
+                '{selector}'.serialize(ref inputs);
+                let command: ByteArray = "{command}";
+                command.serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<{output_type}>(result);
+            }}
+        "#})
+        .stdout_matches(formatdoc! {r#"
+            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing oracle_test
+            {expected_output}
+            Saving output to: target/execute/oracle_test/execution1
+        "#})
+        .check();
+}
+
+#[test]
+fn shell_taskeo_success() {
+    check_shell(
+        "taskeo",
+        "echo hello",
+        "(i32, ByteArray)",
+        "Result::Ok((0, \"hello\n\"))",
+    )
+}
+
+#[test]
+fn shell_taskeo_failure() {
+    check_shell(
+        "taskeo",
+        "exit 1",
+        "(i32, ByteArray)",
+        "Result::Ok((1, \"\"))",
+    )
+}
+
+#[test]
+fn shell_taskco_success() {
+    check_shell(
+        "taskco",
+        "echo hello",
+        "ByteArray",
+        "Result::Ok(\"hello\n\")",
+    )
+}
+
+#[test]
+fn shell_taskco_failure() {
+    check_shell(
+        "taskco",
+        "exit 1",
+        "ByteArray",
+        "Result::Err(\"command failed with exit code: 1\")",
+    )
 }

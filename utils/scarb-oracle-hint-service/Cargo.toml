@@ -18,14 +18,17 @@ starknet-core.workspace = true
 tracing.workspace = true
 
 # Dependencies used only by the builtin protocols are optional and enabled by corresponding features.
+deno_task_shell = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 shell-words = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
 
 [features]
 # Feature per protocol. Names correspond to Protocol::SCHEME values.
 # Default includes all builtin protocols.
-default = ["stdio"]
+default = ["shell", "stdio"]
+shell = ["dep:deno_task_shell", "dep:tokio"]
 stdio = ["dep:serde", "dep:serde_json", "dep:shell-words"]
 
 [dev-dependencies]
