@@ -1591,3 +1591,75 @@ fn disallowed_test_target_names() {
             the name `hint` cannot be used as a test target name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html consider renaming file: [..]
         "#});
 }
+
+#[test]
+fn test_target_defaults() {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let world = t.child("world");
+
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(format!("{BALANCE_CONTRACT}\n{HELLO_CONTRACT}"))
+        .build(&hello);
+
+    ProjectBuilder::start()
+        .name("world")
+        .edition("2023_01")
+        .version("0.1.0")
+        .dep("hello", Dep.path("../hello"))
+        .manifest_extra(formatdoc! {r#"
+            [[test]]
+            name = "a"
+            path = "tests/a.cairo"
+            build-external-contracts = [
+                "hello::HelloContract",
+            ]
+
+            [[test]]
+            name = "b"
+            path = "tests/b.cairo"
+
+            [target-defaults.test]
+            build-external-contracts = [
+                "hello::Balance",
+            ]
+        "#})
+        .dep_starknet()
+        .build(&world);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&world)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling test(a) world v0.1.0 ([..]Scarb.toml)
+        [..]Compiling test(b) world v0.1.0 ([..]Scarb.toml)
+        [..]  Finished `dev` profile target(s) in [..]
+        "#});
+
+    assert_eq!(
+        world.child("target/dev").files(),
+        vec![
+            ".fingerprint",
+            "a.test.json",
+            "a.test.sierra.json",
+            "a.test.starknet_artifacts.json",
+            "a_HelloContract.test.contract_class.json",
+            "b.test.json",
+            "b.test.sierra.json",
+            "b.test.starknet_artifacts.json",
+            "b_Balance.test.contract_class.json",
+            "incremental",
+        ]
+    );
+}
