@@ -11,6 +11,7 @@ use scarb_test_support::contracts::{BALANCE_CONTRACT, FORTY_TWO_CONTRACT, HELLO_
 use scarb_test_support::fsx;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
+use serde_json::json;
 use std::path::PathBuf;
 
 #[test]
@@ -1590,4 +1591,84 @@ fn disallowed_test_target_names() {
         Caused by:
             the name `hint` cannot be used as a test target name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html consider renaming file: [..]
         "#});
+}
+
+#[test]
+fn test_target_defaults() {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let world = t.child("world");
+
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(format!("{BALANCE_CONTRACT}\n{HELLO_CONTRACT}"))
+        .build(&hello);
+
+    ProjectBuilder::start()
+        .name("world")
+        .edition("2023_01")
+        .version("0.1.0")
+        .dep("hello", Dep.path("../hello"))
+        .manifest_extra(formatdoc! {r#"
+            [[test]]
+            name = "a"
+            path = "tests/a.cairo"
+            build-external-contracts = [
+                "hello::HelloContract",
+            ]
+
+            [[test]]
+            name = "b"
+            path = "tests/b.cairo"
+
+            [target-defaults.test]
+            build-external-contracts = [
+                "hello::Balance",
+            ]
+        "#})
+        .dep_starknet()
+        .build(&world);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version", "1"])
+        .current_dir(&world)
+        .stdout_json::<Metadata>();
+
+    let world_package = metadata
+        .packages
+        .iter()
+        .find(|p| p.name == "world")
+        .unwrap();
+    let (mut a, mut b) = (None, None);
+    world_package
+        .targets
+        .iter()
+        .for_each(|t| match t.name.as_str() {
+            "a" => a = Some(t),
+            "b" => b = Some(t),
+            _ => {}
+        });
+
+    assert_eq!(
+        a.unwrap().params,
+        json!({
+            "build-external-contracts": ["hello::HelloContract"],
+            "path": "tests/a.cairo"
+        })
+    );
+
+    assert_eq!(
+        b.unwrap().params,
+        json!({
+            "build-external-contracts": ["hello::Balance"],
+            "path": "tests/b.cairo"
+        })
+    );
 }

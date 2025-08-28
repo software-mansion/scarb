@@ -58,6 +58,13 @@ pub struct TomlManifest {
     pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
     pub features: Option<BTreeMap<FeatureName, Vec<TomlFeatureToEnable>>>,
     pub patch: Option<BTreeMap<SmolStr, BTreeMap<PackageName, TomlDependency>>>,
+    pub target_defaults: Option<BTreeMap<TargetKind, TargetDefaults>>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TargetDefaults {
+    pub build_external_contracts: Option<Vec<String>>,
 }
 
 type MaybeWorkspaceScriptDefinition = MaybeWorkspace<ScriptDefinition, WorkspaceScriptDefinition>;
@@ -894,7 +901,7 @@ impl TomlManifest {
     ) -> Result<Vec<Target>> {
         let mut targets = Vec::new();
 
-        targets.extend(Self::collect_target(
+        targets.extend(self.collect_target(
             TargetKind::LIB,
             self.lib.as_ref(),
             &package_name,
@@ -902,7 +909,7 @@ impl TomlManifest {
             None,
         )?);
 
-        targets.extend(Self::collect_target(
+        targets.extend(self.collect_target(
             TargetKind::CAIRO_PLUGIN,
             self.cairo_plugin.as_ref(),
             &package_name,
@@ -910,7 +917,7 @@ impl TomlManifest {
             None,
         )?);
 
-        targets.extend(Self::collect_target(
+        targets.extend(self.collect_target(
             TargetKind::EXECUTABLE,
             self.executable.as_ref(),
             &package_name,
@@ -924,13 +931,7 @@ impl TomlManifest {
             .flatten()
             .flat_map(|(k, vs)| vs.iter().map(|v| (k.clone(), v)))
         {
-            targets.extend(Self::collect_target(
-                kind,
-                Some(ext_toml),
-                &package_name,
-                root,
-                None,
-            )?);
+            targets.extend(self.collect_target(kind, Some(ext_toml), &package_name, root, None)?);
         }
 
         if targets.is_empty() {
@@ -985,7 +986,7 @@ impl TomlManifest {
         if let Some(test) = self.test.as_ref() {
             // Read test targets from a manifest file.
             for test_toml in test {
-                targets.extend(Self::collect_target(
+                targets.extend(self.collect_target(
                     TargetKind::TEST,
                     Some(test_toml),
                     &package_name,
@@ -1020,7 +1021,7 @@ impl TomlManifest {
                 .sorted()
                 .dedup()
                 .collect_vec();
-            targets.extend(Self::collect_target::<TomlExternalTargetParams>(
+            targets.extend(self.collect_target::<TomlExternalTargetParams>(
                 TargetKind::TEST,
                 Some(&target_config),
                 &package_name,
@@ -1046,7 +1047,7 @@ impl TomlManifest {
                 let source_path = tests_path.join(DEFAULT_MODULE_MAIN_FILE);
                 let target_name: SmolStr = format!("{package_name}_{DEFAULT_TESTS_PATH}").into();
                 let target_config = integration_target_config(target_name, source_path)?;
-                targets.extend(Self::collect_target::<TomlExternalTargetParams>(
+                targets.extend(self.collect_target::<TomlExternalTargetParams>(
                     TargetKind::TEST,
                     Some(&target_config),
                     &package_name,
@@ -1076,7 +1077,7 @@ impl TomlManifest {
                         let file_stem = source_path.file_stem().unwrap().to_string();
                         let target_name: SmolStr = format!("{package_name}_{file_stem}").into();
                         let target_config = integration_target_config(target_name, source_path)?;
-                        targets.extend(Self::collect_target(
+                        targets.extend(self.collect_target(
                             TargetKind::TEST,
                             Some(&target_config),
                             &package_name,
@@ -1091,6 +1092,7 @@ impl TomlManifest {
     }
 
     fn collect_target<T: Serialize>(
+        &self,
         kind: TargetKind,
         target: Option<&TomlTarget<T>>,
         default_name: &SmolStr,
@@ -1118,10 +1120,22 @@ impl TomlManifest {
             .transpose()?
             .unwrap_or(default_source_path.to_path_buf());
 
-        let target =
-            Target::try_from_structured_params(kind, name, source_path, group_id, &target.params)?;
-
+        let default_params = self.get_target_defaults(&kind);
+        let target = Target::try_from_structured_params(
+            kind,
+            name,
+            source_path,
+            group_id,
+            &target.params,
+            default_params,
+        )?;
         Ok(Some(target))
+    }
+
+    fn get_target_defaults(&self, kind: &TargetKind) -> Option<TargetDefaults> {
+        self.target_defaults
+            .as_ref()
+            .and_then(|defaults| defaults.get(kind).cloned())
     }
 
     pub fn collect_profiles(&self) -> Result<Vec<Profile>> {
