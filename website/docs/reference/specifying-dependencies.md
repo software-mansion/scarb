@@ -33,21 +33,22 @@ alexandria_math = { registry = "https://example.com/", version = "0.1.0" }
 
 ### Security and audits
 
-Scarbs supports filtering packages from the registry based on whether they have been audited.
+Scarb supports filtering packages from the registry based on whether they have been audited.
 
 > [!WARNING]
 > Note: package version being audited does not mean there are no bugs or vulnerabilities in the package, just that the process has been undergone by the entity that is considered the authority in the registry.
 
-You can enable this feature by specifying the `require-audits` key in the `[security]` section:
+You can enable this feature by specifying the `require-audits` key in the `[workspace]` section of the workspace root manifest:
 
 ```toml
-[security]
+[workspace]
 require-audits = true
 ```
 
 Setting this field to `true` will cause Scarb to ignore any versions of dependencies, including transitive ones, that are not marked as audited in the registry.
 If unable to resolve the dependency tree due to this, Scarb will exit with an error.
 By default, this field is set to `false`.
+This policy applies applies to entire workspace. Members must not conflict with the root setting.
 
 ## Specifying dependencies from Git repositories
 
