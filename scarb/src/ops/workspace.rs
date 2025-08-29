@@ -65,13 +65,6 @@ fn validate_virtual_manifest(manifest_path: &Utf8Path, manifest: &TomlManifest) 
         "#}))
         .with_context(|| format!("failed to parse manifest at: {manifest_path}"));
     }
-    if manifest.security.is_some() {
-        return Err(anyhow!(indoc! {r#"
-            this virtual manifest specifies a [security] section, which is not allowed
-            help: use [workspace.security] instead
-        "#}))
-        .with_context(|| format!("failed to parse manifest at: {manifest_path}"));
-    }
     Ok(())
 }
 
@@ -143,10 +136,8 @@ fn read_workspace_root<'c>(
             p.id
         });
         let require_audits = workspace
-            .security
-            .map(|s| s.require_audits)
-            .unwrap_or(Some(false))
-            .unwrap();
+            .require_audits
+            .unwrap_or(false);
         Workspace::new(
             manifest_path.into(),
             packages.as_ref(),

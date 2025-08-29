@@ -25,7 +25,7 @@ fn require_audits_disallows_non_audited_version() {
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .manifest_extra(
             r#"
-            [security]
+            [workspace]
             require-audits = true
         "#,
         )
@@ -89,7 +89,7 @@ fn require_audits_disallows_non_audited_version_transitive() {
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .manifest_extra(
             r#"
-            [security]
+            [workspace]
             require-audits = true
         "#,
         )
@@ -141,7 +141,7 @@ fn require_audits_allows_audited_version() {
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .manifest_extra(
             r#"
-            [security]
+            [workspace]
             require-audits = true
         "#,
         )
@@ -192,12 +192,6 @@ fn require_audits_workspace() {
         .version("1.0.0")
         .dep("foo", Dep.version("1.0.0").registry(&registry))
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
-        .manifest_extra(
-            r#"
-            [security]
-            require-audits.workspace = true
-        "#,
-        )
         .build(&first);
 
     ProjectBuilder::start()
@@ -209,12 +203,7 @@ fn require_audits_workspace() {
     WorkspaceBuilder::start()
         .add_member("first")
         .add_member("second")
-        .manifest_extra(
-            r#"
-            [workspace.security]
-            require-audits = true
-        "#,
-        )
+        .require_audits(true)
         .build(&t);
 
     Scarb::quick_snapbox()
