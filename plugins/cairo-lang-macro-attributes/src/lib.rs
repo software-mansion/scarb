@@ -207,9 +207,9 @@ pub fn post_process(_args: TokenStream, input: TokenStream) -> TokenStream {
     let expanded = quote! {
         #item
 
-        #[::cairo_lang_macro::linkme::distributed_slice(::cairo_lang_macro::AUX_DATA_CALLBACKS)]
+        #[::cairo_lang_macro::linkme::distributed_slice(::cairo_lang_macro::CALLBACKS)]
         #[linkme(crate = ::cairo_lang_macro::linkme)]
-        static #callback_link: fn(::cairo_lang_macro::PostProcessContext) = #item_name;
+        static #callback_link: ::cairo_lang_macro::Callback = ::cairo_lang_macro::Callback::PostProcess(#item_name);
     };
 
     TokenStream::from(expanded)

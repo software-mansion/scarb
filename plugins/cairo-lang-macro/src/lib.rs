@@ -169,7 +169,13 @@ pub unsafe extern "C" fn free_result_v2(result: StableProcMacroResult) {
 /// Distributed slice for storing auxiliary data collection callback pointers.
 #[doc(hidden)]
 #[linkme::distributed_slice]
-pub static AUX_DATA_CALLBACKS: [fn(PostProcessContext)];
+pub static CALLBACKS: [Callback];
+
+#[doc(hidden)]
+#[derive(Clone)]
+pub enum Callback {
+    PostProcess(fn(PostProcessContext)),
+}
 
 /// The auxiliary data collection callback.
 ///
@@ -185,11 +191,15 @@ pub static AUX_DATA_CALLBACKS: [fn(PostProcessContext)];
 pub unsafe extern "C" fn post_process_callback_v2(
     context: StablePostProcessContext,
 ) -> StablePostProcessContext {
-    if !AUX_DATA_CALLBACKS.is_empty() {
+    if !CALLBACKS.is_empty() {
         // Callback has been defined, applying the aux data collection.
         let context = PostProcessContext::from_stable(&context);
-        for fun in AUX_DATA_CALLBACKS {
-            fun(context.clone());
+        for callback in CALLBACKS {
+            match callback {
+                Callback::PostProcess(fun) => {
+                    fun(context.clone());
+                }
+            }
         }
     }
     context
