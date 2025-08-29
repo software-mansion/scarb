@@ -33,6 +33,6 @@ The `shell` protocol supports several subprocess calling behaviours, determined 
 identical and differ only in how failures are reported and what is returned:
 
 | Selector | Return type                                                          | Failure handling                                             |
-|----------|----------------------------------------------------------------------|--------------------------------------------------------------|
+| -------- | -------------------------------------------------------------------- | ------------------------------------------------------------ |
 | `taskeo` | <code style="text-wrap:nowrap">(code: i32, stdout: ByteArray)</code> | Never errors after subprocess spawns; exit code is returned. |
 | `taskco` | `stdout: ByteArray`                                                  | Errors if exit code ≠ 0.                                     |
