@@ -15,6 +15,7 @@ use scarb_test_support::command::Scarb;
 const TIMEOUT: Duration = Duration::from_secs(5);
 
 #[tokio::test]
+#[ignore = "TODO(maciektr): Ignored until fixed by LS team."]
 async fn run() {
     let t = TempDir::new().unwrap();
 

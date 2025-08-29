@@ -3,44 +3,44 @@
   "packages_information": [
     {
       "crate_": {
-        "groups": [],
         "root_module": {
-          "constants": [],
-          "enums": [],
-          "extern_functions": [],
-          "extern_types": [],
-          "free_functions": [],
-          "impl_aliases": [],
-          "impls": [],
           "item_data": {
-            "doc": "Fibonacci sequence calculator",
-            "full_path": "hello_world",
-            "group": null,
             "name": "hello_world",
-            "signature": null
+            "doc": "Fibonacci sequence calculator",
+            "signature": null,
+            "full_path": "hello_world",
+            "group": null
           },
+          "submodules": [],
+          "constants": [],
+          "free_functions": [],
+          "structs": [],
+          "enums": [],
+          "type_aliases": [],
+          "impl_aliases": [],
+          "traits": [],
+          "impls": [],
+          "extern_types": [],
+          "extern_functions": [],
           "pub_uses": {
             "use_constants": [],
-            "use_enums": [],
-            "use_extern_functions": [],
-            "use_extern_types": [],
             "use_free_functions": [],
-            "use_impl_aliases": [],
-            "use_impl_defs": [],
-            "use_module_type_aliases": [],
             "use_structs": [],
-            "use_submodules": [],
-            "use_traits": []
-          },
-          "structs": [],
-          "submodules": [],
-          "traits": [],
-          "type_aliases": []
-        }
+            "use_enums": [],
+            "use_module_type_aliases": [],
+            "use_impl_aliases": [],
+            "use_traits": [],
+            "use_impl_defs": [],
+            "use_extern_types": [],
+            "use_extern_functions": [],
+            "use_submodules": []
+          }
+        },
+        "groups": []
       },
       "metadata": {
-        "authors": null,
-        "name": "hello_world"
+        "name": "hello_world",
+        "authors": null
       }
     }
   ]

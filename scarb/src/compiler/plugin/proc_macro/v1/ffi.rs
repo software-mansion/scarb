@@ -11,7 +11,6 @@ use cairo_lang_macro_v1::{
     TokenStream,
 };
 use cairo_lang_syntax::node::TypedSyntaxNode;
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use libloading::{Library, Symbol};
@@ -23,14 +22,15 @@ use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
 use libloading::os::unix::Symbol as RawSymbol;
 #[cfg(windows)]
 use libloading::os::windows::Symbol as RawSymbol;
+use salsa::Database;
 use smol_str::{SmolStr, ToSmolStr};
 
 pub trait FromSyntaxNode {
-    fn from_syntax_node<'db>(db: &'db dyn SyntaxGroup, node: &impl TypedSyntaxNode<'db>) -> Self;
+    fn from_syntax_node<'db>(db: &'db dyn Database, node: &impl TypedSyntaxNode<'db>) -> Self;
 }
 
 impl FromSyntaxNode for TokenStream {
-    fn from_syntax_node<'db>(db: &'db dyn SyntaxGroup, node: &impl TypedSyntaxNode<'db>) -> Self {
+    fn from_syntax_node<'db>(db: &'db dyn Database, node: &impl TypedSyntaxNode<'db>) -> Self {
         let mut builder = PatchBuilder::new(db, node);
         builder.add_node(node.as_syntax_node());
         Self::new(builder.build().0)

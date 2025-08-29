@@ -25,10 +25,10 @@ use cairo_lang_macro::{
 };
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::node::ast::{MaybeImplBody, MaybeTraitBody};
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::{TypedStablePtr, TypedSyntaxNode, ast};
 use itertools::Itertools;
+use salsa::Database;
 use scarb_stable_hash::short_hash;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
@@ -52,7 +52,7 @@ impl DeclaredProcMacroInstances for ProcMacroHostPlugin {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ProcMacroId {
     pub package_id: PackageId,
     pub expansion: Expansion,
@@ -105,7 +105,7 @@ impl ProcMacroHostPlugin {
 
     fn uses_proc_macros<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: &ast::ModuleItem<'db>,
     ) -> bool {
         // Check on inner attributes too.
@@ -183,12 +183,12 @@ impl ProcMacroHostPlugin {
     }
 
     fn calculate_metadata<'db>(
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
         edition: Edition,
     ) -> TokenStreamMetadata {
         let stable_ptr = item_ast.clone().stable_ptr(db).untyped();
-        let file_path = stable_ptr.file_id(db).full_path(db.upcast());
+        let file_path = stable_ptr.file_id(db).full_path(db);
         let file_id = short_hash(file_path.clone());
         let edition = edition_variant(edition);
         TokenStreamMetadata::new(file_path, file_id, edition)
@@ -199,7 +199,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
     #[tracing::instrument(level = "trace", skip_all)]
     fn generate_code<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
         metadata: &MacroPluginMetadata<'_>,
     ) -> PluginResult<'db> {

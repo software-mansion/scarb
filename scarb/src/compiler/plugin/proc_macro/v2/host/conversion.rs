@@ -1,18 +1,18 @@
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_filesystem::span::{TextOffset, TextWidth};
 use cairo_lang_macro::{Diagnostic, Severity, TextSpan};
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::stable_ptr::SyntaxStablePtr;
 use cairo_lang_syntax::node::{SyntaxNode, TypedStablePtr, TypedSyntaxNode};
 use itertools::Itertools;
+use salsa::Database;
 
 pub trait SpanSource<'db> {
-    fn text_span(&self, db: &'db dyn SyntaxGroup) -> TextSpan;
+    fn text_span(&self, db: &'db dyn Database) -> TextSpan;
 }
 
 impl<'db, T: TypedSyntaxNode<'db>> SpanSource<'db> for T {
-    fn text_span(&self, db: &'db dyn SyntaxGroup) -> TextSpan {
+    fn text_span(&self, db: &'db dyn Database) -> TextSpan {
         let node = self.as_syntax_node();
         let span = node.span_without_trivia(db);
         TextSpan::new(span.start.as_u32(), span.end.as_u32())
@@ -25,7 +25,7 @@ pub struct CallSiteLocation<'db> {
 }
 
 impl<'db> CallSiteLocation<'db> {
-    pub fn new<T: TypedSyntaxNode<'db>>(node: &T, db: &'db dyn SyntaxGroup) -> Self {
+    pub fn new<T: TypedSyntaxNode<'db>>(node: &T, db: &'db dyn Database) -> Self {
         Self {
             stable_ptr: node.stable_ptr(db).untyped(),
             span: node.text_span(db),
@@ -34,7 +34,7 @@ impl<'db> CallSiteLocation<'db> {
 }
 
 pub fn into_cairo_diagnostics<'db>(
-    db: &'db dyn SyntaxGroup,
+    db: &'db dyn Database,
     diagnostics: Vec<Diagnostic>,
     call_site_stable_ptr: SyntaxStablePtrId<'db>,
 ) -> Vec<PluginDiagnostic<'db>> {
@@ -70,7 +70,7 @@ pub fn into_cairo_diagnostics<'db>(
 }
 
 fn get_root_ptr<'db>(
-    db: &'db dyn SyntaxGroup,
+    db: &'db dyn Database,
     stable_ptr: SyntaxStablePtrId<'db>,
 ) -> SyntaxStablePtrId<'db> {
     let mut current_ptr = stable_ptr;
@@ -91,7 +91,7 @@ fn get_root_ptr<'db>(
 /// Returns `None` if unable to find such node.
 pub fn find_encompassing_node<'db>(
     root_syntax_node: &SyntaxNode<'db>,
-    db: &'db dyn SyntaxGroup,
+    db: &'db dyn Database,
     span: &TextSpan,
 ) -> Option<SyntaxNode<'db>> {
     let start_offset = TextOffset::default().add_width(TextWidth::new_for_testing(span.start));
@@ -111,7 +111,7 @@ pub fn find_encompassing_node<'db>(
 /// Computes a span relative to `node` from an `absolute_span`.
 fn compute_relative_span<'db>(
     node: &SyntaxNode<'db>,
-    db: &'db dyn SyntaxGroup,
+    db: &'db dyn Database,
     absolute_span: &TextSpan,
 ) -> (TextWidth, TextWidth) {
     let offset = node.offset(db).as_u32();

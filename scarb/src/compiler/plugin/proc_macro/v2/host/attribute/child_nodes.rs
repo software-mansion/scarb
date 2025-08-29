@@ -3,18 +3,18 @@ use cairo_lang_syntax::node::ast::{
     Attribute, FunctionWithBody, ItemConstant, ItemEnum, ItemExternFunction, ItemExternType,
     ItemImpl, ItemImplAlias, ItemModule, ItemStruct, ItemTrait, ItemTypeAlias, ItemUse,
 };
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{SyntaxNode, TypedSyntaxNode};
+use salsa::Database;
 
 pub trait ItemWithAttributes<'db> {
-    fn item_attributes(&self, db: &'db dyn SyntaxGroup) -> Vec<Attribute<'db>>;
-    fn span_with_trivia(&self, db: &'db dyn SyntaxGroup) -> TextSpan;
+    fn item_attributes(&self, db: &'db dyn Database) -> Vec<Attribute<'db>>;
+    fn span_with_trivia(&self, db: &'db dyn Database) -> TextSpan;
 }
 
 pub trait ChildNodesWithoutAttributes<'db> {
     fn child_nodes_without_attributes(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
     ) -> impl Iterator<Item = SyntaxNode<'db>>;
 }
 
@@ -23,7 +23,7 @@ macro_rules! impl_child_nodes_without_attributes {
         impl<'db> ChildNodesWithoutAttributes<'db> for $t {
             fn child_nodes_without_attributes(
                 &self,
-                db: &'db dyn SyntaxGroup,
+                db: &'db dyn Database,
             ) -> impl Iterator<Item = SyntaxNode<'db>> {
                 [
                     $(self.$child(db).as_syntax_node()),*
@@ -36,11 +36,11 @@ macro_rules! impl_child_nodes_without_attributes {
 macro_rules! impl_item_with_attributes {
     ($t:ty) => {
         impl<'db> ItemWithAttributes<'db> for $t {
-            fn item_attributes(&self, db: &'db dyn SyntaxGroup) -> Vec<Attribute<'db>> {
+            fn item_attributes(&self, db: &'db dyn Database) -> Vec<Attribute<'db>> {
                 self.attributes(db).elements(db).collect()
             }
 
-            fn span_with_trivia(&self, db: &'db dyn SyntaxGroup) -> TextSpan {
+            fn span_with_trivia(&self, db: &'db dyn Database) -> TextSpan {
                 self.as_syntax_node().span(db)
             }
         }

@@ -5,6 +5,7 @@ use crate::compiler::plugin::proc_macro::{
 };
 use crate::core::PackageId;
 use anyhow::{Result, ensure};
+use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::{
@@ -13,6 +14,7 @@ use cairo_lang_defs::plugin::{
 };
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
 use cairo_lang_diagnostics::ToOption;
+use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CodeMapping;
 use cairo_lang_macro_v1::{
     AuxData, Diagnostic, FullPathMarker, ProcMacroResult, Severity, TokenStream,
@@ -25,17 +27,18 @@ use cairo_lang_syntax::attribute::structured::{
     Attribute, AttributeArgVariant, AttributeStructurize,
 };
 use cairo_lang_syntax::node::ast::{Expr, ImplItem, MaybeImplBody, MaybeTraitBody, PathSegment};
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::{Terminal, TypedStablePtr, TypedSyntaxNode, ast};
 use itertools::Itertools;
-use scarb_stable_hash::short_hash;
+use salsa::Database;
+use scarb_stable_hash::{StableHasher, short_hash};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::any::Any;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
+use std::hash::{Hash, Hasher};
 use std::sync::{Arc, OnceLock, RwLock};
 use std::vec::IntoIter;
 use tracing::{debug, trace_span};
@@ -58,7 +61,7 @@ impl DeclaredProcMacroInstances for ProcMacroHostPlugin {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ProcMacroId {
     pub package_id: PackageId,
     pub expansion: Expansion,
@@ -102,6 +105,15 @@ impl GeneratedFileAuxData for EmittedAuxData {
 
     fn eq(&self, other: &dyn GeneratedFileAuxData) -> bool {
         self.0 == other.as_any().downcast_ref::<Self>().unwrap().0
+    }
+
+    fn hash_value(&self) -> u64 {
+        let mut hasher = StableHasher::new();
+        for aux_data in &self.0 {
+            aux_data.value.hash(&mut hasher);
+            aux_data.macro_id.hash(&mut hasher);
+        }
+        hasher.finish()
     }
 }
 
@@ -166,7 +178,7 @@ impl ProcMacroHostPlugin {
 
     fn uses_proc_macros<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: &ast::ModuleItem<'db>,
     ) -> bool {
         // Check on inner attributes too.
@@ -221,7 +233,7 @@ impl ProcMacroHostPlugin {
 
     fn expand_inner_attr<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
     ) -> InnerAttrExpansionResult<'db> {
         let mut context = InnerAttrExpansionContext::new(self);
@@ -358,7 +370,7 @@ impl ProcMacroHostPlugin {
 
     fn do_expand_inner_attr<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         context: &mut InnerAttrExpansionContext<'_, 'db>,
         item_builder: &mut PatchBuilder<'db>,
         found: AttrExpansionFound<'db>,
@@ -413,7 +425,7 @@ impl ProcMacroHostPlugin {
     /// Remove the attribute from the code.
     fn parse_attribute<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
     ) -> (AttrExpansionFound<'db>, TokenStream) {
         let mut item_builder = PatchBuilder::new(db, &item_ast);
@@ -509,7 +521,7 @@ impl ProcMacroHostPlugin {
 
     fn parse_attrs<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         builder: &mut PatchBuilder<'db>,
         attrs: Vec<ast::Attribute<'db>>,
         origin: &impl TypedSyntaxNode<'db>,
@@ -568,7 +580,7 @@ impl ProcMacroHostPlugin {
     /// Returns a list of expansions that this plugin should apply.
     fn parse_derive<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
     ) -> Vec<ProcMacroId> {
         let attrs = match item_ast {
@@ -611,7 +623,7 @@ impl ProcMacroHostPlugin {
 
     fn expand_derives<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
         stream_metadata: TokenStreamMetadata,
     ) -> Option<PluginResult<'db>> {
@@ -858,11 +870,12 @@ impl ProcMacroHostPlugin {
     fn collect_full_path_markers(&self, db: &dyn SemanticGroup) -> HashMap<String, String> {
         let mut markers: HashMap<String, String> = HashMap::new();
         for crate_id in db.crates() {
-            let modules = db.crate_modules(crate_id);
+            let modules = db.crate_modules(*crate_id);
             for module_id in modules.iter() {
-                let Ok(module_items) = db.module_items(*module_id) else {
+                let Ok(module_data) = module_id.module_data(db) else {
                     continue;
                 };
+                let module_items = module_data.items(db);
                 for item_id in module_items.iter() {
                     let attr = match item_id {
                         ModuleItemId::Struct(id) => {
@@ -876,7 +889,6 @@ impl ProcMacroHostPlugin {
                         }
                         _ => None,
                     };
-
                     let keys = attr
                         .unwrap_or_default()
                         .into_iter()
@@ -913,11 +925,10 @@ impl ProcMacroHostPlugin {
     ) -> HashMap<PackageId, Vec<ProcMacroAuxData>> {
         let mut data = Vec::new();
         for crate_id in db.crates() {
-            let crate_modules = db.crate_modules(crate_id);
+            let crate_modules = db.crate_modules(*crate_id);
             for module in crate_modules.iter() {
-                let file_infos = db.module_generated_file_aux_data(*module);
-                if let Ok(file_infos) = file_infos {
-                    for file_info in file_infos.iter() {
+                if let Ok(module_data) = module.module_data(db) {
+                    for file_info in module_data.generated_file_aux_data(db).iter() {
                         let aux_data = file_info
                             .as_ref()
                             .and_then(|ad| ad.as_any().downcast_ref::<EmittedAuxData>());
@@ -949,11 +960,11 @@ impl ProcMacroHostPlugin {
     }
 
     fn calculate_metadata<'db>(
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
     ) -> TokenStreamMetadata {
         let stable_ptr = item_ast.clone().stable_ptr(db).untyped();
-        let file_path = stable_ptr.file_id(db).full_path(db.upcast());
+        let file_path = stable_ptr.file_id(db).full_path(db);
         let file_id = short_hash(file_path.clone());
         TokenStreamMetadata::new(file_path, file_id)
     }
@@ -1006,7 +1017,7 @@ impl<'a, 'db> InnerAttrExpansionContext<'a, 'db> {
     }
     pub fn into_result(
         self,
-        _db: &'db dyn SyntaxGroup,
+        _db: &'db dyn Database,
         expanded: String,
         code_mappings: Vec<CodeMapping>,
         attr_names: Vec<SmolStr>,
@@ -1046,7 +1057,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
     #[tracing::instrument(level = "trace", skip_all)]
     fn generate_code<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
         _metadata: &MacroPluginMetadata<'_>,
     ) -> PluginResult<'db> {
@@ -1176,7 +1187,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
     #[tracing::instrument(level = "trace", skip_all)]
     fn generate_code<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         syntax: &ast::ExprInlineMacro<'db>,
         _metadata: &MacroPluginMetadata<'_>,
     ) -> InlinePluginResult<'db> {
