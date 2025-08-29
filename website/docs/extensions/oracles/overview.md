@@ -43,8 +43,10 @@ specific to the executor being used. Oracles are invoked using generic connectio
 protocol:connection params
 ```
 
-The [Scarb executor](../../extensions/execute.md) implements oracles as subprocesses that communicate using
-a [`stdio`](./stdio.md) protocol.
+The [Scarb executor](../../extensions/execute.md) supports multiple oracle protocols:
+
+- [`shell`](./shell.md) — one‑shot shell command execution returning stdout.
+- [`stdio`](./stdio.md) — long‑lived oracles communicating over JSON‑RPC via stdio.
 
 In the oracle repository, you can find ready-to-use SDKs that ease writing oracles compatible with Scarb executor.
 
