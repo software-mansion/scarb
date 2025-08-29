@@ -119,7 +119,9 @@ fn read_workspace_root<'c>(
                             return Err(anyhow!(
                                 "only the workspace root may set `[workspace].require-audits`"
                             ))
-                          .with_context(|| format!("failed to parse manifest at: {package_path}"));
+                            .with_context(|| {
+                                format!("failed to parse manifest at: {package_path}")
+                            });
                         }
                     }
                 }
@@ -145,9 +147,7 @@ fn read_workspace_root<'c>(
             packages.push(p.clone());
             p.id
         });
-        let require_audits = workspace
-            .require_audits
-            .unwrap_or(false);
+        let require_audits = workspace.require_audits.unwrap_or(false);
         Workspace::new(
             manifest_path.into(),
             packages.as_ref(),
