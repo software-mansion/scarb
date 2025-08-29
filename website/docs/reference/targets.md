@@ -184,6 +184,19 @@ The following rules are used to detect test targets:
   - If the directory does not define a `lib.cairo` file, but contains other `.cairo` files, a test target is created
     for each of these files. The test targets will be named `{package_name}_{file_name}`.
 
+### Target defaults
+
+You can specify a default `build-external-contracts` section for a test target. All the test targets will inherit this
+section if no explicit section is defined.
+
+```toml
+[target-defaults.test]
+build-external-contracts = [
+  "hello::HelloContract",
+  "hello::GreeterContract",
+]
+```
+
 ## External targets
 
 Scarb supports registering targets that are handled by Scarb extensions.
