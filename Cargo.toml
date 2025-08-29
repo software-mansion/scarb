@@ -200,7 +200,8 @@ cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo", rev 
 cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev = "546fa8cd3f8fb03edc44e2e24f7f6deb502193a9" }
 cairo-lang-test-utils = { git = "https://github.com/starkware-libs/cairo", rev = "546fa8cd3f8fb03edc44e2e24f7f6deb502193a9" }
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "546fa8cd3f8fb03edc44e2e24f7f6deb502193a9" }
-cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "51ce7d35f5db29d7b680151d5a88ea57bd4e0e85" }
+# FIXME(maciektr): Change to main after fixed by LS team.
+cairo-language-server = { git = "https://github.com/software-mansion/cairols", branch = "spr/main/dab12753" }
 cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "f3bc4f8d79c94cd64c25f6fdecc422e2b7e69b6f" }
 stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
 stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }

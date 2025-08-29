@@ -867,7 +867,7 @@ dependencies = [
  "cairo-lang-utils",
  "indoc",
  "rayon",
- "salsa 0.23.0",
+ "salsa",
  "semver 1.0.26",
  "smol_str",
  "thiserror 2.0.16",
@@ -880,7 +880,7 @@ source = "git+https://github.com/starkware-libs/cairo?rev=546fa8cd3f8fb03edc44e2
 dependencies = [
  "cairo-lang-utils",
  "id-arena",
- "salsa 0.23.0",
+ "salsa",
 ]
 
 [[package]]
@@ -896,7 +896,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "itertools 0.14.0",
- "salsa 0.23.0",
+ "salsa",
  "serde",
  "smol_str",
  "typetag",
@@ -912,7 +912,7 @@ dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-utils",
  "itertools 0.14.0",
- "salsa 0.23.0",
+ "salsa",
 ]
 
 [[package]]
@@ -932,7 +932,7 @@ dependencies = [
  "cairo-lang-utils",
  "itertools 0.14.0",
  "pulldown-cmark 0.13.0",
- "salsa 0.23.0",
+ "salsa",
 ]
 
 [[package]]
@@ -977,7 +977,7 @@ dependencies = [
  "cairo-lang-syntax",
  "indoc",
  "itertools 0.14.0",
- "salsa 0.23.0",
+ "salsa",
 ]
 
 [[package]]
@@ -988,7 +988,7 @@ dependencies = [
  "cairo-lang-debug",
  "cairo-lang-utils",
  "path-clean",
- "salsa 0.23.0",
+ "salsa",
  "semver 1.0.26",
  "serde",
  "smol_str",
@@ -1009,7 +1009,7 @@ dependencies = [
  "diffy",
  "ignore",
  "itertools 0.14.0",
- "salsa 0.23.0",
+ "salsa",
  "serde",
  "thiserror 2.0.16",
 ]
@@ -1036,7 +1036,7 @@ dependencies = [
  "num-bigint",
  "num-integer",
  "num-traits",
- "salsa 0.23.0",
+ "salsa",
  "serde",
 ]
 
@@ -1141,7 +1141,7 @@ dependencies = [
  "itertools 0.14.0",
  "num-bigint",
  "num-traits",
- "salsa 0.23.0",
+ "salsa",
  "unescaper",
 ]
 
@@ -1159,7 +1159,7 @@ dependencies = [
  "indent",
  "indoc",
  "itertools 0.14.0",
- "salsa 0.23.0",
+ "salsa",
 ]
 
 [[package]]
@@ -1177,7 +1177,7 @@ dependencies = [
  "cairo-lang-utils",
  "proc-macro2",
  "quote",
- "salsa 0.23.0",
+ "salsa",
  "syn 2.0.106",
 ]
 
@@ -1277,7 +1277,7 @@ dependencies = [
  "itertools 0.14.0",
  "num-bigint",
  "num-traits",
- "salsa 0.23.0",
+ "salsa",
  "sha3",
  "toml 0.9.5",
 ]
@@ -1355,7 +1355,7 @@ dependencies = [
  "cairo-lang-utils",
  "itertools 0.14.0",
  "num-traits",
- "salsa 0.23.0",
+ "salsa",
  "serde",
  "serde_json",
  "smol_str",
@@ -1413,7 +1413,7 @@ dependencies = [
  "indent",
  "indoc",
  "itertools 0.14.0",
- "salsa 0.23.0",
+ "salsa",
  "serde",
  "serde_json",
  "starknet-types-core",
@@ -1455,7 +1455,7 @@ dependencies = [
  "cairo-lang-utils",
  "num-bigint",
  "num-traits",
- "salsa 0.23.0",
+ "salsa",
  "serde",
  "unescaper",
 ]
@@ -1492,7 +1492,7 @@ dependencies = [
  "itertools 0.14.0",
  "num-bigint",
  "num-traits",
- "salsa 0.23.0",
+ "salsa",
  "serde",
  "starknet-types-core",
 ]
@@ -1544,7 +1544,7 @@ dependencies = [
  "log",
  "num-bigint",
  "num-traits",
- "salsa 0.23.0",
+ "salsa",
  "schemars",
  "serde",
  "smol_str",
@@ -1554,7 +1554,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.11.4"
-source = "git+https://github.com/software-mansion/cairols?rev=51ce7d35f5db29d7b680151d5a88ea57bd4e0e85#51ce7d35f5db29d7b680151d5a88ea57bd4e0e85"
+source = "git+https://github.com/software-mansion/cairols?branch=spr/main/dab12753#99671b8bb2bcaa0d84da6111c64b1f8e499ba51d"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1563,6 +1563,7 @@ dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-doc",
  "cairo-lang-executable",
+ "cairo-lang-executable-plugin",
  "cairo-lang-filesystem",
  "cairo-lang-formatter",
  "cairo-lang-lowering",
@@ -1591,7 +1592,7 @@ dependencies = [
  "lsp-server",
  "lsp-types",
  "memchr",
- "salsa 0.22.0",
+ "salsa",
  "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "scarb-proc-macro-server-types 0.3.0-rc.0",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1630,7 +1631,7 @@ dependencies = [
  "itertools 0.14.0",
  "log",
  "num-bigint",
- "salsa 0.23.0",
+ "salsa",
  "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile",
  "tracing",
@@ -6391,29 +6392,6 @@ checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
 
 [[package]]
 name = "salsa"
-version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8fff508e3d6ef42a32607f7538e17171a877a12015e32036f46e99d00c95781"
-dependencies = [
- "boxcar",
- "crossbeam-queue",
- "dashmap",
- "hashbrown 0.15.5",
- "hashlink",
- "indexmap",
- "parking_lot",
- "portable-atomic",
- "rayon",
- "rustc-hash",
- "salsa-macro-rules 0.22.0",
- "salsa-macros 0.22.0",
- "smallvec",
- "thin-vec",
- "tracing",
-]
-
-[[package]]
-name = "salsa"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e235afdb8e510f38a07138fbe5a0b64691894358a9c0cbd813b1aade110efc9"
@@ -6430,8 +6408,8 @@ dependencies = [
  "portable-atomic",
  "rayon",
  "rustc-hash",
- "salsa-macro-rules 0.23.0",
- "salsa-macros 0.23.0",
+ "salsa-macro-rules",
+ "salsa-macros",
  "smallvec",
  "thin-vec",
  "tracing",
@@ -6439,28 +6417,9 @@ dependencies = [
 
 [[package]]
 name = "salsa-macro-rules"
-version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ea72b3c06f2ce6350fe3a0eeb7aaaf842d1d8352b706973c19c4f02e298a87c"
-
-[[package]]
-name = "salsa-macro-rules"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2edb86a7e9c91f6d30c9ce054312721dbe773a162db27bbfae834d16177b30ce"
-
-[[package]]
-name = "salsa-macros"
-version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ce92025bc160b27814a207cb78d680973af17f863c7f4fc56cf3a535e22f378"
-dependencies = [
- "heck",
- "proc-macro2",
- "quote",
- "syn 2.0.106",
- "synstructure",
-]
 
 [[package]]
 name = "salsa-macros"
@@ -6553,7 +6512,7 @@ dependencies = [
  "ra_ap_toolchain",
  "redb",
  "reqwest",
- "salsa 0.23.0",
+ "salsa",
  "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
@@ -6660,7 +6619,7 @@ dependencies = [
  "expect-test",
  "indoc",
  "itertools 0.14.0",
- "salsa 0.23.0",
+ "salsa",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
  "scarb-test-support",
