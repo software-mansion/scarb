@@ -10,7 +10,6 @@
 mod connection;
 mod connections;
 mod hint_service;
-mod jsonrpc;
 mod protocol;
 
 pub use connection::Connection;
