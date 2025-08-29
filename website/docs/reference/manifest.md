@@ -273,10 +273,6 @@ See [Specifying Dependencies](./specifying-dependencies) page.
 
 See [Specifying Dependencies](./specifying-dependencies) page.
 
-## `[security]`
-
-See [Security and Audits](./specifying-dependencies#security-and-audits) section.
-
 ## Target tables: `[lib]` and `[[target]]`
 
 See [Targets](./targets) page.
