@@ -1,8 +1,11 @@
-use crate::compiler::plugin::proc_macro::ProcMacroApiVersion;
+use crate::compiler::CompilationUnitCairoPlugin;
+use crate::compiler::plugin::proc_macro::{ProcMacroApiVersion, ProcMacroInstance};
+use crate::core::Config;
 use anyhow::{Result, anyhow};
 use camino::Utf8Path;
 use libloading::Library;
 use std::num::NonZeroU8;
+use std::sync::Arc;
 use tracing::debug;
 
 pub struct SharedPluginLibrary {
@@ -59,5 +62,18 @@ impl TryFrom<u8> for ProcMacroApiVersion {
 impl From<SharedPluginLibrary> for Library {
     fn from(plugin: SharedPluginLibrary) -> Self {
         plugin.library
+    }
+}
+
+pub trait InstanceLoader {
+    fn instantiate(&self, config: &Config) -> Result<Arc<ProcMacroInstance>>;
+}
+
+impl InstanceLoader for CompilationUnitCairoPlugin {
+    fn instantiate(&self, config: &Config) -> Result<Arc<ProcMacroInstance>> {
+        self.prebuilt
+            .clone()
+            .map(Ok)
+            .unwrap_or_else(|| config.proc_macro_repository().get_or_load(self, config))
     }
 }
