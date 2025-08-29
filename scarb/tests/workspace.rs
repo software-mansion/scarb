@@ -56,13 +56,29 @@ fn error_on_virtual_manifest_with_dependencies() {
 }
 
 #[test]
-fn error_on_virtual_manifest_with_security() {
+fn require_audits_member_conflict_with_root() {
     let t = TempDir::new().unwrap();
-    WorkspaceBuilder::start()
+    let first = t.child("first");
+    let second = t.child("second");
+
+    ProjectBuilder::start()
+        .name("first")
+        .version("1.0.0")
         .manifest_extra(indoc! {r#"
-            [security]
-            require-audits.workspace = true
+            [workspace]
+            require-audits = false
         "#})
+        .build(&first);
+
+    ProjectBuilder::start()
+        .name("second")
+        .version("1.0.0")
+        .build(&second);
+
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .require_audits(true)
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -74,8 +90,7 @@ fn error_on_virtual_manifest_with_security() {
             error: failed to parse manifest at: [..]
 
             Caused by:
-                this virtual manifest specifies a [security] section, which is not allowed
-                help: use [workspace.security] instead
+                only the workspace root may set `[workspace].require-audits`
         "#});
 }
 
