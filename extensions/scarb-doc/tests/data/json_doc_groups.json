@@ -22,6 +22,7 @@
             ],
             "impl_aliases": [],
             "impls": [],
+            "macro_declarations": [],
             "name": "test",
             "structs": [],
             "submodules": [],
@@ -46,6 +47,7 @@
             ],
             "impl_aliases": [],
             "impls": [],
+            "macro_declarations": [],
             "name": "test2",
             "structs": [],
             "submodules": [],
@@ -78,6 +80,7 @@
             "name": "hello_world",
             "signature": null
           },
+          "macro_declarations": [],
           "pub_uses": {
             "use_constants": [],
             "use_enums": [],
@@ -86,6 +89,7 @@
             "use_free_functions": [],
             "use_impl_aliases": [],
             "use_impl_defs": [],
+            "use_macro_declarations": [],
             "use_module_type_aliases": [],
             "use_structs": [],
             "use_submodules": [],

@@ -16,5 +16,16 @@ mod inner_module {
 
 }
 
+mod macro_module {
+    pub macro macro_definition {
+        ($name:ident) => {
+            fn $name() {
+                println!(name);
+            }
+        };
+    }
+}
+
 pub use inner_module::visible_in_reeksports;
 pub use inner_module::inner_function_visible_in_group;
+pub use macro_module::macro_definition;
