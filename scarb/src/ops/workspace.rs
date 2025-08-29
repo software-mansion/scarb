@@ -113,6 +113,16 @@ fn read_workspace_root<'c>(
             .map(AsRef::as_ref)
             .map(|package_path| {
                 let package_manifest = TomlManifest::read_from_path(package_path)?;
+                if package_path != manifest_path {
+                    if let Some(member_ws) = package_manifest.get_workspace() {
+                        if member_ws.require_audits.is_some() {
+                            return Err(anyhow!(
+                                "only the workspace root may set `[workspace].require-audits`"
+                            ))
+                          .with_context(|| format!("failed to parse manifest at: {package_path}"));
+                        }
+                    }
+                }
                 // Read the member package.
                 let manifest = package_manifest
                     .to_manifest(
