@@ -41,6 +41,7 @@ type FreeResult = extern "C" fn(StableProcMacroResult);
 type PostProcessCallback = extern "C" fn(StablePostProcessContext) -> StablePostProcessContext;
 type DocExpansion = extern "C" fn(*const c_char) -> *mut c_char;
 type FreeExpansionDoc = extern "C" fn(*mut c_char);
+type FingerprintCallback = extern "C" fn() -> u64;
 
 struct VTableV0 {
     list_expansions: RawSymbol<ListExpansions>,
@@ -50,6 +51,7 @@ struct VTableV0 {
     post_process_callback: RawSymbol<PostProcessCallback>,
     doc: RawSymbol<DocExpansion>,
     free_doc: RawSymbol<FreeExpansionDoc>,
+    fingerprint: Option<RawSymbol<FingerprintCallback>>,
 }
 
 macro_rules! get_symbol {
@@ -65,6 +67,10 @@ macro_rules! get_symbol {
 impl VTableV0 {
     unsafe fn try_new(library: &Library) -> Result<VTableV0> {
         unsafe {
+            // We ignore errors here, as v2 macros are not guaranteed to define the fingerprint symbol.
+            let fingerprint: Option<Symbol<'_, FingerprintCallback>> =
+                library.get(b"fingerprint_v2\0").ok();
+            let fingerprint = fingerprint.map(|s| s.into_raw());
             Ok(VTableV0 {
                 list_expansions: get_symbol!(library, b"list_expansions_v2\0", ListExpansions),
                 free_expansions_list: get_symbol!(
@@ -81,6 +87,7 @@ impl VTableV0 {
                 ),
                 doc: get_symbol!(library, b"doc_v2\0", DocExpansion),
                 free_doc: get_symbol!(library, b"free_doc_v2\0", FreeExpansionDoc),
+                fingerprint,
             })
         }
     }
@@ -224,6 +231,19 @@ impl Plugin {
         // Call FFI interface to free the `stable_result` that has been allocated by previous call.
         (self.vtable.free_doc)(stable_result);
         doc
+    }
+
+    /// Get the macro-defined fingerprint.
+    ///
+    /// The fingerprints is an u64 value used to determine if Cairo code depending on this
+    /// procedural macro should be recompiled or can use the incremental cache artifacts from
+    /// the previous build. User can define their own fingerprint callback, otherwise this will return
+    /// a constant value by default.
+    pub fn fingerprint(&self) -> u64 {
+        (self.vtable.fingerprint)
+            .as_ref()
+            .map(|f| f())
+            .unwrap_or_default()
     }
 }
 

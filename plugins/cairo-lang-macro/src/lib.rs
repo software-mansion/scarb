@@ -175,6 +175,7 @@ pub static CALLBACKS: [Callback];
 #[derive(Clone)]
 pub enum Callback {
     PostProcess(fn(PostProcessContext)),
+    Fingerprint(fn() -> u64),
 }
 
 /// The auxiliary data collection callback.
@@ -199,6 +200,7 @@ pub unsafe extern "C" fn post_process_callback_v2(
                 Callback::PostProcess(fun) => {
                     fun(context.clone());
                 }
+                _ => {}
             }
         }
     }
@@ -236,6 +238,35 @@ pub unsafe extern "C" fn free_doc_v2(doc: *mut c_char) {
     if !doc.is_null() {
         let _ = CString::from_raw(doc);
     }
+}
+
+/// The fingerprint calculation callback.
+///
+/// This function needs to be accessible through the FFI interface,
+/// of the dynamic library re-exporting it.
+///
+/// The fingerprints is an u64 value used to determine if Cairo code depending on this
+/// procedural macro should be recompiled or can use the incremental cache artifacts from
+/// the previous build. User can define their own fingerprint callback, otherwise this will return
+/// a constant value by default.
+///
+/// The function will be called for each procedural macro, regardless if it redefines the callback
+/// behaviour or not.
+///
+/// # Safety
+#[doc(hidden)]
+#[no_mangle]
+pub unsafe extern "C" fn fingerprint_v2() -> u64 {
+    let mut result: u64 = 0;
+    for callback in CALLBACKS {
+        match callback {
+            Callback::Fingerprint(fun) => {
+                result = result.wrapping_add(fun());
+            }
+            _ => {}
+        }
+    }
+    result
 }
 
 /// A no-op Cairo attribute macro implementation.
