@@ -215,6 +215,41 @@ pub fn post_process(_args: TokenStream, input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
+/// Constructs the fingerprint callback.
+///
+/// The fingerprints is an u64 value used to determine if Cairo code depending on this
+/// procedural macro should be recompiled or can use the incremental cache artifacts from
+/// the previous build.
+///
+/// This callback enables macro authors to force recompilation of macro depending on code.
+/// This is necessary when the macro output depends on anything but the code passed as expansion
+/// arguments (e.g. environmental variables, etc.).
+///
+/// Multiple callbacks can be defined within the macro, in which case a (wrapping) sum of all the
+/// fingerprints will be used to determine if recompilation should happen.
+#[proc_macro_attribute]
+pub fn fingerprint(_args: TokenStream, input: TokenStream) -> TokenStream {
+    let item: ItemFn = parse_macro_input!(input as ItemFn);
+    let item = hide_name(item);
+    let item_name = &item.sig.ident;
+
+    let callback_link = format!(
+        "FINGERPRINT_DESERIALIZE_{}",
+        item_name.to_string().to_uppercase()
+    );
+    let callback_link = Ident::new(callback_link.as_str(), item.span());
+
+    let expanded = quote! {
+        #item
+
+        #[::cairo_lang_macro::linkme::distributed_slice(::cairo_lang_macro::CALLBACKS)]
+        #[linkme(crate = ::cairo_lang_macro::linkme)]
+        static #callback_link: ::cairo_lang_macro::Callback = ::cairo_lang_macro::Callback::Fingerprint(#item_name);
+    };
+
+    TokenStream::from(expanded)
+}
+
 /// Rename item to hide it from the macro source code.
 fn hide_name(mut item: ItemFn) -> ItemFn {
     let id = short_hash(item.sig.ident.to_string());

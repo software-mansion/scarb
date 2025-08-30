@@ -196,11 +196,8 @@ pub unsafe extern "C" fn post_process_callback_v2(
         // Callback has been defined, applying the aux data collection.
         let context = PostProcessContext::from_stable(&context);
         for callback in CALLBACKS {
-            match callback {
-                Callback::PostProcess(fun) => {
-                    fun(context.clone());
-                }
-                _ => {}
+            if let Callback::PostProcess(fun) = callback {
+                fun(context.clone());
             }
         }
     }
@@ -259,11 +256,8 @@ pub unsafe extern "C" fn free_doc_v2(doc: *mut c_char) {
 pub unsafe extern "C" fn fingerprint_v2() -> u64 {
     let mut result: u64 = 0;
     for callback in CALLBACKS {
-        match callback {
-            Callback::Fingerprint(fun) => {
-                result = result.wrapping_add(fun());
-            }
-            _ => {}
+        if let Callback::Fingerprint(fun) = callback {
+            result = result.wrapping_add(fun());
         }
     }
     result
