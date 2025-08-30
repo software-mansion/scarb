@@ -102,6 +102,7 @@ type TomlToolsDefinition = BTreeMap<SmolStr, toml::Value>;
 #[serde(rename_all = "kebab-case")]
 pub struct TomlWorkspace {
     pub members: Option<Vec<String>>,
+    pub require_audits: Option<bool>,
     pub package: Option<PackageInheritableFields>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub dev_dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
@@ -633,7 +634,7 @@ impl TomlManifest {
             .workspace
             .as_ref()
             .cloned()
-            .or(toml_workspace)
+            .or(toml_workspace.clone())
             .unwrap_or_default();
 
         let inheritable_package = workspace.package.clone().unwrap_or_default();
@@ -660,6 +661,8 @@ impl TomlManifest {
             repeat(DepKind::Target(TargetKind::TEST)),
         );
         let all_deps = toml_deps.chain(toml_dev_deps);
+
+        let require_audits = workspace.require_audits.unwrap_or(false);
 
         for ((name, toml_dep), kind) in all_deps {
             let inherit_ws = || {
@@ -732,6 +735,7 @@ impl TomlManifest {
             .dependencies(dependencies)
             .re_export_cairo_plugins(re_export_cairo_plugins)
             .no_core(no_core)
+            .require_audits(require_audits)
             .build();
 
         let scripts = self.scripts.clone().unwrap_or_default();

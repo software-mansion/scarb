@@ -59,14 +59,13 @@ fn read_workspace_impl<'c>(
 
 fn validate_virtual_manifest(manifest_path: &Utf8Path, manifest: &TomlManifest) -> Result<()> {
     if manifest.dependencies.is_some() {
-        Err(anyhow!(indoc! {r#"
+        return Err(anyhow!(indoc! {r#"
             this virtual manifest specifies a [dependencies] section, which is not allowed
             help: use [workspace.dependencies] instead
         "#}))
-        .with_context(|| format!("failed to parse manifest at: {manifest_path}"))
-    } else {
-        Ok(())
+        .with_context(|| format!("failed to parse manifest at: {manifest_path}"));
     }
+    Ok(())
 }
 
 fn read_workspace_root<'c>(
@@ -114,6 +113,16 @@ fn read_workspace_root<'c>(
             .map(AsRef::as_ref)
             .map(|package_path| {
                 let package_manifest = TomlManifest::read_from_path(package_path)?;
+                if package_path != manifest_path
+                    && let Some(member_ws) = package_manifest.get_workspace()
+                        && member_ws.require_audits.is_some() {
+                            return Err(anyhow!(
+                                "only the workspace root may set `[workspace].require-audits`"
+                            ))
+                            .with_context(|| {
+                                format!("failed to parse manifest at: {package_path}")
+                            });
+                        }
                 // Read the member package.
                 let manifest = package_manifest
                     .to_manifest(
@@ -136,6 +145,7 @@ fn read_workspace_root<'c>(
             packages.push(p.clone());
             p.id
         });
+        let require_audits = workspace.require_audits.unwrap_or(false);
         Workspace::new(
             manifest_path.into(),
             packages.as_ref(),
@@ -144,6 +154,7 @@ fn read_workspace_root<'c>(
             profiles,
             scripts,
             patch,
+            require_audits,
         )
     } else {
         // Read single package workspace
