@@ -6,11 +6,13 @@ use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::{Scarb, ScarbSnapboxExt};
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
+use test_case::test_case;
 
 const DIGEST_LENGTH: usize = 13;
 
-#[test]
-fn incremental_artifacts_emitted() {
+#[test_case("build", vec![".fingerprint", "hello.sierra.json", "incremental",])]
+#[test_case("lint", vec![".fingerprint", "incremental",])]
+fn incremental_artifacts_emitted(command: &str, expected_files: Vec<&str>) {
     // We affix cache dir location, as the corelib path is part of the fingerprint.
     let cache_dir = TempDir::new().unwrap().child("c");
 
@@ -22,16 +24,13 @@ fn incremental_artifacts_emitted() {
 
     Scarb::quick_snapbox()
         .scarb_cache(cache_dir.path())
-        .arg("build")
+        .arg(command)
         .current_dir(&t)
         .assert()
         .success();
 
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
-    assert_eq!(
-        t.child("target/dev").files(),
-        vec![".fingerprint", "hello.sierra.json", "incremental",]
-    );
+    assert_eq!(t.child("target/dev").files(), expected_files);
 
     // We search the dir, as fingerprints will change with different temp dir, so we cannot hardcode
     // the name here.
@@ -71,17 +70,14 @@ fn incremental_artifacts_emitted() {
 
     Scarb::quick_snapbox()
         .scarb_cache(cache_dir.path())
-        .arg("build")
+        .arg(command)
         .current_dir(&t)
         .assert()
         .success();
 
     // The project has not been modified, so the incremental artifacts should not change.
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
-    assert_eq!(
-        t.child("target/dev").files(),
-        vec![".fingerprint", "hello.sierra.json", "incremental",]
-    );
+    assert_eq!(t.child("target/dev").files(), expected_files);
     assert_eq!(
         t.child("target/dev/incremental").files(),
         vec![
@@ -107,8 +103,9 @@ fn incremental_artifacts_emitted() {
     assert_eq!(digest(&hello_component_id), hello_component_digest);
 }
 
-#[test]
-fn deps_are_fingerprinted() {
+#[test_case("build")]
+#[test_case("lint")]
+fn deps_are_fingerprinted(command: &str) {
     let cache_dir = TempDir::new().unwrap().child("c");
     let t = TempDir::new().unwrap();
 
@@ -135,7 +132,7 @@ fn deps_are_fingerprinted() {
 
     Scarb::quick_snapbox()
         .scarb_cache(cache_dir.path())
-        .arg("build")
+        .arg(command)
         .current_dir(&first)
         .assert()
         .success();
@@ -167,7 +164,7 @@ fn deps_are_fingerprinted() {
 
     Scarb::quick_snapbox()
         .scarb_cache(cache_dir.path())
-        .arg("build")
+        .arg(command)
         .current_dir(&first)
         .assert()
         .success();
@@ -187,8 +184,9 @@ fn deps_are_fingerprinted() {
     assert_ne!(digest(new_third_component_id.as_str()), third_digest);
 }
 
-#[test]
-fn can_fingerprint_dependency_cycles() {
+#[test_case("build")]
+#[test_case("lint")]
+fn can_fingerprint_dependency_cycles(command: &str) {
     let cache_dir = TempDir::new().unwrap().child("c");
     let target_dir = TempDir::new().unwrap().child("t");
     let t = TempDir::new().unwrap();
@@ -215,7 +213,7 @@ fn can_fingerprint_dependency_cycles() {
     Scarb::quick_snapbox()
         .scarb_cache(cache_dir.path())
         .env("SCARB_TARGET_DIR", target_dir.path())
-        .arg("build")
+        .arg(command)
         .current_dir(&first)
         .assert()
         .success();
@@ -247,7 +245,7 @@ fn can_fingerprint_dependency_cycles() {
     Scarb::quick_snapbox()
         .scarb_cache(cache_dir.path())
         .env("SCARB_TARGET_DIR", target_dir.path())
-        .arg("build")
+        .arg(command)
         .current_dir(&third)
         .assert()
         .success();
