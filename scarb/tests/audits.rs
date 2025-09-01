@@ -2,6 +2,7 @@ use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use indoc::indoc;
 use scarb_test_support::command::Scarb;
+use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::{LocalRegistry, audit, unaudit};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
@@ -94,6 +95,89 @@ fn require_audits_disallows_non_audited_version() {
         name = "foo"
         version = "1.0.0"
     "#}));
+}
+
+#[test]
+fn require_audits_disallows_git_dep() {
+    let git_dep = gitx::new("foo", |t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .lib_cairo("pub fn hello() -> felt252 { 42 }")
+            .build(&t)
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("foo", &git_dep)
+        .lib_cairo("fn world() -> felt252 { foo::hello() }")
+        .manifest_extra(
+            r#"
+            [workspace]
+            require-audits = true
+        "#,
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: dependency `foo` from `git` source is not allowed when audit requirement is enabled
+
+            Caused by:
+                0: dependency `foo` from `git` source is not allowed when audit requirement is enabled
+                1: help: depend on a registry package
+                   alternatively, consider whitelisting dependency in workspace root manifest
+                    --> Scarb.toml
+                       [workspace]
+                       allow-no-audits = ["foo"]
+        "#});
+}
+
+#[test]
+fn require_audits_disallows_path_dep() {
+    let t = TempDir::new().unwrap();
+
+    let foo = t.child("foo");
+    ProjectBuilder::start()
+        .name("foo")
+        .version("0.1.0")
+        .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+        .build(&foo);
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .dep("foo", Dep.path("foo"))
+        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
+        .manifest_extra(
+            r#"
+            [workspace]
+            require-audits = true
+        "#,
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: dependency `foo` from `path` source is not allowed when audit requirement is enabled
+
+            Caused by:
+                0: dependency `foo` from `path` source is not allowed when audit requirement is enabled
+                1: help: depend on a registry package
+                   alternatively, consider whitelisting dependency in workspace root manifest
+                    --> Scarb.toml
+                       [workspace]
+                       allow-no-audits = ["foo"]
+        "#});
 }
 
 #[test]
