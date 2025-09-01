@@ -421,7 +421,7 @@ fn bypass_audit_requirement() {
         .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
         .manifest_extra(
             r#"
-            [security]
+            [workspace]
             require-audits = true
             allow-no-audits = ["bar"]
         "#,
@@ -450,7 +450,7 @@ fn bypass_audit_requirement() {
         .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
         .manifest_extra(
             r#"
-            [security]
+            [workspace]
             require-audits = true
             allow-no-audits = ["bar", "foo"]
         "#,
