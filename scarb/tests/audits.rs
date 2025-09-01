@@ -338,7 +338,7 @@ fn will_update_to_audited_version_only() {
     audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success();
