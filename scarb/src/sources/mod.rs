@@ -26,9 +26,9 @@ pub fn ensure_audit_requirement_allowed(
     Err(anyhow!(formatdoc!(
         r#"
         help: depend on a registry package
-        alternatively, consider whitelisting dependency in package manifest
+        alternatively, consider whitelisting dependency in workspace root manifest
          --> Scarb.toml
-            [security]
+            [workspace]
             allow-no-audits = ["{dep}"]
         "#
     )))

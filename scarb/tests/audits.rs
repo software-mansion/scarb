@@ -114,7 +114,7 @@ fn require_audits_disallows_git_dep() {
         .lib_cairo("fn world() -> felt252 { foo::hello() }")
         .manifest_extra(
             r#"
-            [security]
+            [workspace]
             require-audits = true
         "#,
         )
@@ -131,9 +131,9 @@ fn require_audits_disallows_git_dep() {
             Caused by:
                 0: dependency `foo` from `git` source is not allowed when audit requirement is enabled
                 1: help: depend on a registry package
-                   alternatively, consider whitelisting dependency in package manifest
+                   alternatively, consider whitelisting dependency in workspace root manifest
                     --> Scarb.toml
-                       [security]
+                       [workspace]
                        allow-no-audits = ["foo"]
         "#});
 }
@@ -156,7 +156,7 @@ fn require_audits_disallows_path_dep() {
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .manifest_extra(
             r#"
-            [security]
+            [workspace]
             require-audits = true
         "#,
         )
@@ -173,9 +173,9 @@ fn require_audits_disallows_path_dep() {
             Caused by:
                 0: dependency `foo` from `path` source is not allowed when audit requirement is enabled
                 1: help: depend on a registry package
-                   alternatively, consider whitelisting dependency in package manifest
+                   alternatively, consider whitelisting dependency in workspace root manifest
                     --> Scarb.toml
-                       [security]
+                       [workspace]
                        allow-no-audits = ["foo"]
         "#});
 }
