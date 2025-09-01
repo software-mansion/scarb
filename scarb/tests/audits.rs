@@ -25,7 +25,7 @@ fn require_audits_allows_non_audited_dev_dep() {
         .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
         .manifest_extra(
             r#"
-            [security]
+            [workspace]
             require-audits = true
         "#,
         )
