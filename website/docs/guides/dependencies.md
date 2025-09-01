@@ -21,15 +21,15 @@ This example adds a dependency on the [`openzeppelin_merkle_tree`](https://githu
 package (note that OpenZeppelin is a collection of multiple packages, and we will use only one of them as an example in this guide).
 To see all available versions of some package, use [`scarb list`](#listing-available-versions-of-the-package) command, or visit the "Versions" pane on the package's [registry page](https://scarbs.xyz/packages/openzeppelin_merkle_tree).
 
-At the time of writing this guide, the latest version of the `openzeppelin_merkle_tree` package is `0.17.0`, which is the version we will use.
+At the time of writing this guide, the latest version of the `openzeppelin_merkle_tree` package is `2.0.0`, which is the version we will use.
 
 ```toml
 [dependencies]
-openzeppelin_merkle_tree = "0.17.0"
+openzeppelin_merkle_tree = "2.0.0"
 ```
 
-Using `"0.17.0"` as version requirement means, that you want to use a version `0.17.0` or newer, up until `0.18.0`. To
-accept only a specific version, you can use `"=0.17.0"`. You can learn more about specifying version
+Using `"2.0.0"` as version requirement means, that you want to use a version `2.0.0` or newer, up until `0.18.0`. To
+accept only a specific version, you can use `"=2.0.0"`. You can learn more about specifying version
 requirements [here](../reference/specifying-dependencies#version-requirements)
 
 Note, that if you want to add more dependencies, you do not have to add `[dependencies]` for each package separately.
@@ -37,8 +37,8 @@ For example:
 
 ```toml
 [dependencies]
-openzeppelin_merkle_tree = "0.17.0"
-openzeppelin_account = "0.17.0"
+openzeppelin_merkle_tree = "2.0.0"
+openzeppelin_account = "2.0.0"
 ```
 
 Now, run `scarb build`, and Scarb will fetch new dependencies and all of their dependencies.
@@ -46,10 +46,10 @@ Then it will compile your package with all of these packages included:
 
 ```shell
 $ scarb build
- Downloading openzeppelin_account v0.17.0
- Downloading openzeppelin_merkle_tree v0.17.0
- Downloading openzeppelin_utils v0.17.0
- Downloading openzeppelin_introspection v0.17.0
+ Downloading openzeppelin_account v2.0.0
+ Downloading openzeppelin_merkle_tree v2.0.0
+ Downloading openzeppelin_utils v2.0.0
+ Downloading openzeppelin_introspection v2.0.0
    Compiling hello_world v0.1.0 (/path/to/package/hello_world/Scarb.toml)
     Finished `dev` profile target(s) in 4 seconds
 ```
@@ -73,7 +73,7 @@ You can add a `[dev-dependencies]` section to your Scarb.toml whose format is eq
 
 ```toml
 [dev-dependencies]
-openzeppelin_merkle_tree = "0.17.0"
+openzeppelin_merkle_tree = "2.0.0"
 ```
 
 ## Adding a dependency via `scarb add`
@@ -84,19 +84,19 @@ It can also automatically keep the list sorted, if it already is.
 For example, the above example of dependency on `openzeppelin_merkle_tree`, can be also added like this:
 
 ```shell
-scarb add openzeppelin_merkle_tree@0.17.0
+scarb add openzeppelin_merkle_tree@2.0.0
 ```
 
 You can add development dependencies similarly by passing `--dev` flag:
 
 ```shell
-scarb add --dev openzeppelin_merkle_tree@0.17.0
+scarb add --dev openzeppelin_merkle_tree@2.0.0
 ```
 
 You can also use it to add git commands if you wish:
 
 ```shell
-scarb add openzeppelin_merkle_tree --git https://github.com/OpenZeppelin/cairo-contracts.git --tag 0.17.0
+scarb add openzeppelin_merkle_tree --git https://github.com/OpenZeppelin/cairo-contracts.git --tag 2.0.0
 ```
 
 ## Removing a dependency
