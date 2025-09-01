@@ -217,7 +217,7 @@ pub fn post_process(_args: TokenStream, input: TokenStream) -> TokenStream {
 
 /// Constructs the fingerprint callback.
 ///
-/// The fingerprints is an u64 value used to determine if Cairo code depending on this
+/// A fingerprint is an `u64` value used to determine if Cairo code depending on this
 /// procedural macro should be recompiled or can use the incremental cache artifacts from
 /// the previous build.
 ///
@@ -225,8 +225,8 @@ pub fn post_process(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// This is necessary when the macro output depends on anything but the code passed as expansion
 /// arguments (e.g. environmental variables, etc.).
 ///
-/// Multiple callbacks can be defined within the macro, in which case a (wrapping) sum of all the
-/// fingerprints will be used to determine if recompilation should happen.
+/// Multiple callbacks can be defined within the macro, in which case values of fingerprints will be
+/// combined, using a formula akin to `boost::hash_combine` implementation.
 #[proc_macro_attribute]
 pub fn fingerprint(_args: TokenStream, input: TokenStream) -> TokenStream {
     let item: ItemFn = parse_macro_input!(input as ItemFn);

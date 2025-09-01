@@ -173,6 +173,7 @@ pub static CALLBACKS: [Callback];
 
 #[doc(hidden)]
 #[derive(Clone)]
+#[non_exhaustive]
 pub enum Callback {
     PostProcess(fn(PostProcessContext)),
     Fingerprint(fn() -> u64),
@@ -242,7 +243,7 @@ pub unsafe extern "C" fn free_doc_v2(doc: *mut c_char) {
 /// This function needs to be accessible through the FFI interface,
 /// of the dynamic library re-exporting it.
 ///
-/// The fingerprints is an u64 value used to determine if Cairo code depending on this
+/// A fingerprint is an `u64` value used to determine if Cairo code depending on this
 /// procedural macro should be recompiled or can use the incremental cache artifacts from
 /// the previous build. User can define their own fingerprint callback, otherwise this will return
 /// a constant value by default.
@@ -257,7 +258,8 @@ pub unsafe extern "C" fn fingerprint_v2() -> u64 {
     let mut result: u64 = 0;
     for callback in CALLBACKS {
         if let Callback::Fingerprint(fun) = callback {
-            result = result.wrapping_add(fun());
+            // This formula for combining hash values is taken from `boost::hash_combine` implementation.
+            result ^= fun() + 0x9e3779b9 + (result << 6) + (result >> 2)
         }
     }
     result

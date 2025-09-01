@@ -235,7 +235,7 @@ impl Plugin {
 
     /// Get the macro-defined fingerprint.
     ///
-    /// The fingerprints is an u64 value used to determine if Cairo code depending on this
+    /// A fingerprint is an `u64` value used to determine if Cairo code depending on this
     /// procedural macro should be recompiled or can use the incremental cache artifacts from
     /// the previous build. User can define their own fingerprint callback, otherwise this will return
     /// a constant value by default.
