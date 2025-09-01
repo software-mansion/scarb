@@ -9,27 +9,24 @@ use crate::{
     core::{PackageId, PackageName, Target, TargetKind},
     ops,
 };
-use std::ops::Deref;
+use salsa::Setter;
 use std::{collections::HashMap, sync::Arc, vec};
 
 use anyhow::anyhow;
 use anyhow::{Context, Result};
+use cairo_lang_defs::db::defs_group_input;
 use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId};
 use cairo_lang_defs::{db::DefsGroup, diagnostic_utils::StableLocation, ids::ModuleId};
 use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
 use cairo_lang_filesystem::ids::CrateInput;
-use cairo_lang_filesystem::{
-    db::{FilesGroup, FilesGroupEx},
-    ids::CrateLongId,
-    override_file_content,
-};
+use cairo_lang_filesystem::{db::FilesGroup, ids::CrateLongId, override_file_content};
+use cairo_lang_semantic::db::semantic_group_input;
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::{
     SemanticDiagnostic, db::SemanticGroup, diagnostic::SemanticDiagnosticKind, plugin::PluginSuite,
 };
 use cairo_lint::{
-    CAIRO_LINT_TOOL_NAME, CorelibContext, LinterAnalysisDatabase, LinterDiagnosticParams,
-    LinterGroup,
+    CAIRO_LINT_TOOL_NAME, LinterAnalysisDatabase, LinterDiagnosticParams, LinterGroup,
 };
 use cairo_lint::{
     CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
@@ -197,8 +194,6 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
             .ui()
             .print(Status::new("Linting", &compilation_unit.name()));
 
-        let corelib_context = CorelibContext::new(&db);
-
         let main_component = compilation_unit.main_component();
         let crate_id = main_component.crate_id(&db);
 
@@ -209,7 +204,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
             .iter()
             .flat_map(|module_id| {
                 let linter_diags = db
-                    .linter_diagnostics(corelib_context.clone(), linter_params.clone(), *module_id)
+                    .linter_diagnostics(linter_params.clone(), *module_id)
                     .into_iter()
                     .map(|diag| {
                         SemanticDiagnostic::new(
@@ -282,7 +277,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         }
 
         if opts.fix {
-            let fixes = get_fixes(&db, &corelib_context, &linter_params, diagnostics);
+            let fixes = get_fixes(&db, &linter_params, diagnostics);
             for (file_id, fixes) in fixes.into_iter() {
                 ws.config()
                     .ui()
@@ -369,12 +364,12 @@ fn build_lint_database(
     if unit.compiler_config.unsafe_panic {
         b.with_unsafe_panic();
     }
-    let db = b.build()?;
+    let mut db = b.build()?;
 
-    apply_plugins(db.get_mut(), plugins);
-    inject_virtual_wrapper_lib(db.get_mut(), unit)?;
+    apply_plugins(&mut db, plugins);
+    inject_virtual_wrapper_lib(&mut db, unit)?;
 
-    Ok(db.deref().clone())
+    Ok(db)
 }
 
 /// Sets the plugin suites for crates related to the library components
@@ -398,14 +393,16 @@ pub fn set_override_crate_plugins_from_suite(
     crate_input: CrateInput,
     plugins: PluginSuite,
 ) {
-    let mut overrides = db.macro_plugin_overrides_input().as_ref().clone();
+    let mut overrides = db.macro_plugin_overrides_input().clone();
     overrides.insert(
         crate_input.clone(),
         plugins.plugins.into_iter().map(MacroPluginLongId).collect(),
     );
-    db.set_macro_plugin_overrides_input(overrides.into());
+    defs_group_input(db)
+        .set_macro_plugin_overrides(db)
+        .to(Some(overrides));
 
-    let mut overrides = db.analyzer_plugin_overrides_input().as_ref().clone();
+    let mut overrides = db.analyzer_plugin_overrides_input().clone();
     overrides.insert(
         crate_input.clone(),
         plugins
@@ -414,9 +411,11 @@ pub fn set_override_crate_plugins_from_suite(
             .map(AnalyzerPluginLongId)
             .collect(),
     );
-    db.set_analyzer_plugin_overrides_input(overrides.into());
+    semantic_group_input(db)
+        .set_analyzer_plugin_overrides(db)
+        .to(Some(overrides));
 
-    let mut overrides = db.inline_macro_plugin_overrides_input().as_ref().clone();
+    let mut overrides = db.inline_macro_plugin_overrides_input().clone();
     overrides.insert(
         crate_input,
         Arc::new(
@@ -427,7 +426,9 @@ pub fn set_override_crate_plugins_from_suite(
                 .collect(),
         ),
     );
-    db.set_inline_macro_plugin_overrides_input(overrides.into());
+    defs_group_input(db)
+        .set_inline_macro_plugin_overrides(db)
+        .to(Some(overrides));
 }
 
 /// Generates a wrapper lib file for appropriate compilation units.

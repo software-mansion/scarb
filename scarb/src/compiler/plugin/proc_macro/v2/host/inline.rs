@@ -11,8 +11,8 @@ use cairo_lang_defs::plugin::{
     PluginGeneratedFile,
 };
 use cairo_lang_macro::{AllocationContext, TokenStream};
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{TypedSyntaxNode, ast};
+use salsa::Database;
 use std::sync::{Arc, OnceLock};
 
 /// A Cairo compiler inline macro plugin controlling the inline procedural macro execution.
@@ -45,7 +45,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
     #[tracing::instrument(level = "trace", skip_all)]
     fn generate_code<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         syntax: &ast::ExprInlineMacro<'db>,
         _metadata: &MacroPluginMetadata<'_>,
     ) -> InlinePluginResult<'db> {

@@ -14,10 +14,10 @@ use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, PluginDiagnostic, PluginGeneratedFile, PluginResult,
 };
 use cairo_lang_filesystem::ids::CodeMapping;
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 pub use inner_attribute::*;
 pub use item_attribute::*;
+use salsa::Database;
 
 #[derive(Default)]
 pub struct AttributePluginResult<'db> {
@@ -33,7 +33,7 @@ impl<'db> AttributePluginResult<'db> {
 
     pub fn with_diagnostics(
         mut self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         call_site_stable_ptr: SyntaxStablePtrId<'db>,
         diagnostics: Vec<AdaptedDiagnostic>,
     ) -> Self {

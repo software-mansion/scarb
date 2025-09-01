@@ -16,7 +16,7 @@ use crate::compiler::plugin::proc_macro::v2::{
 use crate::core::PackageId;
 use cairo_lang_macro::{AllocationContext, ProcMacroResult, TokenStream};
 use cairo_lang_syntax::node::ast;
-use cairo_lang_syntax::node::db::SyntaxGroup;
+use salsa::Database;
 use smol_str::SmolStr;
 
 impl ProcMacroHostPlugin {
@@ -41,7 +41,7 @@ impl ProcMacroHostPlugin {
     /// See [`AttributeSpanAdapter`] for details.
     pub(crate) fn parse_attribute<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
         ctx: &AllocationContext,
     ) -> (AttrExpansionFound<'db>, AdaptedTokenStream) {
@@ -108,7 +108,7 @@ impl ProcMacroHostPlugin {
 
     pub fn expand_attribute<'db>(
         &self,
-        db: &'db dyn SyntaxGroup,
+        db: &'db dyn Database,
         last: bool,
         args: TokenStream,
         token_stream: AdaptedTokenStream,
@@ -202,7 +202,7 @@ impl ProcMacroHostPlugin {
 
 fn parse_item<'db, T: ItemWithAttributes<'db> + ChildNodesWithoutAttributes<'db>>(
     ast: &T,
-    db: &'db dyn SyntaxGroup,
+    db: &'db dyn Database,
     host: &ProcMacroHostPlugin,
     token_stream_builder: &mut TokenStreamBuilder<'db>,
     ctx: &AllocationContext,

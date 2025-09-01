@@ -189,9 +189,10 @@ fn do_expand(
 
     for module_id in crate_modules.iter() {
         builder.add_str(module_stack.register(module_id.full_path(&db)).as_str());
-        let Some(module_items) = db.module_items(*module_id).to_option() else {
+        let Some(module_data) = module_id.module_data(&db).to_option() else {
             continue;
         };
+        let module_items = module_data.items(&db);
         let mut seen_uses = HashSet::new();
         for item_id in module_items.iter() {
             // We need to handle uses manually, as module data only includes use leaf instead of path.
