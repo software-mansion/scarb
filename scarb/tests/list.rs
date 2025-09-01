@@ -46,4 +46,20 @@ fn list_package_versions() {
             1.2.4-beta       x        yanked[..]
             1.2.3            x        -
         "#});
+
+    Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("list")
+        .arg("foo")
+        .arg("--index")
+        .arg(&registry.url)
+        .assert()
+        .success()
+        .stdout_matches(
+            indoc!{
+            r#"
+            [{"v":"2.0.0+build.1","deps":[],"cksum":"sha256:[..]"},{"v":"2.0.0-alpha.1","deps":[],"cksum":"sha256:[..]"},{"v":"1.5.0","deps":[],"cksum":"sha256:[..]","audited":true},{"v":"1.2.4-beta","deps":[],"cksum":"sha256:[..]","yanked":true},{"v":"1.2.3","deps":[],"cksum":"sha256:[..]"}]
+            "#
+            }
+        );
 }
