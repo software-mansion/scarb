@@ -61,6 +61,20 @@ enum PrivateEnum {
     PRIVATE_VARIANT,
 }
 
+/// Public macro declaration
+pub macro public_macro_declaration {
+	[$x:ident  ] => {
+		println!("{}", $x)
+	};
+}
+
+/// Private macro declaration
+macro private_macro_declaration {
+	[$x:ident  ] => {
+		println!("{}", $x)
+	};
+}
+
 /// Public parent module
 pub mod PublicParent {
     /// Parent public function

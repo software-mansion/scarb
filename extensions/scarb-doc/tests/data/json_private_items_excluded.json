@@ -50,6 +50,17 @@
             "name": "hello_world",
             "signature": null
           },
+          "macro_declarations": [
+            {
+              "item_data": {
+                "doc": "Public macro declaration",
+                "full_path": "hello_world::public_macro_declaration",
+                "group": null,
+                "name": "public_macro_declaration",
+                "signature": "macro public_macro_declaration {\n    [$x:ident] => { ... };\n} => { ... }"
+              }
+            }
+          ],
           "pub_uses": {
             "use_constants": [],
             "use_enums": [],
@@ -58,6 +69,7 @@
             "use_free_functions": [],
             "use_impl_aliases": [],
             "use_impl_defs": [],
+            "use_macro_declarations": [],
             "use_module_type_aliases": [],
             "use_structs": [],
             "use_submodules": [],
@@ -132,6 +144,7 @@
                 "name": "PublicParent",
                 "signature": null
               },
+              "macro_declarations": [],
               "pub_uses": {
                 "use_constants": [],
                 "use_enums": [],
@@ -140,6 +153,7 @@
                 "use_free_functions": [],
                 "use_impl_aliases": [],
                 "use_impl_defs": [],
+                "use_macro_declarations": [],
                 "use_module_type_aliases": [],
                 "use_structs": [],
                 "use_submodules": [],
@@ -214,6 +228,7 @@
                     "name": "PublicChild",
                     "signature": null
                   },
+                  "macro_declarations": [],
                   "pub_uses": {
                     "use_constants": [],
                     "use_enums": [],
@@ -222,6 +237,7 @@
                     "use_free_functions": [],
                     "use_impl_aliases": [],
                     "use_impl_defs": [],
+                    "use_macro_declarations": [],
                     "use_module_type_aliases": [],
                     "use_structs": [],
                     "use_submodules": [],
