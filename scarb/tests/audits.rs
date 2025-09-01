@@ -329,7 +329,7 @@ fn will_update_to_audited_version_only() {
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .manifest_extra(
             r#"
-            [security]
+            [workspace]
             require-audits = true
         "#,
         )
