@@ -21,7 +21,7 @@ pub fn ensure_audit_requirement_allowed(
         return Ok(());
     }
     let dep = dependency.name.to_string();
-    let source = dependency.source_id.kind.primary_field(); // <- derive "git"/"path"/"registry"
+    let source = dependency.source_id.kind.primary_field();
 
     Err(anyhow!(formatdoc!(
         r#"
