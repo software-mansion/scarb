@@ -184,7 +184,6 @@ Scarb supports filtering packages from the registry based on whether they have b
 
 You can enable this feature by specifying the `require-audits` key in the `[workspace]` section of the workspace root manifest:
 
-
 ```toml
 [workspace]
 require-audits = true
@@ -195,7 +194,6 @@ If unable to resolve the dependency tree due to this, Scarb will exit with an er
 By default, this field is set to `false`.
 This policy applies applies to entire workspace.
 Members must not conflict with the root setting.
-
 
 ### `[scripts]`
 
