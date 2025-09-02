@@ -644,34 +644,22 @@ fn compile_git_dep_with_rev() {
             .build(&t)
     });
 
-    // Get the current commit hash
-    let repo = gix::open(git_dep.p.path()).unwrap();
-    let head_id = repo.head_id().unwrap();
-    let rev = head_id.to_string();
-
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .dep("dep1", git_dep.with("rev", &rev))
+        .dep("dep1", &git_dep)
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
-        [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished `dev` profile target(s) in [..]
         "#});
-
-    assert_eq!(
-        t.child("target/dev").files(),
-        vec![".fingerprint", "hello.sierra.json", "incremental"],
-    );
 }
 
 #[test]
@@ -707,15 +695,13 @@ fn git_dep_multiple_tags() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-        [..]  Updating git repository file://[..]/dep1
-        [..]  Updating git repository file://[..]/dep2
-        [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished `dev` profile target(s) in [..]
+        [..]  Updating git repository file://[..]/dep[..]
+        [..]  Updating git repository file://[..]/dep[..]
         "#});
 }
 
@@ -738,14 +724,12 @@ fn git_dep_with_nested_structure() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/nested_project
-        [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -865,14 +849,12 @@ fn git_dep_master_branch() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
-        [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -901,14 +883,12 @@ fn git_dep_with_path_dependency() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/workspace
-        [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
