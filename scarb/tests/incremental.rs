@@ -468,10 +468,8 @@ fn fingerprint_callback_can_force_recompilation() {
     let t = temp.child("plugin_package");
     CairoPluginProjectBuilder::default()
         .name("plugin_package")
-        .add_dep(r#"xxhash-rust = { version = "0.8", features = ["xxh3"] }"#)
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{fingerprint, ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
-        use std::hash::{Hash, Hasher};
 
         #[fingerprint]
         fn some_value() -> u64 {
@@ -480,9 +478,16 @@ fn fingerprint_callback_can_force_recompilation() {
 
         #[fingerprint]
         fn env_hash() -> u64 {
-            let mut hasher = xxhash_rust::xxh3::Xxh3::default();
-            std::env::var("TEST_ENV").unwrap().hash(&mut hasher);
-            hasher.finish()
+            std::env::var("TEST_ENV")
+                .ok()
+                .map(|s| {
+                    let mut result = 0;
+                    for c in s.chars() {
+                        result ^= c as u64;
+                    }
+                    result
+                })
+                .unwrap_or_default()
         }
 
         #[attribute_macro]
