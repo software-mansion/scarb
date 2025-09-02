@@ -1,9 +1,12 @@
 #![deny(clippy::dbg_macro)]
 #![deny(clippy::disallowed_methods)]
 
+mod hint_processor;
+
 use std::collections::HashSet;
 use std::{env, fs};
 
+use crate::hint_processor::TestHintProcessor;
 use anyhow::{Context, Result};
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_test_plugin::{TestCompilation, TestCompilationMetadata};
@@ -99,7 +102,17 @@ fn main() -> Result<()> {
                 print_resource_usage: args.print_resource_usage,
                 profiler_config: None,
             };
-            let runner = CompiledTestRunner::new(test_compilation, config);
+            let mut runner = CompiledTestRunner::new(test_compilation, config);
+            runner.with_custom_hint_processor({
+                let oracle_experiment_enabled = args.experimental_oracles;
+                move |cairo_hint_processor| {
+                    Box::new(TestHintProcessor {
+                        cairo_hint_processor,
+                        oracle_experiment_enabled,
+                        oracle_hint_service: Default::default(),
+                    })
+                }
+            });
             runner.run(None)?;
         }
     }
