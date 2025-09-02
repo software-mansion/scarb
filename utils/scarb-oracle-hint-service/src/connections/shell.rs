@@ -2,11 +2,13 @@ use crate::Protocol;
 use crate::connection::Connection;
 use anyhow::{Context, Result, anyhow, ensure};
 use deno_task_shell::parser::{SequentialList, parse};
-use deno_task_shell::{ShellPipeReader, ShellState, pipe};
+use deno_task_shell::{ExecutableCommand, ShellCommand, ShellPipeReader, ShellState, pipe};
 use starknet_core::codec::{Decode, Encode};
 use starknet_core::types::{ByteArray, Felt};
+use std::collections::HashMap;
 use std::env;
 use std::io::{BufRead, BufReader, Read};
+use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio::task::spawn_blocking;
@@ -100,10 +102,20 @@ impl Mode {
 }
 
 fn build_shell() -> Result<ShellState> {
+    let mut custom_commands: HashMap<String, Rc<dyn ShellCommand>> = HashMap::new();
+
+    // If there is a `SCARB` env var present, use it to override the `scarb` command in the shell.
+    if let Some(scarb_path) = env::var_os("SCARB") {
+        custom_commands.insert(
+            "scarb".into(),
+            Rc::new(ExecutableCommand::new("scarb".into(), scarb_path.into())),
+        );
+    }
+
     Ok(ShellState::new(
         env::vars_os().collect(),
         env::current_dir().context("cannot get current dir")?,
-        Default::default(),
+        custom_commands,
         Default::default(),
     ))
 }
