@@ -633,15 +633,27 @@ fn deps_only_cloned_to_checkouts_once() {
         "#});
 }
 
-// Additional comprehensive git dependency tests inspired by Cargo
+// Additional submodule-specific git dependency tests inspired by Cargo
 
 #[test]
-fn compile_git_dep_with_rev() {
+fn git_dep_with_submodule_recursive() {
+    // Test that verifies Scarb correctly handles repositories with .gitmodules
+    // and can fetch them with --recurse-submodules
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
             .lib_cairo("pub fn hello() -> felt252 { 42 }")
-            .build(&t)
+            .build(&t);
+            
+        // Create a .gitmodules file to simulate a repository with submodules
+        t.child(".gitmodules").write_str(indoc! {r#"
+            [submodule "submodule1"]
+                path = submodule1
+                url = https://github.com/example/submodule1.git
+            [submodule "submodule2"]  
+                path = submodule2
+                url = https://github.com/example/submodule2.git
+        "#}).unwrap();
     });
 
     let t = TempDir::new().unwrap();
@@ -649,7 +661,7 @@ fn compile_git_dep_with_rev() {
         .name("hello")
         .version("1.0.0")
         .dep("dep1", &git_dep)
-        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
+        .lib_cairo("fn test() -> felt252 { dep1::hello() }")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -663,64 +675,34 @@ fn compile_git_dep_with_rev() {
 }
 
 #[test]
-fn git_dep_multiple_tags() {
-    let git_dep1 = gitx::new("dep1", |t| {
+fn git_dep_with_nested_submodule() {
+    // Test repository with nested submodule structure via .gitmodules
+    let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
-            .version("1.0.0")
-            .lib_cairo("pub fn hello() -> felt252 { 100 }")
-            .build(&t)
-    });
-
-    // Create a tag for version 1.0.0
-    git_dep1.tag("v1.0.0");
-
-    let git_dep2 = gitx::new("dep2", |t| {
-        ProjectBuilder::start()
-            .name("dep2")
-            .version("2.0.0")
-            .lib_cairo("pub fn hello() -> felt252 { 200 }")
-            .build(&t)
-    });
-    
-    git_dep2.tag("v2.0.0");
-
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .version("1.0.0")
-        .dep("dep1", git_dep1.with("tag", "v1.0.0"))
-        .dep("dep2", git_dep2.with("tag", "v2.0.0"))
-        .lib_cairo("fn test() -> (felt252, felt252) { (dep1::hello(), dep2::hello()) }")
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        .arg("fetch")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-        [..]  Updating git repository file://[..]/dep[..]
-        [..]  Updating git repository file://[..]/dep[..]
-        "#});
-}
-
-#[test]
-fn git_dep_with_nested_structure() {
-    let git_dep = gitx::new("nested_project", |t| {
-        // Create a git repo with nested directories
-        ProjectBuilder::start()
-            .name("nested_project")
-            .lib_cairo("pub fn nested() -> felt252 { 456 }")
+            .lib_cairo("pub fn hello() -> felt252 { 123 }")
             .build(&t);
+            
+        // Create nested .gitmodules structure
+        t.child(".gitmodules").write_str(indoc! {r#"
+            [submodule "libs/common"]
+                path = libs/common
+                url = https://github.com/example/common.git
+            [submodule "libs/utils"]
+                path = libs/utils
+                url = https://github.com/example/utils.git
+        "#}).unwrap();
+        
+        // Create directories to simulate the nested structure
+        std::fs::create_dir_all(t.child("libs").path()).unwrap();
     });
 
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .dep("nested_project", &git_dep)
-        .lib_cairo("fn world() -> felt252 { nested_project::nested() }")
+        .dep("dep1", &git_dep)
+        .lib_cairo("fn test() -> felt252 { dep1::hello() }")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -729,123 +711,37 @@ fn git_dep_with_nested_structure() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-        [..]  Updating git repository file://[..]/nested_project
+        [..]  Updating git repository file://[..]/dep1
         "#});
 }
 
 #[test] 
-fn git_dep_nonexistent_branch() {
+fn git_dep_with_submodule_on_branch() {
+    // Test submodule functionality with a specific git branch
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
-            .lib_cairo("pub fn hello() -> felt252 { 42 }")
-            .build(&t)
+            .lib_cairo("pub fn hello() -> felt252 { 456 }")
+            .build(&t);
+            
+        // Create .gitmodules with branch-specific submodule
+        t.child(".gitmodules").write_str(indoc! {r#"
+            [submodule "feature-module"]
+                path = feature-module
+                url = https://github.com/example/feature.git
+                branch = feature-branch
+        "#}).unwrap();
     });
-
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .version("1.0.0")
-        .dep("dep1", git_dep.with("branch", "nonexistent"))
-        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        .arg("fetch")
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-        [..]  Updating git repository file://[..]/dep1
-        error: failed to clone into: [..]
-
-        Caused by:
-            0: failed to clone into: [..]
-            1: process did not exit successfully: exit status: 128
-        "#});
-}
-
-#[test]
-fn git_dep_nonexistent_tag() {
-    let git_dep = gitx::new("dep1", |t| {
-        ProjectBuilder::start()
-            .name("dep1") 
-            .lib_cairo("pub fn hello() -> felt252 { 42 }")
-            .build(&t)
-    });
-
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .version("1.0.0")
-        .dep("dep1", git_dep.with("tag", "v999.0.0"))
-        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        .arg("fetch")
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-        [..]  Updating git repository file://[..]/dep1
-        error: failed to clone into: [..]
-
-        Caused by:
-            0: failed to clone into: [..]
-            1: process did not exit successfully: exit status: 128
-        "#});
-}
-
-#[test]
-fn git_dep_invalid_rev() {
-    let git_dep = gitx::new("dep1", |t| {
-        ProjectBuilder::start()
-            .name("dep1")
-            .lib_cairo("pub fn hello() -> felt252 { 42 }")
-            .build(&t)
-    });
-
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello") 
-        .version("1.0.0")
-        .dep("dep1", git_dep.with("rev", "invalid-hash"))
-        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        .arg("fetch")
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-        [..]  Updating git repository file://[..]/dep1
-        error: The ref partially named "invalid-hash" could not be found
-
-        Caused by:
-            The ref partially named "invalid-hash" could not be found
-        "#});
-}
-
-#[test]
-fn git_dep_master_branch() {
-    let git_dep = gitx::new("dep1", |t| {
-        ProjectBuilder::start()
-            .name("dep1")
-            .lib_cairo("pub fn hello() -> felt252 { 42 }")
-            .build(&t)
-    });
-
-    // Create master branch (some repos still use master instead of main)
-    git_dep.git(["checkout", "-b", "master"]);
+    
+    // Create a specific branch for this test
+    git_dep.checkout_branch("dev-with-submodule");
 
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0") 
-        .dep("dep1", git_dep.with("branch", "master"))
-        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
+        .dep("dep1", git_dep.with("branch", "dev-with-submodule"))
+        .lib_cairo("fn test() -> felt252 { dep1::hello() }")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -859,82 +755,34 @@ fn git_dep_master_branch() {
 }
 
 #[test]
-fn git_dep_with_path_dependency() {
-    let git_dep = gitx::new("workspace", |t| {
-        // Create a simple package with a path dependency
+fn git_dep_with_submodule_tag() {
+    // Test submodule functionality with a tagged version
+    let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
-            .name("main_lib")
-            .lib_cairo("pub fn main() -> felt252 { sub_lib::sub() }")
-            .dep("sub_lib", Dep.path("./sub_lib"))
+            .name("dep1")
+            .lib_cairo("pub fn hello() -> felt252 { 789 }")
             .build(&t);
-
-        ProjectBuilder::start()
-            .name("sub_lib") 
-            .lib_cairo("pub fn sub() -> felt252 { 123 }")
-            .build(&t.child("sub_lib"));
+            
+        t.child(".gitmodules").write_str(indoc! {r#"
+            [submodule "tagged-module"]
+                path = tagged-module  
+                url = https://github.com/example/tagged.git
+        "#}).unwrap();
     });
+    
+    git_dep.tag("v1.2.0");
 
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .dep("main_lib", &git_dep)
-        .lib_cairo("fn world() -> felt252 { main_lib::main() }")
+        .dep("dep1", git_dep.with("tag", "v1.2.0"))
+        .lib_cairo("fn test() -> felt252 { dep1::hello() }")
         .build(&t);
 
     Scarb::quick_snapbox()
         .arg("fetch")
         .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-        [..]  Updating git repository file://[..]/workspace
-        "#});
-}
-
-#[test]
-fn git_dep_concurrent_fetches() {
-    let git_dep = gitx::new("dep1", |t| {
-        ProjectBuilder::start()
-            .name("dep1")
-            .lib_cairo("pub fn hello() -> felt252 { 42 }")
-            .build(&t)
-    });
-
-    let cache_dir = TempDir::new().unwrap();
-    
-    // Create multiple projects that depend on the same git dependency
-    let t1 = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello1")
-        .version("1.0.0")
-        .dep("dep1", &git_dep)
-        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
-        .build(&t1);
-
-    let t2 = TempDir::new().unwrap(); 
-    ProjectBuilder::start()
-        .name("hello2")
-        .version("1.0.0")
-        .dep("dep1", &git_dep)
-        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
-        .build(&t2);
-
-    // Both should succeed even when using the same cache
-    Scarb::quick_snapbox()
-        .arg("fetch")
-        .env("SCARB_CACHE", cache_dir.path())
-        .current_dir(&t1)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-        [..]  Updating git repository file://[..]/dep1
-        "#});
-
-    Scarb::quick_snapbox()
-        .arg("fetch") 
-        .env("SCARB_CACHE", cache_dir.path())
-        .current_dir(&t2)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"

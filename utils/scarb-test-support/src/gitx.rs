@@ -132,3 +132,17 @@ impl GitContext for &Path {
         self
     }
 }
+
+/// Add a git submodule to a repository.
+/// This mimics the add_submodule functionality from Cargo's test support.
+pub fn add_submodule(git_project: &GitProject, submodule_name: &str, submodule_git_project: &GitProject) {
+    // Set global config to allow file protocol
+    git_project.git(["config", "--global", "protocol.file.allow", "always"]);
+    
+    git_project.git([
+        "submodule", "add", 
+        &submodule_git_project.url(), 
+        submodule_name
+    ]);
+    git_project.commit();
+}
