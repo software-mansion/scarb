@@ -10,6 +10,7 @@ pub mod v2;
 
 pub use compilation::{check_unit, compile_unit, fetch_crate};
 pub use expansion::*;
+pub use ffi::InstanceLoader;
 pub use host::*;
 pub use instance::*;
 pub use repository::*;

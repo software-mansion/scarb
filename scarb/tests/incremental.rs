@@ -461,6 +461,119 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
     assert_ne!(digest(hello_component_id.as_str()), hello_digest);
 }
 
+#[test]
+fn fingerprint_callback_can_force_recompilation() {
+    let cache_dir = TempDir::new().unwrap().child("c");
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("plugin_package");
+    CairoPluginProjectBuilder::default()
+        .name("plugin_package")
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{fingerprint, ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
+
+        #[fingerprint]
+        fn some_value() -> u64 {
+            12
+        }
+
+        #[fingerprint]
+        fn env_hash() -> u64 {
+            std::env::var("TEST_ENV")
+                .ok()
+                .map(|s| {
+                    let mut result = 0;
+                    for c in s.chars() {
+                        result ^= c as u64;
+                    }
+                    result
+                })
+                .unwrap_or_default()
+        }
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let new_token_string = token_stream.to_string().replace("12", "34");
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                new_token_string.clone(),
+                TextSpan { start: 0, end: new_token_string.len() as u32 },
+            ))]);
+            ProcMacroResult::new(token_stream)
+        }
+        "##})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("plugin_package", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> felt252 { 12 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .scarb_cache(&cache_dir)
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .env("TEST_ENV", "FIRST_VALUE")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling plugin_package v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
+
+    let fingerprints = || project.child("target/dev/.fingerprint").files();
+    // Note we do not emit cache artifacts for macros, so we don't need their fingerprint files either.
+    assert_eq!(fingerprints().len(), 2); // core, hello
+
+    let component_id = component_id_factory(project.child("target/dev/"));
+    let digest = digest_factory(project.child("target/dev/"));
+
+    let hello_component_id = component_id("hello");
+    let hello_digest = digest(hello_component_id.as_str());
+
+    // Rebuild without changing the macro.
+    Scarb::quick_snapbox()
+        .scarb_cache(&cache_dir)
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .env("TEST_ENV", "FIRST_VALUE")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling plugin_package v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
+    assert_eq!(fingerprints().len(), 2);
+    assert_eq!(digest(hello_component_id.as_str()), hello_digest);
+
+    // Rebuild with change env var.
+    Scarb::quick_snapbox()
+        .scarb_cache(&cache_dir)
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .env("TEST_ENV", "SECOND_VALUE")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling plugin_package v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
+    assert_eq!(fingerprints().len(), 2);
+    assert_ne!(digest(hello_component_id.as_str()), hello_digest);
+}
+
 fn component_id_factory(target_dir: ChildPath) -> impl Fn(&str) -> String {
     move |name: &str| {
         let component_id = target_dir
