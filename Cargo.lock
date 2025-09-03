@@ -6692,10 +6692,12 @@ name = "scarb-oracle-hint-service"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "deno_task_shell",
  "serde",
  "serde_json",
  "shell-words",
  "starknet-core",
+ "tokio",
  "tracing",
 ]
 
