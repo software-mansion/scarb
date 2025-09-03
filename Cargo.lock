@@ -1071,7 +1071,7 @@ name = "cairo-lang-macro"
 version = "0.2.0"
 dependencies = [
  "bumpalo",
- "cairo-lang-macro-attributes 0.2.0",
+ "cairo-lang-macro-attributes 0.2.1",
  "cairo-lang-macro-stable 2.0.0",
  "cairo-lang-primitive-token",
  "cairo-lang-quote 0.1.0",
@@ -1104,7 +1104,7 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-macro-attributes"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "quote",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
