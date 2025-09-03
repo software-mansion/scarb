@@ -1,5 +1,7 @@
 use crate::compiler::incremental::source::create_local_fingerprints;
-use crate::compiler::plugin::proc_macro::{ProcMacroPathsProvider, SharedLibraryProvider};
+use crate::compiler::plugin::proc_macro::{
+    InstanceLoader, ProcMacroPathsProvider, SharedLibraryProvider,
+};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent,
     CompilationUnitComponentId, Profile,
@@ -90,6 +92,8 @@ pub struct PluginFingerprint {
     is_builtin: bool,
     /// Whether a prebuilt plugin binary is available.
     is_prebuilt: bool,
+    /// Custom fingerprint defined by the proc macro itself.
+    macro_defined_fingerprint: u64,
     /// Local files that should be checked for freshness.
     local: Vec<LocalFingerprint>,
 }
@@ -251,11 +255,28 @@ impl PluginFingerprint {
             let lib_path = component.shared_lib_path(ws.config())?;
             hash(lib_path).await??
         };
+
+        let macro_defined_fingerprint = (!is_builtin)
+            .then(|| {
+                let instance = component.instantiate(ws.config());
+                // Only v2 macros support custom fingerprints.
+                anyhow::Ok::<u64>(
+                    instance?
+                        .try_v2()
+                        .ok()
+                        .map(|p| p.fingerprint())
+                        .unwrap_or_default(),
+                )
+            })
+            .transpose()?
+            .unwrap_or_default();
+
         Ok(Self {
             component_discriminator,
             is_builtin,
             is_prebuilt,
             local,
+            macro_defined_fingerprint,
         })
     }
 
@@ -269,6 +290,7 @@ impl PluginFingerprint {
             local.path.hash(&mut hasher);
             local.checksum.hash(&mut hasher);
         }
+        self.macro_defined_fingerprint.hash(&mut hasher);
         // HACK: turns out the `snforge-scarb-plugin` is non-deterministic.
         // To support it, we check the env variable that it uses as an input.
         // It's hardcoded here, as we need to support older versions of snforge.

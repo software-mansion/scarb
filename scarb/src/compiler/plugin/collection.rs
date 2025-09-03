@@ -1,3 +1,4 @@
+use crate::compiler::plugin::proc_macro::InstanceLoader;
 use std::{collections::HashMap, sync::Arc};
 
 use anyhow::{Result, ensure};
@@ -193,7 +194,6 @@ fn collect_proc_macros(
     workspace: &Workspace<'_>,
     unit: &CairoCompilationUnit,
 ) -> Result<HashMap<CompilationUnitComponentId, Vec<Arc<ProcMacroInstance>>>> {
-    let proc_macro_repository = workspace.config().proc_macro_repository();
     let mut proc_macros_for_components = HashMap::new();
 
     for component in unit.components.iter() {
@@ -214,12 +214,7 @@ fn collect_proc_macros(
                 continue;
             }
 
-            let proc_macro =
-                plugin.prebuilt.clone().map(Ok).unwrap_or_else(|| {
-                    proc_macro_repository.get_or_load(plugin, workspace.config())
-                })?;
-
-            component_proc_macro_instances.push(proc_macro);
+            component_proc_macro_instances.push(plugin.instantiate(workspace.config())?);
         }
 
         proc_macros_for_components.insert(component.id.clone(), component_proc_macro_instances);
