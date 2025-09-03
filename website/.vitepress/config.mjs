@@ -56,6 +56,7 @@ const sidebar = {
           text: "Oracles",
           items: [
             p("Overview", "/docs/extensions/oracles/overview"),
+            p("shell protocol", "/docs/extensions/oracles/shell"),
             p("stdio protocol", "/docs/extensions/oracles/stdio"),
           ],
         },
