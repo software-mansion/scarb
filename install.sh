@@ -539,17 +539,17 @@ add_completions_to_profile() {
   */zsh)
     _profile=$HOME/.zshrc
     _pref_shell=zsh
-    add_completions_block_to_profile "$_profile" zsh_completion_block
+    add_completions_block_to_profile "$_profile" zsh_completions_block
     ;;
   */bash)
     _profile=$HOME/.bashrc
     _pref_shell=bash
-    add_completions_block_to_profile "$_profile" bash_completion_block
+    add_completions_block_to_profile "$_profile" bash_completions_block
     ;;
   */fish)
     _profile=$HOME/.config/fish/config.fish
     _pref_shell=fish
-    add_completions_block_to_profile "$_profile" fish_completion_block
+    add_completions_block_to_profile "$_profile" fish_completions_block
     ;;
   *)
     echo \
