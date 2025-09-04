@@ -30,6 +30,8 @@ pub struct SummaryInner {
     pub no_core: bool,
     #[builder(default)]
     pub checksum: Option<Checksum>,
+    #[builder(default = false)]
+    pub require_audits: bool,
 }
 
 impl Deref for Summary {
