@@ -14,10 +14,12 @@ use cairo_lang_lowering::db::LoweringGroup;
 use cairo_lang_utils::{Intern, Upcast};
 use itertools::Itertools;
 use salsa::par_map;
-use std::env;
 use std::io::Write;
 use std::ops::Deref;
-use tracing::{debug, error};
+use std::sync::Arc;
+use std::{env, mem};
+use tokio::task::spawn_blocking;
+use tracing::{debug, error, trace_span};
 
 const SCARB_INCREMENTAL: &str = "SCARB_INCREMENTAL";
 
@@ -51,42 +53,70 @@ pub fn load_incremental_artifacts(
         return Ok(IncrementalContext::Disabled);
     }
 
-    let fingerprints = ws
-        .config()
-        .tokio_handle()
-        .block_on(UnitFingerprint::new(unit, ws));
+    let (fingerprints, loaded_components) = ws.config().tokio_handle().block_on(async {
+        let fingerprints = UnitFingerprint::new(unit, ws).await;
+        let handles = unit
+            .components
+            .iter()
+            .map(|component| {
+                let fingerprint = fingerprints
+                    .get(&component.id)
+                    .expect("component fingerprint must exist in unit fingerprints");
+                let handle = {
+                    // HACK: We know that we will not use &Config outside the scope of this function,
+                    //   but `tokio::spawn_blocking` lifetime bounds force us to think so.
+                    let ws: &'static Workspace<'_> = unsafe { mem::transmute(ws) };
+                    let unit = unit.clone();
+                    let component = component.clone();
+                    spawn_blocking(move || load_component_cache(fingerprint, unit, component, ws))
+                };
+                (handle, component)
+            })
+            .collect_vec();
 
-    let mut cached_crates = Vec::new();
-
-    let loaded_components = unit
-        .components
-        .iter()
-        .map(|component| {
-            let fingerprint = fingerprints
-                .get(&component.id)
-                .expect("component fingerprint must exist in unit fingerprints");
-            let fingerprint = match fingerprint.deref() {
-                ComponentFingerprint::Library(lib) => lib,
-                ComponentFingerprint::Plugin(_plugin) => {
-                    unreachable!("we iterate through components not plugins");
-                }
-            };
-            let loaded =
-                load_component_cache(fingerprint, db, unit, component, ws).with_context(|| {
-                    format!(
-                        "failed to load cache for `{}` component",
-                        component.target_name()
-                    )
-                })?;
-            Ok((component, loaded))
-        })
-        .collect::<Result<Vec<_>>>()?;
-
-    for (component, loaded) in loaded_components.into_iter() {
-        if loaded {
-            cached_crates.push(component.crate_input(db));
+        let mut caches = Vec::new();
+        for (handle, component) in handles {
+            let loaded = handle.await?.with_context(|| {
+                format!(
+                    "failed to load cache for `{}` component",
+                    component.target_name()
+                )
+            })?;
+            caches.push(loaded);
         }
-    }
+
+        anyhow::Ok((fingerprints, caches))
+    })?;
+
+    let span = trace_span!("set_crate_configs");
+    let cached_crates = {
+        let _guard = span.enter();
+
+        loaded_components
+            .into_iter()
+            .filter_map(|crate_cache| match crate_cache {
+                CrateCache::None => None,
+                CrateCache::Loaded {
+                    component,
+                    blob_content,
+                } => {
+                    let crate_id = component.crate_id(db);
+                    if let Some(core_conf) = db.crate_config(crate_id) {
+                        set_crate_config!(
+                            db,
+                            crate_id,
+                            Some(CrateConfiguration {
+                                root: core_conf.root.clone(),
+                                settings: core_conf.settings.clone(),
+                                cache_file: Some(BlobLongId::Virtual(blob_content).intern(db)),
+                            })
+                        );
+                    }
+                    Some(component.crate_input(db))
+                }
+            })
+            .collect_vec()
+    };
 
     Ok(IncrementalContext::Enabled {
         fingerprints,
@@ -100,12 +130,17 @@ pub fn load_incremental_artifacts(
 /// is not fresh and no cache was loaded.
 #[tracing::instrument(skip_all, level = "trace", fields(target_name = component.target_name().to_string()))]
 fn load_component_cache(
-    fingerprint: &Fingerprint,
-    db: &mut RootDatabase,
-    unit: &CairoCompilationUnit,
-    component: &CompilationUnitComponent,
+    fingerprint: Arc<ComponentFingerprint>,
+    unit: CairoCompilationUnit,
+    component: CompilationUnitComponent,
     ws: &Workspace<'_>,
-) -> Result<bool> {
+) -> Result<CrateCache> {
+    let fingerprint = match fingerprint.deref() {
+        ComponentFingerprint::Library(lib) => lib,
+        ComponentFingerprint::Plugin(_plugin) => {
+            unreachable!("we iterate through components not plugins");
+        }
+    };
     let fingerprint_digest = fingerprint.digest();
     let FreshnessCheck {
         is_fresh,
@@ -134,23 +169,22 @@ fn load_component_cache(
         );
         let cache_dir = cache_dir.path_unchecked();
         let cache_file = cache_dir.join(component.cache_filename(fingerprint));
-        let crate_id = component.crate_id(db);
         let blob_content = fsx::read(cache_file)?;
-        if let Some(core_conf) = db.crate_config(crate_id) {
-            set_crate_config!(
-                db,
-                crate_id,
-                Some(CrateConfiguration {
-                    root: core_conf.root.clone(),
-                    settings: core_conf.settings.clone(),
-                    cache_file: Some(BlobLongId::Virtual(blob_content).intern(db)),
-                })
-            );
-        }
-        Ok(true)
+        Ok(CrateCache::Loaded {
+            component,
+            blob_content,
+        })
     } else {
-        Ok(false)
+        Ok(CrateCache::None)
     }
+}
+
+enum CrateCache {
+    None,
+    Loaded {
+        component: CompilationUnitComponent,
+        blob_content: Vec<u8>,
+    },
 }
 
 #[tracing::instrument(skip_all, level = "info")]
