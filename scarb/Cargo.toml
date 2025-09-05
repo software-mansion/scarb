@@ -40,7 +40,6 @@ cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
 cairo-lang-test-plugin.workspace = true
 cairo-lang-utils.workspace = true
-cairo-lint = { workspace = true, optional = true }
 camino.workspace = true
 cargo_metadata.workspace = true
 chrono.workspace = true
@@ -129,7 +128,6 @@ similar-asserts.workspace = true
 snapbox.workspace = true
 test-case.workspace = true
 test-for-each-example = { path = "../utils/test-for-each-example" }
-cairo-lint = { workspace = true }
 
 [build-dependencies]
 fs_extra.workspace = true
@@ -138,5 +136,5 @@ toml.workspace = true
 zip.workspace = true
 
 [features]
-default = ["scarb-lint"]
-scarb-lint = ["dep:cairo-lint"]
+default = []
+scarb-lint = []

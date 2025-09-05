@@ -2,7 +2,6 @@
 members = [
     "scarb",
     "scarb-metadata",
-    "extensions/scarb-cairo-language-server",
     "extensions/scarb-cairo-test",
     "extensions/scarb-doc",
     "extensions/scarb-execute",
@@ -79,8 +78,6 @@ cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo", rev 
 cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev = "01d01ba9512d930ea26420a576afc97490fee466" }
 cairo-lang-test-utils = { git = "https://github.com/starkware-libs/cairo", rev = "01d01ba9512d930ea26420a576afc97490fee466" }
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "01d01ba9512d930ea26420a576afc97490fee466", features = ["env_logger"] }
-cairo-language-server = "*"
-cairo-lint = "*"
 cairo-vm = "2.3.1"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
@@ -209,9 +206,6 @@ cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo", rev 
 cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev = "01d01ba9512d930ea26420a576afc97490fee466" }
 cairo-lang-test-utils = { git = "https://github.com/starkware-libs/cairo", rev = "01d01ba9512d930ea26420a576afc97490fee466" }
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "01d01ba9512d930ea26420a576afc97490fee466" }
-# FIXME(maciektr): Change to main after fixed by LS team.
-cairo-language-server = { git = "https://github.com/software-mansion/cairols", branch = "spr/main/dab12753" }
-cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "f3bc4f8d79c94cd64c25f6fdecc422e2b7e69b6f" }
 stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
 stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
 
