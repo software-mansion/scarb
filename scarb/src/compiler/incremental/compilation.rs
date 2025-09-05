@@ -208,22 +208,6 @@ fn save_component_cache(
             "component `{}` is not fresh, saving new cache artifacts",
             component.target_name()
         );
-        let fingerprint_dir = unit.fingerprint_dir(ws);
-        let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(fingerprint));
-        let fingerprint_file = fingerprint_dir.create_rw(
-            component.target_name().as_str(),
-            "fingerprint file",
-            ws.config(),
-        )?;
-        fingerprint_file
-            .deref()
-            .write_all(fingerprint_digest.as_bytes())
-            .with_context(|| {
-                format!(
-                    "failed to write fingerprint to `{}`",
-                    fingerprint_file.path()
-                )
-            })?;
         let cache_dir = unit.incremental_cache_dir(ws);
         let crate_id = component.crate_id(db);
         let cache_blob = match generate_crate_cache(db, crate_id) {
@@ -236,6 +220,13 @@ fn save_component_cache(
                 return Ok(());
             }
         };
+        let fingerprint_dir = unit.fingerprint_dir(ws);
+        let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(fingerprint));
+        let fingerprint_file = fingerprint_dir.create_rw(
+            component.target_name().as_str(),
+            "fingerprint file",
+            ws.config(),
+        )?;
         let cache_file = cache_dir.create_rw(
             component.cache_filename(fingerprint),
             "cache file",
@@ -245,6 +236,15 @@ fn save_component_cache(
             .deref()
             .write_all(&cache_blob)
             .with_context(|| format!("failed to write cache to `{}`", cache_file.path()))?;
+        fingerprint_file
+            .deref()
+            .write_all(fingerprint_digest.as_bytes())
+            .with_context(|| {
+                format!(
+                    "failed to write fingerprint to `{}`",
+                    fingerprint_file.path()
+                )
+            })?;
     }
     Ok(())
 }
