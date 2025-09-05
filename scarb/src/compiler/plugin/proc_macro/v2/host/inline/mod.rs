@@ -1,3 +1,5 @@
+mod span_adapter;
+
 use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::compiler::plugin::proc_macro::expansion::Expansion;
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
@@ -5,6 +7,7 @@ use crate::compiler::plugin::proc_macro::v2::host::conversion::{
     CallSiteLocation, into_cairo_diagnostics,
 };
 use crate::compiler::plugin::proc_macro::v2::host::generate_code_mappings;
+use crate::compiler::plugin::proc_macro::v2::host::inline::span_adapter::InlineAdapter;
 use crate::compiler::plugin::proc_macro::v2::{ProcMacroId, TokenStreamBuilder};
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, InlineMacroExprPlugin, InlinePluginResult, MacroPluginMetadata,
@@ -55,18 +58,28 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         token_stream_builder.add_node(arguments.as_syntax_node());
         let token_stream = token_stream_builder.build(&ctx);
+        let (adapter, adapted_token_stream) = InlineAdapter::adapt_token_stream(
+            token_stream,
+            arguments.as_syntax_node().span(db),
+            call_site.span.clone(),
+        );
+        let adapted_call_site = adapter.adapted_call_site();
         let result = self
             .instance()
             .try_v2()
             .expect("procedural macro using v1 api used in a context expecting v2 api")
             .generate_code(
                 self.expansion.expansion_name.clone(),
-                call_site.span.clone(),
+                adapted_call_site.clone(),
                 TokenStream::empty(),
-                token_stream,
+                adapted_token_stream,
             );
         // Handle diagnostics.
-        let diagnostics = into_cairo_diagnostics(db, result.diagnostics, call_site.stable_ptr);
+        let diagnostics = into_cairo_diagnostics(
+            db,
+            adapter.adapt_diagnostics(result.diagnostics),
+            call_site.stable_ptr,
+        );
         let token_stream = result.token_stream.clone();
         if token_stream.is_empty() {
             // Remove original code
@@ -86,7 +99,10 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                 DynGeneratedFileAuxData::new(emitted)
             });
             let content = token_stream.to_string();
-            let code_mappings = generate_code_mappings(&token_stream, call_site.span.clone());
+            let code_mappings = adapter.adapt_code_mappings(generate_code_mappings(
+                &token_stream,
+                adapted_call_site.clone(),
+            ));
             InlinePluginResult {
                 code: Some(PluginGeneratedFile {
                     name: "inline_proc_macro".into(),
