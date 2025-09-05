@@ -1,8 +1,9 @@
 use crate::compiler::incremental::fingerprint::{
-    ComponentFingerprint, Fingerprint, UnitFingerprint, is_fresh,
+    ComponentFingerprint, Fingerprint, FreshnessCheck, UnitFingerprint, is_fresh,
 };
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
+use crate::internal::fsx;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::db::{CrateConfiguration, FilesGroup};
@@ -106,22 +107,35 @@ fn load_component_cache(
     ws: &Workspace<'_>,
 ) -> Result<bool> {
     let fingerprint_digest = fingerprint.digest();
-    if is_fresh(
+    let FreshnessCheck {
+        is_fresh,
+        // We keep the fingerprint lock, so no cache writes can occur between
+        // freshness check and cache load.
+        file_guard: _guard,
+    } = is_fresh(
         &unit
             .fingerprint_dir(ws)
             .child(component.fingerprint_dirname(fingerprint)),
         &component.target_name(),
         &fingerprint_digest,
-    )? {
+        ws.config(),
+    )?;
+    if is_fresh {
         debug!(
             "component `{}` is fresh, loading cache artifacts",
             component.target_name()
         );
         let cache_dir = unit.incremental_cache_dir(ws);
+        // Lock the cache file for reading.
+        let _guard = cache_dir.open_ro(
+            component.cache_filename(fingerprint),
+            &component.cache_filename(fingerprint),
+            ws.config(),
+        );
         let cache_dir = cache_dir.path_unchecked();
         let cache_file = cache_dir.join(component.cache_filename(fingerprint));
         let crate_id = component.crate_id(db);
-        let blob_id = BlobLongId::OnDisk(cache_file.as_std_path().to_path_buf()).intern(db);
+        let blob_content = fsx::read(cache_file)?;
         if let Some(core_conf) = db.crate_config(crate_id) {
             set_crate_config!(
                 db,
@@ -129,7 +143,7 @@ fn load_component_cache(
                 Some(CrateConfiguration {
                     root: core_conf.root.clone(),
                     settings: core_conf.settings.clone(),
-                    cache_file: Some(blob_id),
+                    cache_file: Some(BlobLongId::Virtual(blob_content).intern(db)),
                 })
             );
         }
@@ -197,13 +211,20 @@ fn save_component_cache(
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let fingerprint_digest = fingerprint.digest();
-    if !is_fresh(
+    let FreshnessCheck {
+        is_fresh,
+        file_guard,
+    } = is_fresh(
         &unit
             .fingerprint_dir(ws)
             .child(component.fingerprint_dirname(fingerprint)),
         &component.target_name(),
         &fingerprint_digest,
-    )? {
+        ws.config(),
+    )?;
+    // We drop the fingerprint lock, so it can be locked for writing.
+    drop(file_guard);
+    if !is_fresh {
         debug!(
             "component `{}` is not fresh, saving new cache artifacts",
             component.target_name()
