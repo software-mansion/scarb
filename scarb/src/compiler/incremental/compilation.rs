@@ -16,7 +16,7 @@ use salsa::par_map;
 use std::env;
 use std::io::Write;
 use std::ops::Deref;
-use tracing::debug;
+use tracing::{debug, error};
 
 const SCARB_INCREMENTAL: &str = "SCARB_INCREMENTAL";
 
@@ -225,15 +225,22 @@ fn save_component_cache(
                 )
             })?;
         let cache_dir = unit.incremental_cache_dir(ws);
+        let crate_id = component.crate_id(db);
+        let cache_blob = match generate_crate_cache(db, crate_id) {
+            Ok(blob) => blob,
+            Err(_e) => {
+                error!(
+                    "failed to generate cache for `{}` crate",
+                    component.target_name()
+                );
+                return Ok(());
+            }
+        };
         let cache_file = cache_dir.create_rw(
             component.cache_filename(fingerprint),
             "cache file",
             ws.config(),
         )?;
-        let crate_id = component.crate_id(db);
-        let Some(cache_blob) = generate_crate_cache(db, crate_id).ok() else {
-            return Ok(());
-        };
         cache_file
             .deref()
             .write_all(&cache_blob)
