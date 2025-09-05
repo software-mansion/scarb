@@ -6,8 +6,8 @@ use crate::compiler::{
     CairoCompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent,
     CompilationUnitComponentId, Profile,
 };
-use crate::core::{ManifestCompilerConfig, Workspace};
-use crate::flock::Filesystem;
+use crate::core::{Config, ManifestCompilerConfig, Workspace};
+use crate::flock::{Filesystem, LockedFile};
 use crate::internal::fsx;
 use crate::version::VersionInfo;
 use anyhow::{Context, Result};
@@ -507,16 +507,50 @@ impl Fingerprint {
     }
 }
 
-pub fn is_fresh(fingerprint_dir: &Filesystem, target_name: &str, new_digest: &str) -> Result<bool> {
+pub fn is_fresh(
+    fingerprint_dir: &Filesystem,
+    target_name: &str,
+    new_digest: &str,
+    config: &Config,
+) -> Result<FreshnessCheck> {
+    // Lock the fingerprint file for reading.
+    let file_guard = fingerprint_dir
+        .open_ro(target_name, target_name, config)
+        .ok();
+
     let fingerprint_dir = fingerprint_dir.path_unchecked();
     let old_digest_path = fingerprint_dir.join(target_name);
 
     if !old_digest_path.exists() {
-        return Ok(false);
+        return Ok(FreshnessCheck::not_fresh());
     }
 
     let old_digest = fsx::read_to_string(&old_digest_path)
         .with_context(|| format!("failed to read fingerprint from `{old_digest_path}`"))?;
 
-    Ok(old_digest == new_digest)
+    Ok(if old_digest == new_digest {
+        FreshnessCheck::fresh(file_guard)
+    } else {
+        FreshnessCheck::not_fresh()
+    })
+}
+
+pub struct FreshnessCheck {
+    pub is_fresh: bool,
+    pub file_guard: Option<LockedFile>,
+}
+
+impl FreshnessCheck {
+    pub fn not_fresh() -> Self {
+        Self {
+            is_fresh: false,
+            file_guard: None,
+        }
+    }
+    pub fn fresh(file_guard: Option<LockedFile>) -> Self {
+        Self {
+            is_fresh: true,
+            file_guard,
+        }
+    }
 }
