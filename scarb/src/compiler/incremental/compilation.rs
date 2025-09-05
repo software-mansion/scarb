@@ -98,7 +98,7 @@ pub fn load_incremental_artifacts(
 ///
 /// Returns `Ok(true)` if the cache was loaded successfully, or `Ok(false)` if the component
 /// is not fresh and no cache was loaded.
-#[tracing::instrument(skip_all, level = "trace")]
+#[tracing::instrument(skip_all, level = "trace", fields(target_name = component.target_name().to_string()))]
 fn load_component_cache(
     fingerprint: &Fingerprint,
     db: &mut RootDatabase,
@@ -202,7 +202,7 @@ pub fn save_incremental_artifacts(
     Ok(())
 }
 
-#[tracing::instrument(skip_all, level = "trace")]
+#[tracing::instrument(skip_all, level = "trace", fields(target_name = component.target_name().to_string()))]
 fn save_component_cache(
     fingerprint: &Fingerprint,
     db: &dyn LoweringGroup,
