@@ -2,6 +2,9 @@ use super::{FeatureName, Manifest};
 use crate::compiler::{DefaultForProfile, Profile};
 use crate::core::manifest::maybe_workspace::{MaybeWorkspace, WorkspaceInherit};
 use crate::core::manifest::scripts::ScriptDefinition;
+use crate::core::manifest::target_defaults::{
+    MaybeWorkspaceTargetDefaults, TargetDefaults, TomlTargetKindTestOnly,
+};
 use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Target};
 use crate::core::package::PackageId;
 use crate::core::registry::{DEFAULT_REGISTRY_INDEX, DEFAULT_REGISTRY_INDEX_PATCH_SOURCE};
@@ -10,6 +13,7 @@ use crate::core::{
     Config, DepKind, DependencyVersionReq, EnabledFeature, InliningStrategy, ManifestBuilder,
     ManifestCompilerConfig, PackageName, TargetKind, TestTargetProps, TestTargetType,
 };
+
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::serdex::{RelativeUtf8PathBuf, toml_merge, toml_merge_apply_strategy};
@@ -58,13 +62,7 @@ pub struct TomlManifest {
     pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
     pub features: Option<BTreeMap<FeatureName, Vec<TomlFeatureToEnable>>>,
     pub patch: Option<BTreeMap<SmolStr, BTreeMap<PackageName, TomlDependency>>>,
-    pub target_defaults: Option<BTreeMap<TargetKind, TargetDefaults>>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct TargetDefaults {
-    pub build_external_contracts: Option<Vec<String>>,
+    pub target_defaults: Option<BTreeMap<TomlTargetKindTestOnly, MaybeWorkspaceTargetDefaults>>,
 }
 
 type MaybeWorkspaceScriptDefinition = MaybeWorkspace<ScriptDefinition, WorkspaceScriptDefinition>;
@@ -115,6 +113,7 @@ pub struct TomlWorkspace {
     pub dev_dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub scripts: Option<BTreeMap<SmolStr, ScriptDefinition>>,
     pub tool: Option<TomlToolsDefinition>,
+    pub target_defaults: Option<BTreeMap<TomlTargetKindTestOnly, TargetDefaults>>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -729,7 +728,54 @@ impl TomlManifest {
 
         let no_core = package.no_core.unwrap_or(false);
 
-        let targets = self.collect_targets(package.name.to_smol_str(), root, config.ui())?;
+        let target_defaults = self.target_defaults.clone().unwrap_or_default();
+        let target_defaults: BTreeMap<TargetKind, TargetDefaults> = target_defaults
+            .into_iter()
+            .map(
+                |(target_kind, defaults)| -> Result<(TargetKind, TargetDefaults)> {
+                    let inherit_ws = || {
+                        workspace
+                            .target_defaults
+                            .clone()
+                            .and_then(|tds| tds.get(&target_kind).cloned())
+                            .map(Into::into)
+                            .ok_or_else(|| {
+                                anyhow!(
+                                    "defaults for `{}` target not found in workspace",
+                                    target_kind.clone()
+                                )
+                            })
+                    };
+                    let target_defaults = defaults.resolve(target_kind.as_str(), inherit_ws)?;
+                    let inherit_ws = || {
+                        workspace
+                            .target_defaults
+                            .clone()
+                            .and_then(|tds| tds.get(&target_kind).cloned())
+                            .map(|td| td.build_external_contracts.clone())
+                            .ok_or_else(|| {
+                                anyhow!(
+                                    "defaults for `{}` target not found in workspace",
+                                    target_kind.clone()
+                                )
+                            })
+                    };
+                    let resolved = TargetDefaults {
+                        build_external_contracts: target_defaults
+                            .build_external_contracts
+                            .resolve("build-external-contracts", inherit_ws)?,
+                    };
+                    Ok((TargetKind::from(target_kind), resolved))
+                },
+            )
+            .try_collect()?;
+
+        let targets = self.collect_targets(
+            package.name.to_smol_str(),
+            root,
+            config.ui(),
+            target_defaults,
+        )?;
 
         let publish = package.publish.unwrap_or(true);
 
@@ -899,6 +945,7 @@ impl TomlManifest {
         package_name: SmolStr,
         root: &Utf8Path,
         ui: Ui,
+        target_defaults: BTreeMap<TargetKind, TargetDefaults>,
     ) -> Result<Vec<Target>> {
         let mut targets = Vec::new();
 
@@ -908,6 +955,7 @@ impl TomlManifest {
             &package_name,
             root,
             None,
+            None,
         )?);
 
         targets.extend(self.collect_target(
@@ -915,6 +963,7 @@ impl TomlManifest {
             self.cairo_plugin.as_ref(),
             &package_name,
             root,
+            None,
             None,
         )?);
 
@@ -924,6 +973,7 @@ impl TomlManifest {
             &package_name,
             root,
             None,
+            None,
         )?);
 
         for (kind, ext_toml) in self
@@ -932,7 +982,14 @@ impl TomlManifest {
             .flatten()
             .flat_map(|(k, vs)| vs.iter().map(|v| (k.clone(), v)))
         {
-            targets.extend(self.collect_target(kind, Some(ext_toml), &package_name, root, None)?);
+            targets.extend(self.collect_target(
+                kind,
+                Some(ext_toml),
+                &package_name,
+                root,
+                None,
+                None,
+            )?);
         }
 
         if targets.is_empty() {
@@ -945,7 +1002,16 @@ impl TomlManifest {
 
         // Skip autodetect for cairo plugins.
         let auto_detect = !targets.iter().any(Target::is_cairo_plugin);
-        self.collect_test_targets(&mut targets, package_name.clone(), root, auto_detect)?;
+
+        let test_target_defaults = target_defaults.get(&TargetKind::TEST).cloned();
+
+        self.collect_test_targets(
+            &mut targets,
+            package_name.clone(),
+            root,
+            auto_detect,
+            test_target_defaults,
+        )?;
 
         Self::validate_targets(&targets, ui)?;
 
@@ -983,6 +1049,7 @@ impl TomlManifest {
         package_name: SmolStr,
         root: &Utf8Path,
         auto_detect: bool,
+        target_defaults: Option<TargetDefaults>,
     ) -> Result<()> {
         if let Some(test) = self.test.as_ref() {
             // Read test targets from a manifest file.
@@ -993,11 +1060,12 @@ impl TomlManifest {
                     &package_name,
                     root,
                     None,
+                    target_defaults.as_ref(),
                 )?);
             }
         } else if auto_detect {
             // Auto-detect test target.
-            let external_contracts = targets
+            let mut external_contracts = targets
                 .iter()
                 .filter(|target| target.kind == TargetKind::STARKNET_CONTRACT)
                 .filter_map(|target| target.params.get("build-external-contracts"))
@@ -1016,19 +1084,26 @@ impl TomlManifest {
                     .with_build_external_contracts(external_contracts.clone())
                     .try_into()?,
             };
-            let external_contracts = external_contracts
-                .into_iter()
-                .chain(vec![format!("{package_name}::*")])
-                .sorted()
-                .dedup()
-                .collect_vec();
             targets.extend(self.collect_target::<TomlExternalTargetParams>(
                 TargetKind::TEST,
                 Some(&target_config),
                 &package_name,
                 root,
                 None,
+                target_defaults.as_ref(),
             )?);
+
+            if let Some(target_defaults) = target_defaults.as_ref() {
+                external_contracts.extend(target_defaults.build_external_contracts.clone());
+            };
+
+            let external_contracts = external_contracts
+                .into_iter()
+                .chain(vec![format!("{package_name}::*")])
+                .sorted()
+                .dedup()
+                .collect_vec();
+
             // Auto-detect test targets from `tests` directory.
             let tests_path = root.join(DEFAULT_TESTS_PATH);
             let integration_target_config = |target_name, source_path| {
@@ -1053,6 +1128,7 @@ impl TomlManifest {
                     Some(&target_config),
                     &package_name,
                     root,
+                    None,
                     None,
                 )?);
             } else {
@@ -1084,6 +1160,7 @@ impl TomlManifest {
                             &package_name,
                             root,
                             Some(format!("{package_name}_integrationtest").into()),
+                            target_defaults.as_ref(),
                         )?);
                     }
                 }
@@ -1099,6 +1176,7 @@ impl TomlManifest {
         default_name: &SmolStr,
         root: &Utf8Path,
         group_id: Option<SmolStr>,
+        target_defaults: Option<&TargetDefaults>,
     ) -> Result<Option<Target>> {
         let default_source_path = root.join(DEFAULT_SOURCE_PATH.as_path());
         let Some(target) = target else {
@@ -1121,22 +1199,15 @@ impl TomlManifest {
             .transpose()?
             .unwrap_or(default_source_path.to_path_buf());
 
-        let default_params = self.get_target_defaults(&kind);
         let target = Target::try_from_structured_params(
             kind,
             name,
             source_path,
             group_id,
             &target.params,
-            default_params,
+            target_defaults,
         )?;
         Ok(Some(target))
-    }
-
-    fn get_target_defaults(&self, kind: &TargetKind) -> Option<TargetDefaults> {
-        self.target_defaults
-            .as_ref()
-            .and_then(|defaults| defaults.get(kind).cloned())
     }
 
     pub fn collect_profiles(&self) -> Result<Vec<Profile>> {

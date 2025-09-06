@@ -11,8 +11,10 @@ use scarb_test_support::contracts::{BALANCE_CONTRACT, FORTY_TWO_CONTRACT, HELLO_
 use scarb_test_support::fsx;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
+use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use serde_json::json;
 use std::path::PathBuf;
+use test_case::test_case;
 
 #[test]
 fn compile_with_duplicate_targets_1() {
@@ -1671,4 +1673,209 @@ fn test_target_defaults() {
             "path": "tests/b.cairo"
         })
     );
+}
+
+#[test_case(
+    r#"
+         [target-defaults.test]
+         build-external-contracts.workspace = true
+         "#
+)]
+#[test_case(
+    r#"
+            [target-defaults]
+            test.workspace = true
+        "#
+)]
+fn test_workspace_target_defaults_param(target_defaults: &str) {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello");
+
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(format!("{BALANCE_CONTRACT}\n{HELLO_CONTRACT}"))
+        .build(&hello);
+
+    WorkspaceBuilder::start()
+        .add_member("hello")
+        .manifest_extra(formatdoc! {r#"
+            [package]
+            name = "world"
+            version = "0.1.0"
+
+            [workspace.target-defaults.test]
+            build-external-contracts = [
+                "hello::Balance",
+            ]
+
+            {}
+
+            [[test]]
+            name = "a"
+            path = "tests/a.cairo"
+            build-external-contracts = [
+              "hello::HelloContract",
+            ]
+
+            [[test]]
+            name = "b"
+            path = "tests/b.cairo"
+            "#, target_defaults
+        })
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let world_package = metadata
+        .packages
+        .iter()
+        .find(|p| p.name == "world")
+        .unwrap();
+    let (mut a, mut b) = (None, None);
+    world_package
+        .targets
+        .iter()
+        .for_each(|t| match t.name.as_str() {
+            "a" => a = Some(t),
+            "b" => b = Some(t),
+            _ => {}
+        });
+
+    assert_eq!(
+        a.unwrap().params,
+        json!({
+            "build-external-contracts": ["hello::HelloContract"],
+            "path": "tests/a.cairo"
+        })
+    );
+
+    assert_eq!(
+        b.unwrap().params,
+        json!({
+            "build-external-contracts": ["hello::Balance"],
+            "path": "tests/b.cairo"
+        })
+    );
+}
+
+#[test]
+fn test_target_defaults_fails_for_unsupported_target_kind() {
+    let t = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+
+            [target-defaults.lib]
+            build-external-contracts = [
+                "hello::Balance",
+            ]
+
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+error: failed to parse manifest at: [..]/Scarb.toml
+
+Caused by:
+    TOML parse error at line 10, column 18
+       |
+    10 | [target-defaults.lib]
+       |                  ^^^
+    only target kind `test` is allowed in `target_defaults`, but found `lib`
+"#});
+}
+
+#[test]
+fn test_target_defaults_overrides_auto_detected_targets() {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let world = t.child("world");
+
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(format!("{BALANCE_CONTRACT}\n{HELLO_CONTRACT}"))
+        .build(&hello);
+
+    ProjectBuilder::start()
+        .name("world")
+        .edition("2023_01")
+        .version("0.1.0")
+        .dep("hello", Dep.path("../hello"))
+        .manifest_extra(formatdoc! {r#"
+            [target-defaults.test]
+            build-external-contracts = [
+                "hello::Balance",
+            ]
+        "#})
+        .dep_starknet()
+        .build(&world);
+
+    world.child("tests").create_dir_all().unwrap();
+    world.child("tests/test1.cairo");
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version", "1"])
+        .current_dir(&world)
+        .stdout_json::<Metadata>();
+
+    metadata
+        .packages
+        .iter()
+        .for_each(|p| match p.name.as_str() {
+            "world" => {
+                p.targets
+                    .iter()
+                    .filter(|t| t.kind == "test")
+                    .for_each(|t| match t.name.as_str() {
+                        "world_test1" => assert_eq!(
+                            t.params,
+                            json!({
+                                "build-external-contracts": ["world::*", "hello::Balance"],
+                                "test-type": "integration",
+                                "group-id": "world_integrationtest",
+                            })
+                        ),
+                        "world_unittest" => assert_eq!(
+                            t.params,
+                            json!({
+                                "build-external-contracts": ["hello::Balance"],
+                                "test-type": "unit"
+                            })
+                        ),
+                        _ => panic!("unexpected test target"),
+                    });
+            }
+            _ => p.targets.iter().for_each(|t| {
+                assert_ne!(
+                    t.params.get("build-external-contracts"),
+                    Some(&json!(["hello::Balance"]))
+                );
+            }),
+        });
 }

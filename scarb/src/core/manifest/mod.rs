@@ -31,6 +31,7 @@ mod maybe_workspace;
 mod scripts;
 mod summary;
 mod target;
+mod target_defaults;
 mod target_kind;
 mod toml_manifest;
 mod version_req;
