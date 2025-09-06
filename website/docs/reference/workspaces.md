@@ -175,6 +175,47 @@ openzeppelin.workspace = true
 Paths used to declare path dependencies are relative to workspace root.
 :::
 
+### `[target-defaults.test]`
+
+The `workspace.target-defaults.test` is an optional table that defines keys to be inherited by the test targets of workspace members.
+It helps avoid duplication of common test target settings and provides the ability to customize parameters for auto-detected test targets.
+
+Keys that are supported:
+
+- `build-external-contracts`
+
+Example:
+
+::: code-group
+
+```toml [Scarb.toml]
+[workspace]
+members = ["foo", "bar"]
+
+[workspace.target-defaults.test]
+build-external-contracts = [
+    "hello::HelloContract",
+]
+```
+
+```toml [foo/Scarb.toml]
+[package]
+name = "foo"
+
+[target-defaults]
+test.workspace = true
+```
+
+```toml [bar/Scarb.toml]
+[package]
+name = "bar"
+
+[target-defaults.test]
+build-external-contracts.workspace = true
+```
+
+:::
+
 ### Security and audits
 
 Scarb supports filtering packages from the registry based on whether they have been audited.
