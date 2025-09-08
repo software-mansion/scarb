@@ -32,7 +32,7 @@ fn require_audits_disallows_non_audited_version() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .failure()
@@ -45,7 +45,7 @@ fn require_audits_disallows_non_audited_version() {
 
     audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success();
@@ -96,7 +96,7 @@ fn require_audits_disallows_non_audited_version_transitive() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .failure()
@@ -109,7 +109,7 @@ fn require_audits_disallows_non_audited_version_transitive() {
 
     audit(registry.t.child("index/3/b/bar.json").path(), "1.0.0").unwrap();
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .failure()
@@ -148,7 +148,7 @@ fn require_audits_allows_audited_version() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success();
@@ -161,7 +161,7 @@ fn require_audits_allows_audited_version() {
     "#}));
     unaudit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .failure()
