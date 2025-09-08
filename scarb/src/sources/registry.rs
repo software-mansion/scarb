@@ -14,7 +14,7 @@ use crate::core::registry::index::IndexRecord;
 use crate::core::registry::package_source_store::PackageSourceStore;
 use crate::core::source::Source;
 use crate::core::{
-    Checksum, Config, DepKind, DependencyVersionReq, ManifestDependency, Package, PackageId,
+    Checksum, Config, DependencyVersionReq, ManifestDependency, Package, PackageId,
     SourceId, Summary,
 };
 use crate::flock::LockedFile;
