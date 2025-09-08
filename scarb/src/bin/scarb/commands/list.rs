@@ -76,7 +76,8 @@ fn list_versions(args: ListCommandArgs, config: &Config) -> Result<VersionsList>
         .sorted_by_key(|r| std::cmp::Reverse(r.version.clone()))
         .collect();
 
-    let display_limit = args.all.then(|| None).unwrap_or(Some(5));
+    let display_limit = if args.all { None } else { Some(args.limit) };
+
     Ok(VersionsList {
         records,
         display_limit,
@@ -150,7 +151,11 @@ impl Message for VersionsList {
         }
 
         if limit < total {
-            writeln!(out, "...\nuse --all to show all {} versions", total).unwrap();
+            writeln!(
+                out,
+                "...\nuse `--all` or `--limit {total}` to show all {total} versions"
+            )
+            .unwrap();
         }
 
         // Trim any trailing whitespace in-place.
