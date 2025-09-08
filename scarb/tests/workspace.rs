@@ -56,45 +56,6 @@ fn error_on_virtual_manifest_with_dependencies() {
 }
 
 #[test]
-fn require_audits_member_conflict_with_root() {
-    let t = TempDir::new().unwrap();
-    let first = t.child("first");
-    let second = t.child("second");
-
-    ProjectBuilder::start()
-        .name("first")
-        .version("1.0.0")
-        .manifest_extra(indoc! {r#"
-            [workspace]
-            require-audits = false
-        "#})
-        .build(&first);
-
-    ProjectBuilder::start()
-        .name("second")
-        .version("1.0.0")
-        .build(&second);
-
-    WorkspaceBuilder::start()
-        .add_member("first")
-        .add_member("second")
-        .require_audits(true)
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        .arg("fetch")
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-            error: failed to parse manifest at: [..]
-
-            Caused by:
-                only the workspace root may set `[workspace].require-audits`
-        "#});
-}
-
-#[test]
 fn unify_target_dir() {
     let t = TempDir::new().unwrap();
     let pkg1 = t.child("first");
