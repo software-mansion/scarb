@@ -81,7 +81,6 @@ impl<'c> Workspace<'c> {
     ) -> Result<Self> {
         let manifest_path = package.manifest_path().to_path_buf();
         let root_package = Some(package.id);
-        let require_audits = package.manifest.summary.require_audits;
         Self::new(
             manifest_path,
             vec![package].as_ref(),
@@ -90,7 +89,7 @@ impl<'c> Workspace<'c> {
             profiles,
             BTreeMap::new(),
             patch,
-            require_audits,
+            false,
         )
     }
 

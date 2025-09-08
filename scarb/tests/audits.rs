@@ -191,7 +191,12 @@ fn require_audits_workspace() {
         .name("first")
         .version("1.0.0")
         .dep("foo", Dep.version("1.0.0").registry(&registry))
-        .manifest_extra("[workspace]")
+        // The workspace-level `require-audits` should override this one.
+        .manifest_extra(
+            r#"
+            [workspace]
+            require-audits = false
+        "#)
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .build(&first);
 

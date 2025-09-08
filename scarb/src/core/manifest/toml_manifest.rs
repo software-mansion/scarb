@@ -662,8 +662,6 @@ impl TomlManifest {
         );
         let all_deps = toml_deps.chain(toml_dev_deps);
 
-        let require_audits = workspace.require_audits.unwrap_or(false);
-
         for ((name, toml_dep), kind) in all_deps {
             let inherit_ws = || {
                 let ws_dep = workspace
@@ -735,7 +733,6 @@ impl TomlManifest {
             .dependencies(dependencies)
             .re_export_cairo_plugins(re_export_cairo_plugins)
             .no_core(no_core)
-            .require_audits(require_audits)
             .build();
 
         let scripts = self.scripts.clone().unwrap_or_default();
