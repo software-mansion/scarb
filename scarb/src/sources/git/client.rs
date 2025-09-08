@@ -347,7 +347,7 @@ fn collect_refspecs(reference: &GitReference) -> (Vec<String>, bool) {
     }
 }
 
-/// A wrapper over [`scarb::core::Package`] that provides functionality used to gather VCS info.
+/// A wrapper over [`Package`] that provides functionality used to gather VCS info.
 pub struct PackageRepository {
     pkg: Package,
     repo: gix::Repository,
