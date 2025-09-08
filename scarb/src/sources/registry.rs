@@ -102,7 +102,7 @@ impl Source for RegistrySource<'_> {
             if record.yanked && !self.yanked_whitelist.contains(&package_id) {
                 return None;
             }
-            if self.require_audits && !record.audited {
+            if self.require_audits && dependency.kind == DepKind::Normal && !record.audited {
                 return None;
             }
             let dependencies = record
