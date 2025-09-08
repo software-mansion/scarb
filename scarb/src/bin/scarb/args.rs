@@ -644,11 +644,11 @@ pub struct ListCommandArgs {
     pub index: Option<Url>,
 
     /// Show all available versions.
-    #[arg(short, long, default_value_t = false)]
+    #[arg(long, default_value_t = false)]
     pub all: bool,
 
     /// Limit the number of results.
-    #[arg(short, long, default_value_t = 5, conflicts_with = "all")]
+    #[arg(long, default_value_t = 5, conflicts_with = "all")]
     pub limit: usize,
 }
 
