@@ -643,8 +643,13 @@ pub struct ListCommandArgs {
     #[arg(long, value_name = "URL")]
     pub index: Option<Url>,
 
+    /// Show all available versions.
     #[arg(short, long, default_value_t = false)]
     pub all: bool,
+
+    /// Limit the number of results.
+    #[arg(short, long, default_value_t = 5, conflicts_with = "all")]
+    pub limit: usize,
 }
 
 /// Git reference specification arguments.
