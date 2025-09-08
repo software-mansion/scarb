@@ -63,7 +63,7 @@ pub fn load_incremental_artifacts(
                     .get(&component.id)
                     .expect("component fingerprint must exist in unit fingerprints");
                 let handle = {
-                    // HACK: We know that we will not use &Config outside the scope of this function,
+                    // HACK: We know that we will not use &Workspace outside the scope of this function,
                     //   but `tokio::spawn_blocking` lifetime bounds force us to think so.
                     let ws: &'static Workspace<'_> = unsafe { mem::transmute(ws) };
                     let unit = unit.clone();
