@@ -196,7 +196,8 @@ fn require_audits_workspace() {
             r#"
             [workspace]
             require-audits = false
-        "#)
+        "#,
+        )
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .build(&first);
 
