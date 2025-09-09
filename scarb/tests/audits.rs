@@ -44,6 +44,7 @@ fn require_audits_disallows_non_audited_version() {
         "#});
 
     audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
+
     Scarb::quick_snapbox()
         .arg("fetch")
         .current_dir(&t)
@@ -55,6 +56,20 @@ fn require_audits_disallows_non_audited_version() {
         name = "foo"
         version = "1.0.0"
     "#}));
+
+    unaudit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        error: cannot get dependencies of `hello_world@1.0.0`
+
+        Caused by:
+            cannot find package `foo ^1.0.0`
+    "#});
 }
 
 #[test]
@@ -119,58 +134,6 @@ fn require_audits_disallows_non_audited_version_transitive() {
             Caused by:
                 cannot find package `foo ^1.0.0`
         "#});
-}
-
-#[test]
-fn require_audits_allows_audited_version() {
-    let mut registry = LocalRegistry::create();
-    registry.publish(|t| {
-        ProjectBuilder::start()
-            .name("foo")
-            .version("1.0.0")
-            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
-            .build(t);
-    });
-    audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
-    let t = TempDir::new().unwrap();
-
-    ProjectBuilder::start()
-        .name("hello_world")
-        .version("1.0.0")
-        .dep("foo", Dep.version("1.0.0").registry(&registry))
-        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
-        .manifest_extra(
-            r#"
-            [workspace]
-            require-audits = true
-        "#,
-        )
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        .arg("fetch")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    let lockfile = t.child("Scarb.lock");
-    lockfile.assert(predicates::str::contains(indoc! {r#"
-        [[package]]
-        name = "foo"
-        version = "1.0.0"
-    "#}));
-    unaudit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
-    Scarb::quick_snapbox()
-        .arg("fetch")
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-        error: cannot get dependencies of `hello_world@1.0.0`
-
-        Caused by:
-            cannot find package `foo ^1.0.0`
-    "#});
 }
 
 #[test]
