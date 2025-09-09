@@ -7,7 +7,7 @@ use scarb_test_support::registry::local::{LocalRegistry, audit, unaudit};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 #[test]
-fn require_audits_disallows_non_audited_version() {
+fn require_audits_allows_audited_version_only() {
     let mut registry = LocalRegistry::create();
     registry.publish(|t| {
         ProjectBuilder::start()
