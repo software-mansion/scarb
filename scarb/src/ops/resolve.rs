@@ -310,6 +310,7 @@ pub fn resolve_workspace_with_opts(
                 .collect::<Vec<_>>();
 
             let require_audits = ws.require_audits();
+            let require_audits_whitelist = ws.allow_no_audits();
 
             let (lockfile, yanked_whitelist) = if opts.update {
                 (Lockfile::new([]), HashSet::new())
@@ -330,6 +331,7 @@ pub fn resolve_workspace_with_opts(
                 lockfile,
                 yanked_whitelist,
                 require_audits,
+                require_audits_whitelist,
             )
             .await?;
 

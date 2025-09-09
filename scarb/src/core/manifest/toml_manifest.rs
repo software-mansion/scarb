@@ -790,8 +790,6 @@ impl TomlManifest {
             .dependencies(dependencies)
             .re_export_cairo_plugins(re_export_cairo_plugins)
             .no_core(no_core)
-            .require_audits(require_audits)
-            .allow_no_audits(allow_no_audits)
             .build();
 
         let scripts = self.scripts.clone().unwrap_or_default();

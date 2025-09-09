@@ -34,8 +34,6 @@ pub struct SummaryInner {
     pub yanked: bool,
     #[builder(default = false)]
     pub audited: bool,
-    #[builder(default)]
-    pub allow_no_audits: Vec<PackageName>,
 }
 
 impl Deref for Summary {

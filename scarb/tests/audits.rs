@@ -435,10 +435,9 @@ fn bypass_audit_requirement() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: cannot get dependencies of `bar@1.0.0`
-
-            Caused by:
-                cannot find package `foo ^1.0.0`
+            error: version solving failed:
+            Because there is no version of foo in >=1.0.0, <2.0.0 and bar 1.0.0 depends on foo >=1.0.0, <2.0.0, bar 1.0.0 is forbidden.
+            And because there is no version of bar in >1.0.0, <2.0.0 and first 1.0.0 depends on bar >=1.0.0, <2.0.0, first 1.0.0 is forbidden.
         "#});
 
     // Now whitelist both direct and transitive dependencies
