@@ -130,6 +130,7 @@ pub async fn resolve(
 }
 
 /// Run dependency resolution with PubGrub algorithm.
+#[allow(clippy::too_many_arguments)]
 fn scarb_resolver(
     state: Arc<ResolverState>,
     request_sink: mpsc::Sender<Request>,
