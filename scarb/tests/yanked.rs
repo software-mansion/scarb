@@ -79,10 +79,8 @@ fn will_not_use_yanked_version() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: cannot get dependencies of `hello_world@1.0.0`
-
-        Caused by:
-            cannot find package `foo ^1.0.0`
+        error: version solving failed:
+        Because there is no version of foo in >=1.0.0, <2.0.0 and hello_world 1.0.0 depends on foo >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
         "#});
 
     registry.publish(|t| {

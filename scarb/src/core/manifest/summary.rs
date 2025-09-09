@@ -31,6 +31,8 @@ pub struct SummaryInner {
     #[builder(default)]
     pub checksum: Option<Checksum>,
     #[builder(default = false)]
+    pub yanked: bool,
+    #[builder(default = false)]
     pub audited: bool,
 }
 

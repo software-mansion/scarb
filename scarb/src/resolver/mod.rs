@@ -70,6 +70,7 @@ pub async fn resolve(
     registry: &dyn Registry,
     patch_map: &PatchMap,
     lockfile: Lockfile,
+    yanked_whitelist: HashSet<PackageId>,
     require_audits: bool,
 ) -> anyhow::Result<Resolve> {
     let state = Arc::new(ResolverState::default());
@@ -112,6 +113,7 @@ pub async fn resolve(
                 cloned_patch_map,
                 cloned_lockfile,
                 main_package_ids,
+                yanked_whitelist,
                 require_audits,
             )
         })?;
@@ -135,6 +137,7 @@ fn scarb_resolver(
     patch_map: PatchMap,
     lockfile: Lockfile,
     main_package_ids: HashSet<PackageId>,
+    yanked_whitelist: HashSet<PackageId>,
     require_audits: bool,
 ) {
     let result = || {
@@ -144,6 +147,7 @@ fn scarb_resolver(
             request_sink,
             patch_map,
             lockfile,
+            yanked_whitelist,
             require_audits,
         );
 

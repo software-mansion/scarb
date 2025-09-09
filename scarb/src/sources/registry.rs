@@ -19,22 +19,16 @@ use crate::core::{
 };
 use crate::flock::LockedFile;
 use crate::sources::PathSource;
-use std::collections::HashSet;
 
 pub struct RegistrySource<'c> {
     source_id: SourceId,
     config: &'c Config,
     client: RegistryClientCache<'c>,
     package_sources: PackageSourceStore<'c>,
-    yanked_whitelist: HashSet<PackageId>,
 }
 
 impl<'c> RegistrySource<'c> {
-    pub fn new(
-        source_id: SourceId,
-        config: &'c Config,
-        yanked_whitelist: &HashSet<PackageId>,
-    ) -> Result<Self> {
+    pub fn new(source_id: SourceId, config: &'c Config) -> Result<Self> {
         let client = Self::create_client(source_id, config)?;
         let client = RegistryClientCache::new(source_id, client, config)?;
 
@@ -45,7 +39,6 @@ impl<'c> RegistrySource<'c> {
             config,
             client,
             package_sources,
-            yanked_whitelist: yanked_whitelist.clone(),
         })
     }
 
@@ -95,10 +88,6 @@ impl Source for RegistrySource<'_> {
                 record.version.clone(),
                 self.source_id,
             );
-
-            if record.yanked && !self.yanked_whitelist.contains(&package_id) {
-                return None;
-            }
             let dependencies = record
                 .dependencies
                 .iter()
@@ -118,6 +107,7 @@ impl Source for RegistrySource<'_> {
                     .no_core(record.no_core)
                     .checksum(Some(record.checksum.clone()))
                     .audited(record.audited)
+                    .yanked(record.yanked)
                     .build(),
             )
         };
