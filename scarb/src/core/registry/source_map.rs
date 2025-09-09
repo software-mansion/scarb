@@ -11,7 +11,7 @@ use tracing::trace;
 use crate::core::Workspace;
 use crate::core::registry::Registry;
 use crate::core::source::Source;
-use crate::core::{Config, ManifestDependency, Package, PackageId, PackageName, SourceId, Summary};
+use crate::core::{Config, ManifestDependency, Package, PackageId, SourceId, Summary};
 use crate::sources::PathSource;
 
 /// Source of information about a group of packages.
