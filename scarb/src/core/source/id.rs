@@ -9,9 +9,9 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smol_str::SmolStr;
 use url::Url;
 
+use crate::core::Config;
 use crate::core::registry::DEFAULT_REGISTRY_INDEX;
 use crate::core::source::Source;
-use crate::core::Config;
 use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::static_hash_cache::StaticHashCache;
 use crate::sources::canonical_url::CanonicalUrl;
