@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
@@ -12,7 +11,7 @@ use url::Url;
 
 use crate::core::registry::DEFAULT_REGISTRY_INDEX;
 use crate::core::source::Source;
-use crate::core::{Config, PackageId};
+use crate::core::Config;
 use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::static_hash_cache::StaticHashCache;
 use crate::sources::canonical_url::CanonicalUrl;
@@ -385,20 +384,12 @@ impl SourceId {
     }
 
     /// Creates an implementation of `Source` corresponding to this ID.
-    pub fn load<'c>(
-        self,
-        config: &'c Config,
-        yanked_whitelist: &HashSet<PackageId>,
-    ) -> Result<Arc<dyn Source + 'c>> {
+    pub fn load<'c>(self, config: &'c Config) -> Result<Arc<dyn Source + 'c>> {
         use crate::sources::*;
         match self.kind {
             SourceKind::Path => Ok(Arc::new(PathSource::new(self, config))),
             SourceKind::Git(_) => Ok(Arc::new(GitSource::new(self, config)?)),
-            SourceKind::Registry => Ok(Arc::new(RegistrySource::new(
-                self,
-                config,
-                yanked_whitelist,
-            )?)),
+            SourceKind::Registry => Ok(Arc::new(RegistrySource::new(self, config)?)),
             SourceKind::Std => Ok(Arc::new(StandardLibSource::new(config))),
         }
     }

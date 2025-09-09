@@ -328,6 +328,7 @@ pub fn resolve_workspace_with_opts(
                 &patched,
                 &patch_map,
                 lockfile,
+                yanked_whitelist,
                 require_audits,
             )
             .await?;
