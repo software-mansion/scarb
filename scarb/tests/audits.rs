@@ -195,7 +195,6 @@ fn require_audits_workspace() {
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .build(&hello);
 
-
     WorkspaceBuilder::start()
         .add_member("hello")
         .require_audits(true)
