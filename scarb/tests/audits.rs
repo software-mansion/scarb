@@ -76,10 +76,8 @@ fn require_audits_allows_audited_version_only() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: cannot get dependencies of `hello_world@1.0.0`
-
-        Caused by:
-            cannot find package `foo ^1.0.0`
+        error: version solving failed:
+        Because there is no version of foo in >=1.0.0, <2.0.0 and hello_world 1.0.0 depends on foo >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
         "#});
 
     audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
@@ -104,10 +102,8 @@ fn require_audits_allows_audited_version_only() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: cannot get dependencies of `hello_world@1.0.0`
-
-        Caused by:
-            cannot find package `foo ^1.0.0`
+        error: version solving failed:
+        Because there is no version of foo in >=1.0.0, <2.0.0 and hello_world 1.0.0 depends on foo >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
     "#});
 }
 
@@ -155,10 +151,8 @@ fn require_audits_disallows_non_audited_version_transitive() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: cannot get dependencies of `hello_world@1.0.0`
-
-            Caused by:
-                cannot find package `bar ^1.0.0`
+            error: version solving failed:
+            Because there is no version of bar in >=1.0.0, <2.0.0 and hello_world 1.0.0 depends on bar >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
         "#});
 
     audit(registry.t.child("index/3/b/bar.json").path(), "1.0.0").unwrap();
@@ -168,10 +162,9 @@ fn require_audits_disallows_non_audited_version_transitive() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: cannot get dependencies of `bar@1.0.0`
-
-            Caused by:
-                cannot find package `foo ^1.0.0`
+            error: version solving failed:
+            Because there is no version of foo in >=1.0.0, <2.0.0 and bar 1.0.0 depends on foo >=1.0.0, <2.0.0, bar 1.0.0 is forbidden.
+            And because there is no version of bar in >1.0.0, <2.0.0 and hello_world 1.0.0 depends on bar >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
         "#});
 }
 
@@ -186,11 +179,10 @@ fn require_audits_workspace() {
             .build(t);
     });
     let t = TempDir::new().unwrap();
-    let first = t.child("first");
-    let second = t.child("second");
+    let hello = t.child("hello");
 
     ProjectBuilder::start()
-        .name("first")
+        .name("hello")
         .version("1.0.0")
         .dep("foo", Dep.version("1.0.0").registry(&registry))
         // The workspace-level `require-audits` should override this one.
@@ -201,17 +193,11 @@ fn require_audits_workspace() {
         "#,
         )
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
-        .build(&first);
+        .build(&hello);
 
-    ProjectBuilder::start()
-        .name("second")
-        .version("1.0.0")
-        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
-        .build(&second);
 
     WorkspaceBuilder::start()
-        .add_member("first")
-        .add_member("second")
+        .add_member("hello")
         .require_audits(true)
         .build(&t);
 
@@ -224,10 +210,8 @@ fn require_audits_workspace() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: cannot get dependencies of `first@1.0.0`
-
-            Caused by:
-                cannot find package `foo ^1.0.0`
+            error: version solving failed:
+            Because there is no version of foo in >=1.0.0, <2.0.0 and hello 1.0.0 depends on foo >=1.0.0, <2.0.0, hello 1.0.0 is forbidden.
         "#});
 
     audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();

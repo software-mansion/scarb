@@ -309,6 +309,8 @@ pub fn resolve_workspace_with_opts(
                 .map(|pkg| pkg.manifest.summary.clone())
                 .collect::<Vec<_>>();
 
+            let require_audits = ws.require_audits();
+
             let (lockfile, yanked_whitelist) = if opts.update {
                 (Lockfile::new([]), HashSet::new())
             } else {
@@ -321,13 +323,18 @@ pub fn resolve_workspace_with_opts(
                 ws.members(),
                 ws.config(),
                 yanked_whitelist,
-                ws.require_audits(),
             );
             let cached = RegistryCache::new(&source_map);
             let patched = RegistryPatcher::new(&cached, &patch_map);
 
-            let resolve =
-                resolver::resolve(&members_summaries, &patched, &patch_map, lockfile).await?;
+            let resolve = resolver::resolve(
+                &members_summaries,
+                &patched,
+                &patch_map,
+                lockfile,
+                require_audits,
+            )
+            .await?;
 
             let lockfile = tokio::spawn(write_lockfile(
                 Lockfile::from_resolve(&resolve),
