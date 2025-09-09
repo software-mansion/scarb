@@ -19,7 +19,6 @@ pub struct SourceMap<'c> {
     config: &'c Config,
     sources: RwLock<HashMap<SourceId, Arc<dyn Source + 'c>>>,
     yanked_whitelist: HashSet<PackageId>,
-    require_audits: bool,
 }
 
 impl<'c> SourceMap<'c> {
@@ -33,7 +32,6 @@ impl<'c> SourceMap<'c> {
         packages: impl Iterator<Item = Package>,
         config: &'c Config,
         yanked_whitelist: HashSet<PackageId>,
-        require_audits: bool,
     ) -> Self {
         let sources = packages
             .sorted_by_key(|pkg| pkg.id.source_id)
@@ -49,7 +47,6 @@ impl<'c> SourceMap<'c> {
             config,
             sources,
             yanked_whitelist,
-            require_audits,
         }
     }
 
@@ -60,7 +57,7 @@ impl<'c> SourceMap<'c> {
         } else {
             trace!("loading source: {source_id}");
             let source = source_id
-                .load(self.config, &self.yanked_whitelist, self.require_audits)
+                .load(self.config, &self.yanked_whitelist)
                 .with_context(|| format!("failed to load source: {source_id}"))?;
             self.sources.write().await.insert(source_id, source.clone());
             Ok(source)

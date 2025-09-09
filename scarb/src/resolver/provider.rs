@@ -2,7 +2,7 @@ use crate::core::lockfile::Lockfile;
 use crate::core::registry::patch_map::PatchMap;
 use crate::core::{
     DepKind, DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, PackageName,
-    SourceId, Summary,
+    SourceId, SourceKind, Summary,
 };
 use crate::resolver::in_memory_index::VersionsResponse;
 use crate::resolver::{Request, ResolverState};
@@ -125,6 +125,7 @@ pub struct PubGrubDependencyProvider {
     lockfile: Lockfile,
     state: Arc<ResolverState>,
     request_sink: mpsc::Sender<Request>,
+    require_audits: bool,
 }
 
 impl PubGrubDependencyProvider {
@@ -134,6 +135,7 @@ impl PubGrubDependencyProvider {
         request_sink: mpsc::Sender<Request>,
         patch_map: PatchMap,
         lockfile: Lockfile,
+        require_audits: bool,
     ) -> Self {
         Self {
             main_package_ids,
@@ -144,6 +146,7 @@ impl PubGrubDependencyProvider {
             patch_map,
             lockfile,
             request_sink,
+            require_audits,
         }
     }
 
@@ -326,11 +329,17 @@ impl DependencyProvider for PubGrubDependencyProvider {
             .get(package)
             .cloned()
             .unwrap_or_default();
-        let dependency = package.to_dependency(range.clone(), kind);
+        let dependency = package.to_dependency(range.clone(), kind.clone());
         let summaries = self.wait_for_summaries(dependency)?;
         let summaries = summaries
             .into_iter()
             .filter(|summary| range.contains(&summary.package_id.version))
+            .filter(|summary| {
+                !self.require_audits
+                    || summary.package_id.source_id.kind != SourceKind::Registry
+                    || kind.is_test()
+                    || summary.audited
+            })
             .sorted_by_key(|summary| summary.package_id.version.clone())
             .collect_vec();
 
