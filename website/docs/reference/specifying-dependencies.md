@@ -58,7 +58,7 @@ This field is ignored in member packages manifest files, and only the one define
 You may whitelist specific packages to ignore the `require-audits` setting by specifying them in the `allow-no-audits` key:
 
 ```toml
-[security]
+[workspace]
 allow-no-audits = ["alexandria_math"]
 ```
 
