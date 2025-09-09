@@ -318,12 +318,14 @@ mod tests {
 
         let lockfile = Lockfile::new(locks.iter().cloned());
         let patch_map = PatchMap::new();
+        let yanked_whitelist = Default::default();
         let require_audits = false;
         runtime.block_on(super::resolve(
             &summaries,
             &registry,
             &patch_map,
             lockfile,
+            yanked_whitelist,
             require_audits,
         ))
     }
