@@ -69,7 +69,7 @@ cairo-lang-starknet-classes = "*"
 cairo-lang-syntax = "*"
 cairo-lang-test-plugin = "*"
 cairo-lang-test-runner = "*"
-cairo-lang-utils = "*"
+cairo-lang-utils = { version = "*", features = ["tracing"] }
 cairo-language-server = "*"
 cairo-lint = "*"
 cairo-vm = "2.4.1"
