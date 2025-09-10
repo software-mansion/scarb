@@ -324,6 +324,7 @@ mod tests {
         let patch_map = PatchMap::new();
         let yanked_whitelist = Default::default();
         let require_audits = false;
+        let require_audits_whitelist = Default::default();
         runtime.block_on(super::resolve(
             &summaries,
             &registry,
@@ -331,6 +332,7 @@ mod tests {
             lockfile,
             yanked_whitelist,
             require_audits,
+            require_audits_whitelist,
         ))
     }
 

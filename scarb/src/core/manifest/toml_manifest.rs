@@ -669,9 +669,6 @@ impl TomlManifest {
         );
         let all_deps = toml_deps.chain(toml_dev_deps);
 
-        let require_audits = workspace.require_audits.unwrap_or(false);
-        let allow_no_audits = workspace.allow_no_audits.unwrap_or_default();
-
         for ((name, toml_dep), kind) in all_deps {
             let inherit_ws = || {
                 let ws_dep = workspace
