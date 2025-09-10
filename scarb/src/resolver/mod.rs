@@ -7,8 +7,9 @@ use crate::resolver::provider::{
 };
 use crate::resolver::solution::{build_resolve, validate_solution};
 use crate::resolver::state::{Request, ResolverState};
-use anyhow::{Error, bail, format_err};
+use anyhow::{Error, anyhow, bail, format_err};
 use futures::{FutureExt, TryFutureExt};
+use indoc::formatdoc;
 use itertools::Itertools;
 use pubgrub::PubGrubError;
 use pubgrub::{DefaultStringReporter, Reporter};
@@ -213,6 +214,18 @@ fn format_error(err: PubGrubError<PubGrubDependencyProvider>) -> Error {
         PubGrubError::ErrorChoosingPackageVersion(DependencyProviderError::PackageQueryFailed(
             err,
         )) => format_err!("{}", err).context("dependency query failed"),
+        PubGrubError::ErrorChoosingPackageVersion(
+            DependencyProviderError::AuditRequirementInvalidSource { name, source_kind },
+        ) => anyhow!(formatdoc! {
+            r#"
+                dependency `{name}` from `{source_kind}` source is not allowed when audit requirement is enabled
+                help: depend on a registry package
+                alternatively, consider whitelisting dependency in workspace root manifest
+                 --> Scarb.toml
+                    [workspace]
+                    allow-no-audits = ["{name}"]
+                "#
+        }),
         PubGrubError::ErrorRetrievingDependencies {
             package,
             version,
