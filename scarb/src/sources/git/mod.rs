@@ -12,12 +12,11 @@ use scarb_ui::components::Status;
 
 use crate::core::source::Source;
 use crate::core::{
-    Config, GitReference, ManifestDependency, Package, PackageId, PackageName, SourceId, Summary,
+    Config, GitReference, ManifestDependency, Package, PackageId, SourceId, Summary,
 };
 use crate::sources::git::client::GitDatabase;
-use std::collections::HashSet;
 
-use super::{PathSource, ensure_audit_requirement_allowed};
+use super::PathSource;
 
 pub mod canonical_url;
 pub mod client;
@@ -29,8 +28,6 @@ pub struct GitSource<'c> {
     requested_reference: GitReference,
     locked_rev: Option<Rev>,
     inner: OnceCell<InnerState<'c>>,
-    require_audits: bool,
-    non_audited_whitelist: HashSet<PackageName>,
 }
 
 struct InnerState<'c> {
@@ -39,19 +36,12 @@ struct InnerState<'c> {
 }
 
 impl<'c> GitSource<'c> {
-    pub fn new(
-        source_id: SourceId,
-        config: &'c Config,
-        require_audits: bool,
-        non_audited_whitelist: &HashSet<PackageName>,
-    ) -> Result<Self> {
+    pub fn new(source_id: SourceId, config: &'c Config) -> Result<Self> {
         Self::with_custom_repo(
             &source_id.url,
             source_id.git_reference().unwrap(),
             source_id,
             config,
-            require_audits,
-            non_audited_whitelist.clone(),
         )
     }
 
@@ -60,8 +50,6 @@ impl<'c> GitSource<'c> {
         requested_reference: GitReference,
         source_id: SourceId,
         config: &'c Config,
-        require_audits: bool,
-        non_audited_whitelist: HashSet<PackageName>,
     ) -> Result<Self> {
         let canonical_url = CanonicalUrl::new(repo_url)?;
         let locked_rev: Option<Rev> = source_id
@@ -76,8 +64,6 @@ impl<'c> GitSource<'c> {
             requested_reference,
             locked_rev,
             inner: OnceCell::new(),
-            require_audits,
-            non_audited_whitelist,
         })
     }
 
@@ -166,9 +152,6 @@ impl<'c> GitSource<'c> {
 #[async_trait]
 impl Source for GitSource<'_> {
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
-        if self.require_audits {
-            ensure_audit_requirement_allowed(dependency, &self.non_audited_whitelist)?;
-        }
         self.ensure_loaded()
             .await?
             .path_source

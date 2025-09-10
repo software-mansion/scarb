@@ -322,13 +322,20 @@ impl DependencyProvider for PubGrubDependencyProvider {
             .into_iter()
             .filter(|summary| range.contains(&summary.package_id.version))
             .filter(|summary| {
-                !self.require_audits
-                    || summary.package_id.source_id.kind != SourceKind::Registry
-                    || kind.is_test()
-                    || summary.audited
-                    || self
-                        .require_audits_whitelist
-                        .contains(&summary.package_id.name)
+                if !self.require_audits || kind.is_test() {
+                    return true;
+                }
+                match summary.package_id.source_id.kind {
+                    SourceKind::Std => true,
+                    SourceKind::Path => self.main_package_ids().contains(&summary.package_id),
+                    SourceKind::Registry => {
+                        summary.audited
+                            || self
+                                .require_audits_whitelist
+                                .contains(&summary.package_id.name)
+                    }
+                    SourceKind::Git(_) => false,
+                }
             })
             .filter(|summary| {
                 !summary.yanked || self.yanked_whitelist.contains(&summary.package_id)
