@@ -1220,7 +1220,7 @@ fn code_mappings_preserve_inline_macro_error_locations() {
             let mut tokens = Vec::new();
             tokens.push(TokenTree::Ident(Token::new(
                 "undefined".to_string(),
-                TextSpan::new(0, 9),
+                TextSpan::new(0, 7),
             )));
 
             ProcMacroResult::new(TokenStream::new(tokens))
@@ -1235,7 +1235,7 @@ fn code_mappings_preserve_inline_macro_error_locations() {
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
             fn main() -> felt252 {
-                let _x = some!();
+                let _x = some!(abcdefghi);
                 12
             }
         "#})
@@ -1251,11 +1251,116 @@ fn code_mappings_preserve_inline_macro_error_locations() {
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Identifier not found.
-             --> [..]lib.cairo:1:1
-            fn main() -> felt252 {
-            ^^^^^^^^^
+             --> [..]lib.cairo:2:19
+                let _x = some!(abcdefghi);
+                              ^^^^^^^
 
             error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn inline_macro_error_on_call_site_location() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{inline_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
+
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+            let mut tokens = Vec::new();
+            tokens.push(TokenTree::Ident(Token::new(
+                "undefined".to_string(),
+                TextSpan::call_site(),
+            )));
+
+            ProcMacroResult::new(TokenStream::new(tokens))
+        }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 {
+                let _x = some!(abcdefghi);
+                12
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error[E0006]: Identifier not found.
+             --> [..]lib.cairo:2:14
+                let _x = some!(abcdefghi);
+                         ^^^^^^^^^^^^^^^^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn inline_macro_args_can_be_parsed() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{inline_macro, quote, ProcMacroResult, TokenStream};
+        use cairo_lang_parser::utils::SimpleParserDatabase;
+        use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+
+        #[inline_macro]
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
+            let db_val = SimpleParserDatabase::default();
+            let db = &db_val;
+            let (body, _diagnostics) = db.parse_token_stream_expr(&token_stream);
+            let body = SyntaxNodeWithDb::new(&body, db);
+            let result = ProcMacroResult::new(quote!{
+                #body
+            });
+            result
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 {
+                let _x = some!(12);
+                12
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -1493,6 +1598,55 @@ fn can_emit_diagnostic_with_custom_location() {
              --> [..]lib.cairo:4:8
                 y: (u32, u64),
                    ^^^^^^^^^^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn inline_macro_can_emit_diagnostic_with_custom_location() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, Diagnostic, TextSpan};
+
+        #[inline_macro]
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
+            let result = ProcMacroResult::new(token_stream);
+            let custom_span = TextSpan::new(0, 8);
+            let diag = Diagnostic::span_error(custom_span, "Error from inline.");
+            result.with_diagnostics(diag.into())
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 {
+                let _x = some!("abcdefghi");
+                12
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Plugin diagnostic: Error from inline.
+             --> [..]lib.cairo:2:19
+                let _x = some!("abcdefghi");
+                              ^^^^^^^^
 
             error: could not compile `hello` due to previous error
         "#});
