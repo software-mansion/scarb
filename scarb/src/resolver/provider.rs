@@ -340,27 +340,28 @@ impl DependencyProvider for PubGrubDependencyProvider {
                         }
                         SourceKind::Path => {
                             if !self.main_package_ids.contains(&summary.package_id) {
-                                return Err(DependencyProviderError::AuditRequirementViolation {
-                                    name: summary.package_id.name.to_string(),
-                                    source_kind: source_kind.primary_field().to_string(),
-                                });
+                                return Err(
+                                    DependencyProviderError::AuditRequirementInvalidSource {
+                                        name: summary.package_id.name.to_string(),
+                                        source_kind: source_kind.primary_field().to_string(),
+                                    },
+                                );
                             }
                         }
                         SourceKind::Git(_) => {
-                            return Err(DependencyProviderError::AuditRequirementViolation {
+                            return Err(DependencyProviderError::AuditRequirementInvalidSource {
                                 name: summary.package_id.name.to_string(),
                                 source_kind: source_kind.primary_field().to_string(),
                             });
                         }
                     }
                 }
-
                 Ok(Some(summary))
             })
-            .filter_map(|res| res.transpose()) // keep successes, short-circuit on Err
+            .filter_map(|res| res.transpose())
             .collect::<Result<Vec<_>, Self::Err>>()?
             .into_iter()
-            .sorted_by_key(|s| s.package_id.version.clone())
+            .sorted_by_key(|summary| summary.package_id.version.clone())
             .collect_vec();
 
         // Choose version.
@@ -547,5 +548,5 @@ pub enum DependencyProviderError {
     #[error(
         "dependency `{name}` from `{source_kind}` source is not allowed when audit requirement is enabled"
     )]
-    AuditRequirementViolation { name: String, source_kind: String },
+    AuditRequirementInvalidSource { name: String, source_kind: String },
 }

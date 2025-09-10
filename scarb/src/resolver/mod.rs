@@ -215,7 +215,7 @@ fn format_error(err: PubGrubError<PubGrubDependencyProvider>) -> Error {
             err,
         )) => format_err!("{}", err).context("dependency query failed"),
         PubGrubError::ErrorChoosingPackageVersion(
-            DependencyProviderError::AuditRequirementViolation { name, source_kind },
+            DependencyProviderError::AuditRequirementInvalidSource { name, source_kind },
         ) => anyhow!(formatdoc! {
             r#"
                 dependency `{name}` from `{source_kind}` source is not allowed when audit requirement is enabled
