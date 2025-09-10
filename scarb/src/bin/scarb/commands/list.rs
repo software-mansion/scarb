@@ -30,30 +30,29 @@ fn list_versions(args: ListCommandArgs, config: &Config) -> Result<VersionsList>
         .build();
 
     let std_source = StandardLibSource::new(config);
-    let summary = config
+    let summaries = config
         .tokio_handle()
         .block_on(std_source.query(&package_as_dep))?;
-    if !summary.is_empty() {
-        let std_versions = summary
+    if !summaries.is_empty() {
+        assert_eq!(
+            summaries.len(),
+            1,
+            "Standard library should have exactly one version"
+        );
+        let std_version = summaries
             .iter()
             .map(|s| s.package_id.version.to_string())
             .collect::<Vec<_>>();
 
-        assert_eq!(
-            std_versions.len(),
-            1,
-            "Standard library should have exactly one version"
-        );
-
         config.ui().warn(
             formatdoc! {
                 r#"
-                the package `{package}` is a part of Cairo standard library.
+                the package `{package_name}` is a part of Cairo standard library.
                 its available version ({version}) is coupled to the Cairo version included in your Scarb installation.
                 help: to use another version of this package, consider using a different version of Scarb.
                 "#,
-                package = package_as_dep.name,
-                version = std_versions.first().unwrap(),
+                package_name = package_as_dep.name,
+                version = std_version.first().unwrap(),
             }
         );
     }
