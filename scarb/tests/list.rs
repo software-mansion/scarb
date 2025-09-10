@@ -63,3 +63,46 @@ fn list_package_versions() {
             }
         );
 }
+
+#[test]
+fn list_builtin_package_versions() {
+    let mut registry = LocalRegistry::create();
+    for version in &["0.1.0", "0.1.1", "0.1.2"] {
+        publish_package("starknet", version, &mut registry);
+    }
+
+    Scarb::quick_snapbox()
+        .arg("list")
+        .arg("starknet")
+        .arg("--index")
+        .arg(&registry.url)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            warn: the package `starknet` is a part of Cairo standard library.
+            its available version (2.12.0) is coupled to the Cairo version included in your Scarb installation.
+            help: to use another version of this package, consider using a different version of Scarb.
+
+            VERSION    AUDIT    STATUS
+            0.1.2      x        -[..]
+            0.1.1      x        -[..]
+            0.1.0      x        -
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("list")
+        .arg("starknet")
+        .arg("--index")
+        .arg(&registry.url)
+        .assert()
+        .success()
+        .stdout_matches(
+            indoc!{
+            r#"
+            {"type":"warn","message":"the package `starknet` is a part of Cairo standard library./nits available version (2.12.0) is coupled to the Cairo version included in your Scarb installation./nhelp: to use another version of this package, consider using a different version of Scarb./n"}
+            [{"v":"0.1.2","deps":[],"cksum":"sha256:[..]"},{"v":"0.1.1","deps":[],"cksum":"sha256:[..]"},{"v":"0.1.0","deps":[],"cksum":"sha256:[..]"}]
+            "#
+            }
+        );
+}

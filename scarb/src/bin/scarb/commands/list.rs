@@ -1,13 +1,15 @@
 use crate::args::ListCommandArgs;
 use anyhow::{Context, Result};
 use dialoguer::console::Style;
+use indoc::formatdoc;
 use itertools::Itertools;
 use scarb::core::ManifestDependency;
 use scarb::core::registry::DEFAULT_REGISTRY_INDEX;
 use scarb::core::registry::client::cache::RegistryClientCache;
 use scarb::core::registry::index::IndexRecords;
+use scarb::core::source::Source;
 use scarb::core::{Config, DependencyVersionReq, SourceId};
-use scarb::sources::RegistrySource;
+use scarb::sources::{RegistrySource, StandardLibSource};
 use scarb_ui::Message;
 use serde::{Serialize, Serializer};
 use std::str::FromStr;
@@ -21,23 +23,52 @@ pub fn run(args: ListCommandArgs, config: &Config) -> Result<()> {
 
 fn list_versions(args: ListCommandArgs, config: &Config) -> Result<VersionsList> {
     let package_name = args.package_name;
-    let index = args.index.unwrap_or(Url::from_str(DEFAULT_REGISTRY_INDEX)?);
 
-    let source_id = SourceId::for_registry(&index)?;
-    let registry_client = RegistrySource::create_client(source_id, config)?;
-    let registry_client = RegistryClientCache::new(source_id, registry_client, config)?;
-
-    let dependency = ManifestDependency::builder()
+    let package_as_dep = ManifestDependency::builder()
         .name(package_name)
         .version_req(DependencyVersionReq::Any)
         .build();
 
+    let std_source = StandardLibSource::new(config);
+    let summary = config
+        .tokio_handle()
+        .block_on(std_source.query(&package_as_dep))?;
+    if !summary.is_empty() {
+        let std_versions = summary
+            .iter()
+            .map(|s| s.package_id.version.to_string())
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            std_versions.len(),
+            1,
+            "Standard library should have exactly one version"
+        );
+
+        config.ui().warn(
+            formatdoc! {
+                r#"
+                the package `{package}` is a part of Cairo standard library.
+                its available version ({version}) is coupled to the Cairo version included in your Scarb installation.
+                help: to use another version of this package, consider using a different version of Scarb.
+                "#,
+                package = package_as_dep.name,
+                version = std_versions.first().unwrap(),
+            }
+        );
+    }
+
+    let index = args.index.unwrap_or(Url::from_str(DEFAULT_REGISTRY_INDEX)?);
+    let source_id = SourceId::for_registry(&index)?;
+    let registry_client = RegistrySource::create_client(source_id, config)?;
+    let registry_client = RegistryClientCache::new(source_id, registry_client, config)?;
+
     let records = config
         .tokio_handle()
-        .block_on(registry_client.get_records_with_cache(&dependency))
+        .block_on(registry_client.get_records_with_cache(&package_as_dep))
         .with_context(|| {
             format!(
-                "failed to lookup for `{dependency}` in registry: {}",
+                "failed to lookup for `{package_as_dep}` in registry: {}",
                 source_id
             )
         })?;
