@@ -894,7 +894,7 @@ impl ProcMacroHostPlugin {
                         .into_iter()
                         .filter_map(|attr| Self::extract_key(db, attr))
                         .collect_vec();
-                    let full_path = item_id.full_path(db.upcast());
+                    let full_path = item_id.full_path(db);
                     for key in keys {
                         markers.insert(key, full_path.clone());
                     }

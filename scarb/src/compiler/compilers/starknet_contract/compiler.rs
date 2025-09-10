@@ -211,7 +211,7 @@ pub fn find_project_contracts<'db>(
         let mut filtered_contracts: Vec<ContractDeclaration<'db>> = contracts
             .into_iter()
             .filter(|decl| {
-                let contract_path = decl.module_id().full_path(db.upcast());
+                let contract_path = decl.module_id().full_path(db);
                 external_contracts
                     .iter()
                     .any(|selector| contract_matches(selector, contract_path.as_str()))
@@ -222,7 +222,7 @@ pub fn find_project_contracts<'db>(
             .iter()
             .filter(|selector| {
                 filtered_contracts.iter().any(|decl| {
-                    let contract_path = decl.module_id().full_path(db.upcast());
+                    let contract_path = decl.module_id().full_path(db);
                     contract_matches(selector, contract_path.as_str())
                 })
             })
@@ -237,7 +237,7 @@ pub fn find_project_contracts<'db>(
                     continue;
                 };
                 let module_uses = module_data.uses(db);
-                let module_with_reexport = module_id.full_path(db.upcast());
+                let module_with_reexport = module_id.full_path(db);
                 let matched_contracts = module_uses
                     .iter()
                     .filter_map(|(use_id, use_path)| {
@@ -251,7 +251,7 @@ pub fn find_project_contracts<'db>(
                             ),
                         };
                         let visibility = db
-                            .module_item_info_by_name(*module_id, use_id.name(db.upcast()).into())
+                            .module_item_info_by_name(*module_id, use_id.name(db).into())
                             .ok()??
                             .visibility;
                         if visibility == Visibility::Public {
@@ -262,22 +262,21 @@ pub fn find_project_contracts<'db>(
                     })
                     .filter_map(|(use_item, use_alias)| match use_item {
                         Module(module_id) => {
-                            module_id.name(db.upcast());
+                            module_id.name(db);
                             Some((module_id, use_alias))
                         }
                         _ => None,
                     })
                     .flat_map(|(module_id, use_alias)| {
-                        let exported_module_path = module_id.full_path(db.upcast());
-                        let exported_module_name =
-                            use_alias.unwrap_or_else(|| module_id.name(db.upcast()));
+                        let exported_module_path = module_id.full_path(db);
+                        let exported_module_name = use_alias.unwrap_or_else(|| module_id.name(db));
                         let mut submodules = Vec::new();
                         collect_modules_under(db, &mut submodules, module_id);
                         submodules
                             .iter()
                             .filter_map(|module_id| {
                                 let contract = module_contract(db, *module_id)?;
-                                let contract_path = contract.module_id().full_path(db.upcast());
+                                let contract_path = contract.module_id().full_path(db);
                                 let exported_contract_path =
                                     contract_path.replace(&exported_module_path, "");
                                 let exported_contract_path = format!(
@@ -327,7 +326,7 @@ pub fn find_project_contracts<'db>(
     let mut contracts_found = internal_contracts
         .into_iter()
         .chain(external_contracts)
-        .map(|decl| (decl.module_id().full_path(db.upcast()), decl))
+        .map(|decl| (decl.module_id().full_path(db), decl))
         .sorted_by_key(|(path, _)| path.clone())
         .collect_vec();
     contracts_found.dedup_by_key(|(path, _)| path.clone());

@@ -5,10 +5,10 @@ use cairo_lang_doc::db::DocGroup;
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{FilesGroup, init_files_group};
 use cairo_lang_filesystem::ids::{CrateInput, CrateLongId};
-use cairo_lang_lowering::db::{LoweringGroup, UseApproxCodeSizeEstimator};
+use cairo_lang_lowering::db::LoweringGroup;
 use cairo_lang_parser::db::ParserGroup;
 use cairo_lang_semantic::db::{
-    Elongate, PluginSuiteInput, SemanticGroup, init_semantic_group, semantic_group_input,
+    PluginSuiteInput, SemanticGroup, init_semantic_group, semantic_group_input,
 };
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::inline_macros::get_default_plugin_suite;
@@ -21,8 +21,6 @@ use std::sync::Arc;
 
 use salsa;
 use scarb_metadata::CompilationUnitComponentMetadata;
-
-impl UseApproxCodeSizeEstimator for ScarbDocDatabase {}
 
 /// The Cairo compiler Salsa database tailored for scarb-doc usage.
 #[salsa::db]
@@ -162,12 +160,6 @@ impl<'db> Upcast<'db, dyn DocGroup> for ScarbDocDatabase {
 
 impl<'db> Upcast<'db, dyn LoweringGroup> for ScarbDocDatabase {
     fn upcast(&self) -> &(dyn LoweringGroup + 'static) {
-        self
-    }
-}
-
-impl Elongate for ScarbDocDatabase {
-    fn elongate(&self) -> &(dyn SemanticGroup + 'static) {
         self
     }
 }
