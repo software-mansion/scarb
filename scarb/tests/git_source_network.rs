@@ -9,6 +9,10 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 
 #[test]
+#[cfg_attr(
+    not(target_family = "unix"),
+    ignore = "TODO(#2483): This test case is flaky on windows runners."
+)]
 fn https_something_happens() {
     thread::scope(|ts| {
         let server = TcpListener::bind("127.0.0.1:0").unwrap();
