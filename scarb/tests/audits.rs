@@ -138,8 +138,12 @@ fn require_audits_disallows_git_dep() {
         .failure()
         .stdout_matches(indoc! {r#"
                 Updating git repository [..]
-            error: version solving failed:
-            Because there is no available version for foo and hello 1.0.0 depends on foo, hello 1.0.0 is forbidden.
+            error: dependency `foo` from `git` source is not allowed when audit requirement is enabled
+            help: depend on a registry package
+            alternatively, consider whitelisting dependency in workspace root manifest
+             --> Scarb.toml
+                [workspace]
+                allow-no-audits = ["foo"]
         "#});
 }
 
@@ -173,8 +177,12 @@ fn require_audits_disallows_path_dep() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: version solving failed:
-            Because there is no available version for foo and hello 0.1.0 depends on foo, hello 0.1.0 is forbidden.
+            error: dependency `foo` from `path` source is not allowed when audit requirement is enabled
+            help: depend on a registry package
+            alternatively, consider whitelisting dependency in workspace root manifest
+             --> Scarb.toml
+                [workspace]
+                allow-no-audits = ["foo"]
         "#});
 }
 
@@ -272,14 +280,14 @@ fn require_audits_workspace() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
-        .arg("--workspace")
-        // Disable output from Cargo.
-        .env("CARGO_TERM_QUIET", "true")
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
+            .arg("build")
+            .arg("--workspace")
+            // Disable output from Cargo.
+            .env("CARGO_TERM_QUIET", "true")
+            .current_dir(&t)
+            .assert()
+            .failure()
+            .stdout_matches(indoc! {r#"
             error: version solving failed:
             Because there is no version of foo in >=1.0.0, <2.0.0 and hello 1.0.0 depends on foo >=1.0.0, <2.0.0, hello 1.0.0 is forbidden.
         "#});
@@ -416,11 +424,11 @@ fn bypass_audit_requirement() {
 
     // Bypassing audit requirement is not transitive
     Scarb::quick_snapbox()
-        .arg("build")
-        .current_dir(&first)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
+            .arg("build")
+            .current_dir(&first)
+            .assert()
+            .failure()
+            .stdout_matches(indoc! {r#"
             error: version solving failed:
             Because there is no version of foo in >=1.0.0, <2.0.0 and bar 1.0.0 depends on foo >=1.0.0, <2.0.0, bar 1.0.0 is forbidden.
             And because there is no version of bar in >1.0.0, <2.0.0 and first 1.0.0 depends on bar >=1.0.0, <2.0.0, first 1.0.0 is forbidden.
