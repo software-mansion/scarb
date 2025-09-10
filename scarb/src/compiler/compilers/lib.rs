@@ -9,6 +9,7 @@ use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
 use cairo_lang_sierra_type_size::ProgramRegistryInfo;
 use indoc::formatdoc;
+use salsa::Database;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::{debug, trace_span};
@@ -175,7 +176,7 @@ impl Compiler for LibCompiler {
 }
 
 fn validate_compiler_config(
-    db: &RootDatabase,
+    db: &dyn Database,
     compiler_config: &CompilerConfig<'_>,
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,

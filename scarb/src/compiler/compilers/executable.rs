@@ -19,6 +19,7 @@ use cairo_lang_sierra_generator::executables::find_executable_function_ids;
 use camino::Utf8Path;
 use indoc::formatdoc;
 use itertools::Itertools;
+use salsa::Database;
 use serde::{Deserialize, Serialize};
 use tracing::trace_span;
 
@@ -213,7 +214,7 @@ fn originating_function_path<'db>(
 fn check_executable_plugin_dependency(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
-    db: &RootDatabase,
+    db: &dyn Database,
     package_name: &PackageName,
 ) {
     let main_component = unit.main_component();

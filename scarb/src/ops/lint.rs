@@ -349,7 +349,6 @@ fn build_lint_database(
     let mut b = LinterAnalysisDatabase::builder();
     b.with_project_config(build_project_config(unit)?);
     b.with_cfg(unit.cfg_set.clone());
-    b.with_inlining_strategy(unit.compiler_config.inlining_strategy.clone().into());
 
     let PluginsForComponents { mut plugins, .. } = PluginsForComponents::collect(ws, unit)?;
 

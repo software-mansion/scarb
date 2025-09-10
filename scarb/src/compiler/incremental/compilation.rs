@@ -10,10 +10,9 @@ use cairo_lang_filesystem::db::{CrateConfiguration, FilesGroup};
 use cairo_lang_filesystem::ids::{BlobLongId, CrateInput};
 use cairo_lang_filesystem::set_crate_config;
 use cairo_lang_lowering::cache::generate_crate_cache;
-use cairo_lang_lowering::db::LoweringGroup;
-use cairo_lang_utils::{Intern, Upcast};
+use cairo_lang_utils::Intern;
 use itertools::Itertools;
-use salsa::par_map;
+use salsa::{Database, par_map};
 use std::io::Write;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -190,7 +189,7 @@ enum CrateCache {
 #[tracing::instrument(skip_all, level = "info")]
 pub fn save_incremental_artifacts(
     unit: &CairoCompilationUnit,
-    db: &RootDatabase,
+    db: &dyn Database,
     ctx: IncrementalContext,
     ws: &Workspace<'_>,
 ) -> Result<()> {
@@ -213,11 +212,8 @@ pub fn save_incremental_artifacts(
         })
         .collect_vec();
 
-    let db = Box::new(db.clone());
-
-    let group: &dyn LoweringGroup = db.as_ref().upcast();
     let results: Vec<Result<()>> =
-        par_map(group, components, move |group, (component, fingerprint)| {
+        par_map(db, components, move |group, (component, fingerprint)| {
             let fingerprint = match fingerprint.deref() {
                 ComponentFingerprint::Library(lib) => lib,
                 ComponentFingerprint::Plugin(_plugin) => {
@@ -239,7 +235,7 @@ pub fn save_incremental_artifacts(
 #[tracing::instrument(skip_all, level = "trace", fields(target_name = component.target_name().to_string()))]
 fn save_component_cache(
     fingerprint: &Fingerprint,
-    db: &dyn LoweringGroup,
+    db: &dyn Database,
     unit: &CairoCompilationUnit,
     component: &CompilationUnitComponent,
     ws: &Workspace<'_>,

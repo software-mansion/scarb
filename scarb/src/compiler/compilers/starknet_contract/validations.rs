@@ -13,13 +13,14 @@ use cairo_lang_starknet_classes::allowed_libfuncs::{
 };
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use indoc::{formatdoc, writedoc};
+use salsa::Database;
 use std::fmt::Write;
 use std::iter::zip;
 use tracing::debug;
 
 const AUTO_WITHDRAW_GAS_FLAG: &str = "add_withdraw_gas";
 
-pub fn ensure_gas_enabled(db: &RootDatabase) -> anyhow::Result<()> {
+pub fn ensure_gas_enabled(db: &dyn Database) -> anyhow::Result<()> {
     let flag = FlagId::new(db, FlagLongId(AUTO_WITHDRAW_GAS_FLAG.into()));
     let flag = db.get_flag(flag);
     ensure!(

@@ -20,7 +20,7 @@ use cairo_lang_semantic::db::{SemanticGroup, semantic_group_input};
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
-use salsa::Setter;
+use salsa::{Database, Setter};
 use smol_str::SmolStr;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -286,7 +286,7 @@ pub(crate) fn build_project_config(unit: &CairoCompilationUnit) -> Result<Projec
 }
 
 pub(crate) fn has_plugin(
-    db: &RootDatabase,
+    db: &dyn Database,
     predicate: fn(&dyn MacroPlugin) -> bool,
     component: &CompilationUnitComponent,
 ) -> bool {

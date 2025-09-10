@@ -1,17 +1,16 @@
 use anyhow::{Error, Result};
-use clap::Parser;
-use std::env;
-use std::process::ExitCode;
-use std::str::FromStr;
-use tracing::debug;
-
 use args::ScarbArgs;
+use clap::Parser;
 use scarb::core::Config;
 use scarb::core::errors::ScriptExecutionError;
 use scarb::ops;
 use scarb::process::WillExecReplace;
 use scarb_ui::Ui;
 use scarb_ui::args::VerbositySpec;
+use std::env;
+use std::process::ExitCode;
+use std::str::FromStr;
+use tracing::debug;
 
 use crate::errors::ErrorWithExitCode;
 
@@ -68,7 +67,8 @@ fn init_logging(verbose: VerbositySpec, ui: &Ui) -> Option<impl Drop> {
                 .with_default_directive(FromStr::from_str(verbose.as_trace().as_str()).unwrap())
                 .with_env_var("SCARB_LOG")
                 .from_env_lossy(),
-        );
+        )
+        .with_filter(cairo_lang_utils::logging::exclude_salsa());
 
     let tracing_profile = env::var("SCARB_TRACING_PROFILE")
         .ok()
