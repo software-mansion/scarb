@@ -185,8 +185,12 @@ fn require_audits_disallows_git_dep() {
         .failure()
         .stdout_matches(indoc! {r#"
                 Updating git repository [..]
-            error: version solving failed:
-            Because there is no available version for foo and hello 1.0.0 depends on foo, hello 1.0.0 is forbidden.
+            error: dependency `foo` from `git` source is not allowed when audit requirement is enabled
+            help: depend on a registry package
+            alternatively, consider whitelisting dependency in workspace root manifest
+             --> Scarb.toml
+                [workspace]
+                allow-no-audits = ["foo"]
         "#});
 }
 
@@ -220,8 +224,12 @@ fn require_audits_disallows_path_dep() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: version solving failed:
-            Because there is no available version for foo and hello 0.1.0 depends on foo, hello 0.1.0 is forbidden.
+            error: dependency `foo` from `path` source is not allowed when audit requirement is enabled
+            help: depend on a registry package
+            alternatively, consider whitelisting dependency in workspace root manifest
+             --> Scarb.toml
+                [workspace]
+                allow-no-audits = ["foo"]
         "#});
 }
 
