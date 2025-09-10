@@ -11,10 +11,10 @@ use crate::internal::offloader::Offloader;
 use crate::ops;
 use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
 use anyhow::{Context, Error, Result, anyhow};
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use indoc::formatdoc;
 use itertools::Itertools;
+use salsa::Database;
 use scarb_ui::HumanDuration;
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
@@ -347,7 +347,7 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 fn check_starknet_dependency(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
-    db: &RootDatabase,
+    db: &dyn Database,
     package_name: &PackageName,
 ) {
     // NOTE: This is a special case that can be hit frequently by newcomers. Not specifying

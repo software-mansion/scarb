@@ -12,7 +12,7 @@ use cairo_lang_filesystem::set_crate_config;
 use cairo_lang_lowering::cache::generate_crate_cache;
 use cairo_lang_utils::Intern;
 use itertools::Itertools;
-use salsa::par_map;
+use salsa::{Database, par_map};
 use std::io::Write;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -189,7 +189,7 @@ enum CrateCache {
 #[tracing::instrument(skip_all, level = "info")]
 pub fn save_incremental_artifacts(
     unit: &CairoCompilationUnit,
-    db: &RootDatabase,
+    db: &dyn Database,
     ctx: IncrementalContext,
     ws: &Workspace<'_>,
 ) -> Result<()> {
@@ -235,7 +235,7 @@ pub fn save_incremental_artifacts(
 #[tracing::instrument(skip_all, level = "trace", fields(target_name = component.target_name().to_string()))]
 fn save_component_cache(
     fingerprint: &Fingerprint,
-    db: &RootDatabase,
+    db: &dyn Database,
     unit: &CairoCompilationUnit,
     component: &CompilationUnitComponent,
     ws: &Workspace<'_>,
