@@ -22,7 +22,7 @@ pub struct ProjectBuilder {
     version: Version,
     edition: Option<String>,
     cairo_version: Option<Version>,
-    src: HashMap<Utf8PathBuf, String>,
+    src: HashMap<Utf8PathBuf, Vec<u8>>,
     deps: Vec<(String, Value)>,
     dev_deps: Vec<(String, Value)>,
     manifest_package_extra: String,
@@ -43,7 +43,7 @@ impl ProjectBuilder {
             cairo_version: None,
             src: HashMap::from_iter([(
                 Utf8PathBuf::from("src/lib.cairo"),
-                format!(r#"fn f{n}() -> felt252 {{ {n} }}"#),
+                format!(r#"fn f{n}() -> felt252 {{ {n} }}"#).into(),
             )]),
             deps: Vec::new(),
             dev_deps: Vec::new(),
@@ -78,8 +78,12 @@ impl ProjectBuilder {
         self
     }
 
-    pub fn src(mut self, path: impl Into<Utf8PathBuf>, source: impl ToString) -> Self {
-        self.src.insert(path.into(), source.to_string());
+    pub fn src(self, path: impl Into<Utf8PathBuf>, source: impl ToString) -> Self {
+        self.src_binary(path, source.to_string())
+    }
+
+    pub fn src_binary(mut self, path: impl Into<Utf8PathBuf>, source: impl Into<Vec<u8>>) -> Self {
+        self.src.insert(path.into(), source.into());
         self
     }
 
@@ -193,7 +197,7 @@ impl ProjectBuilder {
 
     pub fn just_code(&self, t: &impl PathChild) {
         for (path, source) in &self.src {
-            t.child(path).write_str(source).unwrap();
+            t.child(path).write_binary(source).unwrap();
         }
 
         for path in &self.executable_files {
