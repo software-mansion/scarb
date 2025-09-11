@@ -12,7 +12,7 @@ use wasmtime::component::{
 use wasmtime::{Engine, Store};
 use wasmtime_wasi::{WasiCtx, WasiCtxView, WasiView};
 use wasmtime_wasi::p2::pipe::MemoryOutputPipe;
-use tracing::warn;
+use tracing::debug;
 
 mod codec;
 
@@ -78,10 +78,7 @@ impl Connection for Wasm {
         func.call(&mut self.store, &params, &mut results)?;
         let results = encode_to_cairo(&results);
         func.post_return(&mut self.store)?;
-        
-        // Flush any stderr output to tracing logs after the call
         self.store.data().flush_stderr_to_tracing();
-        
         results
     }
 }
@@ -231,17 +228,11 @@ struct HostState {
 }
 
 impl HostState {
-    /// Flush any stderr output to tracing logs.
     fn flush_stderr_to_tracing(&self) {
         if let Some(bytes) = self.stderr_pipe.clone().try_into_inner() {
-            if !bytes.is_empty() {
-                if let Ok(text) = std::str::from_utf8(&bytes) {
-                    for line in text.lines() {
-                        let line = line.trim();
-                        if !line.is_empty() {
-                            warn!(target: "wasm_stderr", "{}", line);
-                        }
-                    }
+            if let Ok(text) = std::str::from_utf8(&bytes) {
+                for line in text.lines() {
+                    debug!(target: "wasm_stderr", "{}", line);
                 }
             }
         }
