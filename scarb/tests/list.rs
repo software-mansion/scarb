@@ -169,4 +169,23 @@ fn list_package_versions_many() {
             ...
             use `--all` or `--limit 6` to show all 6 versions
         "#});
+
+    Scarb::quick_snapbox()
+        .arg("list")
+        .arg("foo")
+        .arg("--limit")
+        .arg("100")
+        .arg("--index")
+        .arg(&registry.url)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            VERSION    AUDIT    STATUS
+            0.6.0      x        -[..]
+            0.5.0      x        -[..]
+            0.4.0      x        -[..]
+            0.3.0      x        -[..]
+            0.2.0      x        -[..]
+            0.1.0      x        -
+        "#});
 }
