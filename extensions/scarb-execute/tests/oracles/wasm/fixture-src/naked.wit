@@ -1,0 +1,9 @@
+package naked:adder@0.1.0;
+
+interface add {
+  add: func(x: s64, y: s64) -> s64;
+}
+
+world adder {
+  export add;
+}
