@@ -1,18 +1,21 @@
 use crate::compiler::incremental::fingerprint::{
-    ComponentFingerprint, Fingerprint, UnitFingerprint, is_fresh,
+    ComponentFingerprint, Fingerprint, FreshnessCheck, UnitFingerprint, is_fresh,
 };
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
+use crate::internal::fsx;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_filesystem::db::{FilesGroup, FilesGroupEx};
+use cairo_lang_filesystem::db::{CrateConfiguration, FilesGroup, FilesGroupEx};
 use cairo_lang_filesystem::ids::{BlobLongId, CrateId};
 use cairo_lang_lowering::cache::generate_crate_cache;
+use cairo_lang_utils::Intern;
 use itertools::Itertools;
 use std::env;
 use std::io::Write;
 use std::ops::Deref;
-use tracing::debug;
+use std::sync::Arc;
+use tracing::{debug, error};
 
 const SCARB_INCREMENTAL: &str = "SCARB_INCREMENTAL";
 
@@ -85,7 +88,7 @@ pub fn load_incremental_artifacts(
 ///
 /// Returns `Ok(true)` if the cache was loaded successfully, or `Ok(false)` if the component
 /// is not fresh and no cache was loaded.
-#[tracing::instrument(skip_all, level = "trace")]
+#[tracing::instrument(skip_all, level = "trace", fields(target_name = component.target_name().to_string()))]
 fn load_component_cache(
     fingerprint: &Fingerprint,
     db: &mut RootDatabase,
@@ -94,25 +97,45 @@ fn load_component_cache(
     ws: &Workspace<'_>,
 ) -> Result<bool> {
     let fingerprint_digest = fingerprint.digest();
-    if is_fresh(
+    let FreshnessCheck {
+        is_fresh,
+        // We keep the fingerprint lock, so no cache writes can occur between
+        // freshness check and cache load.
+        file_guard: _guard,
+    } = is_fresh(
         &unit
             .fingerprint_dir(ws)
             .child(component.fingerprint_dirname(fingerprint)),
         &component.target_name(),
         &fingerprint_digest,
-    )? {
+        ws.config(),
+    )?;
+    if is_fresh {
         debug!(
             "component `{}` is fresh, loading cache artifacts",
             component.target_name()
         );
         let cache_dir = unit.incremental_cache_dir(ws);
+        // Lock the cache file for reading.
+        let _guard = cache_dir.open_ro(
+            component.cache_filename(fingerprint),
+            &component.cache_filename(fingerprint),
+            ws.config(),
+        );
         let cache_dir = cache_dir.path_unchecked();
         let cache_file = cache_dir.join(component.cache_filename(fingerprint));
         let crate_id = component.crate_id(db);
-        let blob_id = db.intern_blob(BlobLongId::OnDisk(cache_file.as_std_path().to_path_buf()));
-        if let Some(mut core_conf) = db.crate_config(crate_id) {
-            core_conf.cache_file = Some(blob_id);
-            db.set_crate_config(crate_id, Some(core_conf));
+        let blob_content = fsx::read(cache_file)?;
+        let blob_content: Arc<[u8]> = blob_content.into();
+        if let Some(core_conf) = db.crate_config(crate_id) {
+            db.set_crate_config(
+                crate_id,
+                Some(CrateConfiguration {
+                    root: core_conf.root.clone(),
+                    settings: core_conf.settings.clone(),
+                    cache_file: Some(BlobLongId::Virtual(blob_content).intern(db)),
+                }),
+            );
         }
         Ok(true)
     } else {
@@ -172,7 +195,7 @@ pub fn save_incremental_artifacts(
     Ok(())
 }
 
-#[tracing::instrument(skip_all, level = "trace")]
+#[tracing::instrument(skip_all, level = "trace", fields(target_name = component.target_name().to_string()))]
 fn save_component_cache(
     fingerprint: &Fingerprint,
     db: salsa::Snapshot<RootDatabase>,
@@ -181,17 +204,36 @@ fn save_component_cache(
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let fingerprint_digest = fingerprint.digest();
-    if !is_fresh(
+    let FreshnessCheck {
+        is_fresh,
+        file_guard,
+    } = is_fresh(
         &unit
             .fingerprint_dir(ws)
             .child(component.fingerprint_dirname(fingerprint)),
         &component.target_name(),
         &fingerprint_digest,
-    )? {
+        ws.config(),
+    )?;
+    // We drop the fingerprint lock, so it can be locked for writing.
+    drop(file_guard);
+    if !is_fresh {
         debug!(
             "component `{}` is not fresh, saving new cache artifacts",
             component.target_name()
         );
+        let cache_dir = unit.incremental_cache_dir(ws);
+        let crate_id = component.crate_id(&*db);
+        let cache_blob = match generate_crate_cache(&*db, crate_id) {
+            Ok(blob) => blob,
+            Err(_e) => {
+                error!(
+                    "failed to generate cache for `{}` crate",
+                    component.target_name()
+                );
+                return Ok(());
+            }
+        };
         let fingerprint_dir = unit.fingerprint_dir(ws);
         let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(fingerprint));
         let fingerprint_file = fingerprint_dir.create_rw(
@@ -199,6 +241,15 @@ fn save_component_cache(
             "fingerprint file",
             ws.config(),
         )?;
+        let cache_file = cache_dir.create_rw(
+            component.cache_filename(fingerprint),
+            "cache file",
+            ws.config(),
+        )?;
+        cache_file
+            .deref()
+            .write_all(&cache_blob)
+            .with_context(|| format!("failed to write cache to `{}`", cache_file.path()))?;
         fingerprint_file
             .deref()
             .write_all(fingerprint_digest.as_bytes())
@@ -208,20 +259,6 @@ fn save_component_cache(
                     fingerprint_file.path()
                 )
             })?;
-        let cache_dir = unit.incremental_cache_dir(ws);
-        let cache_file = cache_dir.create_rw(
-            component.cache_filename(fingerprint),
-            "cache file",
-            ws.config(),
-        )?;
-        let crate_id = component.crate_id(&*db);
-        let Some(cache_blob) = generate_crate_cache(&*db, crate_id).ok() else {
-            return Ok(());
-        };
-        cache_file
-            .deref()
-            .write_all(&cache_blob)
-            .with_context(|| format!("failed to write cache to `{}`", cache_file.path()))?;
     }
     Ok(())
 }

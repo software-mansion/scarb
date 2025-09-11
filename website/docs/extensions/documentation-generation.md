@@ -35,6 +35,19 @@ Alternatively, you can do this manually with the following steps:
 - Run `mdbook build` (or `mdbook serve`) inside the generated documentation target (`/target/doc/<PACKAGE-NAME>`).
   By default, mdBook generated documentation doesn't support Cairo code highlighting. To make it work, just replace the generated `book/highlight.js` with [this](https://github.com/software-mansion/scarb/tree/main/extensions/scarb-mdbook/theme) one.
 
+### Supported mdbook syntax
+
+- Code blocks
+- Inline code
+- Tables
+- Links
+- Lists
+- Headings
+- Bold and italic
+- Rules
+- Strikethrough
+- File embedding
+
 ## Examples
 
 Let's take, for example, a simple Cairo project initialized using `scarb new`. Let's change the code inside `lib.cairo` to:
@@ -88,7 +101,3 @@ After running `scarb doc`, inside the target directory, you will see the generat
 - The `book.toml` which contains settings for describing how to build your book.
 
 Running `scarb doc --output-format json` will result in a single JSON file inside the target directory with collected documentation inside.
-
-Check out the link below to see how a bigger project would look like:
-
-- [The Cairo Core Libarary Docs](https://docs.cairo-lang.org/core/)

@@ -113,6 +113,10 @@ jobs:
         if: inputs.include-stwo
         run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} -p scarb-prove -p scarb-verify
 
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
+
       - name: Create archive
         run: cargo xtask create-archive ${{ !inputs.include-cairols && '--skip-cairols' || '' }} ${{ !inputs.include-stwo && '--skip-stwo' || '' }}
         env:
