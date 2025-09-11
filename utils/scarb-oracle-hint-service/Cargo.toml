@@ -23,12 +23,16 @@ serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 shell-words = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
+wasmtime = { workspace = true, optional = true }
+wasmtime-wasi = { workspace = true, optional = true }
 
 [features]
 # Feature per protocol. Names correspond to Protocol::SCHEME values.
 # Default includes all builtin protocols.
-default = ["shell", "stdio"]
+default = ["shell", "stdio", "wasm"]
 shell = ["dep:deno_task_shell", "dep:tokio"]
 stdio = ["dep:serde", "dep:serde_json", "dep:shell-words"]
+wasm = ["dep:wasmtime", "dep:wasmtime-wasi"]
 
 [dev-dependencies]
+itertools.workspace = true
