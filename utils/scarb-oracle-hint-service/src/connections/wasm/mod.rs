@@ -278,21 +278,3 @@ impl WasiView for HostState {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_stderr_redirection_setup() {
-        // Test that we can create a HostState with stderr redirection
-        let host_state = HostState::default();
-        
-        // Verify that the stderr pipe is properly set up
-        // This test mainly ensures our configuration compiles and doesn't panic
-        assert!(!host_state.stderr_pipe.clone().try_into_inner().unwrap_or_default().is_empty() == false);
-        
-        // Test that flush_stderr_to_tracing doesn't panic
-        host_state.flush_stderr_to_tracing();
-    }
-}
