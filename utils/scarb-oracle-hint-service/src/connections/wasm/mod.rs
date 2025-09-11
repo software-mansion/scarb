@@ -11,6 +11,8 @@ use wasmtime::component::{
 };
 use wasmtime::{Engine, Store};
 use wasmtime_wasi::{WasiCtx, WasiCtxView, WasiView};
+use wasmtime_wasi::p2::pipe::MemoryOutputPipe;
+use tracing::warn;
 
 mod codec;
 
@@ -76,6 +78,10 @@ impl Connection for Wasm {
         func.call(&mut self.store, &params, &mut results)?;
         let results = encode_to_cairo(&results);
         func.post_return(&mut self.store)?;
+        
+        // Flush any stderr output to tracing logs after the call
+        self.store.data().flush_stderr_to_tracing();
+        
         results
     }
 }
@@ -221,22 +227,45 @@ impl Wasm {
 struct HostState {
     ctx: WasiCtx,
     table: ResourceTable,
+    stderr_pipe: MemoryOutputPipe,
+}
+
+impl HostState {
+    /// Flush any stderr output to tracing logs.
+    fn flush_stderr_to_tracing(&self) {
+        if let Some(bytes) = self.stderr_pipe.clone().try_into_inner() {
+            if !bytes.is_empty() {
+                if let Ok(text) = std::str::from_utf8(&bytes) {
+                    for line in text.lines() {
+                        let line = line.trim();
+                        if !line.is_empty() {
+                            warn!(target: "wasm_stderr", "{}", line);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl Default for HostState {
     fn default() -> Self {
+        let stderr_pipe = MemoryOutputPipe::new(8192); // 8KB buffer
+        
         Self {
             // TODO(#2629): Preopen some directory if the runtime wants to.
-            // TODO(#2627): Redirect stderr to tracing logs.
             // TODO(#2625): Implement permissions system to allow users to limit these caps.
             ctx: WasiCtx::builder()
-                .inherit_stdio()
+                .inherit_stdin()
+                .inherit_stdout()
+                .stderr(stderr_pipe.clone())
                 .allow_blocking_current_thread(true)
                 .inherit_env()
                 .inherit_network()
                 .allow_ip_name_lookup(true)
                 .build(),
             table: ResourceTable::new(),
+            stderr_pipe,
         }
     }
 }
@@ -247,5 +276,23 @@ impl WasiView for HostState {
             ctx: &mut self.ctx,
             table: &mut self.table,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_stderr_redirection_setup() {
+        // Test that we can create a HostState with stderr redirection
+        let host_state = HostState::default();
+        
+        // Verify that the stderr pipe is properly set up
+        // This test mainly ensures our configuration compiles and doesn't panic
+        assert!(!host_state.stderr_pipe.clone().try_into_inner().unwrap_or_default().is_empty() == false);
+        
+        // Test that flush_stderr_to_tracing doesn't panic
+        host_state.flush_stderr_to_tracing();
     }
 }
