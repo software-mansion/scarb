@@ -1,6 +1,6 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::{LocalRegistry, audit, unaudit};
@@ -42,6 +42,53 @@ fn require_audits_allows_non_audited_dev_dep() {
         [[package]]
         name = "foo"
         version = "1.0.0"
+    "#}));
+}
+
+#[test]
+fn require_audits_allows_non_audited_dev_dep_with_patch() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("1.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("2.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .version("1.0.0")
+        .dev_dep("foo", Dep.version("1").registry(&registry))
+        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .manifest_extra(formatdoc! {r#"
+            [workspace]
+            require-audits = true
+
+            [patch."{}"]
+            foo = {}
+        "#, registry.url.clone(), Dep.version("2").registry(&registry).build()})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lockfile = t.child("Scarb.lock");
+    lockfile.assert(predicates::str::contains(indoc! {r#"
+        [[package]]
+        name = "foo"
+        version = "2.0.0"
     "#}));
 }
 
