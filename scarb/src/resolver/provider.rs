@@ -165,19 +165,10 @@ impl PubGrubDependencyProvider {
     pub fn fetch_summary(&self, package_id: PackageId) -> Result<Summary, DependencyProviderError> {
         let summary = self.packages.read().unwrap().get(&package_id).cloned();
         let summary = summary.map(Ok).unwrap_or_else(|| {
-            let package = PubGrubPackage::from(package_id);
-            let kind = self
-                .kinds
-                .read()
-                .unwrap()
-                .get(&package)
-                .cloned()
-                .unwrap_or_default();
             let dependency = ManifestDependency::builder()
                 .name(package_id.name.clone())
                 .source_id(package_id.source_id)
                 .version_req(DependencyVersionReq::exact(&package_id.version))
-                .kind(kind)
                 .build();
             let summary = self
                 .wait_for_summaries(dependency.clone())?
