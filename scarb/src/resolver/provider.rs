@@ -227,10 +227,7 @@ impl PubGrubDependencyProvider {
     }
 
     fn save_kind(&self, dep: &ManifestDependency) {
-        let package = PubGrubPackage {
-            name: dep.name.clone(),
-            source_id: dep.source_id,
-        };
+        let package = PubGrubPackage::from(dep);
         let mut write_lock = self.kinds.write().unwrap();
         if let Some(kind) = write_lock.get(&package) {
             if !dep.kind.is_test() && kind.is_test() {
