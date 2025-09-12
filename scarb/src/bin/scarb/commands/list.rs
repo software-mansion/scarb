@@ -71,17 +71,10 @@ fn list_versions(args: ListCommandArgs, config: &Config) -> Result<VersionsList>
                 source_id
             )
         })?;
-    let records = records
-        .into_iter()
-        .sorted_by_key(|r| std::cmp::Reverse(r.version.clone()))
-        .collect();
 
     let display_limit = if args.all { None } else { Some(args.limit) };
 
-    Ok(VersionsList {
-        records,
-        display_limit,
-    })
+    Ok(VersionsList::new(records, display_limit))
 }
 
 #[derive(Serialize, Debug)]
@@ -91,6 +84,19 @@ struct VersionsList {
     /// If specified, limits the number of displayed versions to this number.
     #[serde(skip)]
     display_limit: Option<usize>,
+}
+
+impl VersionsList {
+    pub fn new(records: IndexRecords, display_limit: Option<usize>) -> Self {
+        let records = records
+            .into_iter()
+            .sorted_by_key(|r| std::cmp::Reverse(r.version.clone()))
+            .collect();
+        Self {
+            records,
+            display_limit,
+        }
+    }
 }
 
 impl Message for VersionsList {
