@@ -648,7 +648,7 @@ pub struct ListCommandArgs {
     pub all: bool,
 
     /// Limit the number of results.
-    #[arg(long, default_value_t = 5, conflicts_with = "all")]
+    #[arg(long, default_value_t = 10, conflicts_with = "all")]
     pub limit: usize,
 }
 
