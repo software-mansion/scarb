@@ -10,7 +10,7 @@ use smol_str::SmolStr;
 use crate::compiler::Profile;
 use crate::core::config::Config;
 use crate::core::package::Package;
-use crate::core::{ManifestDependency, PackageId, ScriptDefinition, Target};
+use crate::core::{ManifestDependency, PackageId, PackageName, ScriptDefinition, Target};
 use crate::flock::Filesystem;
 use crate::sources::canonical_url::CanonicalUrl;
 use crate::{DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME};
@@ -29,6 +29,7 @@ pub struct Workspace<'c> {
     target_dir: Filesystem,
     patch: BTreeMap<CanonicalUrl, Vec<ManifestDependency>>,
     require_audits: bool,
+    allow_no_audits: Vec<PackageName>,
 }
 
 impl<'c> Workspace<'c> {
@@ -42,6 +43,7 @@ impl<'c> Workspace<'c> {
         scripts: BTreeMap<SmolStr, ScriptDefinition>,
         patch: BTreeMap<CanonicalUrl, Vec<ManifestDependency>>,
         require_audits: bool,
+        allow_no_audits: Vec<PackageName>,
     ) -> Result<Self> {
         let targets = packages
             .iter()
@@ -70,6 +72,7 @@ impl<'c> Workspace<'c> {
             scripts,
             patch,
             require_audits,
+            allow_no_audits,
         })
     }
 
@@ -81,6 +84,8 @@ impl<'c> Workspace<'c> {
     ) -> Result<Self> {
         let manifest_path = package.manifest_path().to_path_buf();
         let root_package = Some(package.id);
+        let require_audits = false;
+        let allow_no_audits = Default::default();
         Self::new(
             manifest_path,
             vec![package].as_ref(),
@@ -89,7 +94,8 @@ impl<'c> Workspace<'c> {
             profiles,
             BTreeMap::new(),
             patch,
-            false,
+            require_audits,
+            allow_no_audits,
         )
     }
 
@@ -118,6 +124,10 @@ impl<'c> Workspace<'c> {
 
     pub fn require_audits(&self) -> bool {
         self.require_audits
+    }
+
+    pub fn allow_no_audits(&self) -> HashSet<PackageName> {
+        self.allow_no_audits.clone().into_iter().collect()
     }
 
     /// Returns the current package of this workspace.
