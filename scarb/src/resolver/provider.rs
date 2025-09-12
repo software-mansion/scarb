@@ -36,12 +36,11 @@ pub struct PubGrubPackage {
 }
 
 impl PubGrubPackage {
-    fn to_dependency(&self, range: SemverPubgrub, kind: DepKind) -> ManifestDependency {
+    fn to_dependency(&self, range: SemverPubgrub) -> ManifestDependency {
         ManifestDependency::builder()
             .name(self.name.clone())
             .source_id(self.source_id)
             .version_req(range.into())
-            .kind(kind)
             .build()
     }
 }
@@ -282,14 +281,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
 
     #[tracing::instrument(level = "trace", skip_all)]
     fn prioritize(&self, package: &Self::P, range: &Self::VS) -> Self::Priority {
-        let kind = self
-            .kinds
-            .read()
-            .unwrap()
-            .get(package)
-            .cloned()
-            .unwrap_or_default();
-        let dependency = package.to_dependency(range.clone(), kind);
+        let dependency = package.to_dependency(range.clone());
         if self
             .state
             .index
@@ -326,7 +318,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
             .get(package)
             .cloned()
             .unwrap_or_default();
-        let dependency = package.to_dependency(range.clone(), kind.clone());
+        let dependency = package.to_dependency(range.clone());
         let summaries = self.wait_for_summaries(dependency)?;
         let summaries = summaries
             .into_iter()
