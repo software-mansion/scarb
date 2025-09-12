@@ -319,7 +319,7 @@ pub fn resolve_workspace_with_opts(
                 (lockfile, yanked_whitelist)
             };
 
-            let source_map = SourceMap::preloaded(ws.members(), ws.config(), yanked_whitelist);
+            let source_map = SourceMap::preloaded(ws.members(), ws.config());
             let cached = RegistryCache::new(&source_map);
             let patched = RegistryPatcher::new(&cached, &patch_map);
 
@@ -328,6 +328,7 @@ pub fn resolve_workspace_with_opts(
                 &patched,
                 &patch_map,
                 lockfile,
+                yanked_whitelist,
                 require_audits,
             )
             .await?;

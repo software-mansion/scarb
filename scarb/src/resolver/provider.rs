@@ -124,6 +124,7 @@ pub struct PubGrubDependencyProvider {
     lockfile: Lockfile,
     state: Arc<ResolverState>,
     request_sink: mpsc::Sender<Request>,
+    yanked_whitelist: HashSet<PackageId>,
     require_audits: bool,
 }
 
@@ -134,6 +135,7 @@ impl PubGrubDependencyProvider {
         request_sink: mpsc::Sender<Request>,
         patch_map: PatchMap,
         lockfile: Lockfile,
+        yanked_whitelist: HashSet<PackageId>,
         require_audits: bool,
     ) -> Self {
         Self {
@@ -145,6 +147,7 @@ impl PubGrubDependencyProvider {
             patch_map,
             lockfile,
             request_sink,
+            yanked_whitelist,
             require_audits,
         }
     }
@@ -319,6 +322,9 @@ impl DependencyProvider for PubGrubDependencyProvider {
                     || summary.package_id.source_id.kind != SourceKind::Registry
                     || kind.is_test()
                     || summary.audited
+            })
+            .filter(|summary| {
+                !summary.yanked || self.yanked_whitelist.contains(&summary.package_id)
             })
             .sorted_by_key(|summary| summary.package_id.version.clone())
             .collect_vec();
