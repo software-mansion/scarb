@@ -1,21 +1,29 @@
+use std::io::{self, Write};
+use std::pin::Pin;
+use std::sync::{Arc, Mutex};
+use std::task::{Context, Poll};
+use tokio::io::AsyncWrite;
+use tracing::{Span, debug, debug_span};
+use wasmtime_wasi::cli::{IsTerminal, StdoutStream};
+
 /// A custom stderr writer that forwards output to tracing logs in real-time.
 #[derive(Clone)]
 pub struct TracingStderrWriter {
-    buffer: std::sync::Arc<std::sync::Mutex<Vec<u8>>>,
-    span: tracing::Span,
+    buffer: Arc<Mutex<Vec<u8>>>,
+    span: Span,
 }
 
 impl TracingStderrWriter {
     pub fn new() -> Self {
         Self {
-            buffer: std::sync::Arc::new(std::sync::Mutex::new(Vec::new())),
-            span: tracing::debug_span!("err"),
+            buffer: Arc::new(Mutex::new(Vec::new())),
+            span: debug_span!("err"),
         }
     }
 }
 
-impl std::io::Write for TracingStderrWriter {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+impl Write for TracingStderrWriter {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let _span = self.span.enter();
 
         let mut buffer = self.buffer.lock().unwrap();
@@ -26,7 +34,7 @@ impl std::io::Write for TracingStderrWriter {
         while let Some(end) = buffer[start..].iter().position(|&b| b == b'\n') {
             let line_end = start + end;
             if let Ok(line) = std::str::from_utf8(&buffer[start..line_end]) {
-                tracing::debug!("{}", line);
+                debug!("{}", line);
             }
             start = line_end + 1;
         }
@@ -39,13 +47,13 @@ impl std::io::Write for TracingStderrWriter {
         Ok(buf.len())
     }
 
-    fn flush(&mut self) -> std::io::Result<()> {
+    fn flush(&mut self) -> io::Result<()> {
         let _span = self.span.enter();
 
         let mut buffer = self.buffer.lock().unwrap();
         if !buffer.is_empty() {
             if let Ok(text) = std::str::from_utf8(&buffer) {
-                tracing::debug!("{}", text);
+                debug!("{}", text);
             }
             buffer.clear();
         }
@@ -53,38 +61,32 @@ impl std::io::Write for TracingStderrWriter {
     }
 }
 
-impl wasmtime_wasi::cli::IsTerminal for TracingStderrWriter {
+impl IsTerminal for TracingStderrWriter {
     fn is_terminal(&self) -> bool {
         false
     }
 }
 
-impl wasmtime_wasi::cli::StdoutStream for TracingStderrWriter {
-    fn async_stream(&self) -> Box<dyn tokio::io::AsyncWrite + Send + Sync> {
+impl StdoutStream for TracingStderrWriter {
+    fn async_stream(&self) -> Box<dyn AsyncWrite + Send + Sync> {
         Box::new(self.clone())
     }
 }
 
-impl tokio::io::AsyncWrite for TracingStderrWriter {
+impl AsyncWrite for TracingStderrWriter {
     fn poll_write(
-        mut self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
+        mut self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
         buf: &[u8],
-    ) -> std::task::Poll<std::io::Result<usize>> {
-        std::task::Poll::Ready(std::io::Write::write(&mut *self, buf))
+    ) -> Poll<io::Result<usize>> {
+        Poll::Ready(self.write(buf))
     }
 
-    fn poll_flush(
-        mut self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
-    ) -> std::task::Poll<std::io::Result<()>> {
-        std::task::Poll::Ready(std::io::Write::flush(&mut *self))
+    fn poll_flush(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+        Poll::Ready(self.flush())
     }
 
-    fn poll_shutdown(
-        self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
-    ) -> std::task::Poll<std::io::Result<()>> {
+    fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
         self.poll_flush(cx)
     }
 }
