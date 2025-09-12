@@ -70,6 +70,7 @@ pub async fn resolve(
     registry: &dyn Registry,
     patch_map: &PatchMap,
     lockfile: Lockfile,
+    require_audits: bool,
 ) -> anyhow::Result<Resolve> {
     let state = Arc::new(ResolverState::default());
 
@@ -111,6 +112,7 @@ pub async fn resolve(
                 cloned_patch_map,
                 cloned_lockfile,
                 main_package_ids,
+                require_audits,
             )
         })?;
 
@@ -133,6 +135,7 @@ fn scarb_resolver(
     patch_map: PatchMap,
     lockfile: Lockfile,
     main_package_ids: HashSet<PackageId>,
+    require_audits: bool,
 ) {
     let result = || {
         let provider = PubGrubDependencyProvider::new(
@@ -141,6 +144,7 @@ fn scarb_resolver(
             request_sink,
             patch_map,
             lockfile,
+            require_audits,
         );
 
         // Init state
@@ -309,7 +313,14 @@ mod tests {
 
         let lockfile = Lockfile::new(locks.iter().cloned());
         let patch_map = PatchMap::new();
-        runtime.block_on(super::resolve(&summaries, &registry, &patch_map, lockfile))
+        let require_audits = false;
+        runtime.block_on(super::resolve(
+            &summaries,
+            &registry,
+            &patch_map,
+            lockfile,
+            require_audits,
+        ))
     }
 
     fn package_id<S: AsRef<str>>(name: S) -> PackageId {

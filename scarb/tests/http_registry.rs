@@ -26,6 +26,7 @@ fn usage() {
         .name("foo")
         .version("0.1.0")
         .dep("bar", Dep.version("1").registry(&registry))
+        .dev_dep("bar", Dep.version("1").registry(&registry))
         .lib_cairo(r#"fn f() -> felt252 { bar::f() }"#)
         .build(&t);
 
