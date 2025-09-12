@@ -1,118 +1,20 @@
 use crate::connection::Connection;
 use crate::connections::wasm::codec::{decode_from_cairo, encode_to_cairo};
+use crate::connections::wasm::tracing_stderr::TracingStderrWriter;
 use crate::protocol::Protocol;
 use anyhow::{Context, Result, bail};
 use starknet_core::types::Felt;
 use std::collections::HashMap;
-use std::io::{self, Write};
-use std::pin::Pin;
 use std::sync::LazyLock;
-use std::sync::{Arc, Mutex};
-use std::task::{Context as TaskContext, Poll};
-use tokio::io::AsyncWrite;
-use tracing::debug;
-use tracing::debug_span;
 use wasmtime::component::types::ComponentItem;
 use wasmtime::component::{
     Component, ComponentExportIndex, Func, Instance, Linker, ResourceTable, Val,
 };
 use wasmtime::{Engine, Store};
-use wasmtime_wasi::cli::{IsTerminal, StdoutStream};
 use wasmtime_wasi::{WasiCtx, WasiCtxView, WasiView};
 
 mod codec;
-
-/// A custom stderr writer that forwards output to tracing in real-time
-#[derive(Clone)]
-struct TracingStderrWriter {
-    buffer: Arc<Mutex<Vec<u8>>>,
-    span: tracing::Span,
-}
-
-impl TracingStderrWriter {
-    fn new() -> Self {
-        let span = debug_span!("err");
-        Self {
-            buffer: Arc::new(Mutex::new(Vec::new())),
-            span,
-        }
-    }
-}
-
-impl Write for TracingStderrWriter {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let _span = self.span.enter();
-
-        let mut buffer = self.buffer.lock().unwrap();
-        buffer.extend_from_slice(buf);
-
-        // Process complete lines immediately
-        let mut start = 0;
-        while let Some(end) = buffer[start..].iter().position(|&b| b == b'\n') {
-            let line_end = start + end;
-            if let Ok(line) = std::str::from_utf8(&buffer[start..line_end]) {
-                debug!("{}", line);
-            }
-            start = line_end + 1;
-        }
-
-        // Keep remaining incomplete line in buffer
-        if start > 0 {
-            buffer.drain(0..start);
-        }
-
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        let _span = self.span.enter();
-
-        let mut buffer = self.buffer.lock().unwrap();
-        if !buffer.is_empty() {
-            if let Ok(text) = std::str::from_utf8(&buffer) {
-                debug!("{}", text);
-            }
-            buffer.clear();
-        }
-        Ok(())
-    }
-}
-
-impl std::fmt::Debug for TracingStderrWriter {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TracingStderrWriter").finish()
-    }
-}
-
-impl IsTerminal for TracingStderrWriter {
-    fn is_terminal(&self) -> bool {
-        false
-    }
-}
-
-impl StdoutStream for TracingStderrWriter {
-    fn async_stream(&self) -> Box<dyn AsyncWrite + Send + Sync> {
-        Box::new(self.clone())
-    }
-}
-
-impl AsyncWrite for TracingStderrWriter {
-    fn poll_write(
-        mut self: Pin<&mut Self>,
-        _cx: &mut TaskContext<'_>,
-        buf: &[u8],
-    ) -> Poll<io::Result<usize>> {
-        Poll::Ready(self.write(buf))
-    }
-
-    fn poll_flush(mut self: Pin<&mut Self>, _cx: &mut TaskContext<'_>) -> Poll<io::Result<()>> {
-        Poll::Ready(self.flush())
-    }
-
-    fn poll_shutdown(self: Pin<&mut Self>, cx: &mut TaskContext<'_>) -> Poll<io::Result<()>> {
-        self.poll_flush(cx)
-    }
-}
+mod tracing_stderr;
 
 /// Maps fully qualified export names to their indices; i.e.:
 /// `naked:adder/add@0.1.0#add` -> `0`.
@@ -176,7 +78,6 @@ impl Connection for Wasm {
         func.call(&mut self.store, &params, &mut results)?;
         let results = encode_to_cairo(&results);
         func.post_return(&mut self.store)?;
-        self.store.data_mut().flush_stderr();
         results
     }
 }
@@ -322,33 +223,23 @@ impl Wasm {
 struct HostState {
     ctx: WasiCtx,
     table: ResourceTable,
-    stderr_writer: TracingStderrWriter,
-}
-
-impl HostState {
-    fn flush_stderr(&mut self) {
-        let _ = self.stderr_writer.flush();
-    }
 }
 
 impl Default for HostState {
     fn default() -> Self {
-        let stderr_writer = TracingStderrWriter::new();
-
         Self {
             // TODO(#2629): Preopen some directory if the runtime wants to.
             // TODO(#2625): Implement permissions system to allow users to limit these caps.
             ctx: WasiCtx::builder()
                 .inherit_stdin()
                 .inherit_stdout()
-                .stderr(stderr_writer.clone())
+                .stderr(TracingStderrWriter::new())
                 .allow_blocking_current_thread(true)
                 .inherit_env()
                 .inherit_network()
                 .allow_ip_name_lookup(true)
                 .build(),
             table: ResourceTable::new(),
-            stderr_writer,
         }
     }
 }
