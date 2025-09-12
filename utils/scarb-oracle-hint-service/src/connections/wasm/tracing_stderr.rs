@@ -3,7 +3,7 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll};
 use tokio::io::AsyncWrite;
-use tracing::{Span, debug, debug_span};
+use tracing::{Span, debug, debug_span, warn};
 use wasmtime_wasi::cli::{IsTerminal, StdoutStream};
 
 /// A custom stderr writer that forwards output to tracing logs in real-time.
@@ -29,19 +29,16 @@ impl Write for TracingStderrWriter {
         let mut buffer = self.buffer.lock().unwrap();
         buffer.extend_from_slice(buf);
 
-        // Process complete lines immediately
-        let mut start = 0;
-        while let Some(end) = buffer[start..].iter().position(|&b| b == b'\n') {
-            let line_end = start + end;
-            if let Ok(line) = std::str::from_utf8(&buffer[start..line_end]) {
-                debug!("{}", line);
-            }
-            start = line_end + 1;
-        }
+        // Find complete lines and process them using the lines pattern
+        while let Some(newline_pos) = buffer.iter().position(|&b| b == b'\n') {
+            let line_with_newline = buffer.drain(..=newline_pos).collect::<Vec<u8>>();
+            let line_bytes = &line_with_newline[..line_with_newline.len() - 1]; // Remove newline
 
-        // Keep remaining incomplete line in buffer
-        if start > 0 {
-            buffer.drain(0..start);
+            // Process line similar to BufRead::lines()
+            match std::str::from_utf8(line_bytes) {
+                Ok(line) => debug!("{}", line),
+                Err(err) => warn!("{:?}", err),
+            }
         }
 
         Ok(buf.len())
@@ -52,8 +49,10 @@ impl Write for TracingStderrWriter {
 
         let mut buffer = self.buffer.lock().unwrap();
         if !buffer.is_empty() {
-            if let Ok(text) = std::str::from_utf8(&buffer) {
-                debug!("{}", text);
+            // Handle final line that doesn't end with newline
+            match std::str::from_utf8(&buffer) {
+                Ok(line) => debug!("{}", line),
+                Err(err) => warn!("{:?}", err),
             }
             buffer.clear();
         }
