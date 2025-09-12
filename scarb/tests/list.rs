@@ -106,3 +106,85 @@ fn list_builtin_package_versions() {
             }
         );
 }
+
+#[test]
+fn list_package_versions_many() {
+    let mut registry = LocalRegistry::create();
+    let versions = vec!["0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.5.0", "0.6.0"];
+    for version in &versions {
+        publish_package("foo", version, &mut registry);
+    }
+
+    Scarb::quick_snapbox()
+        .arg("list")
+        .arg("foo")
+        .arg("--index")
+        .arg(&registry.url)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            VERSION    AUDIT    STATUS
+            0.6.0      x        -[..]
+            0.5.0      x        -[..]
+            0.4.0      x        -[..]
+            0.3.0      x        -[..]
+            0.2.0      x        -[..]
+            ...
+            use `--all` or `--limit 6` to show all 6 versions
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("list")
+        .arg("foo")
+        .arg("--all")
+        .arg("--index")
+        .arg(&registry.url)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            VERSION    AUDIT    STATUS
+            0.6.0      x        -[..]
+            0.5.0      x        -[..]
+            0.4.0      x        -[..]
+            0.3.0      x        -[..]
+            0.2.0      x        -[..]
+            0.1.0      x        -
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("list")
+        .arg("foo")
+        .arg("--limit")
+        .arg("3")
+        .arg("--index")
+        .arg(&registry.url)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            VERSION    AUDIT    STATUS
+            0.6.0      x        -[..]
+            0.5.0      x        -[..]
+            0.4.0      x        -[..]
+            ...
+            use `--all` or `--limit 6` to show all 6 versions
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("list")
+        .arg("foo")
+        .arg("--limit")
+        .arg("100")
+        .arg("--index")
+        .arg(&registry.url)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            VERSION    AUDIT    STATUS
+            0.6.0      x        -[..]
+            0.5.0      x        -[..]
+            0.4.0      x        -[..]
+            0.3.0      x        -[..]
+            0.2.0      x        -[..]
+            0.1.0      x        -
+        "#});
+}
