@@ -345,7 +345,7 @@ fn bypass_audit_requirement() {
 
     // Bypassing audit requirement is not transitive
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&first)
         .assert()
         .failure()
@@ -372,7 +372,7 @@ fn bypass_audit_requirement() {
         .build(&second);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&second)
         .assert()
         .success();
