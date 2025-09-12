@@ -271,3 +271,41 @@ fn require_audits_workspace() {
         .assert()
         .success();
 }
+
+#[test]
+fn require_audits_workspace_normal_and_dev_dep() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("1.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+    let t = TempDir::new().unwrap();
+
+    let first = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .dev_dep("foo", Dep.version("1.0.0").registry(&registry))
+        .build(&first);
+
+    let second = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .dep("foo", Dep.version("1.0.0").registry(&registry))
+        .build(&second);
+
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .require_audits(true)
+        .build(&t);
+
+    // Having a dev dep in a workspace should not lift the audit requirement for a normal dep.
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure();
+}
