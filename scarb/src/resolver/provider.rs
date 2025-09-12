@@ -166,10 +166,7 @@ impl PubGrubDependencyProvider {
     pub fn fetch_summary(&self, package_id: PackageId) -> Result<Summary, DependencyProviderError> {
         let summary = self.packages.read().unwrap().get(&package_id).cloned();
         let summary = summary.map(Ok).unwrap_or_else(|| {
-            let package = PubGrubPackage {
-                name: package_id.name.clone(),
-                source_id: package_id.source_id,
-            };
+            let package = PubGrubPackage::from(package_id);
             let kind = self
                 .kinds
                 .read()
