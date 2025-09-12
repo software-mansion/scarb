@@ -5,14 +5,14 @@ use anyhow::{Context, Result, bail};
 use starknet_core::types::Felt;
 use std::collections::HashMap;
 use std::sync::LazyLock;
+use tracing::debug;
 use wasmtime::component::types::ComponentItem;
 use wasmtime::component::{
     Component, ComponentExportIndex, Func, Instance, Linker, ResourceTable, Val,
 };
 use wasmtime::{Engine, Store};
-use wasmtime_wasi::{WasiCtx, WasiCtxView, WasiView};
 use wasmtime_wasi::p2::pipe::MemoryOutputPipe;
-use tracing::debug;
+use wasmtime_wasi::{WasiCtx, WasiCtxView, WasiView};
 
 mod codec;
 
@@ -242,7 +242,7 @@ impl HostState {
 impl Default for HostState {
     fn default() -> Self {
         let stderr_pipe = MemoryOutputPipe::new(8192); // 8KB buffer
-        
+
         Self {
             // TODO(#2629): Preopen some directory if the runtime wants to.
             // TODO(#2625): Implement permissions system to allow users to limit these caps.
