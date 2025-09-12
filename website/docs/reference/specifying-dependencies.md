@@ -65,6 +65,8 @@ allow-no-audits = ["alexandria_math"]
 > [!WARNING]
 > This setting is not transitive, meaning that dependencies of the whitelisted packages will still be filtered based on the `require-audits` setting, unless they are also explicitly whitelisted.
 
+## Specifying dependencies from Git repositories
+
 To depend on a package located in a Git repository, the minimum information needed to specify is the location of the
 repository with the `git` key:
 

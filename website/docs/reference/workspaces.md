@@ -205,7 +205,6 @@ allow-no-audits = ["alexandria_math"]
 > [!WARNING]
 > This setting is not transitive, meaning that dependencies of the whitelisted packages will still be filtered based on the `require-audits` setting, unless they are also explicitly whitelisted.
 
-
 ### `[scripts]`
 
 The `[scripts]` section can be used to define custom, cross-platform commands specific to the workspace codebase.
