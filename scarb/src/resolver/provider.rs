@@ -212,21 +212,24 @@ impl PubGrubDependencyProvider {
             };
 
             let original_dependency = self.patch_map.lookup(original_dependency);
-            self.save_kind(&original_dependency);
+            self.save_most_restrictive_kind(&original_dependency);
             let dependency = lock_dependency(&self.lockfile, original_dependency.clone())?;
-            self.save_kind(&dependency);
+            self.save_most_restrictive_kind(&dependency);
             blocking_send(dependency);
 
             let dependency =
                 rewrite_path_dependency_source_id(summary.package_id, &original_dependency);
             let dependency = lock_dependency(&self.lockfile, dependency)?;
-            self.save_kind(&dependency);
+            self.save_most_restrictive_kind(&dependency);
             blocking_send(dependency);
         }
         Ok(())
     }
 
-    fn save_kind(&self, dep: &ManifestDependency) {
+    /// Save the **most-restrictive** dependency kind for a package.
+    /// That means if this function is called for the same package with normal and test kinds, normal kind will be saved.
+    /// This is based on assumption that normal kind is more restrictive than test when filtering is applied in [`PubGrubDependencyProvider::choose_version`].
+    fn save_most_restrictive_kind(&self, dep: &ManifestDependency) {
         let package = PubGrubPackage::from(dep);
         let mut write_lock = self.kinds.write().unwrap();
         if let Some(kind) = write_lock.get(&package) {
