@@ -954,7 +954,7 @@ dependencies = [
  "cairo-lang-sierra-generator",
  "cairo-lang-sierra-to-casm",
  "cairo-lang-utils",
- "cairo-vm 2.4.1",
+ "cairo-vm 2.5.0",
  "itertools 0.14.0",
  "salsa",
  "serde",
@@ -1217,7 +1217,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-sierra-type-size",
  "cairo-lang-utils",
- "cairo-vm 2.4.1",
+ "cairo-vm 2.5.0",
  "itertools 0.14.0",
  "thiserror 2.0.16",
 ]
@@ -1238,7 +1238,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-starknet",
  "cairo-lang-utils",
- "cairo-vm 2.4.1",
+ "cairo-vm 2.5.0",
  "clap",
  "itertools 0.14.0",
  "keccak",
@@ -1680,9 +1680,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-vm"
-version = "2.4.1"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0617ed6cf884305edf7e7727e9500b1c5894db73f07858481a2464c02682b1f"
+checksum = "c21cacdf4e290ab5f0018f24d6bf97f8d3a8809bd09568550669270e7f9ed534"
 dependencies = [
  "anyhow",
  "bincode",
@@ -2515,7 +2515,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "778e2ac28f6c47af28e4907f13ffd1e1ddbd400980a9abd7c8df189bf578a5ad"
 dependencies = [
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -4678,7 +4678,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07033963ba89ebaf1584d767badaa2e8fcec21aedea6b8c0346d487d49c28667"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.53.3",
 ]
 
 [[package]]
@@ -6304,7 +6304,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -6559,7 +6559,7 @@ dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-test-plugin",
  "cairo-lang-test-runner",
- "cairo-vm 2.4.1",
+ "cairo-vm 2.5.0",
  "camino",
  "clap",
  "indoc",
@@ -6617,7 +6617,7 @@ dependencies = [
  "cairo-lang-executable",
  "cairo-lang-runner",
  "cairo-lang-utils",
- "cairo-vm 2.4.1",
+ "cairo-vm 2.5.0",
  "camino",
  "clap",
  "console",
@@ -6642,7 +6642,7 @@ name = "scarb-extensions-cli"
 version = "2.12.1"
 dependencies = [
  "anyhow",
- "cairo-vm 2.4.1",
+ "cairo-vm 2.5.0",
  "camino",
  "clap",
  "scarb-ui",
@@ -7879,7 +7879,7 @@ dependencies = [
  "getrandom 0.3.3",
  "once_cell",
  "rustix",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -7899,7 +7899,7 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a43bddab41f8626c7bdaab872bbba75f8df5847b516d77c569c746e2ae5eb746"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
