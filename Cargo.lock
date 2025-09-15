@@ -862,7 +862,7 @@ dependencies = [
  "indoc",
  "rayon",
  "salsa",
- "semver 1.0.26",
+ "semver 1.0.27",
  "smol_str",
  "thiserror 2.0.16",
 ]
@@ -983,7 +983,7 @@ dependencies = [
  "cairo-lang-utils",
  "path-clean",
  "salsa",
- "semver 1.0.26",
+ "semver 1.0.27",
  "serde",
  "smol_str",
  "toml 0.9.5",
@@ -1592,7 +1592,7 @@ dependencies = [
  "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "scarb-proc-macro-server-types 0.3.0-rc.0",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "semver 1.0.26",
+ "semver 1.0.27",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -1641,7 +1641,7 @@ checksum = "2c6b8354ca32d91aa3ebfb2a8e5469c39d0e7155e51badf83838987a4cd0979f"
 dependencies = [
  "anyhow",
  "clap",
- "semver 1.0.26",
+ "semver 1.0.27",
  "toml_edit 0.23.4",
  "xshell",
 ]
@@ -1734,7 +1734,7 @@ version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7dc1a6f7b5651af85774ae5a34b4e8be397d9cf4bc063b7e6dbd99a841837830"
 dependencies = [
- "semver 1.0.26",
+ "semver 1.0.27",
  "serde",
  "serde-untagged",
  "serde-value",
@@ -1753,7 +1753,7 @@ dependencies = [
  "camino",
  "cargo-platform",
  "cargo-util-schemas",
- "semver 1.0.26",
+ "semver 1.0.27",
  "serde",
  "serde_json",
  "thiserror 2.0.16",
@@ -6291,7 +6291,7 @@ version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
 dependencies = [
- "semver 1.0.26",
+ "semver 1.0.27",
 ]
 
 [[package]]
@@ -6492,7 +6492,7 @@ dependencies = [
  "scarb-stable-hash 1.0.0",
  "scarb-test-support",
  "scarb-ui",
- "semver 1.0.26",
+ "semver 1.0.27",
  "semver-pubgrub",
  "serde",
  "serde-untagged",
@@ -6533,7 +6533,7 @@ name = "scarb-build-metadata"
 version = "2.12.1"
 dependencies = [
  "cargo_metadata",
- "semver 1.0.26",
+ "semver 1.0.27",
 ]
 
 [[package]]
@@ -6670,7 +6670,7 @@ dependencies = [
  "cairo-lang-filesystem",
  "camino",
  "derive_builder",
- "semver 1.0.26",
+ "semver 1.0.27",
  "serde",
  "serde_json",
  "snapbox",
@@ -6684,7 +6684,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0a1448d2575cf5f127867379edeb64d0565a69207996a1310a7280c10314064"
 dependencies = [
  "camino",
- "semver 1.0.26",
+ "semver 1.0.27",
  "serde",
  "serde_json",
  "thiserror 2.0.16",
@@ -6784,7 +6784,7 @@ dependencies = [
  "scarb-build-metadata",
  "scarb-proc-macro-server-types 0.3.0",
  "scarb-ui",
- "semver 1.0.26",
+ "semver 1.0.27",
  "serde",
  "serde_json",
  "sha2",
@@ -6924,11 +6924,12 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "1.0.26"
+version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56e6fa9c48d24d85fb3de5ad847117517440f6beceb7798af16b4a87d616b8d0"
+checksum = "d767eb0aabc880b29956c35734170f26ed551a859dbd361d140cdbeca61ab1e2"
 dependencies = [
  "serde",
+ "serde_core",
 ]
 
 [[package]]
@@ -6946,15 +6947,16 @@ version = "0.1.0"
 source = "git+https://github.com/software-mansion-labs/semver-pubgrub.git#6c78141d940cda6d8e69aea794c2bf30cc3402df"
 dependencies = [
  "pubgrub",
- "semver 1.0.26",
+ "semver 1.0.27",
 ]
 
 [[package]]
 name = "serde"
-version = "1.0.219"
+version = "1.0.223"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f0e2c6ed6606019b4e29e69dbaba95b11854410e5347d525002456dbbb786b6"
+checksum = "a505d71960adde88e293da5cb5eda57093379f64e61cf77bf0e6a63af07a7bac"
 dependencies = [
+ "serde_core",
  "serde_derive",
 ]
 
@@ -6980,10 +6982,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_derive"
-version = "1.0.219"
+name = "serde_core"
+version = "1.0.223"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b0276cf7f2c73365f7157c8123c21cd9a50fbbd844757af28ca1f5925fc2a00"
+checksum = "20f57cbd357666aa7b3ac84a90b4ea328f1d4ddb6772b430caa5d9e1309bb9e9"
+dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_derive"
+version = "1.0.223"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3d428d07faf17e306e699ec1e91996e5a165ba5d6bce5b5155173e91a8a01a56"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9312,7 +9323,7 @@ dependencies = [
  "anyhow",
  "cairo-toolchain-xtasks",
  "clap",
- "semver 1.0.26",
+ "semver 1.0.27",
  "serde_json",
  "time",
  "walkdir",
