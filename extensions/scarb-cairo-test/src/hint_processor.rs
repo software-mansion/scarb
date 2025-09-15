@@ -16,6 +16,7 @@ use cairo_vm::vm::vm_core::VirtualMachine;
 use scarb_oracle_hint_service::OracleHintService;
 use std::any::Any;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub struct TestHintProcessor<'a> {
     pub cairo_hint_processor: CairoHintProcessor<'a>,
@@ -30,7 +31,6 @@ impl<'a> HintProcessorLogic for TestHintProcessor<'a> {
         vm: &mut VirtualMachine,
         exec_scopes: &mut ExecutionScopes,
         hint_data: &Box<dyn Any>,
-        constants: &HashMap<String, Felt252>,
     ) -> Result<(), HintError> {
         if let Some(Hint::Starknet(StarknetHint::Cheatcode {
             selector,
@@ -73,7 +73,7 @@ impl<'a> HintProcessorLogic for TestHintProcessor<'a> {
             Ok(())
         } else {
             self.cairo_hint_processor
-                .execute_hint(vm, exec_scopes, hint_data, constants)
+                .execute_hint(vm, exec_scopes, hint_data)
         }
     }
 
@@ -83,12 +83,14 @@ impl<'a> HintProcessorLogic for TestHintProcessor<'a> {
         ap_tracking_data: &ApTracking,
         reference_ids: &HashMap<String, usize>,
         references: &[HintReference],
+        constants: Rc<HashMap<String, Felt252>>,
     ) -> Result<Box<dyn Any>, VirtualMachineError> {
         self.cairo_hint_processor.compile_hint(
             hint_code,
             ap_tracking_data,
             reference_ids,
             references,
+            constants,
         )
     }
 }

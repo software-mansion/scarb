@@ -19,6 +19,8 @@ use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
 use cairo_lang_semantic::items::functions::GenericFunctionId;
+use cairo_lang_semantic::items::imp::ImplSemantic;
+use cairo_lang_semantic::items::module::ModuleSemantic;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::Visibility;
 use cairo_lang_semantic::resolve::ResolvedGenericItem;
