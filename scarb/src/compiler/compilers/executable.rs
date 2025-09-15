@@ -5,9 +5,9 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler}
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::offloader::Offloader;
 use anyhow::{Result, bail, ensure};
-use cairo_lang_compiler::DbWarmupContext;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
+use cairo_lang_compiler::ensure_diagnostics;
 use cairo_lang_executable::compile::{
     CompiledFunction, ExecutableConfig, compile_executable_function_in_prepared_db,
 };
@@ -101,8 +101,7 @@ fn compile_executable<'db>(
     mut diagnostics_reporter: DiagnosticsReporter<'_>,
     config: ExecutableConfig,
 ) -> Result<CompiledFunction> {
-    let context = DbWarmupContext::new();
-    context.ensure_diagnostics(db, &mut diagnostics_reporter)?;
+    ensure_diagnostics(db, &mut diagnostics_reporter)?;
     let executables = find_executable_functions(db, main_crate_ids, executable_path);
 
     let executable = match executables.len() {
@@ -130,10 +129,7 @@ fn compile_executable<'db>(
         }
     };
 
-    Ok(
-        compile_executable_function_in_prepared_db(db, executable, config, context)?
-            .compiled_function,
-    )
+    Ok(compile_executable_function_in_prepared_db(db, executable, config)?.compiled_function)
 }
 
 fn multiple_executables_error_message(executables: Vec<String>, scarb_toml: &Utf8Path) -> String {
