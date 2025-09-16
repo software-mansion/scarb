@@ -3,6 +3,7 @@
 
 use crate::hint_processor::ExecuteHintProcessor;
 use crate::output::{ExecutionOutput, ExecutionResources, ExecutionSummary};
+use crate::profiler::{build_profiler_call_trace, get_profiler_tracked_resource};
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use bincode::enc::write::Writer;
 use cairo_lang_executable::executable::{EntryPointKind, Executable};
@@ -30,6 +31,7 @@ use std::fs;
 use std::io::{self, Write};
 
 mod hint_processor;
+mod profiler;
 
 pub(crate) mod output;
 
@@ -182,6 +184,11 @@ pub fn execute(
             }
         })?;
 
+    let execution_resources =
+        ExecutionResources::try_new(&runner, hint_processor.cairo_hint_processor)?;
+
+    //dbg!(&runner.relocated_trace);
+
     ui.print(ExecutionSummary {
         output: args
             .run
@@ -191,8 +198,7 @@ pub fn execute(
         resources: args
             .run
             .print_resource_usage
-            .then(|| ExecutionResources::try_new(&runner, hint_processor.cairo_hint_processor))
-            .transpose()?,
+            .then(|| execution_resources.clone()),
     });
 
     if output.is_none() {
@@ -247,6 +253,35 @@ pub fn execute(
             .serialize_json()
             .with_context(|| "failed serializing private input")?;
         fs::write(air_private_input_path, output_value)?;
+    }
+
+    if args.run.save_profiler_trace_data {
+        let profiler_trace_path = Utf8PathBuf::from(format!(
+            "{}/{}/{}.sierra.json",
+            &metadata.workspace.root, &scarb_build_dir, &build_target.name
+        ));
+        let tracked_resource = get_profiler_tracked_resource(package);
+        let call_trace = build_profiler_call_trace(
+            &args.run.target,
+            runner.relocated_trace.clone(),
+            execution_resources,
+            &tracked_resource,
+            profiler_trace_path,
+        )?;
+        ui.print(Status::new(
+            "Profiler tracked resource:",
+            tracked_resource.into(),
+        ));
+
+        // Write profiler trace file
+        let profiler_trace_path = execution_output_dir.join("cairo_profiler_trace.json");
+        ui.print(Status::new(
+            "Saving profiler trace data to:",
+            profiler_trace_path.as_ref(),
+        ));
+        let serialized_trace = serde_json::to_string(&call_trace)
+            .expect("Failed to serialize call trace for profiler");
+        fs::write(profiler_trace_path, serialized_trace)?;
     }
 
     Ok(())

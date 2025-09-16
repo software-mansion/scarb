@@ -446,3 +446,25 @@ fn can_use_features() {
         Saving output to: target/execute/hello/execution1
         "#});
 }
+
+#[test]
+fn can_create_profiler_trace_file() {
+    let t = build_executable_project();
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--save-profiler-trace-data")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        Saving output to: target/execute/hello/execution1
+        "#});
+
+    t.child("target/execute/hello/execution1/cairo_profiler_trace.json")
+        .assert_is_json::<serde_json::Value>();
+}
+
+// todo: sierra-gas?
