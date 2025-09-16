@@ -877,16 +877,19 @@ impl ProcMacroHostPlugin {
                 };
                 let module_items = module_data.items(db);
                 for item_id in module_items.iter() {
-                    let attr = match item_id {
-                        ModuleItemId::Struct(id) => {
-                            id.query_attr(db, FULL_PATH_MARKER_KEY).to_option()
-                        }
-                        ModuleItemId::Enum(id) => {
-                            id.query_attr(db, FULL_PATH_MARKER_KEY).to_option()
-                        }
-                        ModuleItemId::FreeFunction(id) => {
-                            id.query_attr(db, FULL_PATH_MARKER_KEY).to_option()
-                        }
+                    let attr: Option<Vec<_>> = match item_id {
+                        ModuleItemId::Struct(id) => id
+                            .query_attr(db, FULL_PATH_MARKER_KEY)
+                            .map(|x| x.into_iter().collect())
+                            .to_option(),
+                        ModuleItemId::Enum(id) => id
+                            .query_attr(db, FULL_PATH_MARKER_KEY)
+                            .map(|x| x.into_iter().collect())
+                            .to_option(),
+                        ModuleItemId::FreeFunction(id) => id
+                            .query_attr(db, FULL_PATH_MARKER_KEY)
+                            .map(|x| x.into_iter().collect())
+                            .to_option(),
                         _ => None,
                     };
                     let keys = attr
@@ -904,7 +907,7 @@ impl ProcMacroHostPlugin {
         markers
     }
 
-    fn extract_key<'db>(db: &'db dyn SemanticGroup, attr: Attribute<'db>) -> Option<String> {
+    fn extract_key<'db>(db: &'db dyn SemanticGroup, attr: &'db Attribute<'db>) -> Option<String> {
         if attr.id != FULL_PATH_MARKER_KEY {
             return None;
         }
