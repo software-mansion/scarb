@@ -205,11 +205,11 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
             .flat_map(|module_id| {
                 let linter_diags = db
                     .linter_diagnostics(linter_params.clone(), *module_id)
-                    .into_iter()
+                    .iter()
                     .map(|diag| {
                         SemanticDiagnostic::new(
                             StableLocation::new(diag.stable_ptr),
-                            SemanticDiagnosticKind::PluginDiagnostic(diag),
+                            SemanticDiagnosticKind::PluginDiagnostic(diag.clone()),
                         )
                     });
 
