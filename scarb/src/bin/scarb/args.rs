@@ -40,7 +40,6 @@ Use -h for short descriptions and --help for more details.
 Read the docs:
 - Scarb Book: https://docs.swmansion.com/scarb/docs.html
 - Cairo Book: https://book.cairo-lang.org/
-- Starknet Book: https://book.starknet.io/
 - Starknet Documentation: https://docs.starknet.io/
 
 Join the community:
