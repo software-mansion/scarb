@@ -1,10 +1,96 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::{LocalRegistry, audit, unaudit};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+
+#[test]
+fn require_audits_allows_non_audited_dev_dep() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("1.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+    let t = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("hello_world")
+        .version("1.0.0")
+        .dev_dep("foo", Dep.version("1.0.0").registry(&registry))
+        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .manifest_extra(
+            r#"
+            [workspace]
+            require-audits = true
+        "#,
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lockfile = t.child("Scarb.lock");
+    lockfile.assert(predicates::str::contains(indoc! {r#"
+        [[package]]
+        name = "foo"
+        version = "1.0.0"
+    "#}));
+}
+
+#[test]
+fn require_audits_allows_non_audited_dev_dep_with_patch() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("1.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("2.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .version("1.0.0")
+        .dev_dep("foo", Dep.version("1").registry(&registry))
+        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .manifest_extra(formatdoc! {r#"
+            [workspace]
+            require-audits = true
+
+            [patch."{}"]
+            foo = {}
+        "#, registry.url.clone(), Dep.version("2").registry(&registry).build()})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lockfile = t.child("Scarb.lock");
+    lockfile.assert(predicates::str::contains(indoc! {r#"
+        [[package]]
+        name = "foo"
+        version = "2.0.0"
+    "#}));
+}
 
 #[test]
 fn require_audits_allows_audited_version_only() {
@@ -37,10 +123,8 @@ fn require_audits_allows_audited_version_only() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: cannot get dependencies of `hello_world@1.0.0`
-
-        Caused by:
-            cannot find package `foo ^1.0.0`
+        error: version solving failed:
+        Because there is no version of foo in >=1.0.0, <2.0.0 and hello_world 1.0.0 depends on foo >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
         "#});
 
     audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
@@ -65,10 +149,8 @@ fn require_audits_allows_audited_version_only() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: cannot get dependencies of `hello_world@1.0.0`
-
-        Caused by:
-            cannot find package `foo ^1.0.0`
+        error: version solving failed:
+        Because there is no version of foo in >=1.0.0, <2.0.0 and hello_world 1.0.0 depends on foo >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
     "#});
 }
 
@@ -116,10 +198,8 @@ fn require_audits_disallows_non_audited_version_transitive() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: cannot get dependencies of `hello_world@1.0.0`
-
-            Caused by:
-                cannot find package `bar ^1.0.0`
+            error: version solving failed:
+            Because there is no version of bar in >=1.0.0, <2.0.0 and hello_world 1.0.0 depends on bar >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
         "#});
 
     audit(registry.t.child("index/3/b/bar.json").path(), "1.0.0").unwrap();
@@ -129,10 +209,9 @@ fn require_audits_disallows_non_audited_version_transitive() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: cannot get dependencies of `bar@1.0.0`
-
-            Caused by:
-                cannot find package `foo ^1.0.0`
+            error: version solving failed:
+            Because there is no version of foo in >=1.0.0, <2.0.0 and bar 1.0.0 depends on foo >=1.0.0, <2.0.0, bar 1.0.0 is forbidden.
+            And because there is no version of bar in >1.0.0, <2.0.0 and hello_world 1.0.0 depends on bar >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
         "#});
 }
 
@@ -147,11 +226,10 @@ fn require_audits_workspace() {
             .build(t);
     });
     let t = TempDir::new().unwrap();
-    let first = t.child("first");
-    let second = t.child("second");
+    let hello = t.child("hello");
 
     ProjectBuilder::start()
-        .name("first")
+        .name("hello")
         .version("1.0.0")
         .dep("foo", Dep.version("1.0.0").registry(&registry))
         // The workspace-level `require-audits` should override this one.
@@ -162,17 +240,10 @@ fn require_audits_workspace() {
         "#,
         )
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
-        .build(&first);
-
-    ProjectBuilder::start()
-        .name("second")
-        .version("1.0.0")
-        .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
-        .build(&second);
+        .build(&hello);
 
     WorkspaceBuilder::start()
-        .add_member("first")
-        .add_member("second")
+        .add_member("hello")
         .require_audits(true)
         .build(&t);
 
@@ -185,10 +256,8 @@ fn require_audits_workspace() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: cannot get dependencies of `first@1.0.0`
-
-            Caused by:
-                cannot find package `foo ^1.0.0`
+            error: version solving failed:
+            Because there is no version of foo in >=1.0.0, <2.0.0 and hello 1.0.0 depends on foo >=1.0.0, <2.0.0, hello 1.0.0 is forbidden.
         "#});
 
     audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
@@ -201,4 +270,42 @@ fn require_audits_workspace() {
         .current_dir(&t)
         .assert()
         .success();
+}
+
+#[test]
+fn require_audits_workspace_normal_and_dev_dep() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("1.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+    let t = TempDir::new().unwrap();
+
+    let first = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .dev_dep("foo", Dep.version("1.0.0").registry(&registry))
+        .build(&first);
+
+    let second = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .dep("foo", Dep.version("1.0.0").registry(&registry))
+        .build(&second);
+
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .require_audits(true)
+        .build(&t);
+
+    // Having a dev dep in a workspace should not lift the audit requirement for a normal dep.
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure();
 }

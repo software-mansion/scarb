@@ -1,8 +1,8 @@
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::patch_map::PatchMap;
 use crate::core::{
-    DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId,
-    Summary,
+    DepKind, DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, PackageName,
+    SourceId, SourceKind, Summary,
 };
 use crate::resolver::in_memory_index::VersionsResponse;
 use crate::resolver::{Request, ResolverState};
@@ -118,11 +118,13 @@ pub enum PubGrubPriority {
 pub struct PubGrubDependencyProvider {
     priority: RwLock<HashMap<PubGrubPackage, usize>>,
     packages: RwLock<HashMap<PackageId, Summary>>,
+    kinds: RwLock<HashMap<PubGrubPackage, DepKind>>,
     main_package_ids: HashSet<PackageId>,
     patch_map: PatchMap,
     lockfile: Lockfile,
     state: Arc<ResolverState>,
     request_sink: mpsc::Sender<Request>,
+    require_audits: bool,
 }
 
 impl PubGrubDependencyProvider {
@@ -132,15 +134,18 @@ impl PubGrubDependencyProvider {
         request_sink: mpsc::Sender<Request>,
         patch_map: PatchMap,
         lockfile: Lockfile,
+        require_audits: bool,
     ) -> Self {
         Self {
             main_package_ids,
             priority: RwLock::new(HashMap::new()),
             packages: RwLock::new(HashMap::new()),
+            kinds: RwLock::new(HashMap::new()),
             state,
             patch_map,
             lockfile,
             request_sink,
+            require_audits,
         }
     }
 
@@ -198,15 +203,33 @@ impl PubGrubDependencyProvider {
             };
 
             let original_dependency = self.patch_map.lookup(original_dependency);
+            self.save_most_restrictive_kind(&original_dependency);
             let dependency = lock_dependency(&self.lockfile, original_dependency.clone())?;
+            self.save_most_restrictive_kind(&dependency);
             blocking_send(dependency);
 
             let dependency =
-                rewrite_path_dependency_source_id(summary.package_id, original_dependency);
+                rewrite_path_dependency_source_id(summary.package_id, &original_dependency);
             let dependency = lock_dependency(&self.lockfile, dependency)?;
+            self.save_most_restrictive_kind(&dependency);
             blocking_send(dependency);
         }
         Ok(())
+    }
+
+    /// Save the **most-restrictive** dependency kind for a package.
+    /// That means if this function is called for the same package with normal and test kinds, normal kind will be saved.
+    /// This is based on assumption that normal kind is more restrictive than test when filtering is applied in [`PubGrubDependencyProvider::choose_version`].
+    fn save_most_restrictive_kind(&self, dep: &ManifestDependency) {
+        let package = PubGrubPackage::from(dep);
+        let mut write_lock = self.kinds.write().unwrap();
+        if let Some(kind) = write_lock.get(&package) {
+            if !dep.kind.is_test() && kind.is_test() {
+                write_lock.insert(package, DepKind::Normal);
+            }
+        } else {
+            write_lock.insert(package, dep.kind.clone());
+        }
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -249,7 +272,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
 
     #[tracing::instrument(level = "trace", skip_all)]
     fn prioritize(&self, package: &Self::P, range: &Self::VS) -> Self::Priority {
-        let dependency: ManifestDependency = package.to_dependency(range.clone());
+        let dependency = package.to_dependency(range.clone());
         if self
             .state
             .index
@@ -279,11 +302,24 @@ impl DependencyProvider for PubGrubDependencyProvider {
         range: &Self::VS,
     ) -> Result<Option<Self::V>, Self::Err> {
         // Query available versions.
-        let dependency: ManifestDependency = package.to_dependency(range.clone());
+        let kind = self
+            .kinds
+            .read()
+            .unwrap()
+            .get(package)
+            .cloned()
+            .unwrap_or_default();
+        let dependency = package.to_dependency(range.clone());
         let summaries = self.wait_for_summaries(dependency)?;
         let summaries = summaries
             .into_iter()
             .filter(|summary| range.contains(&summary.package_id.version))
+            .filter(|summary| {
+                !self.require_audits
+                    || summary.package_id.source_id.kind != SourceKind::Registry
+                    || kind.is_test()
+                    || summary.audited
+            })
             .sorted_by_key(|summary| summary.package_id.version.clone())
             .collect_vec();
 

@@ -27,11 +27,11 @@ impl Registry for RegistryPatcher<'_> {
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         let patch = self.patch_map.lookup(dependency);
 
-        if patch != dependency {
+        if &patch != dependency {
             debug!(%dependency, %patch);
         }
 
-        self.registry.query(patch).await
+        self.registry.query(&patch).await
     }
 
     async fn download(&self, package_id: PackageId) -> Result<Package> {

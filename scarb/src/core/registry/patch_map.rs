@@ -17,13 +17,26 @@ impl PatchMap {
 
     /// Lookup the `dependency` in this patch map and return patched dependency if found,
     /// or return `dependency` back otherwise.
-    pub fn lookup<'a>(&'a self, dependency: &'a ManifestDependency) -> &'a ManifestDependency {
+    pub fn lookup(&self, dependency: &ManifestDependency) -> ManifestDependency {
         let source_pattern = &dependency.source_id.canonical_url;
-        let result = self
+        let patch_dep = self
             .map
             .get(source_pattern)
-            .and_then(|patches| patches.get(&dependency.name))
-            .unwrap_or(dependency);
+            .and_then(|patches| patches.get(&dependency.name));
+
+        let result = if let Some(patch_dep) = patch_dep {
+            ManifestDependency::builder()
+                .name(patch_dep.name.clone())
+                .version_req(patch_dep.version_req.clone())
+                .source_id(patch_dep.source_id)
+                .kind(dependency.kind.clone())
+                .features(patch_dep.features.clone())
+                .default_features(patch_dep.default_features)
+                .build()
+        } else {
+            dependency.clone()
+        };
+
         self.unused.borrow_mut().remove(&(
             source_pattern.clone(),
             result.name.clone(),
