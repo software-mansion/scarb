@@ -70,6 +70,7 @@ pub async fn resolve(
     registry: &dyn Registry,
     patch_map: &PatchMap,
     lockfile: Lockfile,
+    yanked_whitelist: HashSet<PackageId>,
     require_audits: bool,
 ) -> anyhow::Result<Resolve> {
     let state = Arc::new(ResolverState::default());
@@ -112,6 +113,7 @@ pub async fn resolve(
                 cloned_patch_map,
                 cloned_lockfile,
                 main_package_ids,
+                yanked_whitelist,
                 require_audits,
             )
         })?;
@@ -128,6 +130,7 @@ pub async fn resolve(
 }
 
 /// Run dependency resolution with PubGrub algorithm.
+#[allow(clippy::too_many_arguments)]
 fn scarb_resolver(
     state: Arc<ResolverState>,
     request_sink: mpsc::Sender<Request>,
@@ -135,6 +138,7 @@ fn scarb_resolver(
     patch_map: PatchMap,
     lockfile: Lockfile,
     main_package_ids: HashSet<PackageId>,
+    yanked_whitelist: HashSet<PackageId>,
     require_audits: bool,
 ) {
     let result = || {
@@ -144,6 +148,7 @@ fn scarb_resolver(
             request_sink,
             patch_map,
             lockfile,
+            yanked_whitelist,
             require_audits,
         );
 
@@ -313,12 +318,14 @@ mod tests {
 
         let lockfile = Lockfile::new(locks.iter().cloned());
         let patch_map = PatchMap::new();
+        let yanked_whitelist = Default::default();
         let require_audits = false;
         runtime.block_on(super::resolve(
             &summaries,
             &registry,
             &patch_map,
             lockfile,
+            yanked_whitelist,
             require_audits,
         ))
     }

@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
@@ -18,7 +18,6 @@ use crate::sources::PathSource;
 pub struct SourceMap<'c> {
     config: &'c Config,
     sources: RwLock<HashMap<SourceId, Arc<dyn Source + 'c>>>,
-    yanked_whitelist: HashSet<PackageId>,
 }
 
 impl<'c> SourceMap<'c> {
@@ -28,11 +27,7 @@ impl<'c> SourceMap<'c> {
     /// for various operations, and this preload step avoids doubly-loading and
     /// parsing packages on the filesystem by inserting them all into the registry
     /// with their in-memory formats.
-    pub fn preloaded(
-        packages: impl Iterator<Item = Package>,
-        config: &'c Config,
-        yanked_whitelist: HashSet<PackageId>,
-    ) -> Self {
+    pub fn preloaded(packages: impl Iterator<Item = Package>, config: &'c Config) -> Self {
         let sources = packages
             .sorted_by_key(|pkg| pkg.id.source_id)
             .chunk_by(|pkg| pkg.id.source_id);
@@ -43,11 +38,7 @@ impl<'c> SourceMap<'c> {
             (source_id, source)
         });
         let sources = RwLock::new(HashMap::from_iter(sources));
-        Self {
-            config,
-            sources,
-            yanked_whitelist,
-        }
+        Self { config, sources }
     }
 
     async fn ensure_loaded(&self, source_id: SourceId) -> Result<Arc<dyn Source + 'c>> {
@@ -57,7 +48,7 @@ impl<'c> SourceMap<'c> {
         } else {
             trace!("loading source: {source_id}");
             let source = source_id
-                .load(self.config, &self.yanked_whitelist)
+                .load(self.config)
                 .with_context(|| format!("failed to load source: {source_id}"))?;
             self.sources.write().await.insert(source_id, source.clone());
             Ok(source)
