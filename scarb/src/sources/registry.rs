@@ -27,6 +27,7 @@ pub struct RegistrySource<'c> {
     client: RegistryClientCache<'c>,
     package_sources: PackageSourceStore<'c>,
     yanked_whitelist: HashSet<PackageId>,
+    require_audits: bool,
 }
 
 impl<'c> RegistrySource<'c> {
@@ -34,6 +35,7 @@ impl<'c> RegistrySource<'c> {
         source_id: SourceId,
         config: &'c Config,
         yanked_whitelist: &HashSet<PackageId>,
+        require_audits: bool,
     ) -> Result<Self> {
         let client = Self::create_client(source_id, config)?;
         let client = RegistryClientCache::new(source_id, client, config)?;
@@ -46,6 +48,7 @@ impl<'c> RegistrySource<'c> {
             client,
             package_sources,
             yanked_whitelist: yanked_whitelist.clone(),
+            require_audits,
         })
     }
 
@@ -97,6 +100,9 @@ impl Source for RegistrySource<'_> {
             );
 
             if record.yanked && !self.yanked_whitelist.contains(&package_id) {
+                return None;
+            }
+            if self.require_audits && !record.audited {
                 return None;
             }
             let dependencies = record

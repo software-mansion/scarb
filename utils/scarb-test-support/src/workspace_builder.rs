@@ -5,6 +5,7 @@ use toml_edit::{Array, DocumentMut, Item, Value};
 #[derive(Default)]
 pub struct WorkspaceBuilder {
     members: Vec<String>,
+    require_audits: bool,
     package: Option<ProjectBuilder>,
     manifest_extra: String,
     deps: Vec<(String, Value)>,
@@ -17,6 +18,11 @@ impl WorkspaceBuilder {
 
     pub fn add_member(mut self, member: impl Into<String>) -> Self {
         self.members.push(member.into());
+        self
+    }
+
+    pub fn require_audits(mut self, require: bool) -> Self {
+        self.require_audits = require;
         self
     }
 
@@ -40,6 +46,7 @@ impl WorkspaceBuilder {
         doc["workspace"] = toml_edit::table();
         doc["workspace"]["members"] =
             Item::Value(Value::from(Array::from_iter(self.members.clone())));
+        doc["workspace"]["require-audits"] = self.require_audits.into();
         doc["workspace"]["dependencies"] = toml_edit::table();
         for (name, dep) in &self.deps {
             doc["workspace"]["dependencies"][name.clone()] = Item::Value(dep.clone());
