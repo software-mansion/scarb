@@ -1,7 +1,6 @@
+use crate::core::{Checksum, PackageName};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
-
-use crate::core::{Checksum, PackageName};
 
 pub type IndexRecords = Vec<IndexRecord>;
 

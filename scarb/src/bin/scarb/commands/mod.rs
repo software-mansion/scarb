@@ -20,6 +20,7 @@ pub mod fetch;
 pub mod fmt;
 pub mod init;
 mod lint;
+mod list;
 pub mod manifest_path;
 pub mod metadata;
 pub mod new;
@@ -57,6 +58,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         ProcMacroServer => proc_macro_server::run(config),
         Publish(args) => publish::run(args, config),
         Lint(args) => lint::run(args, config),
+        List(args) => list::run(args, config),
         Remove(args) => remove::run(args, config),
         Run(args) => run::run(args, config),
         Test(args) => test::run(args, config),

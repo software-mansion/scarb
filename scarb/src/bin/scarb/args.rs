@@ -152,6 +152,8 @@ pub enum Command {
     /// Remove dependencies from a manifest file.
     #[command(alias = "rm")]
     Remove(RemoveArgs),
+    /// Fetch and list available versions of a package from the registry.
+    List(ListCommandArgs),
     /// Compile current project.
     Build(BuildArgs),
     /// Expand macros.
@@ -628,6 +630,18 @@ pub struct TreeCommandArgs {
     /// Include the `core` package in the dependency tree.
     #[arg(long)]
     pub core: bool,
+}
+
+/// Arguments accepted by the `list` command.
+#[derive(Parser, Clone, Debug)]
+pub struct ListCommandArgs {
+    /// Package name.
+    #[arg(value_name = "PACKAGE_NAME")]
+    pub package_name: PackageName,
+
+    /// Registry index URL to query package versions from.
+    #[arg(long, value_name = "URL")]
+    pub index: Option<Url>,
 }
 
 /// Git reference specification arguments.
