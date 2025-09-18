@@ -1,5 +1,6 @@
 use assert_fs::prelude::PathChild;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
+use scarb_build_metadata::CAIRO_VERSION;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::registry::local::{LocalRegistry, audit, yank};
@@ -78,9 +79,9 @@ fn list_builtin_package_versions() {
         .arg(&registry.url)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_matches(formatdoc! {r#"
             warn: the package `starknet` is a part of Cairo standard library.
-            its available version (2.12.0) is coupled to the Cairo version included in your Scarb installation.
+            its available version ({CAIRO_VERSION}) is coupled to the Cairo version included in your Scarb installation.
             help: to use another version of this package, consider using a different version of Scarb.
 
             VERSION    AUDIT    STATUS
@@ -98,10 +99,10 @@ fn list_builtin_package_versions() {
         .assert()
         .success()
         .stdout_matches(
-            indoc!{
+            formatdoc!{
             r#"
-            {"type":"warn","message":"the package `starknet` is a part of Cairo standard library./nits available version (2.12.0) is coupled to the Cairo version included in your Scarb installation./nhelp: to use another version of this package, consider using a different version of Scarb./n"}
-            [{"v":"0.1.2","deps":[],"cksum":"sha256:[..]"},{"v":"0.1.1","deps":[],"cksum":"sha256:[..]"},{"v":"0.1.0","deps":[],"cksum":"sha256:[..]"}]
+            {{"type":"warn","message":"the package `starknet` is a part of Cairo standard library./nits available version ({CAIRO_VERSION}) is coupled to the Cairo version included in your Scarb installation./nhelp: to use another version of this package, consider using a different version of Scarb./n"}}
+            [{{"v":"0.1.2","deps":[],"cksum":"sha256:[..]"}},{{"v":"0.1.1","deps":[],"cksum":"sha256:[..]"}},{{"v":"0.1.0","deps":[],"cksum":"sha256:[..]"}}]
             "#
             }
         );
