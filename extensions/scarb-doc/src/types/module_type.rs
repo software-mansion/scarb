@@ -16,7 +16,6 @@ use cairo_lang_defs::ids::{
 };
 use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
 use cairo_lang_doc::documentable_item::DocumentableItemId;
-use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::items::imp::ImplSemantic;
@@ -340,7 +339,7 @@ impl<'db> Module<'db> {
                     if args.is_empty() {
                         return false;
                     }
-                    args.into_iter()
+                    args.iter()
                         .filter_map(|arg_id| {
                             let GenericArgumentId::Type(type_id) = arg_id else {
                                 return None;
@@ -348,12 +347,17 @@ impl<'db> Module<'db> {
                             let TypeLongId::Concrete(concrete_type_id) = type_id.long(db) else {
                                 return None;
                             };
-                            let concrete_id: &dyn SemanticQueryAttrs = match &concrete_type_id {
-                                ConcreteTypeId::Struct(struct_id) => struct_id,
-                                ConcreteTypeId::Enum(enum_id) => enum_id,
-                                ConcreteTypeId::Extern(extern_type_id) => extern_type_id,
-                            };
-                            is_doc_hidden_attr_semantic(db, concrete_id).ok()
+                            match &concrete_type_id {
+                                ConcreteTypeId::Struct(struct_id) => {
+                                    struct_id.has_attr_with_arg(db, "doc", "hidden").ok()
+                                }
+                                ConcreteTypeId::Enum(enum_id) => {
+                                    enum_id.has_attr_with_arg(db, "doc", "hidden").ok()
+                                }
+                                ConcreteTypeId::Extern(extern_type_id) => {
+                                    extern_type_id.has_attr_with_arg(db, "doc", "hidden").ok()
+                                }
+                            }
                         })
                         .all(|x| x)
                 })
@@ -682,11 +686,4 @@ where
             Err(a) => Some(Err(a)),
         })
         .collect::<Maybe<Maybe<Vec<K>>>>()?
-}
-
-fn is_doc_hidden_attr_semantic<'db>(
-    db: &'db dyn SemanticGroup,
-    node: &'db dyn SemanticQueryAttrs<'db>,
-) -> Maybe<bool> {
-    node.has_attr_with_arg(db, "doc", "hidden")
 }
