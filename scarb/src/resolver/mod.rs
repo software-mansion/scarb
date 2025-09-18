@@ -1,7 +1,7 @@
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::registry::patch_map::PatchMap;
-use crate::core::{PackageId, Resolve, Summary};
+use crate::core::{PackageId, PackageName, Resolve, Summary};
 use crate::resolver::provider::{
     DependencyProviderError, PubGrubDependencyProvider, PubGrubPackage, lock_dependency,
 };
@@ -72,6 +72,7 @@ pub async fn resolve(
     lockfile: Lockfile,
     yanked_whitelist: HashSet<PackageId>,
     require_audits: bool,
+    require_audits_whitelist: HashSet<PackageName>,
 ) -> anyhow::Result<Resolve> {
     let state = Arc::new(ResolverState::default());
 
@@ -115,6 +116,7 @@ pub async fn resolve(
                 main_package_ids,
                 yanked_whitelist,
                 require_audits,
+                require_audits_whitelist,
             )
         })?;
 
@@ -140,6 +142,7 @@ fn scarb_resolver(
     main_package_ids: HashSet<PackageId>,
     yanked_whitelist: HashSet<PackageId>,
     require_audits: bool,
+    require_audits_whitelist: HashSet<PackageName>,
 ) {
     let result = || {
         let provider = PubGrubDependencyProvider::new(
@@ -150,6 +153,7 @@ fn scarb_resolver(
             lockfile,
             yanked_whitelist,
             require_audits,
+            require_audits_whitelist,
         );
 
         // Init state
@@ -320,6 +324,7 @@ mod tests {
         let patch_map = PatchMap::new();
         let yanked_whitelist = Default::default();
         let require_audits = false;
+        let require_audits_whitelist = Default::default();
         runtime.block_on(super::resolve(
             &summaries,
             &registry,
@@ -327,6 +332,7 @@ mod tests {
             lockfile,
             yanked_whitelist,
             require_audits,
+            require_audits_whitelist,
         ))
     }
 

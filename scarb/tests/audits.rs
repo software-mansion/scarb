@@ -386,3 +386,91 @@ fn will_update_to_audited_version_only() {
         version = "1.1.0"
     "#}));
 }
+
+#[test]
+fn bypass_audit_requirement() {
+    let mut registry = LocalRegistry::create();
+
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("1.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+
+    let registry_url = registry.to_string();
+
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("bar")
+            .version("1.0.0")
+            .dep("foo", Dep.version("1.0.0").registry(&registry_url))
+            .lib_cairo(r#"fn g() -> felt252 { 0 }"#)
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+
+    // Whitelist direct dependency only
+    let first = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .version("1.0.0")
+        .dep("bar", Dep.version("1.0.0").registry(&registry))
+        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .manifest_extra(
+            r#"
+            [workspace]
+            require-audits = true
+            allow-no-audits = ["bar"]
+        "#,
+        )
+        .build(&first);
+
+    // Bypassing audit requirement is not transitive
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&first)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: version solving failed:
+            Because there is no version of foo in >=1.0.0, <2.0.0 and bar 1.0.0 depends on foo >=1.0.0, <2.0.0, bar 1.0.0 is forbidden.
+            And because there is no version of bar in >1.0.0, <2.0.0 and first 1.0.0 depends on bar >=1.0.0, <2.0.0, first 1.0.0 is forbidden.
+        "#});
+
+    // Now whitelist both direct and transitive dependencies
+    let second = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .version("1.0.0")
+        .dep("bar", Dep.version("1.0.0").registry(&registry))
+        .lib_cairo(indoc! {r#"fn hello() -> felt252 { 0 }"#})
+        .manifest_extra(
+            r#"
+            [workspace]
+            require-audits = true
+            allow-no-audits = ["bar", "foo"]
+        "#,
+        )
+        .build(&second);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&second)
+        .assert()
+        .success();
+
+    let lockfile = second.child("Scarb.lock");
+    lockfile.assert(predicates::str::contains(indoc! {r#"
+        [[package]]
+        name = "foo"
+        version = "1.0.0"
+    "#}));
+    lockfile.assert(predicates::str::contains(indoc! {r#"
+        [[package]]
+        name = "bar"
+        version = "1.0.0"
+    "#}));
+}

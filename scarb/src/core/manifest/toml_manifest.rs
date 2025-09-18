@@ -108,6 +108,7 @@ type TomlToolsDefinition = BTreeMap<SmolStr, toml::Value>;
 pub struct TomlWorkspace {
     pub members: Option<Vec<String>>,
     pub require_audits: Option<bool>,
+    pub allow_no_audits: Option<Vec<PackageName>>,
     pub package: Option<PackageInheritableFields>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub dev_dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
