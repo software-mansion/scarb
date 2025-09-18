@@ -322,17 +322,45 @@ impl DependencyProvider for PubGrubDependencyProvider {
             .into_iter()
             .filter(|summary| range.contains(&summary.package_id.version))
             .filter(|summary| {
-                !self.require_audits
-                    || summary.package_id.source_id.kind != SourceKind::Registry
-                    || kind.is_test()
-                    || summary.audited
-                    || self
-                        .require_audits_whitelist
-                        .contains(&summary.package_id.name)
-            })
-            .filter(|summary| {
                 !summary.yanked || self.yanked_whitelist.contains(&summary.package_id)
             })
+            .map(|summary| -> Result<Option<_>, Self::Err> {
+                if self.require_audits && !kind.is_test() {
+                    let source_kind = &summary.package_id.source_id.kind;
+                    match source_kind {
+                        SourceKind::Std => {}
+                        SourceKind::Registry => {
+                            if !summary.audited
+                                && !self
+                                    .require_audits_whitelist
+                                    .contains(&summary.package_id.name)
+                            {
+                                return Ok(None);
+                            }
+                        }
+                        SourceKind::Path => {
+                            if !self.main_package_ids.contains(&summary.package_id) {
+                                return Err(
+                                    DependencyProviderError::AuditRequirementInvalidSource {
+                                        name: summary.package_id.name.to_string(),
+                                        source_kind: source_kind.primary_field().to_string(),
+                                    },
+                                );
+                            }
+                        }
+                        SourceKind::Git(_) => {
+                            return Err(DependencyProviderError::AuditRequirementInvalidSource {
+                                name: summary.package_id.name.to_string(),
+                                source_kind: source_kind.primary_field().to_string(),
+                            });
+                        }
+                    }
+                }
+                Ok(Some(summary))
+            })
+            .filter_map(|res| res.transpose())
+            .collect::<Result<Vec<_>, Self::Err>>()?
+            .into_iter()
             .sorted_by_key(|summary| summary.package_id.version.clone())
             .collect_vec();
 
@@ -517,4 +545,8 @@ pub enum DependencyProviderError {
     /// Channel closed.
     #[error("channel closed")]
     ChannelClosed,
+    #[error(
+        "dependency `{name}` from `{source_kind}` source is not allowed when audit requirement is enabled"
+    )]
+    AuditRequirementInvalidSource { name: String, source_kind: String },
 }
