@@ -71,6 +71,7 @@ pathdiff.workspace = true
 petgraph.workspace = true
 pubgrub.workspace = true
 ra_ap_toolchain.workspace = true
+rayon.workspace = true
 redb.workspace = true
 reqwest.workspace = true
 salsa.workspace = true

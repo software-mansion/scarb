@@ -15,10 +15,10 @@ use cairo_lang_syntax::node::TypedSyntaxNode;
 use cairo_lang_syntax::node::ast::OptionAliasClause;
 use cairo_lang_utils::Intern;
 use itertools::Itertools;
+use rayon::prelude::*;
 use salsa::Database;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use std::iter::zip;
 use tracing::{debug, trace, trace_span};
 
 use super::contract_selector::ContractSelector;
@@ -134,9 +134,15 @@ impl Compiler for StarknetContractCompiler {
             let span = trace_span!("compile_starknet_casm");
             let _guard = span.enter();
 
-            zip(&contracts, &classes)
-                .map(|(decl, class)| -> Result<_> {
-                    let contract_name = decl.submodule_id.name(db);
+            let contract_names = contracts
+                .iter()
+                .map(|decl| decl.submodule_id.name(db))
+                .collect_vec();
+
+            contract_names
+                .par_iter()
+                .zip(classes.par_iter())
+                .map(|(contract_name, class)| -> Result<_> {
                     let casm_class = CasmContractClass::from_contract_class(
                         class.clone(),
                         props.casm_add_pythonic_hints,
@@ -147,7 +153,7 @@ impl Compiler for StarknetContractCompiler {
                     })?;
                     Ok(Some(casm_class))
                 })
-                .try_collect()?
+                .collect::<Result<Vec<_>>>()?
         } else {
             classes.iter().map(|_| None).collect()
         };
