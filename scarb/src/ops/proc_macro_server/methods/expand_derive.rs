@@ -1,11 +1,12 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use super::{Handler, interface_code_mapping_from_cairo};
+use crate::compiler::plugin::proc_macro::ExpansionKind;
 use crate::compiler::plugin::proc_macro::v2::derive::generate_code_mappings_with_offset;
 use crate::compiler::plugin::proc_macro::{
     DeclaredProcMacroInstances, Expansion, ExpansionQuery, ProcMacroApiVersion, ProcMacroInstance,
 };
-use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro::ExpansionKind};
+use crate::ops::store::ProcMacroStore;
 use anyhow::{Context, Result};
 use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
@@ -17,7 +18,7 @@ use scarb_proc_macro_server_types::methods::{
 
 impl Handler for ExpandDerive {
     fn handle(
-        workspace_macros: Arc<WorkspaceProcMacros>,
+        workspace_macros: Arc<Mutex<ProcMacroStore>>,
         params: Self::Params,
     ) -> Result<Self::Response> {
         let Self::Params {
@@ -37,7 +38,7 @@ impl Handler for ExpandDerive {
             let expansion =
                 ExpansionQuery::with_expansion_name(derive.clone(), ExpansionKind::Derive);
 
-            let plugins = workspace_macros.get(&context.component);
+            let plugins = workspace_macros.lock().unwrap().get_plugin(&context);
             let proc_macro_instance = plugins
                 .as_ref()
                 .and_then(|v| {
