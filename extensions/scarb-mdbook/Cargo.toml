@@ -15,6 +15,7 @@ scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-feat
 clap.workspace = true
 anyhow.workspace = true
 camino.workspace = true
+tracing-subscriber.workspace = true
 
 [dev-dependencies]
 scarb-test-support = { path = "../../utils/scarb-test-support" }
