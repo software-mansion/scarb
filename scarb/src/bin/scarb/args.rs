@@ -642,6 +642,14 @@ pub struct ListCommandArgs {
     /// Registry index URL to query package versions from.
     #[arg(long, value_name = "URL")]
     pub index: Option<Url>,
+
+    /// Show all available versions.
+    #[arg(long, default_value_t = false)]
+    pub all: bool,
+
+    /// Limit the number of results.
+    #[arg(long, default_value_t = 10, conflicts_with = "all")]
+    pub limit: usize,
 }
 
 /// Git reference specification arguments.

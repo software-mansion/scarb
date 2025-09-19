@@ -71,17 +71,32 @@ fn list_versions(args: ListCommandArgs, config: &Config) -> Result<VersionsList>
                 source_id
             )
         })?;
-    let records = records
-        .into_iter()
-        .sorted_by_key(|r| std::cmp::Reverse(r.version.clone()))
-        .collect();
 
-    Ok(VersionsList { records })
+    let display_limit = if args.all { None } else { Some(args.limit) };
+
+    Ok(VersionsList::new(records, display_limit))
 }
 
 #[derive(Serialize, Debug)]
 struct VersionsList {
     records: IndexRecords,
+
+    /// If specified, limits the number of displayed versions to this number.
+    #[serde(skip)]
+    display_limit: Option<usize>,
+}
+
+impl VersionsList {
+    pub fn new(records: IndexRecords, display_limit: Option<usize>) -> Self {
+        let records = records
+            .into_iter()
+            .sorted_by_key(|r| std::cmp::Reverse(r.version.clone()))
+            .collect();
+        Self {
+            records,
+            display_limit,
+        }
+    }
 }
 
 impl Message for VersionsList {
@@ -94,8 +109,12 @@ impl Message for VersionsList {
         let audit_header = "AUDIT";
         let status_header = "STATUS";
 
-        let version_width = self
-            .records
+        let total = self.records.len();
+        let limit = self.display_limit.unwrap_or(total);
+
+        let records = self.records.into_iter().take(limit).collect::<Vec<_>>();
+
+        let version_width = records
             .iter()
             .map(|r| r.version.to_string().len())
             .max()
@@ -111,7 +130,7 @@ impl Message for VersionsList {
         )
         .unwrap();
 
-        for record in self.records.into_iter() {
+        for record in records.into_iter() {
             let (audit, audit_styled) = if record.audited {
                 let text = "✓";
                 (text, green.apply_to(text).to_string())
@@ -133,6 +152,14 @@ impl Message for VersionsList {
                 record.version.to_string(),
                 pad_styled_left(audit_styled, audit, 5),
                 pad_styled_left(status_styled, status, 6),
+            )
+            .unwrap();
+        }
+
+        if limit < total {
+            writeln!(
+                out,
+                "...\nuse `--all` or `--limit {total}` to show all {total} versions"
             )
             .unwrap();
         }
