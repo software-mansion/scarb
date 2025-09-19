@@ -31,6 +31,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::zip;
 use std::sync::Arc;
 use std::thread;
+use tracing::trace;
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -343,14 +344,18 @@ pub fn resolve_workspace_with_opts(
             patch_map.warn_unused(ws.config().ui());
 
             let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
+            trace!("[PMS-Resolve] Packages collected");
 
             packages
                 .values()
                 .filter(|p| p.is_cairo_plugin())
                 .map(|p| fetch_cairo_plugin(p, ws))
                 .collect::<Result<Vec<()>>>()?;
+            trace!("[PMS-Resolve] Plugins fetched");
 
+            trace!("[PMS-Resolve] Awaiting lockfile write...");
             lockfile.await??;
+            trace!("[PMS-Resolve] Lockfile written");
 
             Ok(WorkspaceResolve { resolve, packages })
         }))
@@ -417,18 +422,28 @@ pub fn generate_compilation_units(
         .members()
         .filter(|member| !member.is_cairo_plugin())
         .collect_vec();
+    trace!("[PMS-CU] Members collected");
     validate_features(&members, enabled_features)?;
+    trace!("[PMS-CU] Features validated");
     for member in members {
-        cairo_units.extend(generate_cairo_compilation_units(
+        trace!(
+            "[PMS-CU] Generating unit for package: {}",
+            member.id.name.as_str()
+        );
+        let units = generate_cairo_compilation_units(
             &member,
             resolve,
             enabled_features,
             opts.ignore_cairo_version,
             ws,
-        )?);
+        );
+        trace!("[PMS-CU] Error: {:?}", units.as_ref().err());
+        cairo_units.extend(units?);
     }
+    trace!("[PMS-CU] Cairo compilation units generted");
 
     let proc_macro_units = if ws.config().proc_macro_repository().load_proc_macros() {
+        trace!("[PMS-CU] Loading PM units");
         cairo_units
             .iter()
             .flat_map(|unit| unit.cairo_plugins.clone())
@@ -460,6 +475,7 @@ pub fn generate_compilation_units(
     } else {
         HashMap::new()
     };
+    trace!("[PMS-CU] Proc macro units collected");
 
     let units = cairo_units
         .into_iter()
@@ -524,7 +540,9 @@ fn generate_cairo_compilation_units(
     ws: &Workspace<'_>,
 ) -> Result<Vec<CairoCompilationUnit>> {
     let profile = ws.current_profile()?;
+    trace!("[PMS-CU-Cairo] Profile acquired");
     let mut solution = PackageSolutionCollector::new(member, resolve, ws);
+    trace!("[PMS-CU-Cairo] Package Solution initialized");
     let grouped = member
         .manifest
         .targets
@@ -546,6 +564,7 @@ fn generate_cairo_compilation_units(
             )
         })
         .collect::<Result<Vec<_>>>()?;
+    trace!("[PMS-CU-Cairo] Units grouped");
     let result = member
         .manifest
         .targets
@@ -565,6 +584,7 @@ fn generate_cairo_compilation_units(
         .into_iter()
         .chain(grouped)
         .collect();
+    trace!("[PMS-CU-Cairo] Units ready");
     solution.show_warnings();
     Ok(result)
 }

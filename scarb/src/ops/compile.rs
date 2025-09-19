@@ -21,7 +21,7 @@ use scarb_ui::components::Status;
 use smol_str::{SmolStr, ToSmolStr};
 use std::collections::HashSet;
 use std::thread;
-use tracing::trace_span;
+use tracing::{error, trace, trace_span};
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -217,17 +217,25 @@ pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 }
 
 #[tracing::instrument(skip_all, level = "trace")]
-fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+pub fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package_name = unit.main_package_id().name.clone();
 
     let result = match unit {
         CompilationUnit::ProcMacro(unit) => {
             if unit.prebuilt.is_some() {
+                trace!(
+                    "[PMS-compiler] {} unit is prebuilt",
+                    unit.main_package_id.name.as_str()
+                );
                 Ok(())
             } else {
                 ws.config()
                     .ui()
                     .print(Status::new("Compiling", &unit.name()));
+                trace!(
+                    "[PMS-compiler] compiling {}",
+                    unit.main_package_id.name.as_str()
+                );
                 proc_macro::compile_unit(unit, ws)
             }
         }
@@ -277,6 +285,8 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         if !suppress_error(&err) {
             ws.config().ui().anyhow(&err);
         }
+
+        error!(?err);
 
         anyhow!("could not compile `{package_name}` due to previous error")
     })

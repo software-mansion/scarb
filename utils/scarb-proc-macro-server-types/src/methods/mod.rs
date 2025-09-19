@@ -3,6 +3,7 @@ use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 pub mod defined_macros;
+pub mod discover_workspace;
 pub mod expand;
 
 pub trait Method {

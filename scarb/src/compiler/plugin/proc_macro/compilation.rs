@@ -19,7 +19,7 @@ use std::io::{Seek, SeekFrom};
 use std::ops::Deref;
 use std::process::Command;
 use tar::Archive;
-use tracing::trace_span;
+use tracing::{trace, trace_span};
 
 pub const PROC_MACRO_BUILD_PROFILE: &str = "release";
 
@@ -211,12 +211,20 @@ impl<'c> From<CargoCommand<'c>> for Command {
 }
 
 fn exec(cmd: &mut Command, config: &Config) -> Result<()> {
-    exec_piping(
+    let result = exec_piping(
         cmd,
         config,
-        |line: &str| config.ui().print(PipedText::new(line)),
-        |line: &str| config.ui().print(PipedText::new(line)),
-    )
+        |line: &str| {
+            trace!(line);
+            config.ui().print(PipedText::new(line))
+        },
+        |line: &str| {
+            trace!(line);
+            config.ui().print(PipedText::new(line))
+        },
+    );
+    trace!("[PMS-Compiler] exec finished");
+    result
 }
 
 /// This message can be used for piped text from subprocesses.
