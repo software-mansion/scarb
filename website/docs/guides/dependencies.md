@@ -28,7 +28,7 @@ At the time of writing this guide, the latest version of the `openzeppelin_merkl
 openzeppelin_merkle_tree = "2.0.0"
 ```
 
-Using `"2.0.0"` as version requirement means, that you want to use a version `2.0.0` or newer, up until `0.18.0`. To
+Using `"2.0.0"` as version requirement means, that you want to use a version `2.0.0` or newer, up until (but not including) `3.0.0`. To
 accept only a specific version, you can use `"=2.0.0"`. You can learn more about specifying version
 requirements [here](../reference/specifying-dependencies#version-requirements)
 
