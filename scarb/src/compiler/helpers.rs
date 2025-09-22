@@ -57,13 +57,32 @@ where
         .filter(|crate_id| !main_crate_ids.contains(crate_id))
         .map(|c| c.long(db).clone().into_crate_input(db))
         .collect_vec();
-    let crates_to_check: HashSet<CrateId<'db>> = db
-        .crates()
-        .iter()
-        .filter(|crate_id| !cached_crates.contains(&crate_id.long(db).clone().into_crate_input(db)))
-        .chain(main_crate_ids)
-        .copied()
-        .collect();
+    // If a crate is cached, we do not need to check it for error diagnostics,
+    // as the cache can only be produced if the crate is error-free.
+    // So if there were any diagnostics here to show, it would mean that the cache is outdated - thus
+    // we should not use it in the first place.
+    // We also skip showing warnings produced for dependency crates.
+    let crates_to_check = db.crates().iter().filter(|crate_id| {
+        !cached_crates.contains(&crate_id.long(db).clone().into_crate_input(db))
+    });
+    // Note we may need to add the main crates to display warnings generated from them.
+    // This is because warnings do not fail compilation, so we can produce caches for crates with them.
+    //
+    // We only need them in one case: if ui is set to print warnings (verbosity higher than no warnings)
+    // and the compiler is configured to succeed on warnings.
+    //
+    // Note that the compiler may be configured to fail on warnings, so it seems we should check for
+    // them in this case as well. However, if the compiler is set to fail on warnings, we are unable
+    // to produce caches for crates with warnings. If this config changes in between runs, we will
+    // invalidate the cache anyway.
+    let crates_to_check: HashSet<CrateId<'db>> =
+        if ws.config().ui().verbosity().should_print_warnings()
+            && unit.compiler_config.allow_warnings
+        {
+            crates_to_check.chain(main_crate_ids).copied().collect()
+        } else {
+            crates_to_check.copied().collect()
+        };
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
 
@@ -91,11 +110,6 @@ where
         }
     })
     .with_ignore_warnings_crates(&ignore_warnings_crates)
-    // If a crate is cached, we do not need to check it for diagnostics,
-    // as the cache can only be produced if the crate is diagnostic-free.
-    // So if there were any diagnostics here to show, it would mean that the cache is outdated - thus
-    // we should not use it in the first place.
-    // Note we still add the main crate, as we want it to be checked for warnings.
     .with_crates(
         &crates_to_check
             .into_iter()
