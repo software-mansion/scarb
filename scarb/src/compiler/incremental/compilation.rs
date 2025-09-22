@@ -5,11 +5,11 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
 use crate::internal::fsx;
 use anyhow::{Context, Result};
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::db::{CrateConfiguration, FilesGroup};
 use cairo_lang_filesystem::ids::{BlobLongId, CrateInput};
 use cairo_lang_filesystem::set_crate_config;
 use cairo_lang_lowering::cache::generate_crate_cache;
+use cairo_lang_lowering::db::LoweringGroup;
 use cairo_lang_utils::Intern;
 use itertools::Itertools;
 use salsa::{Database, par_map};
@@ -45,7 +45,7 @@ impl IncrementalContext {
 #[tracing::instrument(skip_all, level = "info")]
 pub fn load_incremental_artifacts(
     unit: &CairoCompilationUnit,
-    db: &mut RootDatabase,
+    db: &mut dyn Database,
     ws: &Workspace<'_>,
 ) -> Result<IncrementalContext> {
     if !incremental_allowed(unit) {
@@ -116,6 +116,15 @@ pub fn load_incremental_artifacts(
             })
             .collect_vec()
     };
+
+    // Warmup loaded crates cache in parallel.
+    let _: Vec<()> = par_map(
+        db,
+        CrateInput::into_crate_ids(db, cached_crates.clone()),
+        |db, crate_id| {
+            db.cached_multi_lowerings(crate_id);
+        },
+    );
 
     Ok(IncrementalContext::Enabled {
         fingerprints,
