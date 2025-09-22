@@ -1,5 +1,6 @@
 use crate::compiler::db::{ScarbDatabase, build_scarb_root_database};
 use crate::compiler::helpers::{build_compiler_config, write_string};
+use crate::compiler::incremental::IncrementalContext;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
 use crate::core::{Package, PackageId, TargetKind, Workspace};
 use crate::ops;
@@ -167,8 +168,13 @@ fn do_expand(
     let ScarbDatabase { db, .. } =
         build_scarb_root_database(compilation_unit, ws, Default::default())?;
     let main_crate_id = compilation_unit.main_component().crate_id(&db);
-    let mut compiler_config =
-        build_compiler_config(&db, compilation_unit, &[main_crate_id], &[], ws);
+    let mut compiler_config = build_compiler_config(
+        &db,
+        compilation_unit,
+        &[main_crate_id],
+        &IncrementalContext::Disabled,
+        ws,
+    );
     // Report diagnostics, but do not fail.
     let _ = compiler_config.diagnostics_reporter.check(&db);
     let main_module = ModuleId::CrateRoot(main_crate_id);

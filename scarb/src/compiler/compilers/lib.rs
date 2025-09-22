@@ -3,7 +3,6 @@ use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::MacroPlugin;
-use cairo_lang_filesystem::ids::CrateInput;
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
@@ -17,6 +16,7 @@ use tracing::{debug, trace_span};
 use crate::compiler::helpers::{
     build_compiler_config, collect_main_crate_ids, write_json, write_string,
 };
+use crate::compiler::incremental::IncrementalContext;
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::offloader::Offloader;
@@ -49,7 +49,7 @@ impl Compiler for LibCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateInput],
+        ctx: &IncrementalContext,
         offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
@@ -66,7 +66,7 @@ impl Compiler for LibCompiler {
 
         let main_crate_ids = collect_main_crate_ids(unit, db);
 
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, cached_crates, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ctx, ws);
 
         validate_compiler_config(db, &compiler_config, unit, ws);
 
