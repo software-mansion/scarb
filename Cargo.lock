@@ -6512,6 +6512,7 @@ dependencies = [
  "predicates",
  "pubgrub",
  "ra_ap_toolchain",
+ "rayon",
  "redb",
  "reqwest",
  "salsa",
