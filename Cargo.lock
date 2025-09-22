@@ -6984,6 +6984,7 @@ dependencies = [
  "anyhow",
  "assert_fs",
  "async-trait",
+ "bincode",
  "cairo-lang-compiler",
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
