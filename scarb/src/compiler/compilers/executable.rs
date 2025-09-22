@@ -1,6 +1,7 @@
 use crate::compiler::db::{has_plugin, is_executable_plugin};
 use crate::compiler::helpers::write_json;
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
+use crate::compiler::incremental::IncrementalContext;
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::offloader::Offloader;
@@ -13,7 +14,7 @@ use cairo_lang_executable::compile::{
 };
 use cairo_lang_executable::executable::Executable;
 use cairo_lang_executable_plugin::{EXECUTABLE_PREFIX, EXECUTABLE_RAW_ATTR};
-use cairo_lang_filesystem::ids::{CrateId, CrateInput};
+use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_lowering::ids::ConcreteFunctionWithBodyId;
 use cairo_lang_sierra_generator::executables::find_executable_function_ids;
 use camino::Utf8Path;
@@ -40,7 +41,7 @@ impl Compiler for ExecutableCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateInput],
+        ctx: &IncrementalContext,
         _offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
@@ -64,7 +65,7 @@ impl Compiler for ExecutableCompiler {
 
         let target_dir = unit.target_dir(ws);
         let main_crate_ids = collect_main_crate_ids(unit, db);
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, cached_crates, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ctx, ws);
         let span = trace_span!("compile_executable");
         let executable = {
             let _guard = span.enter();

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
-use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId};
+use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::ContractDeclaration;
@@ -16,6 +16,7 @@ use crate::compiler::compilers::{
     Artifacts, ArtifactsWriter, ContractSelector, ensure_gas_enabled, find_project_contracts,
 };
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
+use crate::compiler::incremental::IncrementalContext;
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, SourceId, TargetKind, TestTargetProps, Workspace};
 use crate::flock::Filesystem;
@@ -31,7 +32,7 @@ impl Compiler for TestCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateInput],
+        ctx: &IncrementalContext,
         offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
@@ -62,8 +63,7 @@ impl Compiler for TestCompiler {
         };
 
         let diagnostics_reporter =
-            build_compiler_config(db, unit, &test_crate_ids, cached_crates, ws)
-                .diagnostics_reporter;
+            build_compiler_config(db, unit, &test_crate_ids, ctx, ws).diagnostics_reporter;
 
         let span = trace_span!("compile_test");
         let test_compilation = {
@@ -129,13 +129,13 @@ impl Compiler for TestCompiler {
             compile_contracts(
                 ContractsCompilationArgs {
                     main_crate_ids: test_crate_ids,
-                    cached_crates: cached_crates.to_vec(),
                     contracts,
                     build_external_contracts,
                 },
                 target_dir,
                 unit,
                 offloader,
+                ctx,
                 db,
                 ws,
             )?;
@@ -147,7 +147,6 @@ impl Compiler for TestCompiler {
 
 struct ContractsCompilationArgs<'db> {
     main_crate_ids: Vec<CrateId<'db>>,
-    cached_crates: Vec<CrateInput>,
     contracts: Vec<ContractDeclaration<'db>>,
     build_external_contracts: Option<Vec<ContractSelector>>,
 }
@@ -157,12 +156,12 @@ fn compile_contracts<'db>(
     target_dir: Filesystem,
     unit: &CairoCompilationUnit,
     offloader: &Offloader<'_>,
+    ctx: &IncrementalContext,
     db: &'db RootDatabase,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let ContractsCompilationArgs {
         main_crate_ids,
-        cached_crates,
         contracts,
         build_external_contracts,
     } = args;
@@ -172,7 +171,7 @@ fn compile_contracts<'db>(
         build_external_contracts,
         ..StarknetContractProps::default()
     };
-    let mut compiler_config = build_compiler_config(db, unit, &main_crate_ids, &cached_crates, ws);
+    let mut compiler_config = build_compiler_config(db, unit, &main_crate_ids, ctx, ws);
     // We already did check the Db for diagnostics when compiling tests, so we can ignore them here.
     compiler_config.diagnostics_reporter = DiagnosticsReporter::ignoring()
         .allow_warnings()
