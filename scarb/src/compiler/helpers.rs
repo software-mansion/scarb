@@ -46,7 +46,7 @@ pub fn build_compiler_config<'c, 'db>(
     db: &'db RootDatabase,
     unit: &CairoCompilationUnit,
     main_crate_ids: &[CrateId<'db>],
-    ctx: &IncrementalContext,
+    ctx: &'db IncrementalContext,
     ws: &Workspace<'c>,
 ) -> CompilerConfig<'c>
 where
@@ -80,7 +80,15 @@ where
         if ws.config().ui().verbosity().should_print_warnings()
             && unit.compiler_config.allow_warnings
         {
-            crates_to_check.chain(main_crate_ids).copied().collect()
+            crates_to_check
+                .chain(main_crate_ids.iter().filter(|c| {
+                    // If we saved information about crate warnings, we can use it here to decide
+                    // whether we should calculate diagnostics for it.
+                    ctx.cached_crates_with_warnings()
+                        .contains(&c.long(db).clone().into_crate_input(db))
+                }))
+                .copied()
+                .collect()
         } else {
             crates_to_check.copied().collect()
         };
@@ -101,6 +109,7 @@ where
                     }
                 }
                 Severity::Warning => {
+                    ctx.report_warnings();
                     if let Some(code) = entry.error_code() {
                         config.ui().warn_with_code(code.as_str(), msg)
                     } else {

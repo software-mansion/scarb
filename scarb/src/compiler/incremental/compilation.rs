@@ -3,7 +3,6 @@ use crate::compiler::incremental::fingerprint::{
 };
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
-use crate::internal::fsx;
 use anyhow::{Context, Result};
 use cairo_lang_filesystem::db::{CrateConfiguration, FilesGroup};
 use cairo_lang_filesystem::ids::{BlobLongId, CrateInput};
@@ -13,9 +12,10 @@ use cairo_lang_lowering::db::LoweringGroup;
 use cairo_lang_utils::Intern;
 use itertools::Itertools;
 use salsa::{Database, par_map};
-use std::io::Write;
+use std::io::{BufReader, Write};
 use std::ops::Deref;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::{env, mem};
 use tokio::task::spawn_blocking;
 use tracing::{debug, error, trace_span};
@@ -27,6 +27,8 @@ pub enum IncrementalContext {
     Enabled {
         fingerprints: UnitFingerprint,
         cached_crates: Vec<CrateInput>,
+        cached_crates_with_warnings: Vec<CrateInput>,
+        warnings_found: AtomicBool,
     },
 }
 
@@ -36,10 +38,53 @@ impl IncrementalContext {
             IncrementalContext::Disabled => &[],
             IncrementalContext::Enabled {
                 fingerprints: _,
+                cached_crates_with_warnings: _,
+                warnings_found: _,
                 cached_crates,
             } => cached_crates,
         }
     }
+    pub fn cached_crates_with_warnings(&self) -> &[CrateInput] {
+        match self {
+            IncrementalContext::Disabled => &[],
+            IncrementalContext::Enabled {
+                fingerprints: _,
+                cached_crates: _,
+                warnings_found: _,
+                cached_crates_with_warnings,
+            } => cached_crates_with_warnings,
+        }
+    }
+
+    pub fn report_warnings(&self) {
+        match self {
+            IncrementalContext::Disabled => {}
+            IncrementalContext::Enabled {
+                fingerprints: _,
+                cached_crates: _,
+                warnings_found,
+                cached_crates_with_warnings: _,
+            } => warnings_found.store(true, Ordering::Release),
+        }
+    }
+
+    pub fn warnings_found(&self) -> bool {
+        match self {
+            IncrementalContext::Disabled => false,
+            IncrementalContext::Enabled {
+                fingerprints: _,
+                cached_crates: _,
+                warnings_found,
+                cached_crates_with_warnings: _,
+            } => warnings_found.load(Ordering::Acquire),
+        }
+    }
+}
+
+#[derive(bincode::Encode, bincode::Decode)]
+pub struct ScarbComponentCache {
+    pub has_warnings: bool,
+    pub blob: Vec<u8>,
 }
 
 #[tracing::instrument(skip_all, level = "info")]
@@ -88,6 +133,7 @@ pub fn load_incremental_artifacts(
     })?;
 
     let span = trace_span!("set_crate_configs");
+    let mut cached_crates_with_warnings = Vec::new();
     let cached_crates = {
         let _guard = span.enter();
 
@@ -98,6 +144,7 @@ pub fn load_incremental_artifacts(
                 CrateCache::Loaded {
                     component,
                     blob_content,
+                    has_warnings,
                 } => {
                     let crate_id = component.crate_id(db);
                     if let Some(core_conf) = db.crate_config(crate_id) {
@@ -110,6 +157,9 @@ pub fn load_incremental_artifacts(
                                 cache_file: Some(BlobLongId::Virtual(blob_content).intern(db)),
                             })
                         );
+                    }
+                    if has_warnings {
+                        cached_crates_with_warnings.push(component.crate_input(db));
                     }
                     Some(component.crate_input(db))
                 }
@@ -129,6 +179,8 @@ pub fn load_incremental_artifacts(
     Ok(IncrementalContext::Enabled {
         fingerprints,
         cached_crates,
+        cached_crates_with_warnings,
+        warnings_found: AtomicBool::new(false),
     })
 }
 
@@ -170,17 +222,18 @@ fn load_component_cache(
         );
         let cache_dir = unit.incremental_cache_dir(ws);
         // Lock the cache file for reading.
-        let _guard = cache_dir.open_ro(
+        let file = cache_dir.open_ro(
             component.cache_filename(fingerprint),
             &component.cache_filename(fingerprint),
             ws.config(),
-        );
-        let cache_dir = cache_dir.path_unchecked();
-        let cache_file = cache_dir.join(component.cache_filename(fingerprint));
-        let blob_content = fsx::read(cache_file)?;
+        )?;
+        let reader = BufReader::new(file.deref());
+        let decoded: ScarbComponentCache =
+            bincode::decode_from_reader(reader, bincode::config::standard())?;
         Ok(CrateCache::Loaded {
             component,
-            blob_content,
+            has_warnings: decoded.has_warnings,
+            blob_content: decoded.blob,
         })
     } else {
         Ok(CrateCache::None)
@@ -191,6 +244,7 @@ enum CrateCache {
     None,
     Loaded {
         component: CompilationUnitComponent,
+        has_warnings: bool,
         blob_content: Vec<u8>,
     },
 }
@@ -202,9 +256,12 @@ pub fn save_incremental_artifacts(
     ctx: IncrementalContext,
     ws: &Workspace<'_>,
 ) -> Result<()> {
+    let warnings_found = ctx.warnings_found();
     let IncrementalContext::Enabled {
         fingerprints,
         cached_crates: _,
+        cached_crates_with_warnings: _,
+        warnings_found: _,
     } = ctx
     else {
         return Ok(());
@@ -229,12 +286,13 @@ pub fn save_incremental_artifacts(
                     unreachable!("we iterate through components not plugins");
                 }
             };
-            save_component_cache(fingerprint, group, unit, component, ws).with_context(|| {
-                format!(
-                    "failed to save cache for `{}` component",
-                    component.target_name()
-                )
-            })
+            save_component_cache(fingerprint, group, unit, component, warnings_found, ws)
+                .with_context(|| {
+                    format!(
+                        "failed to save cache for `{}` component",
+                        component.target_name()
+                    )
+                })
         });
     results.into_iter().collect::<Result<Vec<_>>>()?;
 
@@ -247,6 +305,7 @@ fn save_component_cache(
     db: &dyn Database,
     unit: &CairoCompilationUnit,
     component: &CompilationUnitComponent,
+    warnings_found: bool,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let fingerprint_digest = fingerprint.digest();
@@ -280,6 +339,11 @@ fn save_component_cache(
                 return Ok(());
             }
         };
+        let component_cache = ScarbComponentCache {
+            has_warnings: warnings_found,
+            blob: cache_blob,
+        };
+        let cache_blob = bincode::encode_to_vec(component_cache, bincode::config::standard())?;
         let fingerprint_dir = unit.fingerprint_dir(ws);
         let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(fingerprint));
         let fingerprint_file = fingerprint_dir.create_rw(
