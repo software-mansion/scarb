@@ -1,5 +1,6 @@
 //! Various utility functions helpful for interacting with Cairo compiler.
 
+use crate::compiler::incremental::IncrementalContext;
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
 use crate::core::{InliningStrategy, Workspace};
 use crate::flock::Filesystem;
@@ -9,7 +10,7 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
 use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::ids::{CrateId, CrateInput};
+use cairo_lang_filesystem::ids::CrateId;
 use itertools::Itertools;
 use serde::Serialize;
 use std::collections::HashSet;
@@ -45,7 +46,7 @@ pub fn build_compiler_config<'c, 'db>(
     db: &'db RootDatabase,
     unit: &CairoCompilationUnit,
     main_crate_ids: &[CrateId<'db>],
-    cached_crates: &[CrateInput],
+    ctx: &IncrementalContext,
     ws: &Workspace<'c>,
 ) -> CompilerConfig<'c>
 where
@@ -63,7 +64,8 @@ where
     // we should not use it in the first place.
     // We also skip showing warnings produced for dependency crates.
     let crates_to_check = db.crates().iter().filter(|crate_id| {
-        !cached_crates.contains(&crate_id.long(db).clone().into_crate_input(db))
+        !ctx.cached_crates()
+            .contains(&crate_id.long(db).clone().into_crate_input(db))
     });
     // Note we may need to add the main crates to display warnings generated from them.
     // This is because warnings do not fail compilation, so we can produce caches for crates with them.

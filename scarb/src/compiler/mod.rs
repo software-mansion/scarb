@@ -1,12 +1,11 @@
+use crate::compiler::incremental::IncrementalContext;
+use crate::core::{TargetKind, Workspace};
+use crate::internal::offloader::Offloader;
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_filesystem::ids::CrateInput;
 pub use compilation_unit::*;
 pub use profile::*;
 pub use repository::*;
-
-use crate::core::{TargetKind, Workspace};
-use crate::internal::offloader::Offloader;
 
 mod compilation_unit;
 mod compilers;
@@ -24,7 +23,7 @@ pub trait Compiler: Sync {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateInput],
+        ctx: &IncrementalContext,
         offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
