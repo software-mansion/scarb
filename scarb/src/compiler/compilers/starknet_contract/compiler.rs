@@ -27,6 +27,7 @@ use crate::compiler::compilers::starknet_contract::contract_selector::GLOB_PATH_
 use crate::compiler::compilers::starknet_contract::validations::check_allowed_libfuncs;
 use crate::compiler::compilers::{ArtifactsWriter, ensure_gas_enabled};
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
+use crate::compiler::incremental::IncrementalContext;
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Workspace};
 use crate::internal::offloader::Offloader;
@@ -78,7 +79,7 @@ impl Compiler for StarknetContractCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateInput],
+        ctx: &IncrementalContext,
         offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
@@ -107,7 +108,7 @@ impl Compiler for StarknetContractCompiler {
 
         let main_crate_ids = collect_main_crate_ids(unit, db);
 
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, cached_crates, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ctx, ws);
 
         let contracts = find_project_contracts(
             db,
