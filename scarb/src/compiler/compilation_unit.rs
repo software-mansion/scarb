@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow, ensure};
 use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::CrateIdentifier;
-use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId};
+use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId, SmolStrId};
 use cairo_lang_utils::Intern;
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
@@ -112,7 +112,7 @@ impl CompilationUnitComponent {
     /// Returns a [`CrateInput`] of a crate associated with the [`CompilationUnitComponent`].
     pub fn crate_input(&self, db: &dyn Database) -> CrateInput {
         CrateLongId::Real {
-            name: self.cairo_package_name(),
+            name: SmolStrId::from(db, self.cairo_package_name()),
             discriminator: self.id.to_discriminator(),
         }
         .into_crate_input(db)
@@ -121,7 +121,7 @@ impl CompilationUnitComponent {
     /// Returns a [`CrateId`] of a crate associated with the [`CompilationUnitComponent`].
     pub fn crate_id<'db>(&self, db: &'db dyn Database) -> CrateId<'db> {
         CrateLongId::Real {
-            name: self.cairo_package_name(),
+            name: SmolStrId::from(db, self.cairo_package_name()),
             discriminator: self.id.to_discriminator(),
         }
         .intern(db)

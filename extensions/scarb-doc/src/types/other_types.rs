@@ -58,7 +58,7 @@ impl<'db> ItemData<'db> {
         let group = find_groups_from_attributes(db, &id);
         Self {
             id: documentable_item_id,
-            name: id.name(db).into(),
+            name: id.name(db).to_string(db),
             doc: db.get_item_documentation_as_tokens(documentable_item_id),
             signature,
             full_path: id.full_path(db),
@@ -75,7 +75,7 @@ impl<'db> ItemData<'db> {
     ) -> Self {
         Self {
             id: documentable_item_id,
-            name: id.name(db).into(),
+            name: id.name(db).to_string(db),
             doc: db.get_item_documentation_as_tokens(documentable_item_id),
             signature: None,
             full_path: id.full_path(db),
@@ -89,7 +89,7 @@ impl<'db> ItemData<'db> {
         let documentable_id = DocumentableItemId::Crate(id);
         Self {
             id: documentable_id,
-            name: id.long(db).name().to_string(),
+            name: id.long(db).name().to_string(db),
             doc: db.get_item_documentation_as_tokens(documentable_id),
             signature: None,
             full_path: ModuleId::CrateRoot(id).full_path(db),

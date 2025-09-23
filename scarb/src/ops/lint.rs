@@ -18,7 +18,7 @@ use cairo_lang_defs::db::defs_group_input;
 use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId};
 use cairo_lang_defs::{db::DefsGroup, diagnostic_utils::StableLocation, ids::ModuleId};
 use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
-use cairo_lang_filesystem::ids::CrateInput;
+use cairo_lang_filesystem::ids::{CrateInput, SmolStrId};
 use cairo_lang_filesystem::{db::FilesGroup, ids::CrateLongId, override_file_content};
 use cairo_lang_semantic::db::semantic_group_input;
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
@@ -279,9 +279,10 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         if opts.fix {
             let fixes = get_fixes(&db, &linter_params, diagnostics);
             for (file_id, fixes) in fixes.into_iter() {
-                ws.config()
-                    .ui()
-                    .print(Status::new("Fixing", &file_id.file_name(&db)));
+                ws.config().ui().print(Status::new(
+                    "Fixing",
+                    &file_id.file_name(&db).to_string(&db),
+                ));
                 apply_file_fixes(file_id, fixes, &db, formatter_config.clone())?;
             }
         }
@@ -379,7 +380,7 @@ fn apply_plugins(
 ) {
     for (component_id, suite) in plugins_for_components {
         let crate_input = CrateLongId::Real {
-            name: component_id.cairo_package_name(),
+            name: SmolStrId::from(db, component_id.cairo_package_name()),
             discriminator: component_id.to_discriminator(),
         }
         .into_crate_input(db);

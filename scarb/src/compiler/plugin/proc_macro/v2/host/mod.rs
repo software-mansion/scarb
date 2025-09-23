@@ -18,7 +18,7 @@ use crate::core::{PackageId, edition_variant};
 use anyhow::{Result, ensure};
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
 use cairo_lang_filesystem::db::Edition;
-use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
+use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin, SmolStrId};
 use cairo_lang_filesystem::span::{TextOffset, TextSpan, TextWidth};
 use cairo_lang_macro::{
     AllocationContext, TextSpan as MacroTextSpan, TokenStream, TokenStreamMetadata, TokenTree,
@@ -136,7 +136,7 @@ impl ProcMacroHostPlugin {
         };
 
         if !DeclaredProcMacroInstances::declared_attributes(self).into_iter().any(|declared_attr|
-            item_ast.has_attr(db, &declared_attr) || inner_attrs.contains(&*declared_attr)
+            item_ast.has_attr(db, &declared_attr) || inner_attrs.contains(&SmolStrId::from(db, declared_attr))
         )
             // Plugins can implement own derives.
             && !item_ast.has_attr(db, "derive")
@@ -249,16 +249,25 @@ impl MacroPlugin for ProcMacroHostPlugin {
         }
     }
 
-    fn declared_attributes(&self) -> Vec<String> {
+    fn declared_attributes<'db>(&self, db: &'db dyn Database) -> Vec<SmolStrId<'db>> {
         DeclaredProcMacroInstances::declared_attributes(self)
+            .into_iter()
+            .map(|s| SmolStrId::from(db, s))
+            .collect()
     }
 
-    fn declared_derives(&self) -> Vec<String> {
+    fn declared_derives<'db>(&self, db: &'db dyn Database) -> Vec<SmolStrId<'db>> {
         DeclaredProcMacroInstances::declared_derives(self)
+            .into_iter()
+            .map(|s| SmolStrId::from(db, s))
+            .collect()
     }
 
-    fn executable_attributes(&self) -> Vec<String> {
+    fn executable_attributes<'db>(&self, db: &'db dyn Database) -> Vec<SmolStrId<'db>> {
         DeclaredProcMacroInstances::executable_attributes(self)
+            .into_iter()
+            .map(|s| SmolStrId::from(db, s))
+            .collect()
     }
 }
 

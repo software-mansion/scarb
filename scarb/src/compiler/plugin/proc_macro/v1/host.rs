@@ -15,7 +15,7 @@ use cairo_lang_defs::plugin::{
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
 use cairo_lang_diagnostics::ToOption;
 use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::ids::CodeMapping;
+use cairo_lang_filesystem::ids::{CodeMapping, SmolStrId};
 use cairo_lang_macro_v1::{
     AuxData, Diagnostic, FullPathMarker, ProcMacroResult, Severity, TokenStream,
     TokenStreamMetadata,
@@ -192,7 +192,7 @@ impl ProcMacroHostPlugin {
                             attr.attr(db)
                                 .as_syntax_node()
                                 .get_text_without_trivia(db)
-                                .to_string()
+                                .to_string(db)
                         })
                         .collect()
                 } else {
@@ -208,7 +208,7 @@ impl ProcMacroHostPlugin {
                             attr.attr(db)
                                 .as_syntax_node()
                                 .get_text_without_trivia(db)
-                                .to_string()
+                                .to_string(db)
                         })
                         .collect()
                 } else {
@@ -542,7 +542,7 @@ impl ProcMacroHostPlugin {
             if last {
                 let structured_attr = attr.clone().structurize(db);
                 let found = self.find_expansion(&ExpansionQuery::with_cairo_name(
-                    structured_attr.id,
+                    structured_attr.id.to_string(db),
                     ExpansionKind::Attr,
                 ));
                 if let Some(found) = found {
@@ -612,7 +612,7 @@ impl ProcMacroHostPlugin {
                     return None;
                 };
                 let ident = segment.ident(db);
-                let value = ident.text(db).to_string();
+                let value = ident.text(db).to_string(db);
                 self.find_expansion(&ExpansionQuery::with_cairo_name(
                     value,
                     ExpansionKind::Derive,
@@ -908,7 +908,7 @@ impl ProcMacroHostPlugin {
     }
 
     fn extract_key<'db>(db: &'db dyn SemanticGroup, attr: &'db Attribute<'db>) -> Option<String> {
-        if attr.id != FULL_PATH_MARKER_KEY {
+        if attr.id.to_string(db) != FULL_PATH_MARKER_KEY {
             return None;
         }
 
@@ -1117,16 +1117,25 @@ impl MacroPlugin for ProcMacroHostPlugin {
         }
     }
 
-    fn declared_attributes(&self) -> Vec<String> {
+    fn declared_attributes<'db>(&self, db: &'db dyn Database) -> Vec<SmolStrId<'db>> {
         DeclaredProcMacroInstances::declared_attributes(self)
+            .into_iter()
+            .map(|s| SmolStrId::from(db, s))
+            .collect()
     }
 
-    fn declared_derives(&self) -> Vec<String> {
+    fn declared_derives<'db>(&self, db: &'db dyn Database) -> Vec<SmolStrId<'db>> {
         DeclaredProcMacroInstances::declared_derives(self)
+            .into_iter()
+            .map(|s| SmolStrId::from(db, s))
+            .collect()
     }
 
-    fn executable_attributes(&self) -> Vec<String> {
+    fn executable_attributes<'db>(&self, db: &'db dyn Database) -> Vec<SmolStrId<'db>> {
         DeclaredProcMacroInstances::executable_attributes(self)
+            .into_iter()
+            .map(|s| SmolStrId::from(db, s))
+            .collect()
     }
 }
 
