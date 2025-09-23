@@ -1,7 +1,8 @@
 use crate::support::CheckBuilder;
 use indoc::formatdoc;
 
-fn check(selector: &str, command: &str, output_type: &str, expected_output: &str) {
+#[test]
+fn exec_success() {
     CheckBuilder::default()
         .lib_cairo(formatdoc! {r#"
             #[executable]
@@ -9,59 +10,72 @@ fn check(selector: &str, command: &str, output_type: &str, expected_output: &str
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "shell:";
                 connection_string.serialize(ref inputs);
-                '{selector}'.serialize(ref inputs);
-                let command: ByteArray = "{command}";
+                'exec'.serialize(ref inputs);
+                let command: ByteArray = "echo hello";
                 command.serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
-                oracle_asserts::print::<{output_type}>(result);
+                oracle_asserts::print::<(i32, ByteArray)>(result);
             }}
         "#})
         .stdout_matches(formatdoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            {expected_output}
+            Result::Ok((0, "hello
+            "))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
 }
 
 #[test]
-fn taskeo_success() {
-    check(
-        "taskeo",
-        "echo hello",
-        "(i32, ByteArray)",
-        "Result::Ok((0, \"hello\n\"))",
-    )
+fn exec_failure() {
+    CheckBuilder::default()
+        .lib_cairo(formatdoc! {r#"
+            #[executable]
+            fn main() {{
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "shell:";
+                connection_string.serialize(ref inputs);
+                'exec'.serialize(ref inputs);
+                let command: ByteArray = "exit 1";
+                command.serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<(i32, ByteArray)>(result);
+            }}
+        "#})
+        .stdout_matches(formatdoc! {r#"
+            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing oracle_test
+            Result::Ok((1, ""))
+            Saving output to: target/execute/oracle_test/execution1
+        "#})
+        .check();
 }
 
 #[test]
-fn taskeo_failure() {
-    check(
-        "taskeo",
-        "exit 1",
-        "(i32, ByteArray)",
-        "Result::Ok((1, \"\"))",
-    )
-}
-
-#[test]
-fn taskco_success() {
-    check(
-        "taskco",
-        "echo hello",
-        "ByteArray",
-        "Result::Ok(\"hello\n\")",
-    )
-}
-
-#[test]
-fn taskco_failure() {
-    check(
-        "taskco",
-        "exit 1",
-        "ByteArray",
-        "Result::Err(\"command failed with exit code: 1\")",
-    )
+fn exec_nonexistent_command() {
+    CheckBuilder::default()
+        .lib_cairo(formatdoc! {r#"
+            #[executable]
+            fn main() {{
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "shell:";
+                connection_string.serialize(ref inputs);
+                'exec'.serialize(ref inputs);
+                let command: ByteArray = "nonexistent_command_123";
+                command.serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<(i32, ByteArray)>(result);
+            }}
+        "#})
+        .stdout_matches(formatdoc! {r#"
+            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing oracle_test
+            Result::Ok((127, ""))
+            Saving output to: target/execute/oracle_test/execution1
+        "#})
+        .check();
 }

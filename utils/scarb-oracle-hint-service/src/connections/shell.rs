@@ -1,6 +1,6 @@
 use crate::Protocol;
 use crate::connection::Connection;
-use anyhow::{Context, Result, anyhow, ensure};
+use anyhow::{Context, Result, ensure};
 use deno_task_shell::parser::{SequentialList, parse};
 use deno_task_shell::{ExecutableCommand, ShellCommand, ShellPipeReader, ShellState, pipe};
 use starknet_core::codec::{Decode, Encode};
@@ -41,9 +41,7 @@ impl ShellConnection {
 
 impl Connection for ShellConnection {
     fn call(&mut self, selector: &str, calldata: &[Felt]) -> Result<Vec<Felt>> {
-        // This oracle has several modes which are determined by suffixes of the selector.
-        // All selectors accept the same input format.
-        let mode = Mode::get(selector)?;
+        ensure!(selector == "exec", "unsupported selector: {selector}");
 
         let span = Arc::new(debug_span!("exec", id = next_id()));
         let _enter = span.enter();
@@ -58,46 +56,10 @@ impl Connection for ShellConnection {
         let shell = build_shell()?;
         let (exit_code, stdout) = self.rt.block_on(execute(span.clone(), command, shell));
 
-        // Finalise, according to mode.
-        mode.finalise(exit_code, stdout.into())
-    }
-}
-
-#[derive(Eq, PartialEq)]
-enum Mode {
-    /// `eo`: return (exit code, stdout) tuple.
-    ReturnExitReturnOutput,
-    /// `co`: require successful exit code, return stdout.
-    CheckExitReturnOutput,
-}
-
-impl Mode {
-    fn get(selector: &str) -> Result<Self> {
-        Ok(match selector {
-            "taskeo" => Self::ReturnExitReturnOutput,
-            "taskco" => Self::CheckExitReturnOutput,
-            _ => return Err(anyhow!("unsupported selector: {selector}")),
-        })
-    }
-
-    fn finalise(self, exit_code: i32, stdout: ByteArray) -> Result<Vec<Felt>> {
-        // Because Encode is not implemented for tuples in starknet-core...
-        macro_rules! encode_tuple {
-            ($($item:expr),* $(,)?) => {{
-                let mut felts = Vec::new();
-                $($item.encode(&mut felts)?;)*
-                felts
-            }};
-        }
-
-        match self {
-            Self::ReturnExitReturnOutput => Ok(encode_tuple!(Felt::from(exit_code), stdout)),
-
-            Self::CheckExitReturnOutput => {
-                ensure!(exit_code == 0, "command failed with exit code: {exit_code}");
-                Ok(encode_tuple!(stdout))
-            }
-        }
+        // Encode the result.
+        let mut felts = vec![Felt::from(exit_code)];
+        ByteArray::from(stdout).encode(&mut felts)?;
+        Ok(felts)
     }
 }
 
