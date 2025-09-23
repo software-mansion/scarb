@@ -176,7 +176,7 @@ fn find_executable_functions<'db>(
         .filter_map(|(id, labels)| {
             labels
                 .into_iter()
-                .any(|label| label == EXECUTABLE_RAW_ATTR)
+                .any(|label| label.to_string(db) == EXECUTABLE_RAW_ATTR)
                 .then_some(id)
         })
         .collect();
@@ -196,12 +196,12 @@ fn originating_function_path<'db>(
     wrapper: ConcreteFunctionWithBodyId<'db>,
 ) -> String {
     let semantic = wrapper.base_semantic_function(db);
-    let wrapper_name = semantic.name(db);
+    let wrapper_name = semantic.name(db).to_string(db);
     let wrapper_full_path = semantic.full_path(db);
     let Some(function_name) = wrapper_name.strip_prefix(EXECUTABLE_PREFIX) else {
         return wrapper_full_path;
     };
-    let Some(wrapper_path_to_module) = wrapper_full_path.strip_suffix(wrapper_name) else {
+    let Some(wrapper_path_to_module) = wrapper_full_path.strip_suffix(&wrapper_name) else {
         return wrapper_full_path;
     };
     format!("{wrapper_path_to_module}{function_name}")

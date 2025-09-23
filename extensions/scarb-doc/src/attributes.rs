@@ -17,10 +17,10 @@ pub fn find_groups_from_attributes<'db>(
         for arg in attr.structurize(db).args {
             let text = arg.text(db);
             if let AttributeArgVariant::Named { value, name } = arg.variant {
-                if name.text == "group" {
+                if name.text.to_string(db) == "group" {
                     if let Expr::String(value) = value {
                         let text = value.text(db);
-                        return Some(text.replace("\"", ""));
+                        return Some(text.to_string(db).replace("\"", ""));
                     } else {
                         let diagnostic_message = format!(
                             "Invalid attribute `{}` in {}.\nUse `group: \"group name\"` instead.",

@@ -14,7 +14,7 @@ use cairo_lang_defs::db::{DefsGroup, defs_group_input};
 use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId, ModuleId};
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{CrateIdentifier, CrateSettings, DependencySettings, FilesGroup};
-use cairo_lang_filesystem::ids::{CrateInput, CrateLongId};
+use cairo_lang_filesystem::ids::{CrateInput, CrateLongId, SmolStrId};
 use cairo_lang_filesystem::override_file_content;
 use cairo_lang_semantic::db::{SemanticGroup, semantic_group_input};
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
@@ -95,7 +95,7 @@ fn apply_plugins(
 ) {
     for (component_id, suite) in plugins_for_components {
         let crate_input = (CrateLongId::Real {
-            name: component_id.cairo_package_name(),
+            name: SmolStrId::from(db, component_id.cairo_package_name()),
             discriminator: component_id.to_discriminator(),
         })
         .into_crate_input(db);

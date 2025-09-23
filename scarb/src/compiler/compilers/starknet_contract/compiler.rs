@@ -2,7 +2,7 @@ use anyhow::{Context, Result, ensure};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleId, NamedLanguageElementId};
-use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId};
+use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId, SmolStrId};
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::module::ModuleSemantic;
 use cairo_lang_semantic::items::us::SemanticUseEx;
@@ -136,7 +136,7 @@ impl Compiler for StarknetContractCompiler {
 
             let contract_names = contracts
                 .iter()
-                .map(|decl| decl.submodule_id.name(db))
+                .map(|decl| decl.submodule_id.name(db).to_string(db))
                 .collect_vec();
 
             contract_names
@@ -208,7 +208,7 @@ pub fn find_project_contracts<'db>(
                     .find(|component| component.package.id.name.to_string() == name)
                     .and_then(|component| component.id.to_discriminator());
                 CrateLongId::Real {
-                    name,
+                    name: SmolStrId::from(db, name),
                     discriminator,
                 }
                 .intern(db)
@@ -258,7 +258,7 @@ pub fn find_project_contracts<'db>(
                             ),
                         };
                         let visibility = db
-                            .module_item_info_by_name(*module_id, use_id.name(db).into())
+                            .module_item_info_by_name(*module_id, use_id.name(db))
                             .ok()??
                             .visibility;
                         if visibility == Visibility::Public {
@@ -276,7 +276,9 @@ pub fn find_project_contracts<'db>(
                     })
                     .flat_map(|(module_id, use_alias)| {
                         let exported_module_path = module_id.full_path(db);
-                        let exported_module_name = use_alias.unwrap_or_else(|| module_id.name(db));
+                        let exported_module_name = use_alias
+                            .unwrap_or_else(|| module_id.name(db))
+                            .to_string(db);
                         let mut submodules = Vec::new();
                         collect_modules_under(db, &mut submodules, module_id);
                         submodules

@@ -4,7 +4,7 @@ use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId};
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{FilesGroup, init_files_group};
-use cairo_lang_filesystem::ids::{CrateInput, CrateLongId};
+use cairo_lang_filesystem::ids::{CrateInput, CrateLongId, SmolStrId};
 use cairo_lang_lowering::db::LoweringGroup;
 use cairo_lang_parser::db::ParserGroup;
 use cairo_lang_semantic::db::{
@@ -68,7 +68,7 @@ impl ScarbDocDatabase {
                     acc
                 });
             let crate_input = CrateLongId::Real {
-                name: component.name.to_string(),
+                name: SmolStrId::from(self, component.name.as_str()),
                 discriminator: component.discriminator.as_ref().map(ToString::to_string),
             }
             .into_crate_input(self);

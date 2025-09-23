@@ -191,7 +191,7 @@ fn validate_compiler_config(
     let executable_plugin = db
         .crate_macro_plugins(main_crate_id)
         .iter()
-        .any(|&plugin| !plugin.long(db).executable_attributes().is_empty());
+        .any(|&plugin| !plugin.long(db).executable_attributes(db).is_empty());
     if !executable_plugin && !compiler_config.replace_ids {
         ws.config().ui().warn(formatdoc! {r#"
             artefacts produced by this build may be hard to utilize due to the build configuration
