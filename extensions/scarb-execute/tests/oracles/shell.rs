@@ -1,8 +1,7 @@
 use crate::support::CheckBuilder;
 use indoc::formatdoc;
 
-#[test]
-fn exec_success() {
+fn check(command: &str, expected_output: &str) {
     CheckBuilder::default()
         .lib_cairo(formatdoc! {r#"
             #[executable]
@@ -11,7 +10,7 @@ fn exec_success() {
                 let connection_string: ByteArray = "shell:";
                 connection_string.serialize(ref inputs);
                 'exec'.serialize(ref inputs);
-                let command: ByteArray = "echo hello";
+                let command: ByteArray = "{command}";
                 command.serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<(i32, ByteArray)>(result);
@@ -21,61 +20,23 @@ fn exec_success() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Ok((0, "hello
-            "))
+            {expected_output}
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
+}
+
+#[test]
+fn exec_success() {
+    check("echo hello", "Result::Ok((0, \"hello\n\"))")
 }
 
 #[test]
 fn exec_failure() {
-    CheckBuilder::default()
-        .lib_cairo(formatdoc! {r#"
-            #[executable]
-            fn main() {{
-                let mut inputs: Array<felt252> = array![];
-                let connection_string: ByteArray = "shell:";
-                connection_string.serialize(ref inputs);
-                'exec'.serialize(ref inputs);
-                let command: ByteArray = "exit 1";
-                command.serialize(ref inputs);
-                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
-                oracle_asserts::print::<(i32, ByteArray)>(result);
-            }}
-        "#})
-        .stdout_matches(formatdoc! {r#"
-            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
-            [..]Finished `dev` profile target(s) in [..]
-            [..]Executing oracle_test
-            Result::Ok((1, ""))
-            Saving output to: target/execute/oracle_test/execution1
-        "#})
-        .check();
+    check("exit 1", "Result::Ok((1, \"\"))")
 }
 
 #[test]
 fn exec_nonexistent_command() {
-    CheckBuilder::default()
-        .lib_cairo(formatdoc! {r#"
-            #[executable]
-            fn main() {{
-                let mut inputs: Array<felt252> = array![];
-                let connection_string: ByteArray = "shell:";
-                connection_string.serialize(ref inputs);
-                'exec'.serialize(ref inputs);
-                let command: ByteArray = "nonexistent_command_123";
-                command.serialize(ref inputs);
-                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
-                oracle_asserts::print::<(i32, ByteArray)>(result);
-            }}
-        "#})
-        .stdout_matches(formatdoc! {r#"
-            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
-            [..]Finished `dev` profile target(s) in [..]
-            [..]Executing oracle_test
-            Result::Ok((127, ""))
-            Saving output to: target/execute/oracle_test/execution1
-        "#})
-        .check();
+    check("nonexistent_command_123", "Result::Ok((127, \"\"))")
 }
