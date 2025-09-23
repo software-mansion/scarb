@@ -11,6 +11,7 @@ use crate::types::crate_type::Crate;
 use anyhow::Result;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
+use cairo_lang_filesystem::ids::SmolStrId;
 use cairo_lang_filesystem::{
     db::{Edition, FilesGroup},
     ids::{CrateId, CrateLongId},
@@ -111,7 +112,7 @@ pub fn generate_package_information(
     let db = &context.db;
 
     let main_crate_id = CrateLongId::Real {
-        name: context.main_component.name.to_string(),
+        name: SmolStrId::from(db, context.main_component.name.as_str()),
         discriminator: context
             .main_component
             .discriminator

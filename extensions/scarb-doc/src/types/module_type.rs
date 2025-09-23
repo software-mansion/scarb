@@ -80,7 +80,7 @@ impl<'db> ModulePubUses<'db> {
             .iter()
             .filter_map(|(use_id, _)| {
                 let visibility = db
-                    .module_item_info_by_name(module_id, use_id.long(db).name(db).into())
+                    .module_item_info_by_name(module_id, use_id.long(db).name(db))
                     .unwrap()
                     .unwrap()
                     .visibility;
@@ -651,7 +651,7 @@ fn is_public<'db>(
     element_id: &dyn TopLevelLanguageElementId<'db>,
 ) -> Maybe<bool> {
     let containing_module_id = element_id.parent_module(db);
-    match db.module_item_info_by_name(containing_module_id, element_id.name(db).into())? {
+    match db.module_item_info_by_name(containing_module_id, element_id.name(db))? {
         Some(module_item_info) => Ok(matches!(module_item_info.visibility, Visibility::Public)),
         None => Ok(false),
     }

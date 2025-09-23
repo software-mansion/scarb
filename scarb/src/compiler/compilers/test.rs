@@ -1,7 +1,7 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
-use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId};
+use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId, SmolStrId};
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::ContractDeclaration;
@@ -235,7 +235,7 @@ fn get_contract_crate_ids<'db>(
                         .and_then(|component| component.id.to_discriminator());
                     let name = package_name.to_string();
                     CrateLongId::Real {
-                        name,
+                        name: SmolStrId::from(db, &name),
                         discriminator,
                     }
                     .intern(db)
