@@ -102,7 +102,7 @@ indoc = "2"
 io_tee = "0.1"
 itertools = "0.14"
 libc = "0.2"
-libloading = "0.8.8"
+libloading = "0.8.9"
 linkme = "0.3"
 mdbook = "0.4"
 ntest = "0.9"
@@ -161,7 +161,7 @@ walkdir = "2"
 wasmtime = "36"
 wasmtime-wasi = "36"
 which = "8"
-windows-sys = { version = "0.60", features = ["Win32_Foundation", "Win32_System", "Win32_System_Console"] }
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System", "Win32_System_Console"] }
 xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
