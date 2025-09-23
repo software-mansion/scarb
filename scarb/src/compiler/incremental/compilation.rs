@@ -172,6 +172,8 @@ pub fn load_incremental_artifacts(
         db,
         CrateInput::into_crate_ids(db, cached_crates.clone()),
         |db, crate_id| {
+            let span = trace_span!("cached_multi_lowerings");
+            let _guard = span.enter();
             db.cached_multi_lowerings(crate_id);
         },
     );

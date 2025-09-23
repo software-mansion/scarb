@@ -31,6 +31,7 @@ pub fn ensure_gas_enabled(db: &dyn Database) -> anyhow::Result<()> {
     Ok(())
 }
 
+#[tracing::instrument(level = "trace", skip_all)]
 pub fn check_allowed_libfuncs<'db>(
     props: &Props,
     contracts: &[ContractDeclaration<'db>],
