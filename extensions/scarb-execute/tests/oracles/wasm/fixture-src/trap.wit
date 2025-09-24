@@ -1,0 +1,5 @@
+package trappy:trap;
+
+world root {
+    export trap: func(inputs: list<bool>);
+}
