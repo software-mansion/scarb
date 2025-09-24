@@ -1,5 +1,6 @@
 use crate::connection::Connection;
 use crate::connections::wasm::codec::{decode_from_cairo, encode_to_cairo};
+use crate::connections::wasm::tracing_stderr::TracingStderrWriter;
 use crate::protocol::Protocol;
 use anyhow::{Context, Result, bail};
 use starknet_core::types::Felt;
@@ -13,6 +14,7 @@ use wasmtime::{Engine, Store};
 use wasmtime_wasi::{WasiCtx, WasiCtxView, WasiView};
 
 mod codec;
+mod tracing_stderr;
 
 /// Maps fully qualified export names to their indices; i.e.:
 /// `naked:adder/add@0.1.0#add` -> `0`.
@@ -227,10 +229,11 @@ impl Default for HostState {
     fn default() -> Self {
         Self {
             // TODO(#2629): Preopen some directory if the runtime wants to.
-            // TODO(#2627): Redirect stderr to tracing logs.
             // TODO(#2625): Implement permissions system to allow users to limit these caps.
             ctx: WasiCtx::builder()
-                .inherit_stdio()
+                .inherit_stdin()
+                .inherit_stdout()
+                .stderr(TracingStderrWriter::new())
                 .allow_blocking_current_thread(true)
                 .inherit_env()
                 .inherit_network()

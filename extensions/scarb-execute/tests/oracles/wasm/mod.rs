@@ -31,6 +31,13 @@ fn wasip2() {
                 b.serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<ByteArray>(result);
+
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "wasm:wasip2.wasm";
+                connection_string.serialize(ref inputs);
+                'io'.serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<()>(result);
             }}
         "#})
         .src_binary("wasip2.wasm", include_bytes!("wasip2.wasm"))
@@ -40,8 +47,11 @@ fn wasip2() {
             [..]Executing oracle_test
             Result::Ok(3)
             Result::Ok("foobar")
+            stdout is working as expected
+            Result::Ok(())
             Saving output to: target/execute/oracle_test/execution1
         "#})
+        .stderr_contains("stderr is working as expected\n")
         .check();
 }
 

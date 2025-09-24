@@ -5,6 +5,7 @@ wit_bindgen::generate!({
         world oracle {
             export add: func(left: u64, right: u64) -> u64;
             export join: func(a: string, b: string) -> string;
+            export io: func();
         }
     "#
 });
@@ -17,6 +18,10 @@ impl Guest for MyOracle {
     }
     fn join(a: String, b: String) -> String {
         a + &b
+    }
+    fn io() {
+        println!("stdout is working as expected");
+        eprintln!("stderr is working as expected");
     }
 }
 
