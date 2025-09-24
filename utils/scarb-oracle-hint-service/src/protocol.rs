@@ -1,13 +1,22 @@
 use crate::Connection;
+use crate::assets::Assets;
 use anyhow::{Result, bail};
 use std::fmt;
 
-pub trait Protocol {
-    const SCHEME: &'static str;
-    fn connect(connection_string: &str) -> Result<Box<dyn Connection + 'static>>;
+#[non_exhaustive]
+pub struct ConnectCtx<'a> {
+    pub assets: &'a Assets,
 }
 
-type ConnectFunc = fn(&str) -> Result<Box<dyn Connection + 'static>>;
+pub trait Protocol {
+    const SCHEME: &'static str;
+    fn connect(
+        connection_string: &str,
+        ctx: ConnectCtx<'_>,
+    ) -> Result<Box<dyn Connection + 'static>>;
+}
+
+type ConnectFunc = fn(&str, ConnectCtx<'_>) -> Result<Box<dyn Connection + 'static>>;
 
 // This uses a vector because it is not expected to contain >16 protocols (16 is the thumb rule as
 // vector into hashmap switch point).
@@ -25,12 +34,16 @@ impl Protocols {
         self.0.push((P::SCHEME, P::connect));
     }
 
-    pub fn connect(&self, connection_string: &str) -> Result<Box<dyn Connection + 'static>> {
+    pub fn connect(
+        &self,
+        connection_string: &str,
+        ctx: ConnectCtx<'_>,
+    ) -> Result<Box<dyn Connection + 'static>> {
         for (scheme, connect) in &self.0 {
             if let Some(command) = connection_string.strip_prefix(scheme)
                 && let Some(command) = command.strip_prefix(':')
             {
-                return connect(command);
+                return connect(command, ctx);
             }
         }
 
