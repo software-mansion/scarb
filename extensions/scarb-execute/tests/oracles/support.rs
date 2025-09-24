@@ -15,6 +15,8 @@ pub struct Check {
     failure: bool,
     #[builder(setter(into))]
     stdout_matches: String,
+    #[builder(default, setter(into))]
+    stderr_contains: String,
 
     #[builder(default = "true")]
     enable_experimental_oracles_flag: bool,
@@ -96,6 +98,15 @@ impl Check {
             assert = assert.success();
         }
 
-        assert.stdout_matches(self.stdout_matches);
+        assert = assert.stdout_matches(self.stdout_matches);
+
+        if !self.stderr_contains.is_empty() {
+            let pattern = self.stderr_contains;
+            let stderr = String::from_utf8_lossy(&assert.get_output().stderr).into_owned();
+            assert!(
+                stderr.contains(&pattern),
+                "stderr does not contain: {pattern:?}\n\nstderr:\n{stderr}"
+            );
+        }
     }
 }
