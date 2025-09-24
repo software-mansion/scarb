@@ -12,11 +12,13 @@
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(rustdoc::private_intra_doc_links)]
 
+mod assets;
 mod connection;
 mod connections;
 mod hint_service;
 mod protocol;
 
+pub use assets::Assets;
 pub use connection::Connection;
 pub use hint_service::OracleHintService;
-pub use protocol::Protocol;
+pub use protocol::{ConnectCtx, Protocol};

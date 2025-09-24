@@ -1,7 +1,7 @@
 use crate::connection::Connection;
 use crate::connections::wasm::codec::{decode_from_cairo, encode_to_cairo};
 use crate::connections::wasm::tracing_stderr::TracingStderrWriter;
-use crate::protocol::Protocol;
+use crate::protocol::{ConnectCtx, Protocol};
 use anyhow::{Context, Result, bail};
 use starknet_core::types::Felt;
 use std::collections::HashMap;
@@ -37,14 +37,16 @@ pub struct Wasm {
 impl Protocol for Wasm {
     const SCHEME: &'static str = "wasm";
 
-    #[tracing::instrument]
-    fn connect(path: &str) -> Result<Box<dyn Connection + 'static>> {
+    #[tracing::instrument(skip(ctx))]
+    fn connect(path: &str, ctx: ConnectCtx<'_>) -> Result<Box<dyn Connection + 'static>> {
+        let asset = ctx.assets.fetch(path)?;
+
         static ENGINE: LazyLock<Engine> = LazyLock::new(Engine::default);
 
         let mut linker = Linker::new(&ENGINE);
         wasmtime_wasi::p2::add_to_linker_sync(&mut linker).expect("failed to link wasip2");
 
-        let component = Component::from_file(&ENGINE, path)
+        let component = Component::from_file(&ENGINE, asset)
             .with_context(|| format!("failed to load wasm component from: {path}"))?;
 
         let mut store = Store::new(&ENGINE, HostState::default());

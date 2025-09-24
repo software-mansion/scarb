@@ -1,14 +1,18 @@
+use crate::assets::Assets;
 use crate::connection::Connections;
-use crate::protocol::{Protocol, Protocols};
+use crate::connections::builtin_protocols;
+use crate::protocol::{ConnectCtx, Protocol, Protocols};
 use anyhow::Context;
 use starknet_core::codec::{Decode, Encode};
 use starknet_core::types::{ByteArray, Felt};
 use starknet_core::utils::parse_cairo_short_string;
+use std::path::Path;
 
 #[derive(Debug)]
 pub struct OracleHintService {
     connections: Connections,
     protocols: Protocols,
+    assets: Assets,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -19,19 +23,22 @@ enum OracleCheatcodeSelectorInner {
     OracleInvoke,
 }
 
-impl Default for OracleHintService {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 /// Constructors.
 impl OracleHintService {
-    /// Creates a new `OracleHintService` with all builtin protocols enabled.
-    pub fn new() -> Self {
-        let mut this = Self::bare();
-        crate::connections::add_builtin_protocols(&mut this);
-        this
+    /// Creates a new `OracleHintService` with all builtin protocols enabled and assets directory
+    /// preconfigured.
+    ///
+    /// The `executable_path` must be a path to the file that is going to be executed by the
+    /// executor.
+    ///
+    /// ## Panics
+    /// This function will panic if the executable path is not a file.
+    pub fn new(executable_path: &Path) -> Self {
+        Self {
+            connections: Connections::default(),
+            protocols: builtin_protocols(),
+            assets: Assets::for_executable(executable_path),
+        }
     }
 
     /// Creates a new `OracleHintService` with no builtin protocols enabled.
@@ -39,6 +46,7 @@ impl OracleHintService {
         Self {
             connections: Connections::default(),
             protocols: Protocols::default(),
+            assets: Assets::new(),
         }
     }
 
@@ -99,8 +107,12 @@ impl OracleHintService {
 
             let calldata = inputs_iter.as_slice();
 
+            let ctx = ConnectCtx {
+                assets: &self.assets,
+            };
+
             self.connections
-                .connect(&connection_string, &self.protocols)?
+                .connect(&connection_string, ctx, &self.protocols)?
                 .call(&selector, calldata)
         };
 
