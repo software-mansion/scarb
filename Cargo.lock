@@ -7214,6 +7214,7 @@ dependencies = [
  "scarb-extensions-cli",
  "scarb-test-support",
  "scarb-ui",
+ "tracing-subscriber",
 ]
 
 [[package]]
