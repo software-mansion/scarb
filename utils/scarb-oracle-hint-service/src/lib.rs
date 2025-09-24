@@ -7,6 +7,11 @@
 //!
 //! This crate is e2e tested in `scarb-execute`.
 
+#![deny(clippy::disallowed_methods)]
+#![deny(clippy::dbg_macro)]
+#![deny(rustdoc::broken_intra_doc_links)]
+#![deny(rustdoc::private_intra_doc_links)]
+
 mod connection;
 mod connections;
 mod hint_service;
