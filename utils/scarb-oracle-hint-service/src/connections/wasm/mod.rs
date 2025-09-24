@@ -88,7 +88,11 @@ impl Wasm {
             match index {
                 Ok(index) => *index,
                 Err(ambiguities) => {
-                    let ambiguities = ambiguities.to_vec().join(", ");
+                    let ambiguities = {
+                        let mut v = ambiguities.to_vec();
+                        v.sort();
+                        v.join(", ")
+                    };
                     bail!(
                         "multiple exports named: {selector}\n\
                          note: possible matches are: {ambiguities}"
@@ -96,12 +100,15 @@ impl Wasm {
                 }
             }
         } else {
-            let available = self
-                .fully_qualified_funcs
-                .keys()
-                .cloned()
-                .collect::<Vec<_>>()
-                .join(", ");
+            let available = {
+                let mut v = self
+                    .fully_qualified_funcs
+                    .keys()
+                    .cloned()
+                    .collect::<Vec<_>>();
+                v.sort();
+                v.join(", ")
+            };
             bail!(
                 "no exported func in component named: {selector}\n\
                  note: available funcs are: {available}"
