@@ -2,8 +2,14 @@ package naked:adder@0.1.0;
 
 interface add {
   add: func(x: s64, y: s64) -> s64;
+  f: func(n: s32) -> s32;
+}
+
+interface ambiguous {
+  f: func(n: s32) -> s32;
 }
 
 world adder {
   export add;
+  export ambiguous;
 }

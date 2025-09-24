@@ -55,28 +55,52 @@ fn naked() {
                 let connection_string: ByteArray = "wasm:naked.wasm";
                 connection_string.serialize(ref inputs);
                 'add'.serialize(ref inputs);
-                (1_u64).serialize(ref inputs);
-                (2_u64).serialize(ref inputs);
+                (1_i64).serialize(ref inputs);
+                (2_i64).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
-                oracle_asserts::print::<u64>(result);
+                oracle_asserts::print::<i64>(result);
 
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:naked.wasm";
                 connection_string.serialize(ref inputs);
                 'naked:adder/add@0.1.0/add'.serialize(ref inputs);
-                (1_u64).serialize(ref inputs);
-                (2_u64).serialize(ref inputs);
+                (1_i64).serialize(ref inputs);
+                (2_i64).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
-                oracle_asserts::print::<u64>(result);
+                oracle_asserts::print::<i64>(result);
 
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:naked.wasm";
                 connection_string.serialize(ref inputs);
                 'adda'.serialize(ref inputs);
-                (1_u64).serialize(ref inputs);
-                (2_u64).serialize(ref inputs);
+                (1_i64).serialize(ref inputs);
+                (2_i64).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
-                oracle_asserts::print::<u64>(result);
+                oracle_asserts::print::<i64>(result);
+
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "wasm:naked.wasm";
+                connection_string.serialize(ref inputs);
+                'f'.serialize(ref inputs);
+                (1_i32).serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<i32>(result);
+
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "wasm:naked.wasm";
+                connection_string.serialize(ref inputs);
+                'naked:adder/add@0.1.0/f'.serialize(ref inputs);
+                (1_i32).serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<i32>(result);
+
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "wasm:naked.wasm";
+                connection_string.serialize(ref inputs);
+                'naked:adder/ambiguous@0.1.0/f'.serialize(ref inputs);
+                (1_i32).serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<i32>(result);
             }}
         "#})
         .src_binary("naked.wasm", include_bytes!("naked.wasm"))
@@ -87,7 +111,11 @@ fn naked() {
             Result::Ok(3)
             Result::Ok(3)
             Result::Err("no exported func in component named: adda
-            note: available funcs are: naked:adder/add@0.1.0/add")
+            note: available funcs are: naked:adder/add@0.1.0/add, naked:adder/add@0.1.0/f, naked:adder/ambiguous@0.1.0/f")
+            Result::Err("multiple exports named: f
+            note: possible matches are: naked:adder/add@0.1.0/f, naked:adder/ambiguous@0.1.0/f")
+            Result::Ok(2)
+            Result::Ok(1001)
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
