@@ -1,6 +1,7 @@
-use anyhow::{Result, anyhow};
+use anyhow::{Result, bail};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use tracing::{debug, trace};
 
 #[derive(Clone, Debug)]
 pub struct Assets {
@@ -33,10 +34,26 @@ impl Assets {
     ///
     /// If the asset is not found, this function returns an error.
     pub fn fetch(&self, name: &str) -> Result<PathBuf> {
-        self.search_paths
-            .iter()
-            .map(|p| p.join(name))
-            .find(|p| p.exists())
-            .ok_or_else(|| anyhow!("asset not found: {name}"))
+        debug!(
+            name,
+            search_paths = ?(
+                self.search_paths
+                    .iter()
+                    .map(|p|p.display())
+                    .collect::<Vec<_>>()
+            ),
+            "looking for asset",
+        );
+        for p in self.search_paths.iter() {
+            let path = p.join(name);
+            let exists = path.exists();
+            trace!(path=?path.display(), exists=?exists, "trying");
+            if exists {
+                debug!(path=?path.display(), "found");
+                return Ok(path);
+            }
+        }
+        debug!(name, "asset not found");
+        bail!("asset not found: {name}")
     }
 }
