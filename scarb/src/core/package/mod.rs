@@ -5,6 +5,7 @@ use std::sync::Arc;
 use anyhow::{Context, Result, anyhow};
 use cairo_lang_formatter::FormatterConfig;
 use camino::{Utf8Path, Utf8PathBuf};
+use itertools::Itertools;
 use serde::Deserialize;
 
 pub use id::*;
@@ -113,8 +114,22 @@ impl Package {
             .metadata
             .include
             .iter()
+            // Because `include` should logically contain all `assets`, yet it would be cumbersome
+            // to duplicate all `assets` entries; we just flatten both fields automatically.
+            .chain(&self.manifest.metadata.assets)
             .flatten()
+            .unique()
             .map(|p| self.canonicalize_file_ref(p, "included"))
+            .collect()
+    }
+
+    pub fn assets(&self) -> Result<Vec<Utf8PathBuf>> {
+        self.manifest
+            .metadata
+            .assets
+            .iter()
+            .flatten()
+            .map(|p| self.canonicalize_file_ref(p, "asset"))
             .collect()
     }
 
