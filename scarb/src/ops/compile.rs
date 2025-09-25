@@ -7,11 +7,14 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttr
 use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
 };
+use crate::flock::Filesystem;
+use crate::internal::fsx;
 use crate::internal::offloader::Offloader;
 use crate::ops;
 use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
-use anyhow::{Context, Error, Result, anyhow};
+use anyhow::{Context, Error, Result, anyhow, bail, ensure};
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
+use camino::Utf8PathBuf;
 use indoc::formatdoc;
 use itertools::Itertools;
 use salsa::Database;
@@ -19,9 +22,9 @@ use scarb_ui::HumanDuration;
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 use smol_str::{SmolStr, ToSmolStr};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::thread;
-use tracing::trace_span;
+use tracing::{trace, trace_span};
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -240,10 +243,12 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 proc_macros,
             } = build_scarb_root_database(&unit, ws, Default::default())?;
             check_starknet_dependency(&unit, ws, &db, &package_name);
+            let assets = collect_assets(&unit)?;
 
             // This scope limits the offloader lifetime.
             thread::scope(|s| {
                 let offloader = Offloader::new(s, ws);
+                let target_dir = unit.target_dir(ws);
 
                 let result = ws
                     .config()
@@ -266,6 +271,10 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 {
                     let _guard = span.enter();
                     offloader.join()?;
+                }
+
+                if result.is_ok() {
+                    copy_assets(assets, &target_dir)?;
                 }
 
                 result
@@ -389,4 +398,54 @@ pub fn plugins_required_for_units(units: &[CompilationUnit]) -> HashSet<PackageI
             _ => Vec::new(),
         })
         .collect::<HashSet<PackageId>>()
+}
+
+#[tracing::instrument(level = "trace", skip_all)]
+fn collect_assets(unit: &CairoCompilationUnit) -> Result<Vec<(String, Utf8PathBuf)>> {
+    // Map from file name -> (package name, absolute source path)
+    let mut by_name: HashMap<String, (PackageId, Utf8PathBuf)> = HashMap::new();
+
+    for component in &unit.components {
+        let pkg = &component.package;
+        let pkg_id = pkg.id;
+        let mut seen_in_pkg: HashSet<String> = HashSet::new();
+        for asset in pkg.assets()? {
+            ensure!(
+                asset.is_file(),
+                "package `{pkg_id}` asset is not a file: {asset}"
+            );
+            let Some(file_name) = asset.file_name() else {
+                bail!("package `{pkg_id}` asset path has no file name: {asset}");
+            };
+            ensure!(
+                seen_in_pkg.insert(file_name.into()),
+                "package `{pkg_id}` declares multiple assets with the same file name: {file_name}"
+            );
+            if let Some((other_pkg_id, _)) = by_name.get(file_name)
+                && other_pkg_id != &pkg_id
+            {
+                bail!(
+                    "multiple packages declare an asset with the same file name `{file_name}`: \
+                    {other_pkg_id}, {pkg_id}"
+                );
+            }
+            by_name.insert(file_name.into(), (pkg_id, asset));
+        }
+    }
+
+    Ok(by_name
+        .into_iter()
+        .map(|(name, (_, path))| (name, path))
+        .collect())
+}
+
+#[tracing::instrument(level = "trace", skip_all)]
+fn copy_assets(assets: Vec<(String, Utf8PathBuf)>, target_dir: &Filesystem) -> Result<()> {
+    let target_path = target_dir.path_existent()?;
+    for (name, src) in assets {
+        let dst = target_path.join(&name);
+        trace!(%name, %src, %dst, "copying asset");
+        fsx::copy(src, dst)?;
+    }
+    Ok(())
 }
