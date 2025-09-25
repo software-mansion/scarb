@@ -40,7 +40,7 @@ fn wasip2() {
                 oracle_asserts::print::<()>(result);
             }}
         "#})
-        .src_binary("wasip2.wasm", include_bytes!("wasip2.wasm"))
+        .asset("wasip2.wasm", include_bytes!("wasip2.wasm"))
         .stdout_matches(indoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -113,7 +113,7 @@ fn naked() {
                 oracle_asserts::print::<i32>(result);
             }}
         "#})
-        .src_binary("naked.wasm", include_bytes!("naked.wasm"))
+        .asset("naked.wasm", include_bytes!("naked.wasm"))
         .stdout_matches(indoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -146,7 +146,7 @@ fn trap() {
                 oracle_asserts::print::<u64>(result);
             }}
         "#})
-        .src_binary("trap.wasm", include_bytes!("trap.wasm"))
+        .asset("trap.wasm", include_bytes!("trap.wasm"))
         .stdout_matches(indoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
