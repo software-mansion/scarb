@@ -52,7 +52,7 @@ impl Protocol for Wasm {
             .instantiate(&mut store, &component)
             .context("failed to instantiate wasm component (missing imports?)")?;
 
-        let (fully_qualified_funcs, short_funcs) = dbg!(Self::collect_funcs(&component, &ENGINE));
+        let (fully_qualified_funcs, short_funcs) = Self::collect_funcs(&component, &ENGINE);
 
         Ok(Box::new(Wasm {
             store,
