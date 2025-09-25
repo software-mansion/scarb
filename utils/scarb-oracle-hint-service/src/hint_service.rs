@@ -33,11 +33,13 @@ impl OracleHintService {
     ///
     /// ## Panics
     /// This function will panic if the executable path is not a file.
-    pub fn new(executable_path: &Path) -> Self {
+    pub fn new(executable_path: Option<&Path>) -> Self {
         Self {
             connections: Connections::default(),
             protocols: builtin_protocols(),
-            assets: Assets::for_executable(executable_path),
+            assets: executable_path
+                .map(Assets::for_executable)
+                .unwrap_or(Assets::empty()),
         }
     }
 
@@ -46,7 +48,7 @@ impl OracleHintService {
         Self {
             connections: Connections::default(),
             protocols: Protocols::default(),
-            assets: Assets::new(),
+            assets: Assets::empty(),
         }
     }
 

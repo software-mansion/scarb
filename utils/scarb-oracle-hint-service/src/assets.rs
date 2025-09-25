@@ -1,16 +1,18 @@
-use anyhow::{Result, anyhow, bail};
+use anyhow::{Result, anyhow};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Assets {
     search_paths: Arc<Vec<PathBuf>>,
 }
 
 impl Assets {
     /// Constructs a new assets directory that provides no assets.
-    pub(crate) fn new() -> Self {
-        Default::default()
+    pub(crate) fn empty() -> Self {
+        Self {
+            search_paths: Default::default(),
+        }
     }
 
     /// Constructs a new assets directory that looks for assets related to the given Cairo
