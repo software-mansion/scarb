@@ -449,7 +449,14 @@ pub struct TomlExecutableTargetParams {
     ///
     /// In general, syscalls are not allowed in executables, as they are currently not checked.
     pub allow_syscalls: Option<bool>,
+    /// Program entrypoint.
+    ///
+    /// Executable must have exactly one entrypoint that will be used during the execution.
+    /// This must be a function with the `#[executable]` attribute.
     pub function: Option<String>,
+    /// Emit a compiled Sierra program for the executable function, in JSON format.
+    /// This may be useful, for example, for debugging or local profiling.
+    pub sierra: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
