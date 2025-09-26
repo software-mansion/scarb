@@ -7,6 +7,9 @@ use scarb_proc_macro_server_types::methods::Method;
 use scarb_proc_macro_server_types::methods::defined_macros::CompilationUnitComponentMacros;
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacros;
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacrosParams;
+use scarb_proc_macro_server_types::methods::discover_workspace::DiscoverWorkspace;
+use scarb_proc_macro_server_types::methods::discover_workspace::DiscoverWorkspaceParams;
+use scarb_proc_macro_server_types::scope::Workspace;
 use std::collections::HashMap;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -14,6 +17,7 @@ use std::io::Lines;
 use std::io::Write;
 use std::marker::PhantomData;
 use std::path::Path;
+use std::path::PathBuf;
 use std::process::Child;
 use std::process::ChildStdin;
 use std::process::ChildStdout;
@@ -213,9 +217,19 @@ impl ProcMacroClient {
     pub fn defined_macros_for_package(
         &mut self,
         package_name: &str,
+        manifest_path: PathBuf,
     ) -> CompilationUnitComponentMacros {
+        let workspace = Workspace { manifest_path };
+
+        self.request_and_wait::<DiscoverWorkspace>(DiscoverWorkspaceParams {
+            workspace: workspace.clone(),
+        })
+        .unwrap();
+
         let response = self
-            .request_and_wait::<DefinedMacros>(DefinedMacrosParams {})
+            .request_and_wait::<DefinedMacros>(DefinedMacrosParams {
+                workspace: workspace.clone(),
+            })
             .unwrap();
 
         response

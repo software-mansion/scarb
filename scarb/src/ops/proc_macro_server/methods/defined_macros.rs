@@ -1,21 +1,29 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use itertools::Itertools;
 use scarb_proc_macro_server_types::methods::defined_macros::{
     CompilationUnitComponentMacros, DebugInfo, DefinedMacros, DefinedMacrosResponse,
 };
 
 use super::Handler;
-use crate::compiler::plugin::collection::WorkspaceProcMacros;
 use crate::compiler::plugin::proc_macro::DeclaredProcMacroInstances;
+use crate::core::Config;
+use crate::ops::store::ProcMacroStore;
 
 impl Handler for DefinedMacros {
     fn handle(
-        workspace_macros: Arc<WorkspaceProcMacros>,
-        _params: Self::Params,
+        _config: &Config,
+        proc_macros: Arc<Mutex<ProcMacroStore>>,
+        params: Self::Params,
     ) -> Result<Self::Response> {
-        let macros_for_cu_components = workspace_macros
+        let Self::Params { workspace } = params;
+
+        let macros_for_cu_components = proc_macros
+            .lock()
+            .unwrap()
+            .get_workspace_macros(&workspace)
+            .with_context(|| format!("workspace {workspace:?} not found"))?
             .macros_for_components
             .iter()
             .flat_map(|(component, plugin)| {

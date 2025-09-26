@@ -1,4 +1,4 @@
-use crate::scope::CompilationUnitComponent;
+use crate::scope::{CompilationUnitComponent, Workspace};
 
 use super::Method;
 use serde::{Deserialize, Serialize};
@@ -49,8 +49,10 @@ pub struct DebugInfo {
 /// Parameters for the request to retrieve all defined macros.
 ///
 /// This is typically used as the initial query to understand which macros are supported.
-#[derive(Debug, Default, Serialize, Deserialize)]
-pub struct DefinedMacrosParams {}
+#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DefinedMacrosParams {
+    pub workspace: Workspace,
+}
 
 /// Represents a request to retrieve information on all macros defined and supported.
 ///
