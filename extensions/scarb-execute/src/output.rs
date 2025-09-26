@@ -1,11 +1,16 @@
 use anyhow::Context;
 use anyhow::Result;
+use cairo_annotations::trace_data::{
+    DeprecatedSyscallSelector, ExecutionResources as ProfilerExecutionResources, SyscallUsage,
+    VmExecutionResources,
+};
 use cairo_lang_runner::CairoHintProcessor;
 use cairo_vm::vm::errors::trace_errors::TraceError;
 use cairo_vm::vm::runners::cairo_runner::CairoRunner;
 use console::Style;
 use scarb_ui::Message;
 use serde::{Serialize, Serializer};
+use std::collections::HashMap;
 use thousands::Separable;
 
 #[derive(Serialize)]
@@ -63,7 +68,7 @@ impl Message for ExecutionOutput {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ExecutionResources {
     n_steps: usize,
     n_memory_holes: usize,
@@ -71,6 +76,38 @@ pub struct ExecutionResources {
     syscalls: Vec<(String, usize)>,
     memory_segment_sizes: Vec<(String, usize)>,
     max_memory_address: usize,
+}
+
+impl TryFrom<ExecutionResources> for ProfilerExecutionResources {
+    type Error = String;
+
+    fn try_from(res: ExecutionResources) -> Result<Self, Self::Error> {
+        let syscall_counter: Option<HashMap<DeprecatedSyscallSelector, SyscallUsage>> = {
+            let map = res
+                .syscalls
+                .into_iter()
+                .map(parse_syscall)
+                .collect::<Result<HashMap<_, _>, _>>()?;
+
+            if map.is_empty() { None } else { Some(map) }
+        };
+
+        let vm_resources = VmExecutionResources {
+            n_steps: res.n_steps,
+            n_memory_holes: res.n_memory_holes,
+            builtin_instance_counter: res.builtin_instance_counter.into_iter().collect(),
+        };
+
+        let gas_consumed = Some((res.n_steps * 100).try_into().map_err(|_| {
+            "Failed to convert usize to u64 while calculating gas_consumed".to_string()
+        })?);
+
+        Ok(ProfilerExecutionResources {
+            vm_resources,
+            gas_consumed,
+            syscall_counter,
+        })
+    }
 }
 
 impl ExecutionResources {
@@ -193,4 +230,20 @@ where
             .bold()
             .apply_to(value.separate_with_commas())
     )
+}
+
+fn parse_syscall(
+    (name, count): (String, usize),
+) -> Result<(DeprecatedSyscallSelector, SyscallUsage), String> {
+    name.parse::<DeprecatedSyscallSelector>()
+        .map_err(|_| format!("Unknown syscall: {name}"))
+        .map(|selector| {
+            (
+                selector,
+                SyscallUsage {
+                    call_count: count,
+                    linear_factor: 0,
+                },
+            )
+        })
 }
