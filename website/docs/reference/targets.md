@@ -74,7 +74,7 @@ See [proving and verifying execution](../extensions/prove-and-verify.md) page fo
 
 ### Configurable properties
 
-The executable target can define two custom properties: `allow-syscalls` and `function`.
+The executable target can define three custom properties: `allow-syscalls`, `sierra` and `function`.
 
 The `function` property is described in detail in the [compiling with multiple main functions section](#compiling-with-multiple-main-functions).
 
@@ -88,6 +88,14 @@ By default, this flag is set to `false`.
 ```toml
 [cairo]
 allow-syscalls = false
+```
+
+The `sierra` property is a boolean that enables additional compilation of the executable function to Sierra program artifact.
+By default, this flag is set to `false`.
+
+```toml
+[cairo]
+sierra = false
 ```
 
 ### Choosing the main function
