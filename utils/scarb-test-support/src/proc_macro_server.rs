@@ -7,8 +7,6 @@ use scarb_proc_macro_server_types::methods::Method;
 use scarb_proc_macro_server_types::methods::defined_macros::CompilationUnitComponentMacros;
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacros;
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacrosParams;
-use scarb_proc_macro_server_types::methods::discover_workspace::DiscoverWorkspace;
-use scarb_proc_macro_server_types::methods::discover_workspace::DiscoverWorkspaceParams;
 use scarb_proc_macro_server_types::scope::Workspace;
 use std::collections::HashMap;
 use std::io::BufRead;
@@ -220,11 +218,6 @@ impl ProcMacroClient {
         manifest_path: PathBuf,
     ) -> CompilationUnitComponentMacros {
         let workspace = Workspace { manifest_path };
-
-        self.request_and_wait::<DiscoverWorkspace>(DiscoverWorkspaceParams {
-            workspace: workspace.clone(),
-        })
-        .unwrap();
 
         let response = self
             .request_and_wait::<DefinedMacros>(DefinedMacrosParams {

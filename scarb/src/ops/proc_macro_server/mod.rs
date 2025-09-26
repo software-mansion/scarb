@@ -10,7 +10,6 @@ use methods::Handler;
 use scarb_proc_macro_server_types::jsonrpc::{ResponseError, RpcRequest, RpcResponse};
 use scarb_proc_macro_server_types::methods::Method;
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacros;
-use scarb_proc_macro_server_types::methods::discover_workspace::DiscoverWorkspace;
 use scarb_proc_macro_server_types::methods::expand::{ExpandAttribute, ExpandDerive, ExpandInline};
 use serde_json::Value;
 
@@ -90,7 +89,6 @@ fn route_request(
 ) -> Result<Value> {
     let value = request.value;
     match request.method.as_str() {
-        DiscoverWorkspace::METHOD => run_handler::<DiscoverWorkspace>(config, proc_macros, value),
         DefinedMacros::METHOD => run_handler::<DefinedMacros>(config, proc_macros, value),
         ExpandAttribute::METHOD => run_handler::<ExpandAttribute>(config, proc_macros, value),
         ExpandDerive::METHOD => run_handler::<ExpandDerive>(config, proc_macros, value),

@@ -7,7 +7,6 @@ use crate::core::Config;
 use crate::ops::store::ProcMacroStore;
 
 pub mod defined_macros;
-pub mod discover_workspace;
 pub mod expand_attribute;
 pub mod expand_derive;
 pub mod expand_inline;
