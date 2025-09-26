@@ -58,6 +58,7 @@ impl PluginsForComponents {
 // NOTE: Since this structure is used to handle JsonRPC requests, its keys have to be serialized to strings.
 //
 /// A container for Proc Macro Server to manage macros present in the analyzed workspace.
+#[derive(Default)]
 pub struct WorkspaceProcMacros {
     /// A mapping of the form: `cu_component (as a [`CompilationUnitComponent`]) -> plugin`.
     /// Contains IDs of all components of all compilation units from the workspace,
