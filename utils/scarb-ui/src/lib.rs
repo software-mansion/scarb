@@ -140,7 +140,7 @@ impl Ui {
 
     /// Print a warning to the user.
     pub fn warn(&self, message: impl AsRef<str>) {
-        if self.verbosity > Verbosity::NoWarnings {
+        if self.verbosity.should_print_warnings() {
             self.print(TypedMessage::styled("warn", "yellow", message.as_ref()))
         }
     }
