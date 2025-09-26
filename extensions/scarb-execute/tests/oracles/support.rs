@@ -1,7 +1,7 @@
 use assert_fs::TempDir;
 use camino::Utf8PathBuf;
 use derive_builder::Builder;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
@@ -43,12 +43,15 @@ impl CheckBuilder {
         self
     }
 
-    pub fn src_binary(mut self, path: impl Into<Utf8PathBuf>, content: impl Into<Vec<u8>>) -> Self {
+    pub fn asset(mut self, path: impl Into<Utf8PathBuf>, content: impl Into<Vec<u8>>) -> Self {
         let path = path.into();
         let content = content.into();
-        self.pb_ops
-            .get_or_insert_default()
-            .push(Box::new(move |t| t.src_binary(path, content)));
+        self.pb_ops.get_or_insert_default().push(Box::new(move |t| {
+            t.src_binary(&path, content)
+                .manifest_package_extra(formatdoc! {r#"
+                    assets = [{path:?}]
+                "#})
+        }));
         self
     }
 }

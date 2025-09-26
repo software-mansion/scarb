@@ -102,10 +102,28 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
             .clone()
             .map(|_| MaybeWorkspace::Defined(Utf8PathBuf::from(DEFAULT_README_FILE_NAME).into())),
         repository: metadata.repository.clone().map(MaybeWorkspace::Defined),
-        include: metadata.include.as_ref().map(|x| {
-            // Sort for stability.
-            x.iter().sorted().cloned().collect_vec()
-        }),
+        // Sort `include` and `assets` for stability. Ensure `include` contains all `assets`.
+        include: nullify_vec_if_empty(
+            metadata
+                .include
+                .iter()
+                .chain(&metadata.assets)
+                .flatten()
+                .sorted()
+                .dedup()
+                .cloned()
+                .collect(),
+        ),
+        assets: nullify_vec_if_empty(
+            metadata
+                .assets
+                .iter()
+                .flatten()
+                .sorted()
+                .dedup()
+                .cloned()
+                .collect(),
+        ),
         no_core: summary.no_core.then_some(true),
         cairo_version: metadata.cairo_version.clone().map(MaybeWorkspace::Defined),
         experimental_features: pkg.manifest.experimental_features.clone(),
@@ -208,4 +226,8 @@ fn generate_cairo_plugin(pkg: &Package) -> Option<TomlTarget<TomlCairoPluginTarg
 
 fn nullify_table_if_empty<K, V>(table: BTreeMap<K, V>) -> Option<BTreeMap<K, V>> {
     if table.is_empty() { None } else { Some(table) }
+}
+
+fn nullify_vec_if_empty<T>(vec: Vec<T>) -> Option<Vec<T>> {
+    if vec.is_empty() { None } else { Some(vec) }
 }
