@@ -10,6 +10,7 @@ use scarb_proc_macro_server_types::methods::expand::ExpandInline;
 use scarb_proc_macro_server_types::methods::expand::ExpandInlineMacroParams;
 use scarb_proc_macro_server_types::methods::{CodeMapping, CodeOrigin};
 use scarb_proc_macro_server_types::scope::ProcMacroScope;
+use scarb_proc_macro_server_types::scope::Workspace;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::proc_macro_server::{ProcMacroClient, SIMPLE_MACROS_V1, SIMPLE_MACROS_V2};
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -52,9 +53,14 @@ fn defined_macros() {
     let t = TempDir::new().unwrap();
     let project = setup_project_with_v1_and_v2_macro_deps(&t, None, None);
 
+    let mut manifest_path = project.clone();
+    manifest_path.push("test_package");
+    manifest_path.set_file_name("Scarb.toml");
+
     let mut proc_macro_client = ProcMacroClient::new(&project);
 
-    let defined_macros = proc_macro_client.defined_macros_for_package("test_package");
+    let defined_macros =
+        proc_macro_client.defined_macros_for_package("test_package", manifest_path);
 
     assert_eq!(
         &defined_macros.attributes,
@@ -105,11 +111,15 @@ fn expand_attribute() {
         Some(replace_12_with_34_v2),
     );
 
+    let mut manifest_path = project.clone();
+    manifest_path.push("test_package");
+    manifest_path.set_file_name("Scarb.toml");
+
     let mut proc_macro_client = ProcMacroClient::new(&project);
 
     for macro_name in ["replace_12_with_34_v1", "replace_12_with_34_v2"] {
         let component = proc_macro_client
-            .defined_macros_for_package("test_package")
+            .defined_macros_for_package("test_package", manifest_path.clone())
             .component;
 
         let code = "fn some_test_fn_12(){}".to_string();
@@ -119,6 +129,9 @@ fn expand_attribute() {
         let response = proc_macro_client
             .request_and_wait::<ExpandAttribute>(ExpandAttributeParams {
                 context: ProcMacroScope {
+                    workspace: Workspace {
+                        manifest_path: manifest_path.clone(),
+                    },
                     component: component.clone(),
                 },
                 attr: macro_name.to_string(),
@@ -160,10 +173,14 @@ fn expand_derive() {
     let t = TempDir::new().unwrap();
     let project = setup_project_with_v1_and_v2_macro_deps(&t, None, None);
 
+    let mut manifest_path = project.clone();
+    manifest_path.push("test_package");
+    manifest_path.set_file_name("Scarb.toml");
+
     let mut proc_macro_client = ProcMacroClient::new(&project);
 
     let component = proc_macro_client
-        .defined_macros_for_package("test_package")
+        .defined_macros_for_package("test_package", manifest_path.clone())
         .component;
 
     for macro_name in ["some_derive_v1", "some_derive_v2"] {
@@ -174,6 +191,9 @@ fn expand_derive() {
         let response = proc_macro_client
             .request_and_wait::<ExpandDerive>(ExpandDeriveParams {
                 context: ProcMacroScope {
+                    workspace: Workspace {
+                        manifest_path: manifest_path.clone(),
+                    },
                     component: component.clone(),
                 },
                 derives: vec![macro_name.to_string()],
@@ -247,10 +267,14 @@ fn expand_inline() {
         Some(replace_all_15_with_25_v2),
     );
 
+    let mut manifest_path = project.clone();
+    manifest_path.push("test_package");
+    manifest_path.set_file_name("Scarb.toml");
+
     let mut proc_macro_client = ProcMacroClient::new(&project);
 
     let component = proc_macro_client
-        .defined_macros_for_package("test_package")
+        .defined_macros_for_package("test_package", manifest_path.clone())
         .component;
 
     let args_code = "struct A { field: 15, other_field: macro_call!(12)}".to_string();
@@ -261,6 +285,9 @@ fn expand_inline() {
         let response = proc_macro_client
             .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
                 context: ProcMacroScope {
+                    workspace: Workspace {
+                        manifest_path: manifest_path.clone(),
+                    },
                     component: component.clone(),
                 },
                 name: macro_name.to_string(),

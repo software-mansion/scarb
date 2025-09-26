@@ -1,21 +1,24 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use anyhow::{Context, Result};
 use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
 use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandInline};
 
 use super::{Handler, interface_code_mapping_from_cairo};
+use crate::compiler::plugin::proc_macro::ExpansionKind;
 use crate::compiler::plugin::proc_macro::v2::generate_code_mappings;
 use crate::compiler::plugin::proc_macro::{
     DeclaredProcMacroInstances, ExpansionQuery, ProcMacroApiVersion, ProcMacroInstance,
 };
-use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro::ExpansionKind};
+use crate::core::Config;
+use crate::ops::store::ProcMacroStore;
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
 use scarb_proc_macro_server_types::conversions::{diagnostic_v1_to_v2, token_stream_v2_to_v1};
 
 impl Handler for ExpandInline {
     fn handle(
-        workspace_macros: Arc<WorkspaceProcMacros>,
+        _config: &Config,
+        proc_macros: Arc<Mutex<ProcMacroStore>>,
         params: Self::Params,
     ) -> Result<Self::Response> {
         let Self::Params {
@@ -26,7 +29,7 @@ impl Handler for ExpandInline {
         } = params;
 
         let expansion = ExpansionQuery::with_expansion_name(&name, ExpansionKind::Inline);
-        let plugins = workspace_macros.get(&context.component);
+        let plugins = proc_macros.lock().unwrap().get_plugins(&context);
         let proc_macro_instance = plugins
             .as_ref()
             .and_then(|v| {

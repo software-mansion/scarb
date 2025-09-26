@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use serde::{Deserialize, Serialize};
 
 /// Representation of the Scarb package.
@@ -32,9 +34,18 @@ impl CompilationUnitComponent {
     }
 }
 
+/// A Scarb workspace.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
+pub struct Workspace {
+    /// A path of the workspace's manifest.
+    pub manifest_path: PathBuf,
+}
+
 /// A description of the location in the workspace where particular macro is available.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct ProcMacroScope {
+    /// A Scarb workspace in which the action occurs.
+    pub workspace: Workspace,
     /// A [`CompilationUnitComponent`] in which context the action occurs.
     pub component: CompilationUnitComponent,
 }

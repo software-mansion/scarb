@@ -6,7 +6,7 @@ use cairo_lang_macro_v1::TokenStream;
 use indoc::indoc;
 use libloading::library_filename;
 use scarb_proc_macro_server_types::methods::expand::{ExpandInline, ExpandInlineMacroParams};
-use scarb_proc_macro_server_types::scope::ProcMacroScope;
+use scarb_proc_macro_server_types::scope::{ProcMacroScope, Workspace};
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::proc_macro_server::ProcMacroClient;
@@ -206,6 +206,10 @@ fn load_prebuilt_proc_macros() {
 
     let project = t.child("test_package");
 
+    let mut manifest_path = project.to_path_buf();
+    manifest_path.push("test_package");
+    manifest_path.set_file_name("Scarb.toml");
+
     ProjectBuilder::start()
         .name("test_package")
         .version("1.0.0")
@@ -220,7 +224,7 @@ fn load_prebuilt_proc_macros() {
     let mut proc_macro_client = ProcMacroClient::new_without_cargo(&project);
 
     let component = proc_macro_client
-        .defined_macros_for_package("test_package")
+        .defined_macros_for_package("test_package", manifest_path.clone())
         .component;
 
     let args_code = "42".to_string();
@@ -229,7 +233,10 @@ fn load_prebuilt_proc_macros() {
 
     let response = proc_macro_client
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
-            context: ProcMacroScope { component },
+            context: ProcMacroScope {
+                workspace: Workspace { manifest_path },
+                component,
+            },
             name: "some".to_string(),
             args,
             call_site: span,
