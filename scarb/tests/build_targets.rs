@@ -1879,3 +1879,49 @@ fn test_target_defaults_overrides_auto_detected_targets() {
             }),
         });
 }
+
+#[test]
+fn can_compile_executable_to_sierra() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("executable_test")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            name = "main"
+            function = "executable_test::main"
+            sierra = true
+
+            [[target.executable]]
+            name = "second"
+            function = "executable_test::second"
+            sierra = true
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+            #[executable]
+            fn second() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/main.executable.sierra.json")
+        .assert(predicates::str::is_empty().not());
+    t.child("target/dev/second.executable.sierra.json")
+        .assert(predicates::str::is_empty().not());
+}

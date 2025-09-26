@@ -1665,6 +1665,65 @@ fn executable_target_can_allow_syscalls() {
 }
 
 #[test]
+fn executable_target_can_compile_to_sierra() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("executable_test")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            name = "first"
+            sierra = true
+            function = "executable_test::first"
+
+            [[target.executable]]
+            name = "second"
+            sierra = true
+            function = "executable_test::second"
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn first() -> felt252 {
+                42
+            }
+            #[executable]
+            fn second() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let pkg = meta
+        .packages
+        .iter()
+        .find(|p| p.name == "executable_test")
+        .unwrap();
+    let targets = pkg
+        .targets
+        .iter()
+        .filter(|t| t.kind == "executable")
+        .collect::<Vec<_>>();
+    assert_eq!(targets.len(), 2);
+    for t in targets {
+        assert!(
+            t.params
+                .as_object()
+                .unwrap()
+                .get("sierra")
+                .unwrap()
+                .as_bool()
+                .unwrap(),
+        );
+    }
+}
+
+#[test]
 fn cairo_plugins_added_as_component_dependencies() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
