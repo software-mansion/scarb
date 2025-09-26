@@ -61,7 +61,7 @@ impl ProcMacroHostPlugin {
                     return None;
                 };
                 let ident = segment.ident(db);
-                let value = ident.text(db).to_string();
+                let value = ident.text(db).to_string(db);
                 self.find_expansion(&ExpansionQuery::with_cairo_name(
                     value,
                     ExpansionKind::Derive,

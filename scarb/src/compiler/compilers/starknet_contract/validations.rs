@@ -65,7 +65,7 @@ pub fn check_allowed_libfuncs<'db>(
             }) => {
                 found_disallowed = true;
 
-                let contract_name = decl.submodule_id.name(db);
+                let contract_name = decl.submodule_id.name(db).to_string(db);
                 let mut diagnostic = formatdoc! {r#"
                     libfunc `{invalid_libfunc}` is not allowed in the libfuncs list `{allowed_libfuncs_list_name}`
                      --> contract: {contract_name}
@@ -105,7 +105,7 @@ pub fn check_allowed_libfuncs<'db>(
                 return Err(e).with_context(|| {
                     format!(
                         "failed to check allowed libfuncs for contract: {contract_name}",
-                        contract_name = decl.submodule_id.name(db)
+                        contract_name = decl.submodule_id.name(db).to_string(db)
                     )
                 });
             }
