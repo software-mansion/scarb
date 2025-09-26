@@ -28,75 +28,78 @@ use crate::{
 ///
 /// This function returns a set to ensure entries are deduplicated.
 pub fn list_source_files(pkg: &Package) -> Result<HashSet<Utf8PathBuf>> {
-    let filter = {
-        let pkg = pkg.clone();
-        let readme = pkg.manifest.metadata.readme.clone().unwrap_or_default();
-        let license_file = pkg
-            .manifest
-            .metadata
-            .license_file
-            .clone()
-            .unwrap_or_default();
+    return inner(pkg).with_context(|| format!("failed to list source files in: {}", pkg.root()));
 
-        move |entry: &DirEntry| -> bool {
-            let path = entry.path();
-            let is_root = entry.depth() == 0;
+    fn inner(pkg: &Package) -> Result<HashSet<Utf8PathBuf>> {
+        let filter = {
+            let pkg = pkg.clone();
+            let readme = pkg.manifest.metadata.readme.clone().unwrap_or_default();
+            let license_file = pkg
+                .manifest
+                .metadata
+                .license_file
+                .clone()
+                .unwrap_or_default();
 
-            // Ignore symlinks pointing outside the package directory.
-            if path.strip_prefix(pkg.root()).is_err() {
-                return false;
-            };
+            move |entry: &DirEntry| -> bool {
+                let path = entry.path();
+                let is_root = entry.depth() == 0;
 
-            // Skip any subdirectories containing `Scarb.toml`.
-            if !is_root && path.join(MANIFEST_FILE_NAME).exists() {
-                return false;
+                // Ignore symlinks pointing outside the package directory.
+                if path.strip_prefix(pkg.root()).is_err() {
+                    return false;
+                };
+
+                // Skip any subdirectories containing `Scarb.toml`.
+                if !is_root && path.join(MANIFEST_FILE_NAME).exists() {
+                    return false;
+                }
+
+                // Skip `Scarb.toml`, `Scarb.lock`, 'Cargo.toml`, 'Cargo.lock', `cairo_project.toml`,
+                // and `target` directory.
+                if entry.depth() == 1
+                    && ({
+                        let f = entry.file_name();
+                        f == MANIFEST_FILE_NAME
+                            || f == LOCK_FILE_NAME
+                            || f == CARGO_MANIFEST_FILE_NAME
+                            || f == CARGO_LOCKFILE_FILE_NAME
+                            || f == DEFAULT_TARGET_DIR_NAME
+                            || f == CAIRO_PROJECT_FILE_NAME
+                    })
+                {
+                    return false;
+                }
+
+                // Skip README and LICENSE files
+                if path == readme || path == license_file {
+                    return false;
+                }
+
+                true
             }
-
-            // Skip `Scarb.toml`, `Scarb.lock`, 'Cargo.toml`, 'Cargo.lock', `cairo_project.toml`,
-            // and `target` directory.
-            if entry.depth() == 1
-                && ({
-                    let f = entry.file_name();
-                    f == MANIFEST_FILE_NAME
-                        || f == LOCK_FILE_NAME
-                        || f == CARGO_MANIFEST_FILE_NAME
-                        || f == CARGO_LOCKFILE_FILE_NAME
-                        || f == DEFAULT_TARGET_DIR_NAME
-                        || f == CAIRO_PROJECT_FILE_NAME
-                })
-            {
-                return false;
-            }
-
-            // Skip README and LICENSE files
-            if path == readme || path == license_file {
-                return false;
-            }
-
-            true
+        };
+        let mut builder = WalkBuilder::new(pkg.root());
+        for path in pkg.include()? {
+            builder.add(&path);
         }
-    };
-    let mut builder = WalkBuilder::new(pkg.root());
-    for path in pkg.include()? {
-        builder.add(&path);
+        builder
+            .follow_links(true)
+            .standard_filters(true)
+            .parents(false)
+            .require_git(true)
+            .same_file_system(true)
+            .add_custom_ignore_filename(SCARB_IGNORE_FILE_NAME)
+            .filter_entry(filter)
+            .build()
+            .try_fold(HashSet::new(), |mut set, entry| {
+                let entry = entry?;
+                if !is_dir(&entry) {
+                    set.insert(entry.into_path().try_into_utf8()?);
+                }
+                anyhow::Ok(set)
+            })
     }
-    builder
-        .follow_links(true)
-        .standard_filters(true)
-        .parents(false)
-        .require_git(true)
-        .same_file_system(true)
-        .add_custom_ignore_filename(SCARB_IGNORE_FILE_NAME)
-        .filter_entry(filter)
-        .build()
-        .try_fold(HashSet::new(), |mut set, entry| {
-            let entry = entry?;
-            if !is_dir(&entry) {
-                set.insert(entry.into_path().try_into_utf8()?);
-            }
-            anyhow::Ok(set)
-        })
-        .with_context(|| format!("failed to list source files in: {}", pkg.root()))
 }
 
 fn is_dir(entry: &DirEntry) -> bool {
