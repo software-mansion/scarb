@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use camino::Utf8PathBuf;
 use ignore::{DirEntry, WalkBuilder};
+use std::collections::HashSet;
 
 use crate::core::Package;
 use crate::internal::fsx::PathBufUtf8Ext;
@@ -17,20 +18,16 @@ use crate::{
 /// * Look for any `.scarbignore`, `.gitignore` or `.ignore`-like files, using the [`ignore`] crate.
 /// * Skip `.git` directory.
 /// * Skip any subdirectories containing `Scarb.toml`.
-/// * Skip `<root>/target` directory.
-/// * Skip `Scarb.lock` file.
+/// * Skip the `<root>/target` directory.
+/// * Skip the `Scarb.lock` file.
 /// * Skip README and LICENSE files.
-/// * **Skip `Scarb.toml` file, as users of this function may want to generate it themselves.**
+/// * Include files provided in `include` and `assets` fields in `Scarb.toml`.
+/// * **Skip the `Scarb.toml` file, as users of this function may want to generate it themselves.**
 /// * Symlinks within the package directory are followed, while symlinks outside are just skipped.
-/// * Avoid crossing file system boundaries, because it can complicate our lives.
-pub fn list_source_files(pkg: &Package) -> Result<Vec<Utf8PathBuf>> {
-    let mut ret = Vec::new();
-    push_worktree_files(pkg, &mut ret)
-        .with_context(|| format!("failed to list source files in: {}", pkg.root()))?;
-    Ok(ret)
-}
-
-fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> {
+/// * Avoid crossing file system boundaries because it can complicate our lives.
+///
+/// This function returns a set to ensure entries are deduplicated.
+pub fn list_source_files(pkg: &Package) -> Result<HashSet<Utf8PathBuf>> {
     let filter = {
         let pkg = pkg.clone();
         let readme = pkg.manifest.metadata.readme.clone().unwrap_or_default();
@@ -92,13 +89,14 @@ fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> 
         .add_custom_ignore_filename(SCARB_IGNORE_FILE_NAME)
         .filter_entry(filter)
         .build()
-        .try_for_each(|entry| {
+        .try_fold(HashSet::new(), |mut set, entry| {
             let entry = entry?;
             if !is_dir(&entry) {
-                ret.push(entry.into_path().try_into_utf8()?);
+                set.insert(entry.into_path().try_into_utf8()?);
             }
-            Ok(())
+            anyhow::Ok(set)
         })
+        .with_context(|| format!("failed to list source files in: {}", pkg.root()))
 }
 
 fn is_dir(entry: &DirEntry) -> bool {
