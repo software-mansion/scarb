@@ -1,5 +1,5 @@
-use crate::Protocol;
 use crate::connection::Connection;
+use crate::protocol::{ConnectCtx, Protocol};
 use anyhow::{Context, Result, ensure};
 use deno_task_shell::parser::{SequentialList, parse};
 use deno_task_shell::{ExecutableCommand, ShellCommand, ShellPipeReader, ShellState, pipe};
@@ -21,8 +21,8 @@ pub struct Shell;
 impl Protocol for Shell {
     const SCHEME: &'static str = "shell";
 
-    #[tracing::instrument]
-    fn connect(_command: &str) -> Result<Box<dyn Connection + 'static>> {
+    #[tracing::instrument(skip_all)]
+    fn connect(_command: &str, _ctx: ConnectCtx<'_>) -> Result<Box<dyn Connection + 'static>> {
         Ok(Box::new(ShellConnection::new()?))
     }
 }

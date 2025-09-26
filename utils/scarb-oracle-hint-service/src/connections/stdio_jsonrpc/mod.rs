@@ -1,5 +1,5 @@
 use crate::connection::Connection;
-use crate::protocol::Protocol;
+use crate::protocol::{ConnectCtx, Protocol};
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use serde::Serialize;
 use serde_json::Value::Null;
@@ -26,8 +26,8 @@ pub struct StdioJsonRpc {
 impl Protocol for StdioJsonRpc {
     const SCHEME: &'static str = "stdio";
 
-    #[tracing::instrument]
-    fn connect(command: &str) -> Result<Box<dyn Connection + 'static>> {
+    #[tracing::instrument(skip(_ctx))]
+    fn connect(command: &str, _ctx: ConnectCtx<'_>) -> Result<Box<dyn Connection + 'static>> {
         let command_words =
             shell_words::split(command).context("failed to parse oracle command")?;
         let (command, args) = command_words

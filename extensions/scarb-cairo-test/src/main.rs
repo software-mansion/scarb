@@ -7,17 +7,18 @@ use std::collections::HashSet;
 use std::{env, fs};
 
 use crate::hint_processor::TestHintProcessor;
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, ensure};
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_test_plugin::{TestCompilation, TestCompilationMetadata};
 use cairo_lang_test_runner::{CompiledTestRunner, TestRunConfig};
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use indoc::formatdoc;
 use scarb_extensions_cli::cairo_test::Args;
 use scarb_metadata::{
     Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
 };
+use scarb_oracle_hint_service::OracleHintService;
 use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::{NewLine, Status};
 use scarb_ui::{OutputFormat, Ui};
@@ -93,7 +94,8 @@ fn main() -> Result<()> {
                 ui.print(NewLine::new());
             }
             first = false;
-            let test_compilation = deserialize_test_compilation(&target_dir, name.clone())?;
+            let test_compilation_path = find_test_compilation_path(&target_dir, name.clone())?;
+            let test_compilation = deserialize_test_compilation(&test_compilation_path)?;
             let config = TestRunConfig {
                 filter: args.filter.clone(),
                 include_ignored: args.include_ignored,
@@ -109,7 +111,9 @@ fn main() -> Result<()> {
                     Box::new(TestHintProcessor {
                         cairo_hint_processor,
                         oracle_experiment_enabled,
-                        oracle_hint_service: Default::default(),
+                        oracle_hint_service: OracleHintService::new(Some(
+                            test_compilation_path.as_std_path(),
+                        )),
                     })
                 }
             });
@@ -120,23 +124,34 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn deserialize_test_compilation(
-    target_dir: &Utf8PathBuf,
-    name: String,
-) -> Result<TestCompilation<'_>> {
-    let file_path = target_dir.join(format!("{name}.test.json"));
+fn find_test_compilation_path(target_dir: &Utf8PathBuf, filename: String) -> Result<Utf8PathBuf> {
+    let file_path = target_dir.join(format!("{filename}.test.json"));
+    ensure!(
+        file_path.exists(),
+        formatdoc! {r#"
+            package has not been compiled, file does not exist: `{filename}`
+            help: run `scarb build` to compile the package
+        "#}
+    );
+    Ok(file_path)
+}
+
+fn deserialize_test_compilation<'a>(file_path: &Utf8Path) -> Result<TestCompilation<'a>> {
     let test_comp_metadata = serde_json::from_str::<TestCompilationMetadata>(
-        &fs::read_to_string(file_path.clone())
+        &fs::read_to_string(file_path)
             .with_context(|| format!("failed to read file: {file_path}"))?,
     )
     .with_context(|| format!("failed to deserialize compiled tests metadata file: {file_path}"))?;
 
-    let file_path = target_dir.join(format!("{name}.test.sierra.json"));
+    let sierra_file_path =
+        file_path.with_file_name(format!("{}.sierra.json", file_path.file_stem().unwrap()));
     let sierra_program = serde_json::from_str::<VersionedProgram>(
-        &fs::read_to_string(file_path.clone())
-            .with_context(|| format!("failed to read file: {file_path}"))?,
+        &fs::read_to_string(&sierra_file_path)
+            .with_context(|| format!("failed to read file: {sierra_file_path}"))?,
     )
-    .with_context(|| format!("failed to deserialize compiled tests sierra file: {file_path}"))?;
+    .with_context(|| {
+        format!("failed to deserialize compiled tests sierra file: {sierra_file_path}")
+    })?;
 
     Ok(TestCompilation {
         sierra_program: sierra_program.into_v1()?,
