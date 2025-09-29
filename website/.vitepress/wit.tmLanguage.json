@@ -1,9 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "WIT",
-  "fileTypes": [
-    "wit"
-  ],
+  "fileTypes": ["wit"],
   "uuid": "73554272-ff1a-4515-879e-39a6dcec955d",
   "foldingStartMarker": "(\\{|\\[)\\s*",
   "foldingStopMarker": "\\s*(\\}|\\])",
