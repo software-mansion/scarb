@@ -91,7 +91,7 @@ crate-type = ["cdylib"] # [!code highlight]
 wit-bindgen = "*" # [!code highlight]
 ```
 
-```txt [wit/oracle.wit]
+```wit [wit/oracle.wit]
 // The exact value here does not really matter, but it is conventional
 // to use the Scarb package name as the namespace.
 package mypkg:oracle;

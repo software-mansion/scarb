@@ -231,7 +231,7 @@ export default withMermaid(
     },
 
     markdown: {
-      languages: [syntaxes.cairo],
+      languages: [syntaxes.cairo, syntaxes.wit],
     },
   }),
 );
