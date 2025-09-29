@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicU64, Ordering};
+
 wit_bindgen::generate!({
     inline: r#"
         package testing:oracle;
@@ -6,6 +8,7 @@ wit_bindgen::generate!({
             export add: func(left: u64, right: u64) -> u64;
             export join: func(a: string, b: string) -> string;
             export io: func();
+            export count: func() -> u64;
         }
     "#
 });
@@ -22,6 +25,10 @@ impl Guest for MyOracle {
     fn io() {
         println!("stdout is working as expected");
         eprintln!("stderr is working as expected");
+    }
+    fn count() -> u64 {
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        COUNTER.fetch_add(1, Ordering::Relaxed)
     }
 }
 
