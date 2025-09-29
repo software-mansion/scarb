@@ -1746,6 +1746,39 @@ fn can_include_additional_files() {
 }
 
 #[test]
+fn assets_are_packaged() {
+    let t = TempDir::new().unwrap();
+
+    t.child("data.txt").write_str("asset content").unwrap();
+    t.child("some/file.txt").write_str("asset content").unwrap();
+
+    ProjectBuilder::start()
+        .name("assets")
+        .version("0.1.0")
+        .manifest_package_extra(r#"assets = ["data.txt", "some/file.txt"]"#)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--no-metadata")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    PackageChecker::assert(&t.child("target/package/assets-0.1.0.tar.zst"))
+        .name_and_version("assets", "0.1.0")
+        .contents(&[
+            "VERSION",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+            "src/lib.cairo",
+            "data.txt",
+            "some/file.txt",
+        ])
+        .file_eq_path("data.txt", t.child("data.txt"));
+}
+
+#[test]
 fn files_outside_package_cannot_be_included() {
     let t = TempDir::new().unwrap();
     let pkg = t.child("pkg");
