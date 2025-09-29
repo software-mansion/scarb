@@ -53,3 +53,6 @@ In the oracle repository, you can find ready-to-use SDKs that ease writing oracl
 <BigLink href="https://github.com/software-mansion/cairo-oracle/tree/main/sdk">
   Go to oracle SDKs
 </BigLink>
+
+Some oracles may depend on external files. Use the [`assets`](../../reference/manifest.md#assets) field to include them
+in the build.
