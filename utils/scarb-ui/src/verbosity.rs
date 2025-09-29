@@ -53,6 +53,11 @@ impl Verbosity {
     pub fn is_default(&self) -> bool {
         *self == Verbosity::default()
     }
+
+    /// Whether Scarb ui with this verbosity will print warnings.
+    pub fn should_print_warnings(&self) -> bool {
+        *self > Verbosity::NoWarnings
+    }
 }
 
 #[cfg(test)]
