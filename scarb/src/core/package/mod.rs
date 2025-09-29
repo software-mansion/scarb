@@ -110,22 +110,18 @@ impl Package {
 
     pub fn include(&self) -> Result<Vec<Utf8PathBuf>> {
         self.manifest
-            .as_ref()
             .metadata
             .include
-            .as_ref()
-            .map(|include| {
-                include
-                    .iter()
-                    .map(|path| {
-                        let path = self.root().join(path);
-                        let path = fsx::canonicalize_utf8(&path)
-                            .with_context(|| format!("failed to find included file at {path}"))?;
-                        Ok(path)
-                    })
-                    .collect::<Result<Vec<_>>>()
-            })
-            .unwrap_or_else(|| Ok(Vec::new()))
+            .iter()
+            .flatten()
+            .map(|p| self.canonicalize_file_ref(p, "included"))
+            .collect()
+    }
+
+    fn canonicalize_file_ref(&self, file_path: &Utf8Path, what: &str) -> Result<Utf8PathBuf> {
+        let path = self.root().join(file_path);
+        fsx::canonicalize_utf8(&path)
+            .with_context(|| format!("failed to find {what} file at {path}"))
     }
 
     pub fn fetch_tool_metadata(&self, tool_name: &str) -> Result<&toml::Value> {
