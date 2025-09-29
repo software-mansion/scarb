@@ -135,14 +135,14 @@ At build time:
 - If two assets result in the same file name (either within a single package or across multiple packages in the
   compilation unit), the build fails with an error.
 
-At packaging time, `scarb package` automatically includes all assets in the package archive even if they are not listed 
+At packaging time, `scarb package` automatically includes all assets in the package archive even if they are not listed
 in [`include`](#include).
 
 > [!IMPORTANT]
 > To avoid name collisions when assets are flattened into the target directory, it is recommended to prefix asset file
 > names with the package name (for example, `mypkg-oracle.wasm` or `mypkg.dat`).
 
-Logically, `assets` is a subset of `include`. The `assets` field is separate from `include` to avoid pulling unrelated 
+Logically, `assets` is a subset of `include`. The `assets` field is separate from `include` to avoid pulling unrelated
 files (like readmes or licenses) into the runtime asset set.
 
 ```toml
