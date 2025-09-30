@@ -160,3 +160,27 @@ fn trap() {
         "#})
         .check();
 }
+
+#[test]
+fn out_of_tree_asset() {
+    CheckBuilder::default()
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() {{
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "wasm:foo/../../exploit.wasm";
+                connection_string.serialize(ref inputs);
+                'exploit'.serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<()>(result);
+            }}
+        "#})
+        .stdout_matches(indoc! {r#"
+            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing oracle_test
+            Result::Err("invalid asset path `foo/../../exploit.wasm`: parent reference `..` points outside of base directory")
+            Saving output to: target/execute/oracle_test/execution1
+        "#})
+        .check();
+}
