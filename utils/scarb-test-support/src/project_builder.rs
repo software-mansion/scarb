@@ -148,12 +148,6 @@ impl ProjectBuilder {
         self
     }
 
-    pub fn cp_test_oracle(self, path: impl Into<Utf8PathBuf>) -> Self {
-        let path = path.into();
-        self.cp(resource("src/test_oracle.py"), &path)
-            .make_executable(path)
-    }
-
     pub fn render_manifest(&self) -> String {
         let mut doc = DocumentMut::new();
         doc["package"] = toml_edit::table();

@@ -46,20 +46,19 @@ fn oracle() {
         .dep_builtin("assert_macros")
         .dep_starknet()
         .dep_oracle_asserts()
-        .cp_test_oracle("test_oracle.py")
         .lib_cairo(indoc! {r#"
             #[test]
             fn it_works() {
-                let connection_string: ByteArray = "stdio:python3 ./test_oracle.py";
-
                 let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "shell:";
                 connection_string.serialize(ref inputs);
-                'sqrt'.serialize(ref inputs);
-                (16).serialize(ref inputs);
-                let result = oracle_asserts::deserialize::<felt252>(
+                'exec'.serialize(ref inputs);
+                let command: ByteArray = "echo hello";
+                command.serialize(ref inputs);
+                let result = oracle_asserts::deserialize::<(i32, ByteArray)>(
                     starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span())
                 );
-                assert_eq!(result, Ok(4));
+                assert_eq!(result, Ok((0, "hello\n")));
             }
         "#})
         .build(&t);
