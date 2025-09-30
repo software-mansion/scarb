@@ -16,6 +16,7 @@ camino.workspace = true
 clap.workspace = true
 data-encoding.workspace = true
 dunce.workspace = true
+fs_extra.workspace = true
 hyper = "0.14"
 indoc.workspace = true
 itertools.workspace = true

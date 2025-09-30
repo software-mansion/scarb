@@ -1,5 +1,7 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
+use fs_extra::dir::{CopyOptions, copy};
+use indoc::indoc;
 use serde::de::DeserializeOwned;
 use snapbox::cmd::Command as SnapboxCommand;
 use std::ffi::OsString;
@@ -14,39 +16,36 @@ use crate::cargo::cargo_bin;
 /// Pre-warmed cache directory for test optimization.
 /// This static holds a compiled scarb cache with the core library already compiled.
 /// When tests run, they copy from this pre-warmed cache instead of recompiling core every time.
-static PREWARMED_CACHE: LazyLock<(PathBuf, TempDir)> = LazyLock::new(|| {
+static PREWARMED_CACHE: LazyLock<Option<(PathBuf, TempDir)>> = LazyLock::new(|| {
     use assert_fs::fixture::PathChild;
     
     // Create a temporary directory that will live for the entire test run
-    let temp_dir = TempDir::new().expect("Failed to create temp dir for cache warmup");
+    let temp_dir = TempDir::new().ok()?;
     
     // Create a basic project with a unique name
     let project_dir = temp_dir.child("this_is_a_cache_warmup");
-    project_dir.create_dir_all().expect("Failed to create project dir");
+    project_dir.create_dir_all().ok()?;
     
     // Create Scarb.toml
-    let manifest = r#"[package]
-name = "this_is_a_cache_warmup"
-version = "1.0.0"
-edition = "2024_07"
-
-[dependencies]
-"#;
     project_dir.child("Scarb.toml")
-        .write_str(manifest)
-        .expect("Failed to write Scarb.toml");
+        .write_str(indoc! {r#"
+            [package]
+            name = "this_is_a_cache_warmup"
+            version = "1.0.0"
+            edition = "2024_07"
+
+            [dependencies]
+        "#})
+        .ok()?;
     
     // Create lib.cairo
-    project_dir.child("src")
-        .create_dir_all()
-        .expect("Failed to create src dir");
     project_dir.child("src/lib.cairo")
         .write_str("fn warmup() -> felt252 { 42 }")
-        .expect("Failed to write lib.cairo");
+        .ok()?;
     
     // Create cache directory
     let cache_dir = temp_dir.child("cache");
-    cache_dir.create_dir_all().expect("Failed to create cache dir");
+    cache_dir.create_dir_all().ok()?;
     
     // Compile the project to warm up the cache
     let scarb_bin = cargo_bin("scarb");
@@ -56,39 +55,18 @@ edition = "2024_07"
         .env("SCARB_CACHE", cache_dir.path())
         .env("SCARB_LOG", "scarb=warn")  // Reduce noise during warmup
         .output()
-        .expect("Failed to run scarb build for cache warmup");
+        .ok()?;
     
     if !output.status.success() {
-        eprintln!("Cache warmup build failed:");
+        eprintln!("WARN: cache warmup build failed");
         eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
         eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-        panic!("Failed to warm up cache");
+        return None;
     }
     
     // Return cache path and keep temp_dir alive
-    (cache_dir.to_path_buf(), temp_dir)
+    Some((cache_dir.to_path_buf(), temp_dir))
 });
-
-/// Copy directory contents recursively
-fn copy_dir_contents(src: &Path, dst: &Path) -> std::io::Result<()> {
-    if !dst.exists() {
-        fs::create_dir_all(dst)?;
-    }
-    
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let file_type = entry.file_type()?;
-        let dst_path = dst.join(entry.file_name());
-        
-        if file_type.is_dir() {
-            copy_dir_contents(&entry.path(), &dst_path)?;
-        } else {
-            fs::copy(entry.path(), &dst_path)?;
-        }
-    }
-    
-    Ok(())
-}
 
 
 pub struct Scarb {
@@ -190,11 +168,16 @@ impl EnvPath {
     fn temp_cache_dir() -> Self {
         let temp_dir = TempDir::new().unwrap();
         
-        // Copy pre-warmed cache contents to the new temp directory
-        let (prewarmed_cache, _) = &*PREWARMED_CACHE;
-        if let Err(e) = copy_dir_contents(prewarmed_cache, temp_dir.path()) {
-            eprintln!("Warning: Failed to copy pre-warmed cache: {}", e);
-            // Continue anyway - the test will just recompile core
+        // Copy pre-warmed cache contents to the new temp directory if available
+        if let Some((prewarmed_cache, _)) = &*PREWARMED_CACHE {
+            let mut options = CopyOptions::new();
+            options.content_only = true;
+            options.overwrite = true;
+            
+            if let Err(e) = copy(prewarmed_cache, temp_dir.path(), &options) {
+                eprintln!("WARN: failed to copy pre-warmed cache: {e}");
+                // Continue anyway - the test will just recompile core
+            }
         }
         
         Self::Managed(temp_dir)
@@ -243,17 +226,6 @@ pub trait ScarbSnapboxExt {
 
 impl ScarbSnapboxExt for SnapboxCommand {
     fn scarb_cache(self, path: impl AsRef<Path>) -> SnapboxCommand {
-        let cache_path = path.as_ref();
-        
-        // Pre-populate the cache directory with warmed cache if it doesn't exist
-        if !cache_path.exists() {
-            let (prewarmed_cache, _) = &*PREWARMED_CACHE;
-            if let Err(e) = copy_dir_contents(prewarmed_cache, cache_path) {
-                eprintln!("Warning: Failed to copy pre-warmed cache to {}: {}", cache_path.display(), e);
-                // Continue anyway - the test will just recompile core
-            }
-        }
-        
-        self.env("SCARB_CACHE", cache_path)
+        self.env("SCARB_CACHE", path.as_ref())
     }
 }

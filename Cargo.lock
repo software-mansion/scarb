@@ -7344,6 +7344,7 @@ dependencies = [
  "data-encoding",
  "dunce",
  "expect-test",
+ "fs_extra",
  "hyper 0.14.32",
  "indoc",
  "itertools 0.14.0",
