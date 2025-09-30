@@ -19,6 +19,8 @@ jobs:
   build-test:
     name: build test ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
+    # Skip Windows tests on pull requests and merge queue
+    if: matrix.platform.os != 'windows-latest' || github.event_name == 'push'
     strategy:
       fail-fast: false
       matrix:
@@ -44,6 +46,8 @@ jobs:
   test:
     name: test ${{ matrix.platform.name }} ${{ matrix.partition }}/4
     runs-on: ${{ matrix.platform.os }}
+    # Skip Windows tests on pull requests and merge queue
+    if: matrix.platform.os != 'windows-latest' || github.event_name == 'push'
     needs:
       - build-test
     strategy:
@@ -162,6 +166,8 @@ jobs:
   test-cairo-lang-macro:
     name: test cairo-lang-macro ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
+    # Skip Windows tests on pull requests and merge queue
+    if: matrix.platform.os != 'windows-latest' || github.event_name == 'push'
     strategy:
       fail-fast: false
       matrix:
