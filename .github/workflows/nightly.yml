@@ -71,7 +71,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ !!inputs.is_dev }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ !inputs.is_dev }}
 
 permissions:
   contents: write
