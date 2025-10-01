@@ -236,8 +236,6 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '18.x'
-          cache: npm
-          cache-dependency-path: website/package-lock.json
       - run: npm ci
       - run: npm run fmt:check
       - run: npm run build
