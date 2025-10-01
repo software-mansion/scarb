@@ -15,7 +15,8 @@ fn wasip2() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:wasip2.wasm";
                 connection_string.serialize(ref inputs);
-                'add'.serialize(ref inputs);
+                let selector: ByteArray = "add";
+                selector.serialize(ref inputs);
                 (1_u64).serialize(ref inputs);
                 (2_u64).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
@@ -24,7 +25,8 @@ fn wasip2() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:wasip2.wasm";
                 connection_string.serialize(ref inputs);
-                'join'.serialize(ref inputs);
+                let selector: ByteArray = "join";
+                selector.serialize(ref inputs);
                 let a: ByteArray = "foo";
                 a.serialize(ref inputs);
                 let b: ByteArray = "bar";
@@ -35,14 +37,16 @@ fn wasip2() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:wasip2.wasm";
                 connection_string.serialize(ref inputs);
-                'io'.serialize(ref inputs);
+                let selector: ByteArray = "io";
+                selector.serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<()>(result);
 
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:wasip2.wasm";
                 connection_string.serialize(ref inputs);
-                'count'.serialize(ref inputs);
+                let selector: ByteArray = "count";
+                selector.serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<u64>(result);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
@@ -75,7 +79,8 @@ fn naked() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:naked.wasm";
                 connection_string.serialize(ref inputs);
-                'add'.serialize(ref inputs);
+                let selector: ByteArray = "add";
+                selector.serialize(ref inputs);
                 (1_i64).serialize(ref inputs);
                 (2_i64).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
@@ -84,7 +89,8 @@ fn naked() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:naked.wasm";
                 connection_string.serialize(ref inputs);
-                'naked:adder/add@0.1.0/add'.serialize(ref inputs);
+                let selector: ByteArray = "naked:adder/add@0.1.0/add";
+                selector.serialize(ref inputs);
                 (1_i64).serialize(ref inputs);
                 (2_i64).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
@@ -93,7 +99,8 @@ fn naked() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:naked.wasm";
                 connection_string.serialize(ref inputs);
-                'adda'.serialize(ref inputs);
+                let selector: ByteArray = "adda";
+                selector.serialize(ref inputs);
                 (1_i64).serialize(ref inputs);
                 (2_i64).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
@@ -102,7 +109,8 @@ fn naked() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:naked.wasm";
                 connection_string.serialize(ref inputs);
-                'f'.serialize(ref inputs);
+                let selector: ByteArray = "f";
+                selector.serialize(ref inputs);
                 (1_i32).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<i32>(result);
@@ -110,7 +118,8 @@ fn naked() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:naked.wasm";
                 connection_string.serialize(ref inputs);
-                'naked:adder/add@0.1.0/f'.serialize(ref inputs);
+                let selector: ByteArray = "naked:adder/add@0.1.0/f";
+                selector.serialize(ref inputs);
                 (1_i32).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<i32>(result);
@@ -118,7 +127,8 @@ fn naked() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:naked.wasm";
                 connection_string.serialize(ref inputs);
-                'naked:adder/ambiguous@0.1.0/f'.serialize(ref inputs);
+                let selector: ByteArray = "naked:adder/ambiguous@0.1.0/f";
+                selector.serialize(ref inputs);
                 (1_i32).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<i32>(result);
@@ -151,7 +161,8 @@ fn trap() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:trap.wasm";
                 connection_string.serialize(ref inputs);
-                'trap'.serialize(ref inputs);
+                let selector: ByteArray = "trap";
+                selector.serialize(ref inputs);
                 array![true, false].serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<u64>(result);

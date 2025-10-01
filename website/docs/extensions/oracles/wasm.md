@@ -19,16 +19,16 @@ It can be either a binary `.wasm` or textual `.wat` file.
 
 ```cairo
 // Call an `add` function exported by the component.
-let res = oracle::invoke("wasm:mypkg-oracle.wasm", 'add', (1_u64, 2_u64));
+let res = oracle::invoke("wasm:mypkg-oracle.wasm", "add", (1_u64, 2_u64));
 
 // Call `join` that takes/returns ByteArray.
-let res = oracle::invoke("wasm:mypkg-oracle.wasm", 'join', ("foo", "bar"));
+let res = oracle::invoke("wasm:mypkg-oracle.wasm", "join", ("foo", "bar"));
 
 // Call using a fully‑qualified export name.
 // This is useful when there are ambiguities.
 let res = oracle::invoke(
     "wasm:mypkg-oracle.wasm",
-    'naked:adder/add@0.1.0/add',
+    "naked:adder/add@0.1.0/add",
     (1_i64, 2_i64)
 );
 ```
@@ -132,7 +132,7 @@ Then, you can wrap it in a Cairo package:
 ```cairo
 let result: u64 = oracle::invoke(
     "wasm:my-oracle.wasm",  // Resolved from assets.
-    'add',
+    "add",
     (1_u64, 2_u64)
 );
 assert_eq!(result, 3_u64);

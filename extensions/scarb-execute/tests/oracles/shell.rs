@@ -9,7 +9,8 @@ fn check(command: &str, expected_output: &str) {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "shell:";
                 connection_string.serialize(ref inputs);
-                'exec'.serialize(ref inputs);
+                let selector: ByteArray = "exec";
+                selector.serialize(ref inputs);
                 let command: ByteArray = "{command}";
                 command.serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());

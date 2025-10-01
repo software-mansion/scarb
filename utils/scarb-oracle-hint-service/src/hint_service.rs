@@ -2,10 +2,9 @@ use crate::assets::Assets;
 use crate::connection::Connections;
 use crate::connections::builtin_protocols;
 use crate::protocol::{ConnectCtx, Protocol, Protocols};
-use anyhow::Context;
+use anyhow::{Context, Result};
 use starknet_core::codec::{Decode, Encode};
 use starknet_core::types::{ByteArray, Felt};
-use starknet_core::utils::parse_cairo_short_string;
 use std::path::Path;
 
 #[derive(Debug)]
@@ -98,15 +97,14 @@ impl OracleHintService {
     }
 
     fn execute_invoke(&mut self, inputs: &[Felt]) -> Vec<Felt> {
-        let mut invoke = move || -> anyhow::Result<Vec<Felt>> {
+        let mut invoke = move || -> Result<Vec<Felt>> {
             let mut inputs_iter = inputs.iter();
 
-            let connection_string: String = ByteArray::decode_iter(&mut inputs_iter)?.try_into()?;
+            let mut next_string =
+                || -> Result<String> { Ok(ByteArray::decode_iter(&mut inputs_iter)?.try_into()?) };
 
-            let selector = Felt::decode_iter(&mut inputs_iter)?;
-            let selector = parse_cairo_short_string(&selector)
-                .with_context(|| format!("invalid selector: {selector}"))?;
-
+            let connection_string = next_string().context("malformed connection string")?;
+            let selector = next_string().context("malformed selector")?;
             let calldata = inputs_iter.as_slice();
 
             let ctx = ConnectCtx {
@@ -120,7 +118,7 @@ impl OracleHintService {
 
         // Encode the result as Result<[felt252; N], ByteArray>. The oracle package interprets this
         // as Result<T, oracle::Error>, where T is user-defined, and oracle::Error has an implicit
-        // invariant that it can always deserialise from encoded byte arrays.
+        // invariant that it can always deserialize from encoded byte arrays.
         match invoke() {
             Ok(mut result) => {
                 result.insert(0, Felt::ZERO);

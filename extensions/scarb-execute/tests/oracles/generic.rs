@@ -36,7 +36,8 @@ fn unknown_scheme() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "unknown:///test";
                 connection_string.serialize(ref inputs);
-                'foo'.serialize(ref inputs);
+                let selector: ByteArray = "foo";
+                selector.serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<ByteArray>(result);
             }
@@ -61,7 +62,8 @@ fn no_scheme() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "no scheme";
                 connection_string.serialize(ref inputs);
-                'foo'.serialize(ref inputs);
+                let selector: ByteArray = "foo";
+                selector.serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<ByteArray>(result);
             }

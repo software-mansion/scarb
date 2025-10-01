@@ -52,7 +52,8 @@ fn oracle() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "shell:";
                 connection_string.serialize(ref inputs);
-                'exec'.serialize(ref inputs);
+                let selector: ByteArray = "exec";
+                selector.serialize(ref inputs);
                 let command: ByteArray = "echo hello";
                 command.serialize(ref inputs);
                 let result = oracle_asserts::deserialize::<(i32, ByteArray)>(
