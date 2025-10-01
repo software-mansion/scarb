@@ -72,8 +72,7 @@ impl Check {
             // NOTE: We use this just to access `cheatcode` libfunc.
             .dep_starknet()
             .dep_oracle_asserts()
-            .lib_cairo(self.lib_cairo)
-            .cp_test_oracle("test_oracle.py");
+            .lib_cairo(self.lib_cairo);
 
         for op in self.pb_ops {
             pb = op(pb);

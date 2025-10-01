@@ -58,7 +58,6 @@ const sidebar = {
             p("Overview", "/docs/extensions/oracles/overview"),
             p("shell protocol", "/docs/extensions/oracles/shell"),
             p("wasm protocol", "/docs/extensions/oracles/wasm"),
-            p("stdio protocol", "/docs/extensions/oracles/stdio"),
           ],
         },
       ],
