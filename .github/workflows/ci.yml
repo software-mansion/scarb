@@ -22,8 +22,8 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - id: set-matrix
+        shell: python
         run: |
-          python3 << 'EOF'
           import json
           import os
           
@@ -49,7 +49,6 @@ jobs:
           # Output the matrix as JSON
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"matrix={json.dumps(matrix)}\n")
-          EOF
 
   build-test:
     name: build test ${{ matrix.platform.name }}
