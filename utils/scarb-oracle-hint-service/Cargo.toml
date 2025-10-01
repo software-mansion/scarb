@@ -19,9 +19,6 @@ tracing.workspace = true
 
 # Dependencies used only by the builtin protocols are optional and enabled by corresponding features.
 deno_task_shell = { workspace = true, optional = true }
-serde = { workspace = true, optional = true }
-serde_json = { workspace = true, optional = true }
-shell-words = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 wasmtime = { workspace = true, optional = true }
 wasmtime-wasi = { workspace = true, optional = true }
