@@ -75,7 +75,7 @@ fn naked() {
     CheckBuilder::default()
         .lib_cairo(indoc! {r#"
             #[executable]
-            fn main() {{
+            fn main() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:naked.wasm";
                 connection_string.serialize(ref inputs);
@@ -132,7 +132,7 @@ fn naked() {
                 (1_i32).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<i32>(result);
-            }}
+            }
         "#})
         .asset("naked.wasm", include_bytes!("naked.wasm"))
         .stdout_matches(indoc! {r#"
@@ -157,7 +157,7 @@ fn trap() {
     CheckBuilder::default()
         .lib_cairo(indoc! {r#"
             #[executable]
-            fn main() {{
+            fn main() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:trap.wasm";
                 connection_string.serialize(ref inputs);
@@ -166,7 +166,7 @@ fn trap() {
                 array![true, false].serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<u64>(result);
-            }}
+            }
         "#})
         .asset("trap.wasm", include_bytes!("trap.wasm"))
         .stdout_matches(indoc! {r#"
@@ -188,14 +188,15 @@ fn out_of_tree_asset() {
     CheckBuilder::default()
         .lib_cairo(indoc! {r#"
             #[executable]
-            fn main() {{
+            fn main() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "wasm:foo/../../exploit.wasm";
                 connection_string.serialize(ref inputs);
-                'exploit'.serialize(ref inputs);
+                let selector: ByteArray = "exploit";
+                selector.serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<()>(result);
-            }}
+            }
         "#})
         .stdout_matches(indoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
