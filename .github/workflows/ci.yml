@@ -16,17 +16,47 @@ env:
   RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-02-13"
 
 jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        shell: python
+        run: |
+          import json
+          import os
+          
+          event_name = "${{ github.event_name }}"
+          ref = "${{ github.ref }}"
+          
+          # Build matrix with platforms
+          matrix = {"platform": []}
+          
+          # Always include Linux
+          matrix["platform"].append({
+              "name": "linux x86-64",
+              "os": "ubuntu-latest"
+          })
+          
+          # Include Windows only for pushes to main branch
+          if event_name == "push" and ref == "refs/heads/main":
+              matrix["platform"].append({
+                  "name": "windows x86-64",
+                  "os": "windows-latest"
+              })
+          
+          # Output the matrix as JSON
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"matrix={json.dumps(matrix)}\n")
+
   build-test:
     name: build test ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
+    needs: setup-matrix
     strategy:
       fail-fast: false
-      matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-          - name: windows x86-64
-            os: windows-latest
+      matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
@@ -45,15 +75,12 @@ jobs:
     name: test ${{ matrix.platform.name }} ${{ matrix.partition }}/4
     runs-on: ${{ matrix.platform.os }}
     needs:
+      - setup-matrix
       - build-test
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-          - name: windows x86-64
-            os: windows-latest
+        platform: ${{ fromJSON(needs.setup-matrix.outputs.matrix).platform }}
         partition: [ 1, 2, 3, 4 ]
     steps:
       - uses: actions/checkout@v5
@@ -162,14 +189,10 @@ jobs:
   test-cairo-lang-macro:
     name: test cairo-lang-macro ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
+    needs: setup-matrix
     strategy:
       fail-fast: false
-      matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-          - name: windows x86-64
-            os: windows-latest
+      matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
