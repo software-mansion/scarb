@@ -80,4 +80,4 @@ All files in the package directory are included in the resulting tarball, except
 - File system boundaries are not crossed.
 
 Files that would be otherwise ignored by the rules listed above, can still be included
-with [include](../reference/manifest.md#include) field.
+with [include](../reference/manifest.md#include) and [assets](../reference/manifest.md#assets) fields.

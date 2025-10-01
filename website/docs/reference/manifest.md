@@ -120,6 +120,36 @@ The paths are relative to the package root and cannot point to files outside the
 include = ["target/some/file.txt"]
 ```
 
+### `assets`
+
+Declare files that should be treated as runtime assets of the package.
+Paths are relative to the package root and must point to files (directories are not allowed).
+Assets must exist at build time.
+
+At build time:
+
+- Scarb copies all assets declared by the current package and all of its transitive dependencies into the workspace
+  target directory for the selected profile (for example, `target/dev`).
+- The directory layout is not preserved; all assets are flattened to the top level of the target directory and keep only
+  their file name.
+- If two assets result in the same file name (either within a single package or across multiple packages in the
+  compilation unit), the build fails with an error.
+
+At packaging time, `scarb package` automatically includes all assets in the package archive even if they are not listed
+in [`include`](#include).
+
+> [!IMPORTANT]
+> To avoid name collisions when assets are flattened into the target directory, it is recommended to prefix asset file
+> names with the package name (for example, `mypkg-oracle.wasm` or `mypkg.dat`).
+
+Logically, `assets` is a subset of `include`. The `assets` field is separate from `include` to avoid pulling unrelated
+files (like readmes or licenses) into the runtime asset set.
+
+```toml
+[package]
+assets = ["mypackage-oracle.wasm", "some/file.dat"]
+```
+
 ### `authors`
 
 This optional field lists the people or organizations that are considered the "authors" of the package.
