@@ -79,7 +79,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         if let CompilationUnit::ProcMacro(_) = compilation_unit
             && required_plugins.contains(&compilation_unit.main_package_id())
         {
-            compile_unit(compilation_unit.clone(), ws)?;
+            compile_unit(compilation_unit.clone(), ws, None)?;
         }
     }
 

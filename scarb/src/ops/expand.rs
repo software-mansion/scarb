@@ -56,7 +56,7 @@ pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<
     compilation_units
         .iter()
         .filter(|unit| matches!(unit, CompilationUnit::ProcMacro(_)))
-        .map(|unit| ops::compile::compile_unit(unit.clone(), ws))
+        .map(|unit| ops::compile::compile_unit(unit.clone(), ws, None))
         .collect::<Result<Vec<_>>>()?;
 
     let compilation_units = compilation_units

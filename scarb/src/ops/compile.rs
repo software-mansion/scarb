@@ -1,9 +1,12 @@
 use crate::compiler::db::{
-    ScarbDatabase, build_scarb_root_database, has_plugin, is_starknet_plugin,
+    ScarbDatabase, append_lint_plugin, apply_plugins, build_project_config,
+    build_scarb_root_database, has_plugin, inject_virtual_wrapper_lib, is_starknet_plugin,
 };
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::incremental::IncrementalContext;
+use crate::compiler::plugin::collection::PluginsForComponents;
 use crate::compiler::plugin::proc_macro;
+use crate::compiler::plugin::proc_macro::ProcMacroHostPlugin;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
 use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
@@ -14,7 +17,13 @@ use crate::internal::offloader::Offloader;
 use crate::ops;
 use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
 use anyhow::{Context, Error, Result, anyhow, bail, ensure};
+use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
+use cairo_lang_compiler::project::update_crate_roots_from_project_config;
+use cairo_lang_filesystem::db::FilesGroup;
+use cairo_lang_filesystem::flag::Flag;
+use cairo_lang_filesystem::ids::FlagLongId;
+use cairo_lang_semantic::plugin::PluginSuite;
 use camino::Utf8PathBuf;
 use indoc::formatdoc;
 use itertools::Itertools;
@@ -24,6 +33,7 @@ use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 use smol_str::{SmolStr, ToSmolStr};
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 use std::thread;
 use tracing::{trace, trace_span};
 
@@ -199,27 +209,123 @@ pub fn compile_units(
 ) -> Result<()> {
     let required_plugins = plugins_required_for_units(&units);
 
+    let mut b = RootDatabase::builder();
+    let mut db = b.build()?;
+
     for unit in units {
         // We can skip compiling proc macros that are not used by Cairo compilation units.
         if matches!(&unit, &CompilationUnit::ProcMacro(_))
-            && !required_plugins.contains(&unit.main_package_id())
-            // Unless they are explicitly requested with `--package` CLI arg.
-            && !required_packages.contains(&unit.main_package_id())
+                && !required_plugins.contains(&unit.main_package_id())
+                    // Unless they are explicitly requested with `--package` CLI arg.
+                    && !required_packages.contains(&unit.main_package_id())
         {
             continue;
         }
-        compile_unit(unit, ws)?;
+        compile_unit(unit, ws, Some(&mut db))?;
     }
     Ok(())
 }
 
+#[tracing::instrument(level = "debug", skip_all)]
+fn compile_cairo_unit_inner(
+    unit: &CairoCompilationUnit,
+    db: &mut RootDatabase,
+    ws: &Workspace<'_>,
+    additional_plugins: Vec<PluginSuite>,
+) -> Result<()> {
+    ws.config()
+        .ui()
+        .print(Status::new("Compiling", &unit.name()));
+
+    let add_withdraw_gas_flag_id = FlagLongId("add_withdraw_gas".into());
+    db.set_flag(
+        add_withdraw_gas_flag_id,
+        Some(Arc::new(Flag::AddWithdrawGas(
+            unit.compiler_config.enable_gas,
+        ))),
+    );
+
+    let panic_backtrace_flag_id = FlagLongId("panic_backtrace".into());
+    db.set_flag(
+        panic_backtrace_flag_id,
+        Some(Arc::new(Flag::PanicBacktrace(
+            unit.compiler_config.panic_backtrace,
+        ))),
+    );
+    let unsafe_panic_flag_id = FlagLongId("unsafe_panic".into());
+    db.set_flag(
+        unsafe_panic_flag_id,
+        Some(Arc::new(Flag::UnsafePanic(
+            unit.compiler_config.unsafe_panic,
+        ))),
+    );
+
+    let project_config = build_project_config(unit)?;
+    update_crate_roots_from_project_config(db, &project_config);
+
+    db.use_cfg(&unit.cfg_set);
+
+    let PluginsForComponents {
+        mut plugins,
+        proc_macros,
+    } = PluginsForComponents::collect(ws, unit)?;
+    append_lint_plugin(plugins.get_mut(&unit.main_component().id).unwrap());
+
+    let main_component_suite = plugins
+        .get_mut(&unit.main_component().id)
+        .expect("should be able to retrieve plugins for main component");
+    for additional_suite in additional_plugins.iter() {
+        main_component_suite.add(additional_suite.clone());
+    }
+    apply_plugins(db, plugins);
+    inject_virtual_wrapper_lib(db, unit)?;
+    let proc_macros: Vec<ProcMacroHostPlugin> = proc_macros
+        .into_values()
+        .flat_map(|hosts| hosts.into_iter())
+        .collect();
+    let package_name = unit.main_package_id().name.clone();
+    check_starknet_dependency(unit, ws, db, &package_name);
+    let assets = collect_assets(unit)?;
+    thread::scope(|s| {
+        let offloader = Offloader::new(s, ws);
+        let target_dir = unit.target_dir(ws);
+
+        let result = ws
+            .config()
+            .compilers()
+            .compile(unit.clone(), &offloader, db, ws);
+
+        for plugin in proc_macros {
+            plugin
+                .post_process(db)
+                .context("procedural macro post processing callback failed")?;
+        }
+
+        let span = trace_span!("offloader_join");
+        {
+            let _guard = span.enter();
+            offloader.join()?;
+        }
+
+        if result.is_ok() {
+            copy_assets(assets, &target_dir)?;
+        }
+
+        result
+    })
+}
+
 /// Run compiler in a new thread.
 /// The stack size of created threads can be altered with `RUST_MIN_STACK` env variable.
-pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+pub fn compile_unit(
+    unit: CompilationUnit,
+    ws: &Workspace<'_>,
+    db: Option<&mut RootDatabase>,
+) -> Result<()> {
     thread::scope(|s| {
         thread::Builder::new()
             .name(format!("scarb compile {}", unit.id()))
-            .spawn_scoped(s, || compile_unit_inner(unit, ws))
+            .spawn_scoped(s, || compile_unit_inner(unit, ws, db))
             .expect("Failed to spawn compiler thread.")
             .join()
             .expect("Compiler thread has panicked.")
@@ -227,7 +333,11 @@ pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 }
 
 #[tracing::instrument(skip_all, level = "trace")]
-fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+fn compile_unit_inner(
+    unit: CompilationUnit,
+    ws: &Workspace<'_>,
+    db: Option<&mut RootDatabase>,
+) -> Result<()> {
     let package_name = unit.main_package_id().name.clone();
 
     let result = match unit {
@@ -242,50 +352,8 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
             }
         }
         CompilationUnit::Cairo(unit) => {
-            ws.config()
-                .ui()
-                .print(Status::new("Compiling", &unit.name()));
-            let ScarbDatabase {
-                mut db,
-                proc_macros,
-            } = build_scarb_root_database(&unit, ws, Default::default())?;
-            check_starknet_dependency(&unit, ws, &db, &package_name);
-            let assets = collect_assets(&unit)?;
-
-            // This scope limits the offloader lifetime.
-            thread::scope(|s| {
-                let offloader = Offloader::new(s, ws);
-                let target_dir = unit.target_dir(ws);
-
-                let result = ws
-                    .config()
-                    .compilers()
-                    .compile(unit, &offloader, &mut db, ws);
-
-                for plugin in proc_macros {
-                    plugin
-                        .post_process(&db)
-                        .context("procedural macro post processing callback failed")?;
-                }
-
-                let span = trace_span!("drop_db");
-                {
-                    let _guard = span.enter();
-                    drop(db);
-                }
-
-                let span = trace_span!("offloader_join");
-                {
-                    let _guard = span.enter();
-                    offloader.join()?;
-                }
-
-                if result.is_ok() {
-                    copy_assets(assets, &target_dir)?;
-                }
-
-                result
-            })
+            let db = db.expect("db must be provided for Cairo compilation units");
+            compile_cairo_unit_inner(&unit, db, ws, Default::default())
         }
     };
 
@@ -311,7 +379,7 @@ fn check_units(
         {
             // We compile proc macros that will be used by latter Cairo CUs.
             // Note: this only works, because `process` maintains the order of units.
-            compile_unit(unit, ws)?;
+            compile_unit(unit, ws, None)?;
         } else {
             check_unit(unit, ws)?;
         }
