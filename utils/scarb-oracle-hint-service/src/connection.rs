@@ -1,4 +1,4 @@
-use crate::protocol::Protocols;
+use crate::protocol::{ConnectCtx, Protocols};
 use anyhow::Result;
 use starknet_core::types::Felt;
 use std::collections::HashMap;
@@ -21,13 +21,14 @@ impl Connections {
     pub fn connect(
         &mut self,
         connection_string: &str,
+        ctx: ConnectCtx<'_>,
         protocols: &Protocols,
     ) -> Result<&mut (dyn Connection + 'static)> {
         match self.0.entry(connection_string.into()) {
             Entry::Occupied(entry) => Ok(entry.into_mut().as_mut()),
-            Entry::Vacant(entry) => {
-                Ok(entry.insert(protocols.connect(connection_string)?).as_mut())
-            }
+            Entry::Vacant(entry) => Ok(entry
+                .insert(protocols.connect(connection_string, ctx)?)
+                .as_mut()),
         }
     }
 }

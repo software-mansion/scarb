@@ -1,4 +1,4 @@
-use crate::hint_service::OracleHintService;
+use crate::protocol::Protocols;
 
 #[cfg(feature = "shell")]
 mod shell;
@@ -7,11 +7,15 @@ mod stdio_jsonrpc;
 #[cfg(feature = "wasm")]
 mod wasm;
 
-pub fn add_builtin_protocols(hint_service: &mut OracleHintService) {
+pub fn builtin_protocols() -> Protocols {
+    let mut p = Protocols::default();
+
     #[cfg(feature = "stdio")]
-    hint_service.add_protocol::<stdio_jsonrpc::StdioJsonRpc>();
+    p.add::<stdio_jsonrpc::StdioJsonRpc>();
     #[cfg(feature = "shell")]
-    hint_service.add_protocol::<shell::Shell>();
+    p.add::<shell::Shell>();
     #[cfg(feature = "wasm")]
-    hint_service.add_protocol::<wasm::Wasm>();
+    p.add::<wasm::Wasm>();
+
+    p
 }

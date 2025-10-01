@@ -22,6 +22,7 @@ use scarb_extensions_cli::execute::{
     Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
 };
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
+use scarb_oracle_hint_service::OracleHintService;
 use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars, WithManifestPath};
 use scarb_ui::components::Status;
@@ -89,10 +90,11 @@ pub fn execute(
     let build_target = find_build_target(metadata, package, &args.build_target_args)?;
 
     ui.print(Status::new("Executing", &package.name));
-    let executable = load_prebuilt_executable(
+    let executable_path = find_prebuilt_executable_path(
         &scarb_build_dir,
         format!("{}.executable.json", build_target.name),
     )?;
+    let executable = load_prebuilt_executable(&executable_path)?;
 
     let data = executable
         .program
@@ -157,7 +159,7 @@ pub fn execute(
     let mut hint_processor = ExecuteHintProcessor {
         cairo_hint_processor,
         oracle_experiment_enabled: args.run.experimental_oracles,
-        oracle_hint_service: Default::default(),
+        oracle_hint_service: OracleHintService::new(Some(executable_path.as_std_path())),
     };
 
     let proof_mode = args.run.target.is_standalone();
@@ -346,7 +348,7 @@ fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {
         .to_string()
 }
 
-fn load_prebuilt_executable(path: &Utf8Path, filename: String) -> Result<Executable> {
+fn find_prebuilt_executable_path(path: &Utf8Path, filename: String) -> Result<Utf8PathBuf> {
     let file_path = path.join(&filename);
     ensure!(
         file_path.exists(),
@@ -355,7 +357,11 @@ fn load_prebuilt_executable(path: &Utf8Path, filename: String) -> Result<Executa
             help: run `scarb build` to compile the package
         "#}
     );
-    let file = fs::File::open(&file_path)
+    Ok(file_path)
+}
+
+fn load_prebuilt_executable(file_path: &Utf8Path) -> Result<Executable> {
+    let file = fs::File::open(file_path)
         .with_context(|| format!("failed to open executable program: `{file_path}`"))?;
     serde_json::from_reader(file)
         .with_context(|| format!("failed to deserialize executable program: `{file_path}`"))
