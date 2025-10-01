@@ -28,7 +28,7 @@ pub fn run(config: &Config) -> Result<()> {
     // Compile procedural macros only.
     for unit in &compilation_units {
         if let CompilationUnit::ProcMacro(_) = unit {
-            ops::compile_unit(unit.clone(), &ws)?;
+            ops::compile_unit(unit.clone(), &ws, None)?;
         }
     }
 

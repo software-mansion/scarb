@@ -96,6 +96,7 @@ fn asset_directory_is_error() {
         .stdout_matches(indoc! {r#"
             [..] Compiling badpkg v0.1.0 ([..])
             error: package `badpkg v0.1.0 ([..])` asset is not a file: [..]/assets
+            error: could not compile `badpkg` due to previous error
         "#});
 }
 
@@ -123,6 +124,7 @@ fn duplicate_asset_names_within_package_error() {
         .stdout_matches(indoc! {r#"
             [..] Compiling dupsame v0.1.0 ([..])
             error: package `dupsame v0.1.0 ([..])` declares multiple assets with the same file name: file.txt
+            error: could not compile `dupsame` due to previous error
         "#});
 }
 
@@ -149,6 +151,7 @@ fn missing_asset() {
             Caused by:
                 0: failed to get absolute path of `[..]/data.txt`
                 1: [..]
+            error: could not compile `missing` due to previous error
         "#});
 }
 
@@ -200,5 +203,6 @@ fn duplicate_asset_names_between_dependencies_error() {
         .stdout_matches(indoc! {r#"
             [..] Compiling app v0.1.0 ([..])
             error: multiple packages declare an asset with the same file name `common.txt`: dep2 [..], dep1 [..]
+            error: could not compile `app` due to previous error
         "#});
 }
