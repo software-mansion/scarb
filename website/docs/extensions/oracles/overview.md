@@ -46,7 +46,7 @@ protocol:connection params
 The [Scarb executor](../../extensions/execute.md) supports multiple oracle protocols:
 
 - [`shell`](./shell.md) — one‑shot shell command execution returning stdout.
-- [`wasm`](./wasm.md) — run WebAssembly components. This is the default protocol where a default is implied.
+- [`wasm`](./wasm.md) — run WebAssembly components.
 
 In the oracle repository, you can find ready-to-use SDKs that ease writing oracles compatible with Scarb executor.
 
