@@ -21,7 +21,7 @@ fn build_script_runs_before_compilation() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..]Running `build` script for `hello`
+            [..]Running build script for hello v1.0.0 ([..]Scarb.toml)
             Prebuild script executed
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]

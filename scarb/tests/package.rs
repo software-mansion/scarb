@@ -1845,7 +1845,7 @@ fn package_script_is_run() {
         .success()
         .stdout_matches(indoc! {r#"
            [..]Packaging foo v1.0.0 ([..]Scarb.toml)
-           [..]Running `package` script for `foo`
+           [..]Running package script for foo v1.0.0 ([..]Scarb.toml)
            Hello!
            [..]Verifying foo-1.0.0.tar.zst
            [..]Compiling foo v1.0.0 ([..]Scarb.toml)
