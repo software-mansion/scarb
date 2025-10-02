@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
@@ -7,16 +7,18 @@ use scarb_proc_macro_server_types::conversions::{diagnostic_v1_to_v2, token_stre
 use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandAttribute};
 
 use super::{Handler, interface_code_mapping_from_cairo};
-use crate::compiler::plugin::collection::WorkspaceProcMacros;
 use crate::compiler::plugin::proc_macro::v2::generate_code_mappings;
 use crate::compiler::plugin::proc_macro::{
     DeclaredProcMacroInstances, ExpansionKind, ExpansionQuery, ProcMacroApiVersion,
     ProcMacroInstance,
 };
+use crate::core::Config;
+use crate::ops::store::ProcMacroStore;
 
 impl Handler for ExpandAttribute {
     fn handle(
-        workspace_macros: Arc<WorkspaceProcMacros>,
+        _config: &Config,
+        proc_macros: Arc<Mutex<ProcMacroStore>>,
         params: Self::Params,
     ) -> Result<Self::Response> {
         let Self::Params {
@@ -27,7 +29,7 @@ impl Handler for ExpandAttribute {
             adapted_call_site,
         } = params;
         let expansion = ExpansionQuery::with_expansion_name(&attr, ExpansionKind::Attr);
-        let plugins = workspace_macros.get(&context.component);
+        let plugins = proc_macros.lock().unwrap().get_plugins(&context);
         let proc_macro_instance = plugins
             .as_ref()
             .and_then(|v| {
