@@ -9,9 +9,9 @@ use camino::Utf8Path;
 use deno_task_shell::{ExecutableCommand, KillSignal, ShellCommand, parser};
 use scarb_ui::components::Status;
 
-use crate::core::{Package, Workspace};
 use crate::core::errors::ScriptExecutionError;
 use crate::core::manifest::ScriptDefinition;
+use crate::core::{Package, Workspace};
 use crate::subcommands::get_env_vars;
 
 /// Execute a magic script if it exists in the package manifest.
@@ -26,19 +26,19 @@ pub fn execute_magic_script_if_exists(
     let Some(script_definition) = package.manifest.scripts.get(script_name) else {
         return Ok(());
     };
-    
+
     // Ensure no two instances of Scarb will run this script at the same time.
     let _guard = ws.target_dir().child("scarb").advisory_lock(
         &format!(".scarb-{script_name}.lock"),
         &format!("{script_name} script"),
         ws.config(),
     );
-    
+
     ws.config().ui().print(Status::new(
         "Running",
         &format!("{script_name} script for {pkg}", pkg = package.id),
     ));
-    
+
     execute_script(script_definition, &[], ws, package.root(), None)
 }
 

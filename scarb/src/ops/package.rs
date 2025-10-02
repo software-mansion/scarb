@@ -221,8 +221,6 @@ fn package_one_impl(
     Ok(dst)
 }
 
-
-
 fn list_one_impl(
     pkg_id: PackageId,
     opts: &PackageOpts,
