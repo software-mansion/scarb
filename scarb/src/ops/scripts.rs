@@ -124,8 +124,8 @@ pub fn execute_magic_script_if_exists(
 
     // Ensure no two instances of Scarb will run this script at the same time.
     let _guard = ws.target_dir().child("scarb").advisory_lock(
-        &format!(".scarb-{script_name}.lock"),
-        &format!("{script_name} script"),
+        format!(".scarb-{script_name}.lock"),
+        format!("{script_name} script"),
         ws.config(),
     );
 
