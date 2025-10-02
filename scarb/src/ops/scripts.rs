@@ -36,7 +36,7 @@ pub fn execute_magic_script_if_exists(
     
     ws.config().ui().print(Status::new(
         "Running",
-        &format!("{script_name} script for {pkg}", pkg=package.id),
+        &format!("`{script_name}` script for `{pkg}`", pkg = package.id.name),
     ));
     
     execute_script(script_definition, &[], ws, package.root(), None)

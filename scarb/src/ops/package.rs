@@ -167,7 +167,7 @@ fn package_one_impl(
         check_metadata(pkg, ws.config())?;
     }
 
-    run_prepackage_script(pkg, ws)?;
+    ops::execute_magic_script_if_exists("package", pkg, ws)?;
 
     let recipe = prepare_archive_recipe(pkg, opts, ws)?;
     let num_files = recipe.len();
@@ -221,9 +221,7 @@ fn package_one_impl(
     Ok(dst)
 }
 
-fn run_prepackage_script(package: &Package, ws: &Workspace<'_>) -> Result<()> {
-    ops::execute_magic_script_if_exists("package", package, ws)
-}
+
 
 fn list_one_impl(
     pkg_id: PackageId,
