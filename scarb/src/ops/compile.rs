@@ -134,6 +134,7 @@ where
     for package in &packages_to_process {
         ops::execute_magic_script_if_exists("build", package, ws)?;
     }
+
     // Add test compilation units to build
     let packages = get_test_package_ids(packages, ws);
     let compilation_units = ops::generate_compilation_units(
