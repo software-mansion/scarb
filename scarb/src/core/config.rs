@@ -28,6 +28,25 @@ use super::ManifestDependency;
 const USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
 pub struct Config {
+    // The order of fields here is important!
+    // Rust will drop fields of a struct in order of declaration.
+    // This becomes important, as the Scarb codebase often assumes that the [`Config`] struct lives
+    // throughout the entire program execution.
+    // This assumption is represented by multiple `mem::transmute` calls that convert references to
+    // the [`Config`] struct to a `'static` lifetime.
+    // Obviously, this assumption is only true if all such references are dropped before the
+    // [`Config`] struct is dropped.
+    // However, a task executed on the tokio runtime executor may take such references as well.
+    // To ensure that no tasks run from the executor thread access a field in [`Config`] struct after
+    // the field is already dropped, we drop the executor itself first, which will cancel all the
+    // tasks running on it.
+    // Note: this has no effect, if all tasks executed on the executor are awaited before the program
+    // exits - and thus before [`Config`] struct is dropped.
+    // Note: this measure is not enough to ensure memory safety in all cases, as it does not prevent
+    // code executed on a separate thread, which is not governed by the runtime, from executing
+    // without any synchronization from the main thread (without any join).
+    tokio_handle: OnceCell<Handle>,
+    tokio_runtime: OnceCell<Runtime>,
     manifest_path: Utf8PathBuf,
     dirs: Arc<AppDirs>,
     target_dir_override: Option<Utf8PathBuf>,
@@ -44,8 +63,6 @@ pub struct Config {
     proc_macro_repository: ProcMacroRepository,
     // This is a Dojo-specific feature that will be removed once Dojo is decoupled from Scarb as a library.
     custom_source_patches: Option<Vec<ManifestDependency>>,
-    tokio_runtime: OnceCell<Runtime>,
-    tokio_handle: OnceCell<Handle>,
     profile: Profile,
     http_client: OnceCell<reqwest::Client>,
     load_prebuilt_proc_macros: bool,
