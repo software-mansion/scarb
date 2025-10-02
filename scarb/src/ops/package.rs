@@ -167,6 +167,7 @@ fn package_one_impl(
         check_metadata(pkg, ws.config())?;
     }
 
+    ops::execute_magic_script_if_exists("build", pkg, ws)?;
     ops::execute_magic_script_if_exists("package", pkg, ws)?;
 
     let recipe = prepare_archive_recipe(pkg, opts, ws)?;

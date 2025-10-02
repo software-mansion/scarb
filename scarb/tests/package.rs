@@ -1975,3 +1975,45 @@ fn package_ignores_patches() {
             "#},
         );
 }
+
+#[test]
+fn package_with_generated_asset() {
+    let t = TempDir::new().unwrap();
+    simple_project()
+        .manifest_package_extra(indoc! {r#"
+            assets = ["asset.txt"]
+        "#})
+        .manifest_extra(indoc! {r#"
+            [scripts]
+            build = "echo 'built' > asset.txt"
+            package = "echo 'and packaged' >> asset.txt"
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("package")
+        .arg("--no-metadata")
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+           [..]Packaging foo v1.0.0 ([..]Scarb.toml)
+           [..]Running build script for foo v1.0.0 ([..]Scarb.toml)
+           [..]Running package script for foo v1.0.0 ([..]Scarb.toml)
+           [..]Verifying foo-1.0.0.tar.zst
+           [..]Compiling foo v1.0.0 ([..]Scarb.toml)
+           [..]Finished `dev` profile target(s) in [..]
+           [..]Packaged [..] files[..]
+        "#});
+
+    PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
+        .name_and_version("foo", "1.0.0")
+        .contents(&[
+            "VERSION",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+            "src/lib.cairo",
+            "src/foo.cairo",
+            "asset.txt",
+        ])
+        .file_eq_nl("asset.txt", "built\nand packaged");
+}
