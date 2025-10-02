@@ -30,6 +30,7 @@ The following script names are reserved:
 
 1. `test` - This script will be executed when you run `scarb test` command.
 2. `package` - This script will be executed before the packaging process when you run `scarb package` command.
+3. `build` - This script will be executed before the compilation process when you run `scarb build` command and before packaging (even before `package` script) when you run `scarb package`.
 
 ## Listing scripts
 

@@ -7,10 +7,11 @@ use std::rc::Rc;
 use anyhow::Result;
 use camino::Utf8Path;
 use deno_task_shell::{ExecutableCommand, KillSignal, ShellCommand, parser};
+use scarb_ui::components::Status;
 
-use crate::core::Workspace;
 use crate::core::errors::ScriptExecutionError;
 use crate::core::manifest::ScriptDefinition;
+use crate::core::{Package, Workspace};
 use crate::subcommands::get_env_vars;
 
 /// Execute user defined script.
@@ -106,4 +107,32 @@ fn has_pipe(seq: &parser::Sequence) -> bool {
         },
         parser::Sequence::BooleanList(list) => has_pipe(&list.current) || has_pipe(&list.next),
     }
+}
+
+/// Execute a magic script if it exists in the package manifest.
+///
+/// Magic scripts are special script names that are automatically executed by Scarb
+/// at specific points in the build process (e.g., "build", "package").
+pub fn execute_magic_script_if_exists(
+    script_name: &str,
+    package: &Package,
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    let Some(script_definition) = package.manifest.scripts.get(script_name) else {
+        return Ok(());
+    };
+
+    // Ensure no two instances of Scarb will run this script at the same time.
+    let _guard = ws.target_dir().child("scarb").advisory_lock(
+        format!(".scarb-{script_name}.lock"),
+        format!("{script_name} script"),
+        ws.config(),
+    );
+
+    ws.config().ui().print(Status::new(
+        "Running",
+        &format!("{script_name} script for {pkg}", pkg = package.id),
+    ));
+
+    execute_script(script_definition, &[], ws, package.root(), None)
 }
