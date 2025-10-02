@@ -6,7 +6,7 @@ use crate::compiler::incremental::IncrementalContext;
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
 use crate::core::{
-    FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
+    FeatureName, Package, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
 };
 use crate::flock::Filesystem;
 use crate::internal::fsx;
@@ -26,6 +26,8 @@ use smol_str::{SmolStr, ToSmolStr};
 use std::collections::{HashMap, HashSet};
 use std::thread;
 use tracing::{trace, trace_span};
+
+const SCARB_PREBUILD_SCRIPT_NAME: &str = "build";
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -129,6 +131,11 @@ where
         .filter(|p| packages.contains(&p.id))
         .collect_vec();
     validate_features(&packages_to_process, &opts.features)?;
+    
+    // Run prebuild scripts for all packages being compiled
+    for package in &packages_to_process {
+        run_prebuild_script(package, ws)?;
+    }
     // Add test compilation units to build
     let packages = get_test_package_ids(packages, ws);
     let compilation_units = ops::generate_compilation_units(
@@ -455,4 +462,22 @@ fn copy_assets(assets: Vec<(String, Utf8PathBuf)>, target_dir: &Filesystem) -> R
         fsx::copy(src, dst)?;
     }
     Ok(())
+}
+
+fn run_prebuild_script(package: &Package, ws: &Workspace<'_>) -> Result<()> {
+    if let Some(script_definition) = package.manifest.scripts.get(SCARB_PREBUILD_SCRIPT_NAME) {
+        // Ensure no two instance of Scarb will run `build` script at the same time.
+        let _guard = ws.target_dir().child("scarb").advisory_lock(
+            ".scarb-build.lock",
+            "`build` script",
+            ws.config(),
+        );
+        ws.config().ui().print(Status::new(
+            "Running",
+            &format!("`build` script for `{}`", package.id.name),
+        ));
+        ops::execute_script(script_definition, &[], ws, package.root(), None)
+    } else {
+        Ok(())
+    }
 }
