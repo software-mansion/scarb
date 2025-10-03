@@ -4,6 +4,13 @@ The `shell` oracle protocol is a lightweight, built‑in protocol that executes 
 output to Cairo. Standard error is forwarded to the executor logs. It is useful for calling utility scripts available in
 the running CLI environment; for example, in tests.
 
+The `shell` library provides a type-safe interface for this protocol. Invoking this protocol directly is not
+recommended.
+
+<BigLink href="https://scarbs.xyz/packages/shell">
+  Go to shell on scarbs.xyz
+</BigLink>
+
 ## Connection string format
 
 ```
