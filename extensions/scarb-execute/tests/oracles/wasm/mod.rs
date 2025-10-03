@@ -2,13 +2,15 @@
 //! To regenerate them, run the build-fixtures.sh script.
 
 use crate::support::CheckBuilder;
+use assert_fs::prelude::*;
 use indoc::indoc;
+use predicates::prelude::*;
 
 // TODO(#2630): Implement network access tests.
 
 #[test]
 fn wasip2() {
-    CheckBuilder::default()
+    let t = CheckBuilder::default()
         .lib_cairo(indoc! {r#"
             #[executable]
             fn main() {{
@@ -51,9 +53,22 @@ fn wasip2() {
                 oracle_asserts::print::<u64>(result);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<u64>(result);
+
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "wasm:wasip2.wasm";
+                connection_string.serialize(ref inputs);
+                let selector: ByteArray = "fs";
+                selector.serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<Result<ByteArray, ByteArray>>(result);
             }}
         "#})
         .asset("wasip2.wasm", include_bytes!("wasip2.wasm"))
+        .dir_op(|t| {
+            t.child("read_file.txt")
+                .write_str("hello from the outside")
+                .unwrap()
+        })
         .stdout_matches(indoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -64,10 +79,14 @@ fn wasip2() {
             Result::Ok(())
             Result::Ok(0)
             Result::Ok(1)
+            Result::Ok(Result::Ok("hello from the outside"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .stderr_contains("stderr is working as expected\n")
         .check();
+
+    t.child("write_file.txt")
+        .assert(predicate::eq("hello from wasm"));
 }
 
 #[test]

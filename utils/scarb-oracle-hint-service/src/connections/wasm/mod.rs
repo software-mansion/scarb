@@ -11,7 +11,7 @@ use wasmtime::component::{
     Component, ComponentExportIndex, Func, Instance, Linker, ResourceTable, Val,
 };
 use wasmtime::{Engine, Store};
-use wasmtime_wasi::{WasiCtx, WasiCtxView, WasiView};
+use wasmtime_wasi::{DirPerms, FilePerms, WasiCtx, WasiCtxView, WasiView};
 
 mod codec;
 mod tracing_stderr;
@@ -229,18 +229,23 @@ struct HostState {
 
 impl Default for HostState {
     fn default() -> Self {
+        let mut b = WasiCtx::builder();
+        b.inherit_stdin();
+        b.inherit_stdout();
+        b.stderr(TracingStderrWriter::new());
+        b.allow_blocking_current_thread(true);
+        b.inherit_env();
+        b.inherit_network();
+        b.allow_ip_name_lookup(true);
+
+        if let Ok(cwd) = std::env::current_dir() {
+            b.preopened_dir(cwd, ".", DirPerms::all(), FilePerms::all())
+                .expect("failed to preopen current working directory");
+        }
+
         Self {
-            // TODO(#2629): Preopen some directory if the runtime wants to.
             // TODO(#2625): Implement permissions system to allow users to limit these caps.
-            ctx: WasiCtx::builder()
-                .inherit_stdin()
-                .inherit_stdout()
-                .stderr(TracingStderrWriter::new())
-                .allow_blocking_current_thread(true)
-                .inherit_env()
-                .inherit_network()
-                .allow_ip_name_lookup(true)
-                .build(),
+            ctx: b.build(),
             table: ResourceTable::new(),
         }
     }

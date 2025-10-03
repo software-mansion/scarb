@@ -1,3 +1,4 @@
+use std::fs;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 wit_bindgen::generate!({
@@ -9,6 +10,7 @@ wit_bindgen::generate!({
             export join: func(a: string, b: string) -> string;
             export io: func();
             export count: func() -> u64;
+            export fs: func() -> result<string, string>;
         }
     "#
 });
@@ -29,6 +31,10 @@ impl Guest for MyOracle {
     fn count() -> u64 {
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         COUNTER.fetch_add(1, Ordering::Relaxed)
+    }
+    fn fs() -> Result<String, String> {
+        fs::write("write_file.txt", "hello from wasm").map_err(|e| e.to_string())?;
+        fs::read_to_string("read_file.txt").map_err(|e| e.to_string())
     }
 }
 
