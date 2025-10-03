@@ -125,6 +125,10 @@ pub struct RunArgs {
     /// Enable experimental oracles support.
     #[arg(long, default_value_t = false, env = "SCARB_EXPERIMENTAL_ORACLES")]
     pub experimental_oracles: bool,
+
+    /// Whether to save cairo-profiler trace data.
+    #[arg(long, default_value_t = false)]
+    pub save_profiler_trace_data: bool,
 }
 
 impl ToArgs for RunArgs {
@@ -136,6 +140,7 @@ impl ToArgs for RunArgs {
             print_program_output,
             print_resource_usage,
             experimental_oracles,
+            save_profiler_trace_data,
         } = self;
         let mut args = arguments.to_args();
         if let Some(output) = output {
@@ -152,6 +157,9 @@ impl ToArgs for RunArgs {
         }
         if *experimental_oracles {
             args.push("--experimental-oracles".to_string());
+        }
+        if *save_profiler_trace_data {
+            args.push("--save-profiler-trace-data".to_string());
         }
         args
     }
