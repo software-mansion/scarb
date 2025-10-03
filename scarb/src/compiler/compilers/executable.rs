@@ -7,8 +7,9 @@ use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::offloader::Offloader;
 use anyhow::{Result, bail, ensure};
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
-use cairo_lang_compiler::ensure_diagnostics;
+use cairo_lang_compiler::{
+    CompilerConfig, compile_prepared_db_program_artifact_for_functions, ensure_diagnostics,
+};
 use cairo_lang_executable::compile::{
     CompiledFunction, ExecutableConfig, compile_executable_function_in_prepared_db,
 };
@@ -16,12 +17,14 @@ use cairo_lang_executable::executable::Executable;
 use cairo_lang_executable_plugin::{EXECUTABLE_PREFIX, EXECUTABLE_RAW_ATTR};
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_lowering::ids::ConcreteFunctionWithBodyId;
+use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_generator::executables::find_executable_function_ids;
 use camino::Utf8Path;
 use indoc::formatdoc;
 use itertools::Itertools;
 use salsa::Database;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use tracing::trace_span;
 
 pub struct ExecutableCompiler;
@@ -31,6 +34,7 @@ pub struct ExecutableCompiler;
 struct Props {
     pub allow_syscalls: bool,
     pub function: Option<String>,
+    pub sierra: bool,
 }
 
 impl Compiler for ExecutableCompiler {
@@ -42,7 +46,7 @@ impl Compiler for ExecutableCompiler {
         &self,
         unit: &CairoCompilationUnit,
         ctx: &IncrementalContext,
-        _offloader: &Offloader<'_>,
+        offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -63,7 +67,6 @@ impl Compiler for ExecutableCompiler {
 
         let props: Props = unit.main_component().targets.target_props()?;
 
-        let target_dir = unit.target_dir(ws);
         let main_crate_ids = collect_main_crate_ids(unit, db);
         let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ctx, ws);
         let span = trace_span!("compile_executable");
@@ -73,9 +76,10 @@ impl Compiler for ExecutableCompiler {
                 unit,
                 db,
                 ws,
-                props.function.as_deref(),
+                offloader,
+                &props,
                 main_crate_ids,
-                compiler_config.diagnostics_reporter,
+                compiler_config,
                 ExecutableConfig {
                     allow_syscalls: props.allow_syscalls,
                     ..ExecutableConfig::default()
@@ -83,33 +87,45 @@ impl Compiler for ExecutableCompiler {
             )?)
         };
 
-        write_json(
-            format!("{}.executable.json", unit.main_component().target_name()).as_str(),
-            "output file",
-            &target_dir,
-            ws,
-            &executable,
-        )
+        let span = trace_span!("serialize_executable_json");
+        {
+            let _guard = span.enter();
+            let target_name = unit.main_component().target_name();
+            let target_dir = unit.target_dir(ws);
+            offloader.offload("output file", move |ws| {
+                write_json(
+                    format!("{target_name}.executable.json").as_str(),
+                    "output file",
+                    &target_dir,
+                    ws,
+                    &executable,
+                )
+            });
+        }
+
+        Ok(())
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn compile_executable<'db>(
     unit: &CairoCompilationUnit,
     db: &'db RootDatabase,
     ws: &Workspace<'_>,
-    executable_path: Option<&str>,
+    offloader: &Offloader<'_>,
+    props: &Props,
     main_crate_ids: Vec<CrateId<'db>>,
-    mut diagnostics_reporter: DiagnosticsReporter<'_>,
+    mut compiler_config: CompilerConfig<'db>,
     config: ExecutableConfig,
 ) -> Result<CompiledFunction> {
-    ensure_diagnostics(db, &mut diagnostics_reporter)?;
+    ensure_diagnostics(db, &mut compiler_config.diagnostics_reporter)?;
+
+    let executable_path = props.function.as_deref();
     let executables = find_executable_functions(db, main_crate_ids, executable_path);
 
     let executable = match executables.len() {
         0 => {
-            // Report diagnostics as they might reveal the reason why no executable was found.
-            diagnostics_reporter.ensure(db)?;
-            bail!("Requested `#[executable]` not found.");
+            bail!("requested `#[executable]` not found");
         }
         1 => executables[0],
         _ => {
@@ -130,7 +146,50 @@ fn compile_executable<'db>(
         }
     };
 
-    Ok(compile_executable_function_in_prepared_db(db, executable, config)?.compiled_function)
+    if props.sierra {
+        let span = trace_span!("compile_sierra");
+        let program_artifact = {
+            let _guard = span.enter();
+
+            // This seems wasteful, as the subsequent call to `compile_executable_function_in_prepared_db`
+            // will compile executable to sierra again. However, it's very inexpensive in practice,
+            // as salsa will save this compilation in the cache, and only load later.
+            let program_artifact = compile_prepared_db_program_artifact_for_functions(
+                db,
+                vec![executable],
+                compiler_config,
+            )?;
+            Arc::new(program_artifact)
+        };
+
+        let span = trace_span!("offload_serializing_sierra");
+        {
+            let _guard = span.enter();
+            let target_name = unit.main_component().target_name();
+            let target_dir = unit.target_dir(ws);
+            // We only clone Arc, not the underlying program, so it's inexpensive.
+            let program = program_artifact.clone();
+            offloader.offload("output file", move |ws| {
+                // Cloning the underlying program is expensive, but we can afford it here,
+                // as we are on a dedicated thread anyway.
+                let sierra_program: VersionedProgram = program.as_ref().clone().into();
+                write_json(
+                    &format!("{target_name}.executable.sierra.json"),
+                    "output file",
+                    &target_dir,
+                    ws,
+                    &sierra_program,
+                )?;
+                Ok(())
+            });
+        }
+    }
+
+    let span = trace_span!("compile_executable_function_in_prepared_db");
+    Ok({
+        let _guard = span.enter();
+        compile_executable_function_in_prepared_db(db, executable, config)?.compiled_function
+    })
 }
 
 fn multiple_executables_error_message(executables: Vec<String>, scarb_toml: &Utf8Path) -> String {

@@ -160,7 +160,7 @@ fn fails_when_attr_missing() {
         .failure()
         .stdout_matches(indoc! {r#"
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-            error: Requested `#[executable]` not found.
+            error: requested `#[executable]` not found
             error: could not compile `hello` due to previous error
             error: `scarb` command exited with error
         "#});
