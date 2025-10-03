@@ -16,7 +16,7 @@ argument (a Cairo `ByteArray`).
 #### Example
 
 ```cairo
-oracle::invoke("shell:", 'exec', "curl -sSLf https://api.github.com/zen");
+oracle::invoke("shell:", "exec", "curl -sSLf https://api.github.com/zen");
 ```
 
 ## Execution model
