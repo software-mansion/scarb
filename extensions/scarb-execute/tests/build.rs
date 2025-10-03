@@ -446,3 +446,68 @@ fn can_use_features() {
         Saving output to: target/execute/hello/execution1
         "#});
 }
+
+#[test]
+fn can_create_profiler_trace_file() {
+    let t = TempDir::new().unwrap();
+    executable_project_builder()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            sierra = true
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 { 1 }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--save-profiler-trace-data")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        Saving output to: target/execute/hello/execution1
+        Profiler tracked resource: cairo-steps
+        Saving profiler trace data to: [..]
+        "#});
+
+    t.child("target/execute/hello/execution1/cairo_profiler_trace.json")
+        .assert_is_json::<serde_json::Value>();
+}
+
+#[test]
+fn no_required_sierra_for_profiler_trace_file() {
+    let t = TempDir::new().unwrap();
+    executable_project_builder()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 { 1 }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--save-profiler-trace-data")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        Saving output to: target/execute/hello/execution1
+        error: Failed to write profiler trace data into a file - missing sierra code. Set `sierra = true` under your `[executable]` target in the config and try again.
+        "#});
+}
