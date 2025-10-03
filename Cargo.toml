@@ -44,6 +44,8 @@ async-trait = "0.1"
 axum = { version = "0.6", features = ["http2"] }
 bincode = "2.0.1"
 bumpalo = "=3.17.0"
+# todo(szymczyk): change before merge, after annotations release
+cairo-annotations = {git = "https://github.com/software-mansion/cairo-annotations", branch = "szymczyk/header-size"}
 cairo-lang-casm = "*"
 cairo-lang-compiler = "*"
 cairo-lang-defs = "*"
