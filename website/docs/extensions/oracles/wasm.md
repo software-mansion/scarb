@@ -70,10 +70,29 @@ This example shows how to build a simple oracle in Rust.
 name = "mypkg"
 version = "0.1.0"
 # Make sure the compiled component is a Scarb package's asset.
-assets = ["target/wasm32-wasip2/release/mypkg-oracle.wasm"] # [!code highlight]
+assets = ["oracle/target/wasm32-wasip2/release/mypkg_oracle.wasm"] # [!code highlight]
+
+[dependencies]
+# The oracle package helps writing Cairo-side glue code.
+oracle = "*" # [!code highlight]
+
+[scripts]
+# Let Scarb call Cargo to build the oracle whenever our package
+# is being built or prepared for publishing.
+build = "cargo build --manifest-path oracle/Cargo.toml --release --target wasm32-wasip2" # [!code highlight]
 ```
 
-```toml [Cargo.toml]
+```cairo [src/lib.cairo]
+pub fn add(left: u64, right: u64) -> oracle::Result<u64> {
+    oracle::invoke(
+        "wasm:mypkg_oracle.wasm",  // Resolved from assets. [!code highlight]
+        "add",
+        (left, right)
+    )
+}
+```
+
+```toml [oracle/Cargo.toml]
 [package]
 # Because the component is an asset, its name must be globally unique,
 # so it is best to prefix it with the package name.
@@ -91,7 +110,7 @@ crate-type = ["cdylib"] # [!code highlight]
 wit-bindgen = "*" # [!code highlight]
 ```
 
-```wit [wit/oracle.wit]
+```wit [oracle/wit/oracle.wit]
 // The exact value here does not really matter, but it is conventional
 // to use the Scarb package name as the namespace.
 package mypkg:oracle;
@@ -103,7 +122,7 @@ world oracle {
 }
 ```
 
-```rust [src/lib.rs]
+```rust [oracle/src/lib.rs]
 wit_bindgen::generate!();
 
 struct Oracle;
@@ -115,30 +134,17 @@ impl Guest for Oracle {
 }
 
 export!(Oracle);
-
 ```
 
 :::
 
-To build the component, run the following commands:
+Remember to install the `wasm32-wasip2` Rust cross-compiler on your machine. You need to do this once:
 
 ```shell
-rustup target add wasm32-wasip2  # You just need to do this once.
-cargo build --release --target wasm32-wasip2
+rustup target add wasm32-wasip2
 ```
 
-Then, you can wrap it in a Cairo package:
-
-```cairo
-let result: u64 = oracle::invoke(
-    "wasm:my-oracle.wasm",  // Resolved from assets.
-    "add",
-    (1_u64, 2_u64)
-);
-assert_eq!(result, 3_u64);
-```
-
-And build it as usual:
+Building such a package is as simple as:
 
 ```shell
 scarb build
