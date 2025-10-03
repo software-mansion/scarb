@@ -121,6 +121,17 @@ pub struct RunArgs {
     /// Whether to print detailed execution resources.
     #[arg(long, default_value_t = false)]
     pub print_resource_usage: bool,
+<<<<<<< HEAD
+=======
+
+    /// Enable experimental oracles support.
+    #[arg(long, default_value_t = false, env = "SCARB_EXPERIMENTAL_ORACLES")]
+    pub experimental_oracles: bool,
+
+    /// Whether to save cairo-profiler trace data.
+    #[arg(long, default_value_t = false)]
+    pub save_profiler_trace_data: bool,
+>>>>>>> 1bf9eafc (Add cairo-profiler support for scarb execute)
 }
 
 impl ToArgs for RunArgs {
@@ -131,6 +142,11 @@ impl ToArgs for RunArgs {
             target,
             print_program_output,
             print_resource_usage,
+<<<<<<< HEAD
+=======
+            experimental_oracles,
+            save_profiler_trace_data,
+>>>>>>> 1bf9eafc (Add cairo-profiler support for scarb execute)
         } = self;
         let mut args = arguments.to_args();
         if let Some(output) = output {
@@ -145,6 +161,15 @@ impl ToArgs for RunArgs {
         if *print_resource_usage {
             args.push("--print-resource-usage".to_string());
         }
+<<<<<<< HEAD
+=======
+        if *experimental_oracles {
+            args.push("--experimental-oracles".to_string());
+        }
+        if *save_profiler_trace_data {
+            args.push("--save-profiler-trace-data".to_string());
+        }
+>>>>>>> 1bf9eafc (Add cairo-profiler support for scarb execute)
         args
     }
 }
