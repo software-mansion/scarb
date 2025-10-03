@@ -26,11 +26,14 @@ pub struct Check {
 
     #[builder(default, setter(custom))]
     pb_ops: Vec<Box<dyn FnOnce(ProjectBuilder) -> ProjectBuilder>>,
+
+    #[builder(default, setter(custom))]
+    dir_ops: Vec<Box<dyn FnOnce(&TempDir)>>,
 }
 
 impl CheckBuilder {
-    pub fn check(self) {
-        self.build().unwrap().check();
+    pub fn check(self) -> TempDir {
+        self.build().unwrap().check()
     }
 
     pub fn failure(mut self) -> Self {
@@ -43,21 +46,30 @@ impl CheckBuilder {
         self
     }
 
-    pub fn asset(mut self, path: impl Into<Utf8PathBuf>, content: impl Into<Vec<u8>>) -> Self {
+    pub fn pb_op(mut self, op: impl FnOnce(ProjectBuilder) -> ProjectBuilder + 'static) -> Self {
+        self.pb_ops.get_or_insert_default().push(Box::new(op));
+        self
+    }
+
+    pub fn dir_op(mut self, op: impl FnOnce(&TempDir) + 'static) -> Self {
+        self.dir_ops.get_or_insert_default().push(Box::new(op));
+        self
+    }
+
+    pub fn asset(self, path: impl Into<Utf8PathBuf>, content: impl Into<Vec<u8>>) -> Self {
         let path = path.into();
         let content = content.into();
-        self.pb_ops.get_or_insert_default().push(Box::new(move |t| {
+        self.pb_op(move |t| {
             t.src_binary(&path, content)
                 .manifest_package_extra(formatdoc! {r#"
                     assets = [{path:?}]
                 "#})
-        }));
-        self
+        })
     }
 }
 
 impl Check {
-    pub fn check(self) {
+    pub fn check(self) -> TempDir {
         let t = TempDir::new().unwrap();
         let mut pb = ProjectBuilder::start()
             .name("oracle_test")
@@ -79,6 +91,10 @@ impl Check {
         }
 
         pb.build(&t);
+
+        for op in self.dir_ops {
+            op(&t);
+        }
 
         let mut snapbox = Scarb::quick_snapbox().env("RUST_BACKTRACE", "0");
 
@@ -110,5 +126,7 @@ impl Check {
                 "stderr does not contain: {pattern:?}\n\nstderr:\n{stderr}"
             );
         }
+
+        t
     }
 }
