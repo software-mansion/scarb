@@ -42,8 +42,7 @@ let res = oracle::invoke(
 - Standard input: the component inherits stdin from the executor process. Attempts to read from stdin will block the
   execution.
 - Environment: the component inherits executor's environment.
-- Filesystem: not implemented yet. Filesystem APIs will fail with a permissions error if used. There is no current
-  working directory.
+- Filesystem: executor's current working directory is mounted as `.` with read-write access.
 - Network: network access is enabled (WASI 0.2 sockets). DNS name lookups are allowed. Actual reachability is still
   subject to the host OS/firewall.
 - Failures (including traps) never abort Cairo execution; they propagate to Cairo as an `oracle::Error` value.
