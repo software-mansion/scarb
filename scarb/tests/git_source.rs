@@ -376,6 +376,8 @@ fn stale_cached_version_update() {
 
 #[test]
 fn change_source() {
+    let cache_dir = TempDir::new().unwrap();
+
     let dep = gitx::new("dep", |t| {
         ProjectBuilder::start()
             .name("dep")
@@ -392,7 +394,9 @@ fn change_source() {
         .dep("dep", &dep)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -409,7 +413,12 @@ fn change_source() {
     let manifest_toml = manifest_toml.replace("1.0.0", "2.0.0");
     manifest.write_str(&manifest_toml).unwrap();
 
-    Scarb::quick_snapbox()
+    // FIXME(#2718): This should not be necessary.
+    fs::remove_file(t.child("Scarb.lock")).unwrap();
+
+    Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -421,6 +430,8 @@ fn change_source() {
 
 #[test]
 fn force_push() {
+    let cache = TempDir::new().unwrap();
+
     let dep = gitx::new("dep", |t| {
         ProjectBuilder::start()
             .name("dep")
@@ -436,11 +447,16 @@ fn force_push() {
         .lib_cairo("fn world() -> felt252 { dep::hello() }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::new()
+        .cache(&cache)
+        .snapbox()
         .arg("fetch")
         .current_dir(&t)
         .assert()
         .success();
+
+    // Remove Scarb.lock to force Scarb to look for newer commits.
+    fs::remove_file(t.child("Scarb.lock")).unwrap();
 
     dep.child("src/lib.cairo")
         .write_str("fn hello() -> felt252 { 43 }")
@@ -449,7 +465,9 @@ fn force_push() {
     dep.git(["add", "."]);
     dep.git(["commit", "--amend", "-m", "amended"]);
 
-    Scarb::quick_snapbox()
+    Scarb::new()
+        .cache(&cache)
+        .snapbox()
         .arg("fetch")
         .current_dir(&t)
         .assert()
