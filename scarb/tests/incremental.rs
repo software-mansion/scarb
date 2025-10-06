@@ -218,8 +218,8 @@ fn can_fingerprint_dependency_cycles() {
 
     Scarb::new()
         .cache(cache_dir.path())
+        .target_dir(target_dir.path())
         .snapbox()
-        .env("SCARB_TARGET_DIR", target_dir.path())
         .arg("build")
         .current_dir(&first)
         .assert()
@@ -251,8 +251,8 @@ fn can_fingerprint_dependency_cycles() {
 
     Scarb::new()
         .cache(cache_dir.path())
+        .target_dir(target_dir.path())
         .snapbox()
-        .env("SCARB_TARGET_DIR", target_dir.path())
         .arg("build")
         .current_dir(&third)
         .assert()
