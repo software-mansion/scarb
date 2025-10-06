@@ -27,6 +27,7 @@ pub struct Workspace<'c> {
     scripts: BTreeMap<SmolStr, ScriptDefinition>,
     root_package: Option<PackageId>,
     target_dir: Filesystem,
+    incremental_base_dir: Filesystem,
     patch: BTreeMap<CanonicalUrl, Vec<ManifestDependency>>,
     require_audits: bool,
     allow_no_audits: Vec<PackageName>,
@@ -55,6 +56,7 @@ impl<'c> Workspace<'c> {
             .iter()
             .map(|p| (p.id, p.clone()))
             .collect::<BTreeMap<_, _>>();
+
         let target_dir = config.target_dir_override().cloned().unwrap_or_else(|| {
             manifest_path
                 .parent()
@@ -62,12 +64,19 @@ impl<'c> Workspace<'c> {
                 .join(DEFAULT_TARGET_DIR_NAME)
         });
         let target_dir = Filesystem::new_output_dir(target_dir);
+
+        let incremental_base_dir = match config.incremental_base_dir_override() {
+            Some(path) => Filesystem::new_output_dir(path),
+            None => target_dir.clone(),
+        };
+
         Ok(Self {
             config,
             manifest_path,
             profiles,
             root_package,
             target_dir,
+            incremental_base_dir,
             members: packages,
             scripts,
             patch,
@@ -120,6 +129,11 @@ impl<'c> Workspace<'c> {
 
     pub fn target_dir(&self) -> &Filesystem {
         &self.target_dir
+    }
+
+    /// By default, this is the same as `target_dir` but can be overridden.
+    pub fn incremental_base_dir(&self) -> &Filesystem {
+        &self.incremental_base_dir
     }
 
     pub fn require_audits(&self) -> bool {

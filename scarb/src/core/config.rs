@@ -142,6 +142,14 @@ impl Config {
         self.target_dir_override.as_ref()
     }
 
+    pub fn incremental_base_dir_override(&self) -> Option<Utf8PathBuf> {
+        // This magic environment variable is used to speed up our E2E test suite. Regular users,
+        // though, shouldn't attempt to influence this behavior; hence it is secret.
+        env::var("__SCARB_INCREMENTAL_BASE_DIR")
+            .ok()
+            .map(Into::into)
+    }
+
     pub fn app_exe(&self) -> Result<&Path> {
         self.app_exe
             .get_or_try_init(|| {

@@ -3,7 +3,7 @@ use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::{FileWriteStr, PathChild};
 use indoc::indoc;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
-use scarb_test_support::command::Scarb;
+use scarb_test_support::command::{Incremental, Scarb};
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
 
@@ -22,6 +22,7 @@ fn incremental_artifacts_emitted() {
 
     Scarb::new()
         .cache(cache_dir.path())
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         .current_dir(&t)
@@ -72,6 +73,7 @@ fn incremental_artifacts_emitted() {
 
     Scarb::new()
         .cache(cache_dir.path())
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         .current_dir(&t)
@@ -137,6 +139,7 @@ fn deps_are_fingerprinted() {
 
     Scarb::new()
         .cache(cache_dir.path())
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         .current_dir(&first)
@@ -170,6 +173,7 @@ fn deps_are_fingerprinted() {
 
     Scarb::new()
         .cache(cache_dir.path())
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         .current_dir(&first)
@@ -219,6 +223,7 @@ fn can_fingerprint_dependency_cycles() {
     Scarb::new()
         .cache(cache_dir.path())
         .target_dir(target_dir.path())
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         .current_dir(&first)
@@ -252,6 +257,7 @@ fn can_fingerprint_dependency_cycles() {
     Scarb::new()
         .cache(cache_dir.path())
         .target_dir(target_dir.path())
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         .current_dir(&third)
@@ -298,6 +304,7 @@ fn proc_macros_are_fingerprinted() {
 
     Scarb::new()
         .cache(&cache_dir)
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         // Disable output from Cargo.
@@ -324,6 +331,7 @@ fn proc_macros_are_fingerprinted() {
     // Rebuild without changing the macro.
     Scarb::new()
         .cache(&cache_dir)
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         // Disable output from Cargo.
@@ -359,6 +367,7 @@ fn proc_macros_are_fingerprinted() {
 
     Scarb::new()
         .cache(&cache_dir)
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         // Disable output from Cargo.
@@ -410,6 +419,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
 
     Scarb::new()
         .cache(&cache_dir)
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         // Disable output from Cargo.
@@ -437,6 +447,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
     // Rebuild without changing the macro.
     Scarb::new()
         .cache(&cache_dir)
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         // Disable output from Cargo.
@@ -456,6 +467,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
     // Rebuild with change env var.
     Scarb::new()
         .cache(&cache_dir)
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         // Disable output from Cargo.
@@ -526,6 +538,7 @@ fn fingerprint_callback_can_force_recompilation() {
 
     Scarb::new()
         .cache(&cache_dir)
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         // Disable output from Cargo.
@@ -553,6 +566,7 @@ fn fingerprint_callback_can_force_recompilation() {
     // Rebuild without changing the macro.
     Scarb::new()
         .cache(&cache_dir)
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         // Disable output from Cargo.
@@ -572,6 +586,7 @@ fn fingerprint_callback_can_force_recompilation() {
     // Rebuild with change env var.
     Scarb::new()
         .cache(&cache_dir)
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         // Disable output from Cargo.
