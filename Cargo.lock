@@ -1084,13 +1084,13 @@ dependencies = [
 [[package]]
 name = "cairo-lang-macro"
 version = "0.2.1"
-source = "git+https://github.com/software-mansion/scarb?branch=feature/pms-prototype#8253ace2f52f7883669fcb493ee86401eeb67774"
+source = "git+https://github.com/software-mansion/scarb?rev=d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034#d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034"
 dependencies = [
  "bumpalo",
- "cairo-lang-macro-attributes 0.2.1 (git+https://github.com/software-mansion/scarb?branch=feature/pms-prototype)",
- "cairo-lang-macro-stable 2.0.0 (git+https://github.com/software-mansion/scarb?branch=feature/pms-prototype)",
+ "cairo-lang-macro-attributes 0.2.1 (git+https://github.com/software-mansion/scarb?rev=d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034)",
+ "cairo-lang-macro-stable 2.0.0 (git+https://github.com/software-mansion/scarb?rev=d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034)",
  "cairo-lang-primitive-token",
- "cairo-lang-quote 0.1.0 (git+https://github.com/software-mansion/scarb?branch=feature/pms-prototype)",
+ "cairo-lang-quote 0.1.0 (git+https://github.com/software-mansion/scarb?rev=d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034)",
  "linkme",
  "serde",
 ]
@@ -1118,7 +1118,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-macro-attributes"
 version = "0.2.1"
-source = "git+https://github.com/software-mansion/scarb?branch=feature/pms-prototype#8253ace2f52f7883669fcb493ee86401eeb67774"
+source = "git+https://github.com/software-mansion/scarb?rev=d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034#d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034"
 dependencies = [
  "quote",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1138,7 +1138,7 @@ version = "2.0.0"
 [[package]]
 name = "cairo-lang-macro-stable"
 version = "2.0.0"
-source = "git+https://github.com/software-mansion/scarb?branch=feature/pms-prototype#8253ace2f52f7883669fcb493ee86401eeb67774"
+source = "git+https://github.com/software-mansion/scarb?rev=d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034#d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034"
 
 [[package]]
 name = "cairo-lang-parser"
@@ -1217,7 +1217,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-quote"
 version = "0.1.0"
-source = "git+https://github.com/software-mansion/scarb?branch=feature/pms-prototype#8253ace2f52f7883669fcb493ee86401eeb67774"
+source = "git+https://github.com/software-mansion/scarb?rev=d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034#d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1569,7 +1569,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.12.3"
-source = "git+https://github.com/software-mansion/cairols?branch=feature/dynamic-macro-loading#99c5361abec314c7d3cd37993da8fe9a6a092a04"
+source = "git+https://github.com/software-mansion/cairols?rev=8eb59905#8eb59905cf23be2fe2bf2d1a8a930411e9fa3933"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1582,7 +1582,7 @@ dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-lowering",
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.1 (git+https://github.com/software-mansion/scarb?branch=feature/pms-prototype)",
+ "cairo-lang-macro 0.2.1 (git+https://github.com/software-mansion/scarb?rev=d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034)",
  "cairo-lang-parser",
  "cairo-lang-plugins",
  "cairo-lang-project",
@@ -1607,7 +1607,7 @@ dependencies = [
  "memchr",
  "salsa",
  "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "scarb-proc-macro-server-types 0.3.0 (git+https://github.com/software-mansion/scarb?branch=feature/pms-prototype)",
+ "scarb-proc-macro-server-types 0.3.0 (git+https://github.com/software-mansion/scarb?rev=d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034)",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "semver 1.0.27",
  "serde",
@@ -7295,10 +7295,10 @@ dependencies = [
 [[package]]
 name = "scarb-proc-macro-server-types"
 version = "0.3.0"
-source = "git+https://github.com/software-mansion/scarb?branch=feature/pms-prototype#8253ace2f52f7883669fcb493ee86401eeb67774"
+source = "git+https://github.com/software-mansion/scarb?rev=d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034#d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034"
 dependencies = [
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.1 (git+https://github.com/software-mansion/scarb?branch=feature/pms-prototype)",
+ "cairo-lang-macro 0.2.1 (git+https://github.com/software-mansion/scarb?rev=d22d0e0fb0429ae5924c51e6ecd7b1b5fea47034)",
  "serde",
  "serde_json",
 ]
