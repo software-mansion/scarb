@@ -311,10 +311,7 @@ fn test_target_skipped_without_flag() {
         .success();
 
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
-    assert_eq!(
-        t.child("target/dev").files(),
-        vec![".fingerprint", "hello.sierra.json", "incremental"]
-    );
+    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra.json"]);
 }
 
 #[test]
@@ -351,12 +348,10 @@ fn compile_test_target() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
-            ".fingerprint",
             "hello_integrationtest.test.json",
             "hello_integrationtest.test.sierra.json",
             "hello_unittest.test.json",
             "hello_unittest.test.sierra.json",
-            "incremental"
         ]
     );
 
@@ -559,12 +554,10 @@ fn features_enabled_in_integration_tests() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
-            ".fingerprint",
             "hello_integrationtest.test.json",
             "hello_integrationtest.test.sierra.json",
             "hello_unittest.test.json",
             "hello_unittest.test.sierra.json",
-            "incremental",
         ]
     );
 
@@ -766,12 +759,7 @@ fn can_choose_target_by_name() {
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
     assert_eq!(
         t.child("target/dev").files(),
-        vec![
-            ".fingerprint",
-            "hello.sierra.json",
-            "hello.starknet_artifacts.json",
-            "incremental"
-        ]
+        vec!["hello.sierra.json", "hello.starknet_artifacts.json"]
     );
 }
 
@@ -810,10 +798,7 @@ fn can_choose_target_by_kind() {
         .success();
 
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
-    assert_eq!(
-        t.child("target/dev").files(),
-        vec![".fingerprint", "hello.sierra.json", "incremental"]
-    );
+    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra.json"]);
 }
 
 #[test]
@@ -980,7 +965,6 @@ fn test_target_builds_contracts() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
-            ".fingerprint",
             "hello_integrationtest.test.json",
             "hello_integrationtest.test.sierra.json",
             "hello_integrationtest.test.starknet_artifacts.json",
@@ -992,7 +976,6 @@ fn test_target_builds_contracts() {
             "hello_unittest.test.starknet_artifacts.json",
             "hello_unittest_Balance.test.contract_class.json",
             "hello_unittest_FortyTwo.test.contract_class.json",
-            "incremental",
         ]
     );
 
@@ -1058,12 +1041,10 @@ fn test_target_builds_external() {
     assert_eq!(
         t.child("hello/target/dev").files(),
         vec![
-            ".fingerprint",
             "hello_unittest.test.json",
             "hello_unittest.test.sierra.json",
             "hello_unittest.test.starknet_artifacts.json",
             "hello_unittest_HelloContract.test.contract_class.json",
-            "incremental",
         ]
     );
 
@@ -1486,12 +1467,10 @@ fn test_target_builds_contracts_with_warning() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
-            ".fingerprint",
             "hello_unittest.test.json",
             "hello_unittest.test.sierra.json",
             "hello_unittest.test.starknet_artifacts.json",
             "hello_unittest_HelloContract.test.contract_class.json",
-            "incremental",
         ]
     );
 }

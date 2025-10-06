@@ -65,8 +65,6 @@ fn compile_imported_contracts() {
     assert_eq!(
         world.child("target/dev").files(),
         vec![
-            ".fingerprint",
-            "incremental",
             "world.starknet_artifacts.json",
             "world_Balance.contract_class.json",
             "world_FortyTwo.contract_class.json",
@@ -103,8 +101,6 @@ fn compile_multiple_imported_contracts() {
     assert_eq!(
         world.child("target/dev").files(),
         vec![
-            ".fingerprint",
-            "incremental",
             "world.starknet_artifacts.json",
             "world_Balance.contract_class.json",
             "world_FortyTwo.contract_class.json",
@@ -233,8 +229,6 @@ fn build_external_full_path() {
     assert_eq!(
         world.child("target/dev").files(),
         vec![
-            ".fingerprint",
-            "incremental",
             "world.starknet_artifacts.json",
             "world_Balance.contract_class.json",
             "world_FortyTwo.contract_class.json",
@@ -262,8 +256,6 @@ fn compile_multiple_with_glob_path() {
     assert_eq!(
         world.child("target/dev").files(),
         vec![
-            ".fingerprint",
-            "incremental",
             "world.starknet_artifacts.json",
             "world_Balance.contract_class.json",
             "world_FortyTwo.contract_class.json",
@@ -502,8 +494,6 @@ fn will_warn_about_unmatched_paths() {
     assert_eq!(
         world.child("target/dev").files(),
         vec![
-            ".fingerprint",
-            "incremental",
             "world.starknet_artifacts.json",
             "world_Balance.contract_class.json",
             "world_FortyTwo.contract_class.json",
@@ -572,8 +562,6 @@ fn can_build_external_reexported_contracts() {
     assert_eq!(
         world.child("target/dev").files(),
         vec![
-            ".fingerprint",
-            "incremental",
             "world.starknet_artifacts.json",
             "world_Balance.contract_class.json",
             "world_HelloContract.contract_class.json"
@@ -628,8 +616,6 @@ fn can_dedup_contract_reexports() {
     assert_eq!(
         world.child("target/dev").files(),
         vec![
-            ".fingerprint",
-            "incremental",
             "world.starknet_artifacts.json",
             "world_Balance.contract_class.json",
         ]
