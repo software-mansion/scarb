@@ -18,9 +18,6 @@ pub struct Check {
     #[builder(default, setter(into))]
     stderr_contains: String,
 
-    #[builder(default = "true")]
-    enable_experimental_oracles_flag: bool,
-
     #[builder(default, setter(custom))]
     profile: Option<String>,
 
@@ -87,10 +84,6 @@ impl Check {
         }
 
         snapbox = snapbox.arg("execute").current_dir(&t);
-
-        if self.enable_experimental_oracles_flag {
-            snapbox = snapbox.arg("--experimental-oracles");
-        }
 
         let mut assert = snapbox.assert();
 

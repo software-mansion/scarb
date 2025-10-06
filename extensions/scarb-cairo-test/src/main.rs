@@ -106,11 +106,9 @@ fn main() -> Result<()> {
             };
             let mut runner = CompiledTestRunner::new(test_compilation, config);
             runner.with_custom_hint_processor({
-                let oracle_experiment_enabled = args.experimental_oracles;
                 move |cairo_hint_processor| {
                     Box::new(TestHintProcessor {
                         cairo_hint_processor,
-                        oracle_experiment_enabled,
                         oracle_hint_service: OracleHintService::new(Some(
                             test_compilation_path.as_std_path(),
                         )),

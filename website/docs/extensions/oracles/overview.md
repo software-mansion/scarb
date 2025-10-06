@@ -2,7 +2,7 @@
 
 > [!WARNING]
 > This is an experimental feature. The API and behaviour may change in future versions of Scarb.
-> Oracles are currently available in **`scarb execute`** and `scarb cairo-test` with the `--experimental-oracles` flag.
+> Oracles are currently available in **`scarb execute`** and **`scarb cairo-test`**.
 > Support is also planned in future versions of **`snforge`**.
 
 An oracle is an external process (like a script, binary, or web service) that exposes custom logic or data to a Cairo

@@ -4,7 +4,7 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
-fn oracle_invoke_without_experimental_flag_fails() {
+fn oracle_invoke_without_connection() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("oracle_test")
@@ -31,7 +31,7 @@ fn oracle_invoke_without_experimental_flag_fails() {
             running 1 test
             test oracle_test::should_not_work ... failed to run
             failures:
-               oracle_test::should_not_work - Got an exception while executing a hint: Oracles are experimental feature. To enable, pass --experimental-oracles CLI flag.
+               oracle_test::should_not_work - [..]
 
         "#});
 }
@@ -66,7 +66,6 @@ fn oracle() {
 
     Scarb::quick_snapbox()
         .arg("cairo-test")
-        .arg("--experimental-oracles")
         .env("RUST_BACKTRACE", "0")
         .current_dir(&t)
         .assert()
