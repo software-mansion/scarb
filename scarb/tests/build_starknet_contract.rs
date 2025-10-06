@@ -117,10 +117,8 @@ fn compile_starknet_contract_to_casm() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
-            ".fingerprint",
             "hello.starknet_artifacts.json",
             "hello_Balance.compiled_contract_class.json",
-            "incremental",
         ]
     );
 
@@ -171,7 +169,6 @@ fn compile_many_contracts() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
-            ".fingerprint",
             "a.starknet_artifacts.json",
             "a_Balance.contract_class.json",
             "a_FortyTwo.contract_class.json",
@@ -181,7 +178,6 @@ fn compile_many_contracts() {
             "hello.casm",
             "hello.sierra",
             "hello.sierra.json",
-            "incremental",
         ]
     );
 
@@ -233,11 +229,9 @@ fn compile_same_name_contracts() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
-            ".fingerprint",
             "hello.starknet_artifacts.json",
             "hello_hello_forty_two_FortyTwo.contract_class.json",
             "hello_hello_world_FortyTwo.contract_class.json",
-            "incremental",
         ]
     );
 
