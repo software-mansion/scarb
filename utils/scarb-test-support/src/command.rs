@@ -111,7 +111,6 @@ impl EnvPath {
         Self::Managed(TempDir::new().unwrap())
     }
 
-    #[cfg(feature = "scarb-config")]
     fn borrow(path: impl AsRef<Path>) -> Self {
         Self::Unmanaged(path.as_ref().to_path_buf())
     }
