@@ -73,10 +73,8 @@ fn compile_starknet_contract() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
-            ".fingerprint",
             "hello.starknet_artifacts.json",
             "hello_Balance.contract_class.json",
-            "incremental",
         ]
     );
 
@@ -334,11 +332,9 @@ fn compile_starknet_contract_only_with_cfg() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
-            ".fingerprint",
             "hello.sierra.json",
             "hello.starknet_artifacts.json",
             "hello_Balance.contract_class.json",
-            "incremental",
         ]
     );
 
@@ -453,8 +449,6 @@ fn do_not_compile_dep_contracts() {
             .sorted()
             .collect::<Vec<&String>>(),
         vec![
-            ".fingerprint",
-            "incremental",
             "world.starknet_artifacts.json",
             "world_FortyTwo.contract_class.json",
             "world_HelloContract.contract_class.json",

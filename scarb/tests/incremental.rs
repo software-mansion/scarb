@@ -32,7 +32,7 @@ fn incremental_artifacts_emitted() {
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
     assert_eq!(
         t.child("target/dev").files(),
-        vec![".fingerprint", "hello.sierra.json", "incremental",]
+        vec![".fingerprint", "hello.sierra.json", "incremental"]
     );
 
     // We search the dir, as fingerprints will change with different temp dir, so we cannot hardcode
@@ -84,7 +84,7 @@ fn incremental_artifacts_emitted() {
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
     assert_eq!(
         t.child("target/dev").files(),
-        vec![".fingerprint", "hello.sierra.json", "incremental",]
+        vec![".fingerprint", "hello.sierra.json", "incremental"]
     );
     assert_eq!(
         t.child("target/dev/incremental").files(),

@@ -40,10 +40,7 @@ fn compile_simple_git_dep() {
         [..]  Finished `dev` profile target(s) in [..]
         "#});
 
-    assert_eq!(
-        t.child("target/dev").files(),
-        vec![".fingerprint", "hello.sierra.json", "incremental"],
-    );
+    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra.json"]);
 }
 
 #[test]
