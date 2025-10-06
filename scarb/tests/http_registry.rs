@@ -317,9 +317,10 @@ fn caching() {
         .build(&t);
 
     // FIXME(mkaput): Why are verbose statuses not appearing here?
-    Scarb::quick_snapbox()
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .arg("fetch")
-        .env("SCARB_CACHE", cache_dir.path())
         .current_dir(&t)
         .timeout(Duration::from_secs(10))
         .assert()
@@ -329,18 +330,20 @@ fn caching() {
         "#});
 
     // FIXME(mkaput): Why are verbose statuses not appearing here?
-    Scarb::quick_snapbox()
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .arg("fetch")
-        .env("SCARB_CACHE", cache_dir.path())
         .current_dir(&t)
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
         .stdout_eq("");
 
-    Scarb::quick_snapbox()
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .arg("fetch")
-        .env("SCARB_CACHE", cache_dir.path())
         .current_dir(&t)
         .timeout(Duration::from_secs(10))
         .assert()

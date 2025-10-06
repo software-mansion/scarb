@@ -15,8 +15,9 @@ fn check_simple() {
         .version("0.1.0")
         .build(&t);
 
-    Scarb::quick_snapbox()
-        .env("SCARB_CACHE", cache_dir.path())
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .arg("check")
         .current_dir(&t)
         .assert()

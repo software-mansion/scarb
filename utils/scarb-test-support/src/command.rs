@@ -87,6 +87,11 @@ impl Scarb {
             .build()
             .unwrap()
     }
+
+    pub fn cache(mut self, path: &Path) -> Self {
+        self.cache = EnvPath::borrow(path);
+        self
+    }
 }
 
 impl Default for Scarb {
@@ -106,7 +111,6 @@ impl EnvPath {
         Self::Managed(TempDir::new().unwrap())
     }
 
-    #[cfg(feature = "scarb-config")]
     fn borrow(path: impl AsRef<Path>) -> Self {
         Self::Unmanaged(path.as_ref().to_path_buf())
     }
@@ -140,15 +144,5 @@ impl CommandExt for SnapboxCommand {
         }
         // help: make sure that the command outputs NDJSON (`--json` flag).
         panic!("Failed to deserialize stdout to JSON");
-    }
-}
-
-pub trait ScarbSnapboxExt {
-    fn scarb_cache(self, path: impl AsRef<Path>) -> SnapboxCommand;
-}
-
-impl ScarbSnapboxExt for SnapboxCommand {
-    fn scarb_cache(self, path: impl AsRef<Path>) -> SnapboxCommand {
-        self.env("SCARB_CACHE", path.as_ref())
     }
 }
