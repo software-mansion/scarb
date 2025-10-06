@@ -28,6 +28,7 @@ pub struct Check {
     pb_ops: Vec<Box<dyn FnOnce(ProjectBuilder) -> ProjectBuilder>>,
 
     #[builder(default, setter(custom))]
+    #[expect(clippy::type_complexity)] // this is not complex at all
     dir_ops: Vec<Box<dyn FnOnce(&TempDir)>>,
 }
 
