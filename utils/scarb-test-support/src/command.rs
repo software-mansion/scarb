@@ -13,9 +13,9 @@ use std::process::Command as StdCommand;
 use std::sync::LazyLock;
 
 pub struct Scarb {
-    cache: Option<EnvPath>,
+    cache: EnvPath,
     config: EnvPath,
-    target: Option<EnvPath>,
+    target: EnvPath,
     log: OsString,
     scarb_bin: PathBuf,
     incremental: Incremental,
@@ -24,9 +24,9 @@ pub struct Scarb {
 impl Scarb {
     pub fn new() -> Self {
         Self {
-            cache: None,
+            cache: EnvPath::Unspecified,
             config: EnvPath::temp_dir(),
-            target: None,
+            target: EnvPath::Unspecified,
             log: "scarb=trace".into(),
             scarb_bin: cargo_bin("scarb"),
             incremental: Default::default(),
@@ -36,13 +36,12 @@ impl Scarb {
     #[cfg(feature = "scarb-config")]
     pub fn from_config(config: &scarb::core::Config) -> Self {
         Self {
-            cache: Some(EnvPath::borrow(
-                config.dirs().cache_dir.path_unchecked().as_std_path(),
-            )),
+            cache: EnvPath::borrow(config.dirs().cache_dir.path_unchecked().as_std_path()),
             config: EnvPath::borrow(config.dirs().config_dir.path_unchecked().as_std_path()),
             target: config
                 .target_dir_override()
-                .map(|p| EnvPath::borrow(p.as_std_path())),
+                .map(|p| EnvPath::borrow(p.as_std_path()))
+                .unwrap_or_default(),
             log: config.log_filter_directive().to_os_string(),
             scarb_bin: cargo_bin("scarb"),
             incremental: Default::default(),
@@ -64,26 +63,35 @@ impl Scarb {
         static SHARED_CACHE: LazyLock<SharedCache> = LazyLock::new(force_warmup_shared_cache);
 
         let mut cmd = StdCommand::new(self.scarb_bin);
+
         cmd.env("SCARB_LOG", self.log);
+
         cmd.env(
             "SCARB_CACHE",
-            match &self.cache {
-                Some(env_path) => env_path.path(),
-                None => SHARED_CACHE.cache.path(),
-            },
+            self.cache
+                .path()
+                .unwrap_or_else(|| SHARED_CACHE.cache.path()),
         );
-        cmd.env("SCARB_CONFIG", self.config.path());
-        cmd.env("SCARB_INIT_TEST_RUNNER", "cairo-test");
-        if let Some(target) = self.target {
-            cmd.env("SCARB_TARGET_DIR", target.path());
+
+        if let Some(config) = self.config.path() {
+            cmd.env("SCARB_CONFIG", config);
         }
+
+        cmd.env("SCARB_INIT_TEST_RUNNER", "cairo-test");
+
+        if let Some(target) = self.target.path() {
+            cmd.env("SCARB_TARGET_DIR", target);
+        }
+
         cmd.env("SCARB_INCREMENTAL", self.incremental.env());
+
         if self.incremental == Incremental::Shared {
             cmd.env(
                 "__SCARB_INCREMENTAL_BASE_DIR",
                 SHARED_CACHE.incremental.path(),
             );
         }
+
         cmd
     }
 
@@ -122,12 +130,12 @@ impl Scarb {
     }
 
     pub fn cache(mut self, path: &Path) -> Self {
-        self.cache = Some(EnvPath::borrow(path));
+        self.cache = EnvPath::borrow(path);
         self
     }
 
     pub fn target_dir(mut self, path: &Path) -> Self {
-        self.target = Some(EnvPath::borrow(path));
+        self.target = EnvPath::borrow(path);
         self
     }
 
@@ -143,10 +151,12 @@ impl Default for Scarb {
     }
 }
 
-#[allow(dead_code)]
+#[derive(Default)]
 enum EnvPath {
     Managed(TempDir),
     Unmanaged(PathBuf),
+    #[default]
+    Unspecified,
 }
 
 impl EnvPath {
@@ -158,10 +168,11 @@ impl EnvPath {
         Self::Unmanaged(path.as_ref().to_path_buf())
     }
 
-    fn path(&self) -> &Path {
+    fn path(&self) -> Option<&Path> {
         match self {
-            EnvPath::Managed(t) => t.path(),
-            EnvPath::Unmanaged(p) => p,
+            EnvPath::Managed(t) => Some(t.path()),
+            EnvPath::Unmanaged(p) => Some(p),
+            EnvPath::Unspecified => None,
         }
     }
 }
