@@ -1,5 +1,8 @@
+use crate::cargo::cargo_bin;
+use anyhow::Context;
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
+use indoc::indoc;
 use serde::de::DeserializeOwned;
 use snapbox::cmd::Command as SnapboxCommand;
 use std::ffi::OsString;
@@ -9,37 +12,40 @@ use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 use std::sync::LazyLock;
 
-use crate::cargo::cargo_bin;
-
 pub struct Scarb {
-    cache: EnvPath,
+    cache: Option<EnvPath>,
     config: EnvPath,
     target: Option<EnvPath>,
     log: OsString,
     scarb_bin: PathBuf,
+    incremental: Incremental,
 }
 
 impl Scarb {
     pub fn new() -> Self {
         Self {
-            cache: EnvPath::temp_dir(),
+            cache: None,
             config: EnvPath::temp_dir(),
             target: None,
             log: "scarb=trace".into(),
             scarb_bin: cargo_bin("scarb"),
+            incremental: Default::default(),
         }
     }
 
     #[cfg(feature = "scarb-config")]
     pub fn from_config(config: &scarb::core::Config) -> Self {
         Self {
-            cache: EnvPath::borrow(config.dirs().cache_dir.path_unchecked().as_std_path()),
+            cache: Some(EnvPath::borrow(
+                config.dirs().cache_dir.path_unchecked().as_std_path(),
+            )),
             config: EnvPath::borrow(config.dirs().config_dir.path_unchecked().as_std_path()),
             target: config
                 .target_dir_override()
                 .map(|p| EnvPath::borrow(p.as_std_path())),
             log: config.log_filter_directive().to_os_string(),
             scarb_bin: cargo_bin("scarb"),
+            incremental: Default::default(),
         }
     }
 
@@ -52,19 +58,38 @@ impl Scarb {
     }
 
     pub fn std(self) -> StdCommand {
+        /// This static holds a compiled scarb cache and incremental cache with the core library
+        /// already compiled. When tests run in Incremental::Shared mode, this cache is reused
+        /// to speed up test execution.
+        static SHARED_CACHE: LazyLock<SharedCache> = LazyLock::new(force_warmup_shared_cache);
+
         let mut cmd = StdCommand::new(self.scarb_bin);
         cmd.env("SCARB_LOG", self.log);
-        cmd.env("SCARB_CACHE", self.cache.path());
+        cmd.env(
+            "SCARB_CACHE",
+            match &self.cache {
+                Some(env_path) => env_path.path(),
+                None => SHARED_CACHE.cache.path(),
+            },
+        );
         cmd.env("SCARB_CONFIG", self.config.path());
         cmd.env("SCARB_INIT_TEST_RUNNER", "cairo-test");
         if let Some(target) = self.target {
             cmd.env("SCARB_TARGET_DIR", target.path());
         }
+        cmd.env("SCARB_INCREMENTAL", self.incremental.env());
+        if self.incremental == Incremental::Shared {
+            cmd.env(
+                "__SCARB_INCREMENTAL_BASE_DIR",
+                SHARED_CACHE.incremental.path(),
+            );
+        }
         cmd
     }
 
     pub fn isolate_from_extensions(self) -> Self {
-        // NOTE: We keep TempDir instance in static, so that it'll be dropped when program ends.
+        // NOTE: We keep the TempDir instance in a static variable
+        //   so that it will be dropped when the program ends.
         static ISOLATE: LazyLock<(PathBuf, TempDir)> = LazyLock::new(|| {
             let t = TempDir::new().unwrap();
             let source_bin = cargo_bin("scarb");
@@ -97,12 +122,17 @@ impl Scarb {
     }
 
     pub fn cache(mut self, path: &Path) -> Self {
-        self.cache = EnvPath::borrow(path);
+        self.cache = Some(EnvPath::borrow(path));
         self
     }
 
     pub fn target_dir(mut self, path: &Path) -> Self {
         self.target = Some(EnvPath::borrow(path));
+        self
+    }
+
+    pub fn incremental(mut self, incremental: Incremental) -> Self {
+        self.incremental = incremental;
         self
     }
 }
@@ -158,4 +188,68 @@ impl CommandExt for SnapboxCommand {
         // help: make sure that the command outputs NDJSON (`--json` flag).
         panic!("Failed to deserialize stdout to JSON");
     }
+}
+
+/// Specifies how scarb incremental compilation should behave in this test.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub enum Incremental {
+    // Incremental compilation is disabled, i.e. `SCARB_INCREMENTAL=0` is set.
+    No,
+
+    // In isolated mode, incremental compilation is enabled but not shared with other tests.
+    Isolated,
+
+    // In shared mode, all tests use the same cache and incremental directories.
+    #[default]
+    Shared,
+}
+
+impl Incremental {
+    fn env(self) -> &'static str {
+        match self {
+            Incremental::No => "0",
+            Incremental::Isolated | Incremental::Shared => "1",
+        }
+    }
+}
+
+struct SharedCache {
+    cache: TempDir,
+    incremental: TempDir,
+}
+
+fn force_warmup_shared_cache() -> SharedCache {
+    let cache = TempDir::new().unwrap();
+    let incremental = TempDir::new().unwrap();
+    let work = TempDir::new().unwrap();
+
+    work.child("Scarb.toml")
+        .write_str(indoc! {r#"
+            [package]
+            name = "scarb_e2e_cache_warmup"
+            version = "1.0.0"
+            edition = "2024_07"
+        "#})
+        .unwrap();
+
+    work.child("src/lib.cairo")
+        .write_str("fn warmup() -> felt252 { 42 }")
+        .unwrap();
+
+    let result = StdCommand::new(cargo_bin("scarb"))
+        .env("SCARB_LOG", "warn") // Reduce log noise during warmup.
+        .env("SCARB_CACHE", cache.path())
+        .env("__SCARB_INCREMENTAL_BASE_DIR", incremental.path())
+        .arg("build")
+        .current_dir(&work)
+        .status()
+        .context("WARN cache warmup failed");
+
+    match result {
+        Ok(status) if status.success() => {}
+        Ok(status) => eprintln!("WARN cache warmup build failed, code={status}"),
+        Err(e) => eprintln!("{e:?}"),
+    }
+
+    SharedCache { cache, incremental }
 }

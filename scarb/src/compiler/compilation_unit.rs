@@ -338,11 +338,11 @@ impl CairoCompilationUnit {
     }
 
     pub fn fingerprint_dir(&self, ws: &Workspace<'_>) -> Filesystem {
-        self.target_dir(ws).child(FINGERPRINT_DIR_NAME)
+        ws.incremental_base_dir().child(FINGERPRINT_DIR_NAME)
     }
 
     pub fn incremental_cache_dir(&self, ws: &Workspace<'_>) -> Filesystem {
-        self.target_dir(ws).child(INCREMENTAL_DIR_NAME)
+        ws.incremental_base_dir().child(INCREMENTAL_DIR_NAME)
     }
 
     /// Rewrite single compilation unit with multiple targets, into multiple compilation units
