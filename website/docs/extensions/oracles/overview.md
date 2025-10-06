@@ -4,8 +4,6 @@ An oracle is an external process (like a script, binary, or web service) that ex
 program at runtime. You use it to perform tasks the Cairo VM can't, such as accessing real-world data or executing
 complex, non-provable computations.
 
-Oracles are available in **`scarb execute`** and **`scarb cairo-test`**.
-
 ## Using oracles
 
 The `oracle` library provides a type-safe interface for interacting with external oracles in Cairo applications.
