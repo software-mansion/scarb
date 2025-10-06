@@ -87,6 +87,11 @@ impl Scarb {
             .build()
             .unwrap()
     }
+
+    pub fn cache(mut self, path: &Path) -> Self {
+        self.cache = EnvPath::borrow(path);
+        self
+    }
 }
 
 impl Default for Scarb {
@@ -140,15 +145,5 @@ impl CommandExt for SnapboxCommand {
         }
         // help: make sure that the command outputs NDJSON (`--json` flag).
         panic!("Failed to deserialize stdout to JSON");
-    }
-}
-
-pub trait ScarbSnapboxExt {
-    fn scarb_cache(self, path: impl AsRef<Path>) -> SnapboxCommand;
-}
-
-impl ScarbSnapboxExt for SnapboxCommand {
-    fn scarb_cache(self, path: impl AsRef<Path>) -> SnapboxCommand {
-        self.env("SCARB_CACHE", path.as_ref())
     }
 }

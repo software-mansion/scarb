@@ -3,7 +3,7 @@ use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::{FileWriteStr, PathChild};
 use indoc::indoc;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
-use scarb_test_support::command::{Scarb, ScarbSnapboxExt};
+use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
 
@@ -20,8 +20,9 @@ fn incremental_artifacts_emitted() {
         .name("inner")
         .build(&t.child("src/inner"));
 
-    Scarb::quick_snapbox()
-        .scarb_cache(cache_dir.path())
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -69,8 +70,9 @@ fn incremental_artifacts_emitted() {
         .write_str("fn f() -> felt252 { 412 }")
         .unwrap();
 
-    Scarb::quick_snapbox()
-        .scarb_cache(cache_dir.path())
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -133,8 +135,9 @@ fn deps_are_fingerprinted() {
         .build(&t.child("fourth"));
     ProjectBuilder::start().name("fifth").build(&fifth);
 
-    Scarb::quick_snapbox()
-        .scarb_cache(cache_dir.path())
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .arg("build")
         .current_dir(&first)
         .assert()
@@ -165,8 +168,9 @@ fn deps_are_fingerprinted() {
         .write_str("fn f() -> felt252 { 42 }")
         .unwrap();
 
-    Scarb::quick_snapbox()
-        .scarb_cache(cache_dir.path())
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .arg("build")
         .current_dir(&first)
         .assert()
@@ -212,8 +216,9 @@ fn can_fingerprint_dependency_cycles() {
         .dep("first", &first)
         .build(&t.child("fourth"));
 
-    Scarb::quick_snapbox()
-        .scarb_cache(cache_dir.path())
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .env("SCARB_TARGET_DIR", target_dir.path())
         .arg("build")
         .current_dir(&first)
@@ -244,8 +249,9 @@ fn can_fingerprint_dependency_cycles() {
         .write_str("fn f() -> felt252 { 412 }")
         .unwrap();
 
-    Scarb::quick_snapbox()
-        .scarb_cache(cache_dir.path())
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .env("SCARB_TARGET_DIR", target_dir.path())
         .arg("build")
         .current_dir(&third)
@@ -290,8 +296,9 @@ fn proc_macros_are_fingerprinted() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
-        .scarb_cache(&cache_dir)
+    Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -315,8 +322,9 @@ fn proc_macros_are_fingerprinted() {
     let hello_digest = digest(hello_component_id.as_str());
 
     // Rebuild without changing the macro.
-    Scarb::quick_snapbox()
-        .scarb_cache(&cache_dir)
+    Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -349,8 +357,9 @@ fn proc_macros_are_fingerprinted() {
         "#})
         .unwrap();
 
-    Scarb::quick_snapbox()
-        .scarb_cache(&cache_dir)
+    Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -399,8 +408,9 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
-        .scarb_cache(&cache_dir)
+    Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -425,8 +435,9 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
     let hello_digest = digest(hello_component_id.as_str());
 
     // Rebuild without changing the macro.
-    Scarb::quick_snapbox()
-        .scarb_cache(&cache_dir)
+    Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -443,8 +454,9 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
     assert_eq!(digest(hello_component_id.as_str()), hello_digest);
 
     // Rebuild with change env var.
-    Scarb::quick_snapbox()
-        .scarb_cache(&cache_dir)
+    Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -512,8 +524,9 @@ fn fingerprint_callback_can_force_recompilation() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
-        .scarb_cache(&cache_dir)
+    Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -538,8 +551,9 @@ fn fingerprint_callback_can_force_recompilation() {
     let hello_digest = digest(hello_component_id.as_str());
 
     // Rebuild without changing the macro.
-    Scarb::quick_snapbox()
-        .scarb_cache(&cache_dir)
+    Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -556,8 +570,9 @@ fn fingerprint_callback_can_force_recompilation() {
     assert_eq!(digest(hello_component_id.as_str()), hello_digest);
 
     // Rebuild with change env var.
-    Scarb::quick_snapbox()
-        .scarb_cache(&cache_dir)
+    Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
