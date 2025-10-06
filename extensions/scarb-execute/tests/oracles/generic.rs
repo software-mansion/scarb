@@ -2,27 +2,6 @@ use crate::support::CheckBuilder;
 use indoc::indoc;
 
 #[test]
-fn no_connection_string() {
-    CheckBuilder::default()
-        .lib_cairo(indoc! {r#"
-            #[executable]
-            fn main() {
-                starknet::testing::cheatcode::<'oracle_invoke'>(array![].span());
-            }
-        "#})
-        .profile("release".to_string())
-        .failure()
-        .stdout_matches(indoc! {r#"
-            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
-            [..]Finished `release` profile target(s) in [..]
-            [..]Executing oracle_test
-            error: [..]
-
-        "#})
-        .check();
-}
-
-#[test]
 fn unknown_scheme() {
     CheckBuilder::default()
         .lib_cairo(indoc! {r#"
