@@ -841,6 +841,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
 
 [[package]]
+name = "cairo-annotations"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c97ec125673123e432c0082c80ceeeb2c18516d97373565f9710b19a7aafb6c"
+dependencies = [
+ "camino",
+ "derive_more",
+ "regex",
+ "serde",
+ "serde_json",
+ "starknet-types-core 0.2.2",
+ "strum",
+ "strum_macros",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "cairo-lang-casm"
 version = "2.12.3"
 source = "git+https://github.com/starkware-libs/cairo?rev=2e1ecd0c18d9a6dfd8667062827adbb3cc36cf0b#2e1ecd0c18d9a6dfd8667062827adbb3cc36cf0b"
@@ -2541,6 +2558,27 @@ checksum = "ab63b0e2bf4d5928aff72e83a7dace85d7bba5fe12dcc3c5a572d78caffd3f3c"
 dependencies = [
  "derive_builder_core",
  "syn 2.0.106",
+]
+
+[[package]]
+name = "derive_more"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "093242cf7570c207c83073cf82f79706fe7b8317e98620a47d5be7c3d8497678"
+dependencies = [
+ "derive_more-impl",
+]
+
+[[package]]
+name = "derive_more-impl"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bda628edc44c4bb645fbe0f758797143e4e07926f7ebf4e9bdfbd3d2ce621df3"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
+ "unicode-xid",
 ]
 
 [[package]]
@@ -6830,6 +6868,7 @@ dependencies = [
  "anyhow",
  "assert_fs",
  "bincode",
+ "cairo-annotations",
  "cairo-lang-casm",
  "cairo-lang-executable",
  "cairo-lang-runner",
@@ -7829,6 +7868,24 @@ name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
+
+[[package]]
+name = "strum"
+version = "0.27.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af23d6f6c1a224baef9d3f61e287d2761385a5b88fdab4eb4c6f11aeb54c4bcf"
+
+[[package]]
+name = "strum_macros"
+version = "0.27.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7695ce3845ea4b33927c055a39dc438a45b059f7c1b3d91d38d10355fb8cbca7"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
+]
 
 [[package]]
 name = "stwo-air-utils"

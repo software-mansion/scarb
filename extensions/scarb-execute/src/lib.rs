@@ -262,15 +262,21 @@ pub fn execute(
 
     if args.run.save_profiler_trace_data {
         ensure!(
-            package.targets.iter().any(|t| t.kind == "executable"
-                && t.params.get("sierra").and_then(|v| v.as_bool()) == Some(true)),
-            "Failed to write profiler trace data into a file - missing sierra code. \
-            Set `sierra = true` under your `[executable]` target in the config and try again."
+            build_target.params.get("sierra").and_then(|v| v.as_bool()) == Some(true),
+            "Failed to write profiler trace data into a file — missing sierra code for target `{0}`. \
+            Set `sierra = true` under your `[executable]` target in the config and try again.",
+            build_target.name
         );
-        let profiler_trace_path = Utf8PathBuf::from(format!(
-            "{}/{}/{}.executable.sierra.json",
-            &metadata.workspace.root, &scarb_build_dir, &build_target.name
+        let executable_sierra_path = Utf8PathBuf::from(format!(
+            "{}/{}.executable.sierra.json",
+            &scarb_build_dir, &build_target.name
         ));
+        ensure!(
+            executable_sierra_path.exists(),
+            "Missing sierra code for executable `{0}`, file {executable_sierra_path} does not exist. \
+             help: run `scarb build` to compile the package and try again.",
+            build_target.name
+        );
         let tracked_resource = get_profiler_tracked_resource(package);
         let function_name: Option<String> = build_target
             .params
@@ -293,7 +299,7 @@ pub fn execute(
             runner.relocated_trace.clone(),
             execution_resources.expect("Failed to obtain execution resources"),
             &tracked_resource,
-            profiler_trace_path,
+            executable_sierra_path,
             function_name,
             program_offset,
         )?;
