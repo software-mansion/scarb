@@ -849,7 +849,8 @@ checksum = "f5c434ae3cf0089ca203e9019ebe529c47ff45cefe8af7c85ecb734ef541822f"
 [[package]]
 name = "cairo-annotations"
 version = "0.7.0"
-source = "git+https://github.com/software-mansion/cairo-annotations?branch=szymczyk/header-size#2c324b2fd8c06c068de82fd54bbff3784dad9254"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c97ec125673123e432c0082c80ceeeb2c18516d97373565f9710b19a7aafb6c"
 dependencies = [
  "camino",
  "derive_more",

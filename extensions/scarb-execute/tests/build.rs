@@ -508,6 +508,41 @@ fn no_required_sierra_for_profiler_trace_file() {
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
         Saving output to: target/execute/hello/execution1
-        error: Failed to write profiler trace data into a file - missing sierra code. Set `sierra = true` under your `[executable]` target in the config and try again.
+        error: Failed to write profiler trace data into a file — missing sierra code for target `hello`. Set `sierra = true` under your `[executable]` target in the config and try again.
+        "#});
+}
+
+#[test]
+fn no_build_artifact_for_profiler_trace_file() {
+    let t = TempDir::new().unwrap();
+    executable_project_builder()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            sierra = true
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 { 1 }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox().arg("build").current_dir(&t).assert();
+    let artifact_path = t.path().join("target/dev/hello.executable.sierra.json");
+    if artifact_path.exists() {
+        std::fs::remove_file(&artifact_path).unwrap();
+    }
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--no-build")
+        .arg("--save-profiler-trace-data")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..]Executing hello
+        Saving output to: target/execute/hello/execution1
+        error: Missing sierra code for executable `hello`, file [..]hello.executable.sierra.json does not exist. help: run `scarb build` to compile the package and try again.
         "#});
 }
