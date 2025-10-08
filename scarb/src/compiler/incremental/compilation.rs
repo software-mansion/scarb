@@ -180,15 +180,23 @@ pub fn load_incremental_artifacts(
     };
 
     // Warmup loaded crates cache in parallel.
-    let _: Vec<()> = par_map(
-        db,
-        CrateInput::into_crate_ids(db, cached_crates.clone()),
-        |db, crate_id| {
-            let span = trace_span!("cached_multi_lowerings");
-            let _guard = span.enter();
-            db.cached_multi_lowerings(crate_id);
-        },
-    );
+    {
+        let cached_crates = cached_crates.clone();
+        let db = db.fork_db();
+        // We do not want to block the main thread here.
+        // We only care about side effects of the warmup.
+        rayon::spawn(move || {
+            let _: Vec<()> = par_map(
+                db.as_ref(),
+                CrateInput::into_crate_ids(db.as_ref(), cached_crates),
+                |db, crate_id| {
+                    let span = trace_span!("cached_multi_lowerings");
+                    let _guard = span.enter();
+                    db.cached_multi_lowerings(crate_id);
+                },
+            );
+        })
+    }
 
     Ok(IncrementalContext::Enabled {
         fingerprints,
