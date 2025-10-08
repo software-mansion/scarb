@@ -14,6 +14,7 @@ use crate::cargo::cargo_bin;
 pub struct Scarb {
     cache: EnvPath,
     config: EnvPath,
+    target: Option<EnvPath>,
     log: OsString,
     scarb_bin: PathBuf,
 }
@@ -23,6 +24,7 @@ impl Scarb {
         Self {
             cache: EnvPath::temp_dir(),
             config: EnvPath::temp_dir(),
+            target: None,
             log: "scarb=trace".into(),
             scarb_bin: cargo_bin("scarb"),
         }
@@ -33,6 +35,9 @@ impl Scarb {
         Self {
             cache: EnvPath::borrow(config.dirs().cache_dir.path_unchecked().as_std_path()),
             config: EnvPath::borrow(config.dirs().config_dir.path_unchecked().as_std_path()),
+            target: config
+                .target_dir_override()
+                .map(|p| EnvPath::borrow(p.as_std_path())),
             log: config.log_filter_directive().to_os_string(),
             scarb_bin: cargo_bin("scarb"),
         }
@@ -52,6 +57,9 @@ impl Scarb {
         cmd.env("SCARB_CACHE", self.cache.path());
         cmd.env("SCARB_CONFIG", self.config.path());
         cmd.env("SCARB_INIT_TEST_RUNNER", "cairo-test");
+        if let Some(target) = self.target {
+            cmd.env("SCARB_TARGET_DIR", target.path());
+        }
         cmd
     }
 
@@ -87,6 +95,16 @@ impl Scarb {
             .build()
             .unwrap()
     }
+
+    pub fn cache(mut self, path: &Path) -> Self {
+        self.cache = EnvPath::borrow(path);
+        self
+    }
+
+    pub fn target_dir(mut self, path: &Path) -> Self {
+        self.target = Some(EnvPath::borrow(path));
+        self
+    }
 }
 
 impl Default for Scarb {
@@ -106,7 +124,6 @@ impl EnvPath {
         Self::Managed(TempDir::new().unwrap())
     }
 
-    #[cfg(feature = "scarb-config")]
     fn borrow(path: impl AsRef<Path>) -> Self {
         Self::Unmanaged(path.as_ref().to_path_buf())
     }
@@ -140,15 +157,5 @@ impl CommandExt for SnapboxCommand {
         }
         // help: make sure that the command outputs NDJSON (`--json` flag).
         panic!("Failed to deserialize stdout to JSON");
-    }
-}
-
-pub trait ScarbSnapboxExt {
-    fn scarb_cache(self, path: impl AsRef<Path>) -> SnapboxCommand;
-}
-
-impl ScarbSnapboxExt for SnapboxCommand {
-    fn scarb_cache(self, path: impl AsRef<Path>) -> SnapboxCommand {
-        self.env("SCARB_CACHE", path.as_ref())
     }
 }

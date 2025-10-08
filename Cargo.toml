@@ -80,7 +80,7 @@ clap = { version = "4", features = ["derive", "env", "string"] }
 clap_complete = "4"
 console = "0.15"
 convert_case = "0.8.0"
-darling = "0.20"
+darling = "0.21"
 dashmap = "6"
 data-encoding = "2"
 deno_task_shell = ">=0.13"
@@ -89,7 +89,7 @@ dialoguer = "0.11.0"
 directories = "5"
 dunce = "1"
 expect-test = "1.5"
-flate2 = { version = "1.1.2", default-features = false, features = ["zlib"] }
+flate2 = { version = "1.1.4", default-features = false, features = ["zlib"] }
 fs_extra = "1"
 futures = { version = "0.3", default-features = false, features = ["std", "async-await", "executor"] }
 gix = ">=0.55"
@@ -201,7 +201,7 @@ cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo", rev 
 cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev = "62012e3fc5a9958867ec7bad0eea183616e359c2" }
 cairo-lang-test-utils = { git = "https://github.com/starkware-libs/cairo", rev = "62012e3fc5a9958867ec7bad0eea183616e359c2" }
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "62012e3fc5a9958867ec7bad0eea183616e359c2" }
-cairo-language-server = { git = "https://github.com/software-mansion/cairols", branch = "feature/dynamic-macro-loading" }
+cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "8eb59905" }
 cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "94a0ac6bf5bfeb7ce9308831f52aade3293fb9bd" }
 stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
 stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }

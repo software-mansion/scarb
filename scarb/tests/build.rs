@@ -28,8 +28,9 @@ fn compile_simple() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    Scarb::quick_snapbox()
-        .env("SCARB_CACHE", cache_dir.path())
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
