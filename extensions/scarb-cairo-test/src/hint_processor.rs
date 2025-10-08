@@ -20,8 +20,6 @@ use std::rc::Rc;
 
 pub struct TestHintProcessor<'a> {
     pub cairo_hint_processor: CairoHintProcessor<'a>,
-    /// Whether `--experimental-oracles` flag has been enabled.
-    pub oracle_experiment_enabled: bool,
     pub oracle_hint_service: OracleHintService,
 }
 
@@ -42,14 +40,6 @@ impl<'a> HintProcessorLogic for TestHintProcessor<'a> {
             && let selector = selector.value.to_bytes_be().1
             && let Some(oracle_selector) = self.oracle_hint_service.accept_cheatcode(&selector)
         {
-            if !self.oracle_experiment_enabled {
-                return Err(HintError::AssertionFailed(
-                    "Oracles are experimental feature. \
-                    To enable, pass --experimental-oracles CLI flag."
-                        .into(),
-                ));
-            }
-
             // Extract the inputs.
             let input_start = extract_relocatable(vm, input_start)?;
             let input_end = extract_relocatable(vm, input_end)?;

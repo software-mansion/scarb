@@ -158,7 +158,6 @@ pub fn execute(
 
     let mut hint_processor = ExecuteHintProcessor {
         cairo_hint_processor,
-        oracle_experiment_enabled: args.run.experimental_oracles,
         oracle_hint_service: OracleHintService::new(Some(executable_path.as_std_path())),
     };
 

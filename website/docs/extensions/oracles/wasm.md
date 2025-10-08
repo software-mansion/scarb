@@ -1,4 +1,4 @@
-# `wasm` protocol <Badge type="warning" text="experimental" />
+# `wasm` protocol
 
 The `wasm` oracle protocol runs a WebAssembly Component and calls one of its exported functions.
 It uses WASI 0.2 (aka WASI Preview 2) as the host ABI.

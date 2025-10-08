@@ -1,4 +1,4 @@
-# `shell` protocol <Badge type="warning" text="experimental" />
+# `shell` protocol
 
 The `shell` oracle protocol is a lightweight, built‑in protocol that executes a shell command and returns its standard
 output to Cairo. Standard error is forwarded to the executor logs. It is useful for calling utility scripts available in
