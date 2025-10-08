@@ -160,6 +160,10 @@ impl Lockfile {
             .map(|p| p.try_into())
     }
 
+    pub fn locks_dependency(&self, dependency: ManifestDependency) -> bool {
+        self.package_matching(dependency.clone()).is_some()
+    }
+
     fn body(&self) -> Result<DocumentMut> {
         let doc = toml_edit::ser::to_string_pretty(self)?;
         let mut doc = doc.parse::<DocumentMut>()?;
