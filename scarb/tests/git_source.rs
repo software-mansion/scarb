@@ -463,6 +463,51 @@ fn force_push() {
 }
 
 #[test]
+fn force_push_with_cache() {
+    let dep = gitx::new("dep", |t| {
+        ProjectBuilder::start()
+            .name("dep")
+            .lib_cairo("fn hello() -> felt252 { 42 }")
+            .build(&t)
+    });
+    let c = TempDir::new().unwrap();
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep", &dep)
+        .lib_cairo("fn world() -> felt252 { dep::hello() }")
+        .build(&t);
+
+    Scarb::new()
+        .cache(c.path())
+        .snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    dep.child("src/lib.cairo")
+        .write_str("fn hello() -> felt252 { 43 }")
+        .unwrap();
+
+    dep.git(["add", "."]);
+    dep.git(["commit", "--amend", "-m", "amended"]);
+
+    Scarb::new()
+        .cache(c.path())
+        .snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        // Even though the locked commit is not accessible on remote no more, we do not update the
+        // local git repository checkout, as the locked commit is still in the Scarb cache.
+        .stdout_matches("");
+}
+
+#[test]
 fn transitive_path_dep() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
