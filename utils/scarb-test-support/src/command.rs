@@ -1,8 +1,7 @@
-use crate::cargo::cargo_bin;
-use anyhow::Context;
+use crate::cargo::{cargo_bin, manifest_dir};
+use crate::fsx;
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
-use indoc::indoc;
 use serde::de::DeserializeOwned;
 use snapbox::cmd::Command as SnapboxCommand;
 use std::ffi::OsString;
@@ -24,7 +23,7 @@ pub struct Scarb {
 impl Scarb {
     pub fn new() -> Self {
         Self {
-            cache: EnvPath::Unspecified,
+            cache: EnvPath::temp_dir(),
             config: EnvPath::temp_dir(),
             target: EnvPath::Unspecified,
             log: "scarb=trace".into(),
@@ -56,22 +55,18 @@ impl Scarb {
         SnapboxCommand::from_std(self.std())
     }
 
-    pub fn std(self) -> StdCommand {
-        /// This static holds a compiled scarb cache and incremental cache with the core library
-        /// already compiled. When tests run in Incremental::Shared mode, this cache is reused
-        /// to speed up test execution.
-        static SHARED_CACHE: LazyLock<SharedCache> = LazyLock::new(force_warmup_shared_cache);
+    pub fn std(mut self) -> StdCommand {
+        /// This static holds scarb cache and incremental compilation directories to be shared
+        /// with other tests. To run a test with isolated cache, create a custom tempdir and pass
+        /// to Scarb::cache, and to run a test with isolated incremental compilation,
+        /// set Scarb::incremental to either Incremental::No or Incremental::Isolated.
+        static SHARED_CACHE: LazyLock<SharedCache> = LazyLock::new(prepare_shared_cache);
 
         let mut cmd = StdCommand::new(self.scarb_bin);
 
         cmd.env("SCARB_LOG", self.log);
 
-        cmd.env(
-            "SCARB_CACHE",
-            self.cache
-                .path()
-                .unwrap_or_else(|| SHARED_CACHE.cache.path()),
-        );
+        cmd.env("SCARB_CACHE", self.cache.ensure_path());
 
         if let Some(config) = self.config.path() {
             cmd.env("SCARB_CONFIG", config);
@@ -86,10 +81,7 @@ impl Scarb {
         cmd.env("SCARB_INCREMENTAL", self.incremental.env());
 
         if self.incremental == Incremental::Shared {
-            cmd.env(
-                "__SCARB_INCREMENTAL_BASE_DIR",
-                SHARED_CACHE.incremental.path(),
-            );
+            cmd.env("__SCARB_INCREMENTAL_BASE_DIR", &SHARED_CACHE.incremental);
         }
 
         cmd
@@ -175,6 +167,13 @@ impl EnvPath {
             EnvPath::Unspecified => None,
         }
     }
+
+    fn ensure_path(&mut self) -> &Path {
+        if matches!(self, EnvPath::Unspecified) {
+            *self = EnvPath::Managed(TempDir::new().unwrap());
+        }
+        self.path().unwrap()
+    }
 }
 
 pub trait CommandExt {
@@ -225,42 +224,25 @@ impl Incremental {
 }
 
 struct SharedCache {
-    cache: TempDir,
-    incremental: TempDir,
+    // cache: PathBuf,
+    incremental: PathBuf,
 }
 
-fn force_warmup_shared_cache() -> SharedCache {
-    let cache = TempDir::new().unwrap();
-    let incremental = TempDir::new().unwrap();
-    let work = TempDir::new().unwrap();
+fn prepare_shared_cache() -> SharedCache {
+    let mut base = manifest_dir().join("target").join("scarb-test-shared");
 
-    work.child("Scarb.toml")
-        .write_str(indoc! {r#"
-            [package]
-            name = "scarb_e2e_cache_warmup"
-            version = "1.0.0"
-            edition = "2024_07"
-        "#})
-        .unwrap();
-
-    work.child("src/lib.cairo")
-        .write_str("fn warmup() -> felt252 { 42 }")
-        .unwrap();
-
-    let result = StdCommand::new(cargo_bin("scarb"))
-        .env("SCARB_LOG", "warn") // Reduce log noise during warmup.
-        .env("SCARB_CACHE", cache.path())
-        .env("__SCARB_INCREMENTAL_BASE_DIR", incremental.path())
-        .arg("build")
-        .current_dir(&work)
-        .status()
-        .context("WARN cache warmup failed");
-
-    match result {
-        Ok(status) if status.success() => {}
-        Ok(status) => eprintln!("WARN cache warmup build failed, code={status}"),
-        Err(e) => eprintln!("{e:?}"),
+    // Avoid concurrent access to the cache so that we won't get "blocking waiting for..." msgs.
+    if let Ok(slot) = std::env::var("NEXTEST_TEST_GLOBAL_SLOT") {
+        base.push(slot);
     }
 
-    SharedCache { cache, incremental }
+    // let cache = base.join("cache");
+    // fsx::create_dir_all(&cache).unwrap();
+
+    let incremental = base.join("incremental");
+    fsx::create_dir_all(&incremental).unwrap();
+
+    SharedCache {
+        /* cache, */ incremental,
+    }
 }
