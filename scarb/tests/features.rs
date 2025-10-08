@@ -753,6 +753,7 @@ fn cannot_use_not_existing_features_in_deps() {
 
 #[test]
 fn dependency_features_simple() {
+    let cache = TempDir::new().unwrap();
     let t = TempDir::new().unwrap();
 
     let path_dep = t.child("path_dep");
@@ -866,7 +867,9 @@ fn dependency_features_simple() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::new()
+        .cache(&cache)
+        .snapbox()
         .arg("check")
         .arg("--features=x,y")
         .current_dir(&t)
