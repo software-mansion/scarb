@@ -11,15 +11,10 @@ pub struct Check {
     #[builder(setter(into))]
     lib_cairo: String,
 
-    #[builder(default, setter(custom))]
-    failure: bool,
     #[builder(setter(into))]
     stdout_matches: String,
     #[builder(default, setter(into))]
     stderr_contains: String,
-
-    #[builder(default, setter(custom))]
-    profile: Option<String>,
 
     #[builder(default, setter(custom))]
     pb_ops: Vec<Box<dyn FnOnce(ProjectBuilder) -> ProjectBuilder>>,
@@ -84,23 +79,15 @@ impl Check {
             op(&t);
         }
 
-        let mut snapbox = Scarb::quick_snapbox().env("RUST_BACKTRACE", "0");
+        let snapbox = Scarb::quick_snapbox()
+            .env("RUST_BACKTRACE", "0")
+            .arg("execute")
+            .current_dir(&t);
 
-        if let Some(profile) = &self.profile {
-            snapbox = snapbox.args(vec!["--profile", profile]);
-        }
-
-        snapbox = snapbox.arg("execute").current_dir(&t);
-
-        let mut assert = snapbox.assert();
-
-        if self.failure {
-            assert = assert.failure();
-        } else {
-            assert = assert.success();
-        }
-
-        assert = assert.stdout_matches(self.stdout_matches);
+        let assert = snapbox
+            .assert()
+            .success()
+            .stdout_matches(self.stdout_matches);
 
         if !self.stderr_contains.is_empty() {
             let pattern = self.stderr_contains;
