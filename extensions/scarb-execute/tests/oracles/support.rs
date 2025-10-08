@@ -34,16 +34,6 @@ impl CheckBuilder {
         self.build().unwrap().check()
     }
 
-    pub fn failure(mut self) -> Self {
-        self.failure = Some(true);
-        self
-    }
-
-    pub fn profile(mut self, profile: String) -> Self {
-        self.profile = Some(Some(profile));
-        self
-    }
-
     pub fn pb_op(mut self, op: impl FnOnce(ProjectBuilder) -> ProjectBuilder + 'static) -> Self {
         self.pb_ops.get_or_insert_default().push(Box::new(op));
         self
