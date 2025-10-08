@@ -1,3 +1,5 @@
+use crate::cargo::{cargo_bin, manifest_dir};
+use crate::fsx;
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use serde::de::DeserializeOwned;
@@ -9,14 +11,13 @@ use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 use std::sync::LazyLock;
 
-use crate::cargo::cargo_bin;
-
 pub struct Scarb {
     cache: EnvPath,
     config: EnvPath,
-    target: Option<EnvPath>,
+    target: EnvPath,
     log: OsString,
     scarb_bin: PathBuf,
+    incremental: Incremental,
 }
 
 impl Scarb {
@@ -24,9 +25,10 @@ impl Scarb {
         Self {
             cache: EnvPath::temp_dir(),
             config: EnvPath::temp_dir(),
-            target: None,
+            target: EnvPath::Unspecified,
             log: "scarb=trace".into(),
             scarb_bin: cargo_bin("scarb"),
+            incremental: Default::default(),
         }
     }
 
@@ -37,9 +39,11 @@ impl Scarb {
             config: EnvPath::borrow(config.dirs().config_dir.path_unchecked().as_std_path()),
             target: config
                 .target_dir_override()
-                .map(|p| EnvPath::borrow(p.as_std_path())),
+                .map(|p| EnvPath::borrow(p.as_std_path()))
+                .unwrap_or_default(),
             log: config.log_filter_directive().to_os_string(),
             scarb_bin: cargo_bin("scarb"),
+            incremental: Default::default(),
         }
     }
 
@@ -51,20 +55,41 @@ impl Scarb {
         SnapboxCommand::from_std(self.std())
     }
 
-    pub fn std(self) -> StdCommand {
+    pub fn std(mut self) -> StdCommand {
+        /// This static holds scarb cache and incremental compilation directories to be shared
+        /// with other tests. To run a test with isolated cache, create a custom tempdir and pass
+        /// to Scarb::cache, and to run a test with isolated incremental compilation,
+        /// set Scarb::incremental to either Incremental::No or Incremental::Isolated.
+        static SHARED_CACHE: LazyLock<SharedCache> = LazyLock::new(prepare_shared_cache);
+
         let mut cmd = StdCommand::new(self.scarb_bin);
+
         cmd.env("SCARB_LOG", self.log);
-        cmd.env("SCARB_CACHE", self.cache.path());
-        cmd.env("SCARB_CONFIG", self.config.path());
-        cmd.env("SCARB_INIT_TEST_RUNNER", "cairo-test");
-        if let Some(target) = self.target {
-            cmd.env("SCARB_TARGET_DIR", target.path());
+
+        cmd.env("SCARB_CACHE", self.cache.ensure_path());
+
+        if let Some(config) = self.config.path() {
+            cmd.env("SCARB_CONFIG", config);
         }
+
+        cmd.env("SCARB_INIT_TEST_RUNNER", "cairo-test");
+
+        if let Some(target) = self.target.path() {
+            cmd.env("SCARB_TARGET_DIR", target);
+        }
+
+        cmd.env("SCARB_INCREMENTAL", self.incremental.env());
+
+        if self.incremental == Incremental::Shared {
+            cmd.env("__SCARB_INCREMENTAL_BASE_DIR", &SHARED_CACHE.incremental);
+        }
+
         cmd
     }
 
     pub fn isolate_from_extensions(self) -> Self {
-        // NOTE: We keep TempDir instance in static, so that it'll be dropped when program ends.
+        // NOTE: We keep the TempDir instance in a static variable
+        //   so that it will be dropped when the program ends.
         static ISOLATE: LazyLock<(PathBuf, TempDir)> = LazyLock::new(|| {
             let t = TempDir::new().unwrap();
             let source_bin = cargo_bin("scarb");
@@ -102,7 +127,12 @@ impl Scarb {
     }
 
     pub fn target_dir(mut self, path: &Path) -> Self {
-        self.target = Some(EnvPath::borrow(path));
+        self.target = EnvPath::borrow(path);
+        self
+    }
+
+    pub fn incremental(mut self, incremental: Incremental) -> Self {
+        self.incremental = incremental;
         self
     }
 }
@@ -113,10 +143,12 @@ impl Default for Scarb {
     }
 }
 
-#[allow(dead_code)]
+#[derive(Default)]
 enum EnvPath {
     Managed(TempDir),
     Unmanaged(PathBuf),
+    #[default]
+    Unspecified,
 }
 
 impl EnvPath {
@@ -128,11 +160,19 @@ impl EnvPath {
         Self::Unmanaged(path.as_ref().to_path_buf())
     }
 
-    fn path(&self) -> &Path {
+    fn path(&self) -> Option<&Path> {
         match self {
-            EnvPath::Managed(t) => t.path(),
-            EnvPath::Unmanaged(p) => p,
+            EnvPath::Managed(t) => Some(t.path()),
+            EnvPath::Unmanaged(p) => Some(p),
+            EnvPath::Unspecified => None,
         }
+    }
+
+    fn ensure_path(&mut self) -> &Path {
+        if matches!(self, EnvPath::Unspecified) {
+            *self = EnvPath::Managed(TempDir::new().unwrap());
+        }
+        self.path().unwrap()
     }
 }
 
@@ -157,5 +197,52 @@ impl CommandExt for SnapboxCommand {
         }
         // help: make sure that the command outputs NDJSON (`--json` flag).
         panic!("Failed to deserialize stdout to JSON");
+    }
+}
+
+/// Specifies how scarb incremental compilation should behave in this test.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub enum Incremental {
+    // Incremental compilation is disabled, i.e. `SCARB_INCREMENTAL=0` is set.
+    No,
+
+    // In isolated mode, incremental compilation is enabled but not shared with other tests.
+    Isolated,
+
+    // In shared mode, all tests use the same cache and incremental directories.
+    #[default]
+    Shared,
+}
+
+impl Incremental {
+    fn env(self) -> &'static str {
+        match self {
+            Incremental::No => "0",
+            Incremental::Isolated | Incremental::Shared => "1",
+        }
+    }
+}
+
+struct SharedCache {
+    // cache: PathBuf,
+    incremental: PathBuf,
+}
+
+fn prepare_shared_cache() -> SharedCache {
+    let mut base = manifest_dir().join("target").join("scarb-test-shared");
+
+    // Avoid concurrent access to the cache so that we won't get "blocking waiting for..." msgs.
+    if let Ok(slot) = std::env::var("NEXTEST_TEST_GLOBAL_SLOT") {
+        base.push(slot);
+    }
+
+    // let cache = base.join("cache");
+    // fsx::create_dir_all(&cache).unwrap();
+
+    let incremental = base.join("incremental");
+    fsx::create_dir_all(&incremental).unwrap();
+
+    SharedCache {
+        /* cache, */ incremental,
     }
 }

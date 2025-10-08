@@ -114,7 +114,6 @@ fn checksum_locked_for_unexpected_source() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        [..] Updating git repository [..]
         error: checksum for `bar v1.0.0 ([..])` could not be calculated, but a checksum is listed in the existing lock file
 
         this could be indicative of a few possible situations:

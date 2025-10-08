@@ -533,7 +533,10 @@ fn warn_unused_patch() {
     for (expected, real) in zip(&expected, packages) {
         snapbox::assert_matches(expected, real);
     }
-    Scarb::quick_snapbox()
+    let cache = TempDir::new().unwrap();
+    Scarb::new()
+        .cache(&cache)
+        .snapbox()
         .arg("fetch")
         .current_dir(&t)
         .assert()

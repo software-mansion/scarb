@@ -10,7 +10,7 @@ use predicates::prelude::*;
 
 use scarb_build_metadata::CAIRO_VERSION;
 use scarb_metadata::Metadata;
-use scarb_test_support::command::{CommandExt, Scarb};
+use scarb_test_support::command::{CommandExt, Incremental, Scarb};
 use scarb_test_support::contracts::BALANCE_CONTRACT;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
@@ -30,6 +30,8 @@ fn compile_simple() {
 
     Scarb::new()
         .cache(cache_dir.path())
+        // To ensure incremental compilation directories are created.
+        .incremental(Incremental::Isolated)
         .snapbox()
         .arg("build")
         .current_dir(&t)
@@ -39,7 +41,7 @@ fn compile_simple() {
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
     assert_eq!(
         t.child("target/dev").files(),
-        vec![".fingerprint", "hello.sierra.json", "incremental",]
+        vec![".fingerprint", "hello.sierra.json", "incremental"]
     );
 
     cache_dir
@@ -692,12 +694,7 @@ fn workspace_as_dep() {
     );
     assert_eq!(
         second_t.child("target/dev").files(),
-        vec![
-            ".fingerprint",
-            "fourth.sierra.json",
-            "incremental",
-            "third.sierra.json"
-        ]
+        vec!["fourth.sierra.json", "third.sierra.json"]
     );
     second_t.child("target/dev/third.sierra.json").assert(
         predicates::str::contains(r#""debug_name":"third::example""#)
