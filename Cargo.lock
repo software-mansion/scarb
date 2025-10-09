@@ -1570,7 +1570,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.12.3"
-source = "git+https://github.com/software-mansion/cairols?rev=f069351#f06935175f7d88f3363c7e78dd71a63ff1ec0c59"
+source = "git+https://github.com/software-mansion/cairols?rev=300ad2943bd3baed7712a26983f8ab1d4abc1675#300ad2943bd3baed7712a26983f8ab1d4abc1675"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1593,7 +1593,7 @@ dependencies = [
  "cairo-lang-syntax-codegen",
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
- "cairo-lint",
+ "cairo-lint 2.12.3 (git+https://github.com/software-mansion/cairo-lint?rev=7645ee195ac52df48eb051577fe3d921a9d7954d)",
  "colored",
  "convert_case",
  "crossbeam",
@@ -1626,6 +1626,34 @@ dependencies = [
 name = "cairo-lint"
 version = "2.12.3"
 source = "git+https://github.com/software-mansion/cairo-lint?rev=7645ee195ac52df48eb051577fe3d921a9d7954d#7645ee195ac52df48eb051577fe3d921a9d7954d"
+dependencies = [
+ "anyhow",
+ "cairo-lang-compiler",
+ "cairo-lang-defs",
+ "cairo-lang-diagnostics",
+ "cairo-lang-filesystem",
+ "cairo-lang-formatter",
+ "cairo-lang-parser",
+ "cairo-lang-semantic",
+ "cairo-lang-syntax",
+ "cairo-lang-test-plugin",
+ "cairo-lang-utils",
+ "if_chain",
+ "indoc",
+ "itertools 0.14.0",
+ "log",
+ "num-bigint",
+ "salsa",
+ "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tempfile",
+ "tracing",
+ "which",
+]
+
+[[package]]
+name = "cairo-lint"
+version = "2.12.3"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=ee6112089eda1e6e1514d0a1f00ee53f291e229f#ee6112089eda1e6e1514d0a1f00ee53f291e229f"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -7022,7 +7050,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
- "cairo-lint",
+ "cairo-lint 2.12.3 (git+https://github.com/software-mansion/cairo-lint?rev=ee6112089eda1e6e1514d0a1f00ee53f291e229f)",
  "camino",
  "cargo_metadata",
  "chrono",
