@@ -1,12 +1,9 @@
 use cairo_lang_compiler::project::{ProjectConfig, update_crate_roots_from_project_config};
 use cairo_lang_defs::db::{DefsGroup, defs_group_input, init_defs_group, init_external_files};
 use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId};
-use cairo_lang_doc::db::DocGroup;
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{FilesGroup, init_files_group};
 use cairo_lang_filesystem::ids::{CrateInput, CrateLongId, SmolStrId};
-use cairo_lang_lowering::db::LoweringGroup;
-use cairo_lang_parser::db::ParserGroup;
 use cairo_lang_semantic::db::{
     PluginSuiteInput, SemanticGroup, init_semantic_group, semantic_group_input,
 };
@@ -14,8 +11,6 @@ use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::inline_macros::get_default_plugin_suite;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_starknet::starknet_plugin_suite;
-use cairo_lang_syntax::node::db::SyntaxGroup;
-use cairo_lang_utils::Upcast;
 use salsa::Setter;
 use std::sync::Arc;
 
@@ -121,51 +116,3 @@ impl ScarbDocDatabase {
 }
 
 impl salsa::Database for ScarbDocDatabase {}
-
-impl<'db> Upcast<'db, dyn FilesGroup> for ScarbDocDatabase {
-    fn upcast(&self) -> &(dyn FilesGroup + 'static) {
-        self
-    }
-}
-
-impl<'db> Upcast<'db, dyn ParserGroup> for ScarbDocDatabase {
-    fn upcast(&self) -> &(dyn ParserGroup + 'static) {
-        self
-    }
-}
-
-impl<'db> Upcast<'db, dyn SyntaxGroup> for ScarbDocDatabase {
-    fn upcast(&self) -> &(dyn SyntaxGroup + 'static) {
-        self
-    }
-}
-
-impl<'db> Upcast<'db, dyn DefsGroup> for ScarbDocDatabase {
-    fn upcast(&self) -> &(dyn DefsGroup + 'static) {
-        self
-    }
-}
-
-impl<'db> Upcast<'db, dyn SemanticGroup> for ScarbDocDatabase {
-    fn upcast(&self) -> &(dyn SemanticGroup + 'static) {
-        self
-    }
-}
-
-impl<'db> Upcast<'db, dyn DocGroup> for ScarbDocDatabase {
-    fn upcast(&self) -> &(dyn DocGroup + 'static) {
-        self
-    }
-}
-
-impl<'db> Upcast<'db, dyn LoweringGroup> for ScarbDocDatabase {
-    fn upcast(&self) -> &(dyn LoweringGroup + 'static) {
-        self
-    }
-}
-
-impl<'db> Upcast<'db, dyn salsa::Database> for ScarbDocDatabase {
-    fn upcast(&self) -> &(dyn salsa::Database + 'static) {
-        self
-    }
-}

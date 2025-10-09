@@ -87,8 +87,10 @@ impl ProcMacroHostPlugin {
             let crate_modules = db.crate_modules(*crate_id);
             for module in crate_modules.iter() {
                 if let Ok(module_data) = module.module_data(db) {
-                    for file_info in module_data.generated_file_aux_data(db).iter() {
-                        let aux_data = file_info
+                    for (_file_id, aux_data_option) in
+                        module_data.generated_file_aux_data(db).iter()
+                    {
+                        let aux_data = aux_data_option
                             .as_ref()
                             .and_then(|ad| ad.as_any().downcast_ref::<EmittedAuxData>());
                         if let Some(aux_data) = aux_data {
