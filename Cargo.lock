@@ -1570,7 +1570,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.12.3"
-source = "git+https://github.com/software-mansion/cairols?rev=8eb59905#8eb59905cf23be2fe2bf2d1a8a930411e9fa3933"
+source = "git+https://github.com/software-mansion/cairols?rev=f069351#f06935175f7d88f3363c7e78dd71a63ff1ec0c59"
 dependencies = [
  "anyhow",
  "bincode",
@@ -7162,8 +7162,6 @@ dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-doc",
  "cairo-lang-filesystem",
- "cairo-lang-lowering",
- "cairo-lang-parser",
  "cairo-lang-semantic",
  "cairo-lang-starknet",
  "cairo-lang-syntax",
