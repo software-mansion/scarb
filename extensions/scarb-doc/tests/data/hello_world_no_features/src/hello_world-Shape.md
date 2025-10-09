@@ -25,7 +25,7 @@ Calculate the area of the shape
 
 Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)::[area](./hello_world-Shape.md#area)
 
-<pre><code class="language-cairo">fn area&lt;T, T&gt;(self: T) -&gt; u32</code></pre>
+<pre><code class="language-cairo">fn area(self: T) -&gt; u32</code></pre>
 
 
 ## Trait types
