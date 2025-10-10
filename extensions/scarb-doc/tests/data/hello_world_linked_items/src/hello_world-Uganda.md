@@ -26,21 +26,21 @@ Fully qualified path: [hello_world](./hello_world.md)::[Uganda](./hello_world-Ug
 
 Fully qualified path: [hello_world](./hello_world.md)::[Uganda](./hello_world-Uganda.md)::[burundi](./hello_world-Uganda.md#burundi)
 
-<pre><code class="language-cairo">fn burundi&lt;T, T&gt;(self: T) -&gt; u32</code></pre>
+<pre><code class="language-cairo">fn burundi(self: T) -&gt; u32</code></pre>
 
 
 ### rwanda
 
 Fully qualified path: [hello_world](./hello_world.md)::[Uganda](./hello_world-Uganda.md)::[rwanda](./hello_world-Uganda.md#rwanda-1)
 
-<pre><code class="language-cairo">fn rwanda&lt;T, T&gt;(self: T) -&gt; u32</code></pre>
+<pre><code class="language-cairo">fn rwanda(self: T) -&gt; u32</code></pre>
 
 
 ### uganda
 
 Fully qualified path: [hello_world](./hello_world.md)::[Uganda](./hello_world-Uganda.md)::[uganda](./hello_world-Uganda.md#uganda-2)
 
-<pre><code class="language-cairo">fn uganda&lt;T, T&gt;()</code></pre>
+<pre><code class="language-cairo">fn uganda()</code></pre>
 
 
 ## Trait types
