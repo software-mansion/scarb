@@ -1,5 +1,5 @@
 use crate::cargo::{cargo_bin, manifest_dir};
-use crate::fsx;
+use crate::reusable_thread_id;
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use serde::de::DeserializeOwned;
@@ -23,7 +23,7 @@ pub struct Scarb {
 impl Scarb {
     pub fn new() -> Self {
         Self {
-            cache: EnvPath::temp_dir(),
+            cache: EnvPath::Unspecified,
             config: EnvPath::temp_dir(),
             target: EnvPath::Unspecified,
             log: "scarb=trace".into(),
@@ -55,7 +55,7 @@ impl Scarb {
         SnapboxCommand::from_std(self.std())
     }
 
-    pub fn std(mut self) -> StdCommand {
+    pub fn std(self) -> StdCommand {
         /// This static holds scarb cache and incremental compilation directories to be shared
         /// with other tests. To run a test with isolated cache, create a custom tempdir and pass
         /// to Scarb::cache, and to run a test with isolated incremental compilation,
@@ -66,7 +66,10 @@ impl Scarb {
 
         cmd.env("SCARB_LOG", self.log);
 
-        cmd.env("SCARB_CACHE", self.cache.ensure_path());
+        cmd.env(
+            "SCARB_CACHE",
+            self.cache.path().unwrap_or_else(|| &SHARED_CACHE.cache),
+        );
 
         if let Some(config) = self.config.path() {
             cmd.env("SCARB_CONFIG", config);
@@ -167,13 +170,6 @@ impl EnvPath {
             EnvPath::Unspecified => None,
         }
     }
-
-    fn ensure_path(&mut self) -> &Path {
-        if matches!(self, EnvPath::Unspecified) {
-            *self = EnvPath::Managed(TempDir::new().unwrap());
-        }
-        self.path().unwrap()
-    }
 }
 
 pub trait CommandExt {
@@ -224,7 +220,7 @@ impl Incremental {
 }
 
 struct SharedCache {
-    // cache: PathBuf,
+    cache: PathBuf,
     incremental: PathBuf,
 }
 
@@ -233,16 +229,13 @@ fn prepare_shared_cache() -> SharedCache {
 
     // Avoid concurrent access to the cache so that we won't get "blocking waiting for..." msgs.
     if let Ok(slot) = std::env::var("NEXTEST_TEST_GLOBAL_SLOT") {
-        base.push(slot);
+        base.push(format!("nextest-{slot}"));
     }
 
-    // let cache = base.join("cache");
-    // fsx::create_dir_all(&cache).unwrap();
-
-    let incremental = base.join("incremental");
-    fsx::create_dir_all(&incremental).unwrap();
+    base.push(reusable_thread_id::current().to_string());
 
     SharedCache {
-        /* cache, */ incremental,
+        cache: base.join("cache"),
+        incremental: base.join("incremental"),
     }
 }
