@@ -14,8 +14,7 @@ use cairo_lang_defs::plugin::{
 };
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
 use cairo_lang_diagnostics::ToOption;
-use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::ids::{CodeMapping, SmolStrId};
+use cairo_lang_filesystem::ids::{CodeMapping, CrateId, SmolStrId};
 use cairo_lang_macro_v1::{
     AuxData, Diagnostic, FullPathMarker, ProcMacroResult, Severity, TokenStream,
     TokenStreamMetadata,
@@ -813,8 +812,8 @@ impl ProcMacroHostPlugin {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    pub fn post_process(&self, db: &dyn SemanticGroup) -> Result<()> {
-        let aux_data = self.collect_aux_data(db);
+    pub fn post_process(&self, db: &dyn SemanticGroup, crate_ids: &[CrateId<'_>]) -> Result<()> {
+        let aux_data = self.collect_aux_data(db, crate_ids);
         // Only collect full path markers if any have been registered by macros.
         let any_markers = !self
             .full_path_markers
@@ -823,7 +822,7 @@ impl ProcMacroHostPlugin {
             .values()
             .all(|v| v.is_empty());
         let markers = if any_markers {
-            self.collect_full_path_markers(db)
+            self.collect_full_path_markers(db, crate_ids)
         } else {
             Default::default()
         };
@@ -867,9 +866,13 @@ impl ProcMacroHostPlugin {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    fn collect_full_path_markers(&self, db: &dyn SemanticGroup) -> HashMap<String, String> {
+    fn collect_full_path_markers(
+        &self,
+        db: &dyn SemanticGroup,
+        create_ids: &[CrateId<'_>],
+    ) -> HashMap<String, String> {
         let mut markers: HashMap<String, String> = HashMap::new();
-        for crate_id in db.crates() {
+        for crate_id in create_ids {
             let modules = db.crate_modules(*crate_id);
             for module_id in modules.iter() {
                 let Ok(module_data) = module_id.module_data(db) else {
@@ -925,9 +928,10 @@ impl ProcMacroHostPlugin {
     fn collect_aux_data(
         &self,
         db: &dyn SemanticGroup,
+        crate_ids: &[CrateId<'_>],
     ) -> HashMap<PackageId, Vec<ProcMacroAuxData>> {
         let mut data = Vec::new();
-        for crate_id in db.crates() {
+        for crate_id in crate_ids {
             let crate_modules = db.crate_modules(*crate_id);
             for module in crate_modules.iter() {
                 if let Ok(module_data) = module.module_data(db) {

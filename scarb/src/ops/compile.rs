@@ -19,7 +19,9 @@ use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
 use anyhow::{Context, Error, Result, anyhow, bail, ensure};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
-use cairo_lang_compiler::project::update_crate_roots_from_project_config;
+use cairo_lang_compiler::project::{
+    get_main_crate_ids_from_project, update_crate_roots_from_project_config,
+};
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::flag::Flag;
 use cairo_lang_filesystem::ids::FlagLongId;
@@ -295,9 +297,10 @@ fn compile_cairo_unit_inner(
             .compilers()
             .compile(unit.clone(), &offloader, db, ws);
 
+        let main_crate_ids = get_main_crate_ids_from_project(db, &project_config).clone();
         for plugin in proc_macros {
             plugin
-                .post_process(db)
+                .post_process(db, &main_crate_ids.clone())
                 .context("procedural macro post processing callback failed")?;
         }
 
