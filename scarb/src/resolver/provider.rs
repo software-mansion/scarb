@@ -1,4 +1,4 @@
-use crate::core::lockfile::Lockfile;
+use crate::core::lockfile::{Lockfile, PackageLock};
 use crate::core::registry::patch_map::PatchMap;
 use crate::core::{
     DepKind, DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, PackageName,
@@ -156,20 +156,56 @@ impl PubGrubDependencyProvider {
         }
     }
 
+    /// Ids of packages that we resolve dependency graph for.
     pub fn main_package_ids(&self) -> &HashSet<PackageId> {
         &self.main_package_ids
     }
 
-    pub fn fetch_summary_and_request_dependencies(
+    /// Request a dependency to be fetched.
+    ///
+    /// Dependencies are fetched in the background, on another thread, by [`ResolverState`].
+    /// This function sends a request to the [`ResolverState`] to fetch the dependency via a channel.
+    ///
+    /// This function decides whether the dependency should be fetched before sending the request.
+    /// Not all dependencies need to be fetched! The algorithm works as follows:
+    /// - If the dependency is not from a registry source, it should be fetched.
+    ///   Note that this does not necessarily mean they will be fetched from remote sources.
+    ///   Fetching a git source may mean only checking out a locally cached repository clone.
+    /// - If the dependency comes from a registry source, and its version is locked in the
+    ///   `Scarb.lock` file, we can skip fetching the repository from the registry.
+    ///   This is safe, since the registry is immutable, and thus if we have previously selected
+    ///   a version and locked it in the lockfile, we can safely assume we can download it from the
+    ///   registry this time as well. On the contrary, we cannot assume the same about git sources,
+    ///   as previously used commit hash may no longer be accessible from a remote repository, so we
+    ///   can then only use it if we already have it cloned in our local cache.
+    pub fn request_dependency(&self, dependency: ManifestDependency) {
+        if (self.require_audits
+            || !dependency.source_id.is_registry()
+            || !self.lockfile.locks_dependency(dependency.clone()))
+            && self
+                .state
+                .index
+                .packages()
+                .register(dependency.clone().into())
+        {
+            self.request_sink
+                .blocking_send(Request::Package(dependency.clone()))
+                .unwrap();
+        }
+    }
+
+    /// Block until a package summary is fetched, then return it.
+    ///
+    /// This function fetches a single summary, determined by a [`PackageId`].
+    /// If you need to fetch summaries by [`ManifestDependency`], use
+    /// [`Self::blocking_fetch_summaries_by_dependency`] instead.
+    ///
+    /// Only use this function if the package summary has been previously requested with
+    /// [`Self::request_dependency`] or another method, otherwise this function will panic!
+    pub fn blocking_fetch_summary_by_package_id(
         &self,
         package_id: PackageId,
     ) -> Result<Summary, DependencyProviderError> {
-        let summary = self.fetch_summary(package_id)?;
-        self.request_dependencies(&summary)?;
-        Ok(summary)
-    }
-
-    pub fn fetch_summary(&self, package_id: PackageId) -> Result<Summary, DependencyProviderError> {
         let summary = self.packages.read().unwrap().get(&package_id).cloned();
         let summary = summary.map(Ok).unwrap_or_else(|| {
             let dependency = ManifestDependency::builder()
@@ -178,7 +214,7 @@ impl PubGrubDependencyProvider {
                 .version_req(DependencyVersionReq::exact(&package_id.version))
                 .build();
             let summary = self
-                .wait_for_summaries(dependency.clone())?
+                .blocking_fetch_summaries_by_dependency(dependency.clone())?
                 .into_iter()
                 .find_or_first(|summary| summary.package_id == package_id);
             if let Some(summary) = summary.as_ref() {
@@ -194,53 +230,16 @@ impl PubGrubDependencyProvider {
         Ok(summary)
     }
 
-    fn request_dependencies(&self, summary: &Summary) -> Result<(), DependencyProviderError> {
-        for original_dependency in summary.dependencies.iter() {
-            let blocking_send = |dependency: ManifestDependency| {
-                if self
-                    .state
-                    .index
-                    .packages()
-                    .register(dependency.clone().into())
-                {
-                    self.request_sink
-                        .blocking_send(Request::Package(dependency))
-                        .unwrap();
-                }
-            };
-
-            let original_dependency = self.patch_map.lookup(original_dependency);
-            self.save_most_restrictive_kind(&original_dependency);
-            let dependency = lock_dependency(&self.lockfile, original_dependency.clone())?;
-            self.save_most_restrictive_kind(&dependency);
-            blocking_send(dependency);
-
-            let dependency =
-                rewrite_path_dependency_source_id(summary.package_id, &original_dependency);
-            let dependency = lock_dependency(&self.lockfile, dependency)?;
-            self.save_most_restrictive_kind(&dependency);
-            blocking_send(dependency);
-        }
-        Ok(())
-    }
-
-    /// Save the **most-restrictive** dependency kind for a package.
-    /// That means if this function is called for the same package with normal and test kinds, normal kind will be saved.
-    /// This is based on assumption that normal kind is more restrictive than test when filtering is applied in [`PubGrubDependencyProvider::choose_version`].
-    fn save_most_restrictive_kind(&self, dep: &ManifestDependency) {
-        let package = PubGrubPackage::from(dep);
-        let mut write_lock = self.kinds.write().unwrap();
-        if let Some(kind) = write_lock.get(&package) {
-            if !dep.kind.is_test() && kind.is_test() {
-                write_lock.insert(package, DepKind::Normal);
-            }
-        } else {
-            write_lock.insert(package, dep.kind.clone());
-        }
-    }
-
-    #[tracing::instrument(level = "trace", skip_all)]
-    fn wait_for_summaries(
+    /// Block until a package summary is fetched, then return it.
+    ///
+    /// This function fetches multiple summaries, determined by a [`ManifestDependency`].
+    /// If you need to fetch a single summary identified by [`PackageId`], use
+    /// [`Self::blocking_fetch_summary_by_package_id`] instead.
+    ///
+    /// Only use this function if the package summary has been previously requested with
+    /// [`Self::request_dependency`] or another method, otherwise this function will panic!
+    #[tracing::instrument(level = "trace", skip(self))]
+    fn blocking_fetch_summaries_by_dependency(
         &self,
         dependency: ManifestDependency,
     ) -> Result<Vec<Summary>, DependencyProviderError> {
@@ -269,6 +268,60 @@ impl PubGrubDependencyProvider {
 
         Ok(summaries)
     }
+
+    /// Request all dependencies of some package to be fetched.
+    ///
+    /// This is a shortcut to calling [`Self::request_dependency`] for each of the dependencies.
+    fn request_dependencies(&self, summary: &Summary) -> Result<(), DependencyProviderError> {
+        for original_dependency in summary.dependencies.iter() {
+            let original_dependency = self.patch_map.lookup(original_dependency);
+            self.save_most_restrictive_kind(&original_dependency);
+            let dependency = lock_dependency(&self.lockfile, original_dependency.clone())?;
+            self.save_most_restrictive_kind(&dependency);
+            self.request_dependency(dependency);
+
+            let dependency =
+                rewrite_path_dependency_source_id(summary.package_id, &original_dependency);
+            let dependency = lock_dependency(&self.lockfile, dependency)?;
+            self.save_most_restrictive_kind(&dependency);
+            self.request_dependency(dependency);
+        }
+        Ok(())
+    }
+
+    /// Save the **most-restrictive** dependency kind for a package.
+    /// That means if this function is called for the same package with normal and test kinds,
+    /// normal kind will be saved. This is based on assumption that normal kind is more restrictive
+    /// than test when filtering is applied in [`PubGrubDependencyProvider::choose_version`].
+    fn save_most_restrictive_kind(&self, dep: &ManifestDependency) {
+        let package = PubGrubPackage::from(dep);
+        let mut write_lock = self.kinds.write().unwrap();
+        if let Some(kind) = write_lock.get(&package) {
+            if !dep.kind.is_test() && kind.is_test() {
+                write_lock.insert(package, DepKind::Normal);
+            }
+        } else {
+            write_lock.insert(package, dep.kind.clone());
+        }
+    }
+
+    /// Check if the lockfile locks the specified registry dependency to a specific version.
+    pub fn locked_registry_version<'a>(
+        &'a self,
+        package: &PubGrubPackage,
+        range: &SemverPubgrub,
+    ) -> Option<&'a PackageLock> {
+        self.lockfile.packages_by_name(&package.name).find(|p| {
+            p.name == package.name
+                && range.contains(&p.version)
+                && p.source
+                    .map(|source| {
+                        // Git sources are rewritten to the locked source before fetching summaries.
+                        (source.is_registry()) && source.can_lock_source_id(package.source_id)
+                    })
+                    .unwrap_or_default()
+        })
+    }
 }
 
 impl DependencyProvider for PubGrubDependencyProvider {
@@ -280,16 +333,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
     #[tracing::instrument(level = "trace", skip_all)]
     fn prioritize(&self, package: &Self::P, range: &Self::VS) -> Self::Priority {
         let dependency = package.to_dependency(range.clone());
-        if self
-            .state
-            .index
-            .packages()
-            .register(dependency.clone().into())
-        {
-            self.request_sink
-                .blocking_send(Request::Package(dependency.clone()))
-                .unwrap();
-        }
+        self.request_dependency(dependency);
 
         // Prioritize by ordering from the root.
         let priority = self.priority.read().unwrap().get(package).copied();
@@ -302,13 +346,26 @@ impl DependencyProvider for PubGrubDependencyProvider {
     type Priority = Option<PubGrubPriority>;
     type Err = DependencyProviderError;
 
-    #[tracing::instrument(level = "trace", skip_all)]
+    #[tracing::instrument(level = "trace", skip(self))]
     fn choose_version(
         &self,
         package: &Self::P,
         range: &Self::VS,
     ) -> Result<Option<Self::V>, Self::Err> {
+        let dependency: ManifestDependency = package.to_dependency(range.clone());
+        let locked = self.locked_registry_version(package, range);
+        // The lokfile does not give us any assumptions about the audit status,
+        // thus we need to pull it from remote source when run in require audits mode.
+        if !self.require_audits
+            && let Some(locked) = locked.as_ref()
+        {
+            // If we are locked to some version, and it is available from cache, we do not need to
+            // wait for the network query to finish, we can just return the cached summary.
+            return Ok(Some(locked.version.clone()));
+        }
+
         // Query available versions.
+        let summaries = self.blocking_fetch_summaries_by_dependency(dependency)?;
         let kind = self
             .kinds
             .read()
@@ -316,8 +373,6 @@ impl DependencyProvider for PubGrubDependencyProvider {
             .get(package)
             .cloned()
             .unwrap_or_default();
-        let dependency = package.to_dependency(range.clone());
-        let summaries = self.wait_for_summaries(dependency)?;
         let summaries = summaries
             .into_iter()
             .filter(|summary| range.contains(&summary.package_id.version))
@@ -365,16 +420,6 @@ impl DependencyProvider for PubGrubDependencyProvider {
             .collect_vec();
 
         // Choose version.
-        let locked = self.lockfile.packages_by_name(&package.name).find(|p| {
-            p.name == package.name
-                && range.contains(&p.version)
-                && p.source
-                    .map(|source| {
-                        // Git sources are rewritten to the locked source before fetching summaries.
-                        source.is_registry() && source.can_lock_source_id(package.source_id)
-                    })
-                    .unwrap_or_default()
-        });
         let summary = locked
             .and_then(|locked| {
                 summaries
@@ -400,18 +445,25 @@ impl DependencyProvider for PubGrubDependencyProvider {
         Ok(summary.map(|summary| summary.package_id.version.clone()))
     }
 
-    #[tracing::instrument(level = "trace", skip_all)]
+    #[tracing::instrument(level = "trace", skip(self))]
     #[expect(clippy::type_complexity)]
     fn get_dependencies(
         &self,
         package: &Self::P,
         version: &Self::V,
     ) -> Result<Dependencies<Self::P, Self::VS, Self::M>, Self::Err> {
-        // Query summary.
-        let package_id = PackageId::new(package.name.clone(), version.clone(), package.source_id);
-        let summary = self.fetch_summary_and_request_dependencies(package_id)?;
+        let locked = self.lockfile.packages_by_name(&package.name).find(|p| {
+            p.name == package.name
+                && version == &p.version
+                && p.source
+                    .map(|source| {
+                        // Git sources are rewritten to the locked source before fetching summaries.
+                        (source.is_registry()) && source.can_lock_source_id(package.source_id)
+                    })
+                    .unwrap_or_default()
+        });
 
-        // Set priority for dependencies.
+        let package_id = PackageId::new(package.name.clone(), version.clone(), package.source_id);
         let self_priority = self
             .priority
             .read()
@@ -421,6 +473,57 @@ impl DependencyProvider for PubGrubDependencyProvider {
                 source_id: package_id.source_id,
             })
             .copied();
+
+        if let Some(locked) = locked.as_ref() {
+            // If the package is locked, all of it's dependencies are locked as well.
+            let dep_names = locked.dependencies.iter().collect::<HashSet<_>>();
+            let deps = self
+                .lockfile
+                .packages()
+                .filter(|package| dep_names.contains(&package.name))
+                .collect_vec();
+
+            if let Some(priority) = self_priority {
+                let mut write_lock = self.priority.write().unwrap();
+                for dependency in deps.iter() {
+                    if let Some(source_id) = dependency.source {
+                        let package: PubGrubPackage = PubGrubPackage {
+                            name: dependency.name.clone(),
+                            source_id,
+                        };
+                        write_lock.insert(package, priority + 1);
+                    }
+                }
+            }
+
+            let deps = deps
+                .iter()
+                .map(|dependency| {
+                    let package_id = PackageId::new(
+                        dependency.name.clone(),
+                        dependency.version.clone(),
+                        dependency.source.expect(
+                            "source set to `None` is filtered out when searching the lockfile",
+                        ),
+                    );
+                    Ok((
+                        package_id,
+                        DependencyVersionReq::exact(&dependency.version.clone()),
+                    ))
+                })
+                .collect::<Result<Vec<(PackageId, DependencyVersionReq)>, DependencyProviderError>>(
+                )?;
+            let constraints = deps
+                .into_iter()
+                .map(|(package_id, req)| (package_id.into(), req.into()))
+                .collect();
+            return Ok(Dependencies::Available(constraints));
+        }
+
+        // Query summary.
+        let summary = self.blocking_fetch_summary_by_package_id(package_id)?;
+        self.request_dependencies(&summary)?;
+        // Set priority for dependencies.
         if let Some(priority) = self_priority {
             let mut write_lock = self.priority.write().unwrap();
             for dependency in summary.full_dependencies() {
@@ -437,14 +540,40 @@ impl DependencyProvider for PubGrubDependencyProvider {
             .cloned()
             .map(|dependency| self.patch_map.lookup(&dependency).clone())
             .map(|dependency| {
+                let locked_dependency = self
+                    .lockfile
+                    .packages_by_name(&dependency.name)
+                    .find(|p| dependency.matches_name_and_version(&p.name, &p.version))
+                    .filter(|p| {
+                        p.source
+                            .map(|sid| {
+                                (sid.is_registry()) && sid.can_lock_source_id(dependency.source_id)
+                            })
+                            // No locking occurs on path sources.
+                            .unwrap_or(false)
+                    })
+                    .cloned();
+
+                if let Some(locked_dependency) = locked_dependency.as_ref() {
+                    let package_id = PackageId::new(
+                        locked_dependency.name.clone(),
+                        locked_dependency.version.clone(),
+                        locked_dependency.source.expect(
+                            "source set to `None` is filtered out when searching the lockfile",
+                        ),
+                    );
+
+                    return Ok((package_id, dependency.version_req.clone()));
+                }
+
                 let original_dependency = dependency.clone();
                 let dependency = rewrite_path_dependency_source_id(summary.package_id, &dependency);
                 let dependency = lock_dependency(&self.lockfile, dependency)?;
 
                 let dep_name = dependency.name.clone().to_string();
-                let summaries = self.wait_for_summaries(dependency.clone())?;
+                let summaries = self.blocking_fetch_summaries_by_dependency(dependency.clone())?;
                 let summaries = if summaries.is_empty() {
-                    self.wait_for_summaries(original_dependency.clone())?
+                    self.blocking_fetch_summaries_by_dependency(original_dependency.clone())?
                 } else {
                     summaries
                 };
