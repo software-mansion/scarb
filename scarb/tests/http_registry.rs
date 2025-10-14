@@ -80,7 +80,6 @@ fn usage() {
         user-agent: ...
 
         304 Not Modified
-        content-length: 0
         etag: ...
 
         ###
@@ -170,7 +169,6 @@ fn publish_verified() {
         user-agent: ...
 
         304 Not Modified
-        content-length: 0
         etag: ...
 
         ###
@@ -248,7 +246,6 @@ fn not_found() {
         user-agent: ...
 
         404 Not Found
-        content-length: 0
         etag: ...
     "]];
     expected.assert_eq(&registry.logs());
@@ -289,7 +286,6 @@ fn missing_config_json() {
         user-agent: ...
 
         404 Not Found
-        content-length: 0
         etag: ...
     "]];
     expected.assert_eq(&registry.logs());
@@ -389,7 +385,6 @@ fn caching() {
         user-agent: ...
 
         304 Not Modified
-        content-length: 0
         etag: ...
 
         ###
