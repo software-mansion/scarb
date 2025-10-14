@@ -7032,7 +7032,6 @@ dependencies = [
  "fs_extra",
  "futures",
  "gix",
- "gix-path",
  "glob",
  "ignore",
  "include_dir",
