@@ -7259,7 +7259,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-oracle-hint-service"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "deno_task_shell",

@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-## [0.1.1] (2025-MM-DD)
+## [0.1.1] (2025-10-14)
 
 - Added filesystem access support for WASM oracles. Executor's current working directory is mounted as `.` with
   read-write access.
