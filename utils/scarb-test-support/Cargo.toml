@@ -16,7 +16,6 @@ camino.workspace = true
 clap.workspace = true
 data-encoding.workspace = true
 dunce.workspace = true
-hyper = "0.14"
 indoc.workspace = true
 itertools.workspace = true
 scarb = { path = "../../scarb", default-features = false, optional = true }
