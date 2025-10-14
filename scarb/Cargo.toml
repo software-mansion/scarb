@@ -58,7 +58,6 @@ directories.workspace = true
 dunce.workspace = true
 flate2.workspace = true
 futures.workspace = true
-gix-path.workspace = true
 gix.workspace = true
 glob.workspace = true
 ignore.workspace = true
