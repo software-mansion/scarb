@@ -36,10 +36,6 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub print_resource_usage: bool,
 
-    /// Enable experimental oracles support.
-    #[arg(long, default_value_t = false, env = "SCARB_EXPERIMENTAL_ORACLES")]
-    pub experimental_oracles: bool,
-
     /// Logging verbosity.
     #[command(flatten)]
     pub verbose: VerbositySpec,

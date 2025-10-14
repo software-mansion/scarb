@@ -11,18 +11,10 @@ pub struct Check {
     #[builder(setter(into))]
     lib_cairo: String,
 
-    #[builder(default, setter(custom))]
-    failure: bool,
     #[builder(setter(into))]
     stdout_matches: String,
     #[builder(default, setter(into))]
     stderr_contains: String,
-
-    #[builder(default = "true")]
-    enable_experimental_oracles_flag: bool,
-
-    #[builder(default, setter(custom))]
-    profile: Option<String>,
 
     #[builder(default, setter(custom))]
     pb_ops: Vec<Box<dyn FnOnce(ProjectBuilder) -> ProjectBuilder>>,
@@ -35,16 +27,6 @@ pub struct Check {
 impl CheckBuilder {
     pub fn check(self) -> TempDir {
         self.build().unwrap().check()
-    }
-
-    pub fn failure(mut self) -> Self {
-        self.failure = Some(true);
-        self
-    }
-
-    pub fn profile(mut self, profile: String) -> Self {
-        self.profile = Some(Some(profile));
-        self
     }
 
     pub fn pb_op(mut self, op: impl FnOnce(ProjectBuilder) -> ProjectBuilder + 'static) -> Self {
@@ -97,27 +79,15 @@ impl Check {
             op(&t);
         }
 
-        let mut snapbox = Scarb::quick_snapbox().env("RUST_BACKTRACE", "0");
+        let snapbox = Scarb::quick_snapbox()
+            .env("RUST_BACKTRACE", "0")
+            .arg("execute")
+            .current_dir(&t);
 
-        if let Some(profile) = &self.profile {
-            snapbox = snapbox.args(vec!["--profile", profile]);
-        }
-
-        snapbox = snapbox.arg("execute").current_dir(&t);
-
-        if self.enable_experimental_oracles_flag {
-            snapbox = snapbox.arg("--experimental-oracles");
-        }
-
-        let mut assert = snapbox.assert();
-
-        if self.failure {
-            assert = assert.failure();
-        } else {
-            assert = assert.success();
-        }
-
-        assert = assert.stdout_matches(self.stdout_matches);
+        let assert = snapbox
+            .assert()
+            .success()
+            .stdout_matches(self.stdout_matches);
 
         if !self.stderr_contains.is_empty() {
             let pattern = self.stderr_contains;
