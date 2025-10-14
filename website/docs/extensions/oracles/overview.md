@@ -48,11 +48,5 @@ The [Scarb executor](../../extensions/execute.md) supports multiple oracle proto
 - [`shell`](./shell.md) — one‑shot shell command execution returning stdout.
 - [`wasm`](./wasm.md) — run WebAssembly components.
 
-In the oracle repository, you can find ready-to-use SDKs that ease writing oracles compatible with Scarb executor.
-
-<BigLink href="https://github.com/software-mansion/cairo-oracle/tree/main/sdk">
-  Go to oracle SDKs
-</BigLink>
-
 Some oracles may depend on external files. Use the [`assets`](../../reference/manifest.md#assets) field to include them
 in the build.
