@@ -5,11 +5,11 @@ use assert_fs::prelude::*;
 use serde::de::DeserializeOwned;
 use snapbox::cmd::Command as SnapboxCommand;
 use std::ffi::OsString;
-use std::fs;
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 use std::sync::LazyLock;
+use std::{env, fs};
 
 pub struct Scarb {
     cache: EnvPath,
@@ -225,13 +225,15 @@ struct SharedCache {
 }
 
 fn prepare_shared_cache() -> SharedCache {
-    let mut base = manifest_dir().join("target").join("scarb-test-shared");
+    let mut base = env::temp_dir().join("scarb-e2e-tests");
 
     // Avoid concurrent access to the cache so that we won't get "blocking waiting for..." msgs.
-    if let Ok(slot) = std::env::var("NEXTEST_TEST_GLOBAL_SLOT") {
-        base.push(format!("nextest-{slot}"));
+    if let Ok(uuid) = env::var("NEXTEST_RUN_ID") {
+        base.push(format!("nr{uuid}"));
     }
-
+    if let Ok(slot) = env::var("NEXTEST_TEST_GLOBAL_SLOT") {
+        base.push(format!("ns{slot}"));
+    }
     base.push(reusable_thread_id::current().to_string());
 
     SharedCache {
