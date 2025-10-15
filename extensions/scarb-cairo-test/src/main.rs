@@ -13,7 +13,7 @@ use cairo_lang_test_plugin::{TestCompilation, TestCompilationMetadata};
 use cairo_lang_test_runner::{CompiledTestRunner, TestRunConfig};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
-use indoc::formatdoc;
+use indoc::{formatdoc, indoc};
 use scarb_extensions_cli::cairo_test::Args;
 use scarb_metadata::{
     Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
@@ -27,15 +27,12 @@ fn main() -> Result<()> {
     let args: Args = Args::parse();
     let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
 
-    // Print deprecation warning
-    ui.warn(
-        formatdoc! {r#"
-        `scarb-cairo-test` is deprecated and will be removed in a future version.
-        Please migrate to `snforge` for testing Cairo code.
-        For more information, visit: https://foundry-rs.github.io/starknet-foundry/
-    "#}
-        .trim(),
-    );
+    // Print deprecation warning.
+    ui.warn(indoc! {r#"
+        `scarb cairo-test` is deprecated and will be removed in a future version.
+        help: Please migrate to `snforge` for all your testing needs.
+        help: For more information, visit: https://foundry-rs.github.io/starknet-foundry/
+    "#});
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
