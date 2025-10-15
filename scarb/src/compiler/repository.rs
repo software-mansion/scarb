@@ -1,5 +1,4 @@
 use anyhow::{Result, bail};
-use cairo_lang_compiler::db::RootDatabase;
 use itertools::Itertools;
 use smol_str::SmolStr;
 use std::collections::HashMap;
@@ -49,7 +48,7 @@ impl CompilerRepository {
         &self,
         unit: CairoCompilationUnit,
         offloader: &Offloader<'_>,
-        db: &mut RootDatabase,
+        db: &mut dyn Database,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let target_kind = &unit.main_component().target_kind();

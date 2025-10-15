@@ -4,7 +4,6 @@ use crate::compiler::helpers::write_json_with_byte_count;
 use crate::core::{PackageName, Workspace};
 use crate::flock::Filesystem;
 use crate::internal::offloader::Offloader;
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::abi::Contract;
@@ -13,6 +12,7 @@ use cairo_lang_starknet_classes::contract_class::{ContractClass, ContractEntryPo
 use cairo_lang_utils::bigint::BigUintAsHex;
 use indoc::formatdoc;
 use itertools::{Itertools, izip};
+use salsa::Database;
 use scarb_stable_hash::short_hash;
 use serde::Serialize;
 use smol_str::SmolStr;
@@ -137,7 +137,7 @@ impl ArtifactsWriter {
             casm_classes,
         }: Artifacts<'db>,
         offloader: &Offloader<'_>,
-        db: &'db RootDatabase,
+        db: &'db dyn Database,
         ws: &Workspace<'_>,
     ) -> anyhow::Result<()> {
         let span = trace_span!("serialize_starknet");

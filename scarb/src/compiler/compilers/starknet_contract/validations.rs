@@ -2,7 +2,6 @@ use crate::compiler::compilers::{Props, SerdeListSelector};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
 use crate::core::{Utf8PathWorkspaceExt, Workspace};
 use anyhow::{Context, bail, ensure};
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::flag::Flag;
@@ -36,7 +35,7 @@ pub fn check_allowed_libfuncs<'db>(
     props: &Props,
     contracts: &[ContractDeclaration<'db>],
     classes: &[ContractClass],
-    db: &'db RootDatabase,
+    db: &'db dyn Database,
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
 ) -> anyhow::Result<()> {

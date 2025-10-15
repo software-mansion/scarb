@@ -6,12 +6,12 @@ use crate::core::{InliningStrategy, Workspace};
 use crate::flock::Filesystem;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::CompilerConfig;
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CrateId;
 use itertools::Itertools;
+use salsa::Database;
 use serde::Serialize;
 use std::collections::HashSet;
 use std::io::{BufWriter, Write};
@@ -43,7 +43,7 @@ impl<W: Write> Write for CountingWriter<W> {
 }
 
 pub fn build_compiler_config<'c, 'db>(
-    db: &'db RootDatabase,
+    db: &'db dyn Database,
     unit: &CairoCompilationUnit,
     main_crate_ids: &[CrateId<'db>],
     ctx: &'db IncrementalContext,
@@ -172,7 +172,7 @@ impl From<cairo_lang_lowering::utils::InliningStrategy> for InliningStrategy {
 
 pub fn collect_main_crate_ids<'db>(
     unit: &CairoCompilationUnit,
-    db: &'db RootDatabase,
+    db: &'db dyn Database,
 ) -> Vec<CrateId<'db>> {
     let main_component = unit.main_component();
     vec![main_component.crate_id(db)]
