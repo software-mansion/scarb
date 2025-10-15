@@ -1,5 +1,4 @@
 use anyhow::Result;
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId, SmolStrId};
 use cairo_lang_sierra::program::VersionedProgram;
@@ -9,6 +8,7 @@ use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_test_plugin::{TestsCompilationConfig, compile_test_prepared_db};
 use cairo_lang_utils::Intern;
 use itertools::Itertools;
+use salsa::Database;
 use tracing::{trace, trace_span};
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
@@ -34,7 +34,7 @@ impl Compiler for TestCompiler {
         unit: &CairoCompilationUnit,
         ctx: &IncrementalContext,
         offloader: &Offloader<'_>,
-        db: &mut RootDatabase,
+        db: &dyn Database,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let target_dir = unit.target_dir(ws);
@@ -157,7 +157,7 @@ fn compile_contracts<'db>(
     unit: &CairoCompilationUnit,
     offloader: &Offloader<'_>,
     ctx: &IncrementalContext,
-    db: &'db RootDatabase,
+    db: &'db dyn Database,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let ContractsCompilationArgs {
@@ -216,7 +216,7 @@ fn get_contract_crate_ids<'db>(
     build_external_contracts: &Option<Vec<ContractSelector>>,
     test_crate_ids: Vec<CrateId<'db>>,
     unit: &CairoCompilationUnit,
-    db: &'db RootDatabase,
+    db: &'db dyn Database,
 ) -> Vec<CrateId<'db>> {
     let mut all_crate_ids = build_external_contracts
         .as_ref()

@@ -6,7 +6,6 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler}
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::offloader::Offloader;
 use anyhow::{Result, bail, ensure};
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::{
     CompilerConfig, compile_prepared_db_program_artifact_for_functions, ensure_diagnostics,
 };
@@ -47,7 +46,7 @@ impl Compiler for ExecutableCompiler {
         unit: &CairoCompilationUnit,
         ctx: &IncrementalContext,
         offloader: &Offloader<'_>,
-        db: &mut RootDatabase,
+        db: &dyn Database,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         ensure!(
@@ -110,7 +109,7 @@ impl Compiler for ExecutableCompiler {
 #[allow(clippy::too_many_arguments)]
 fn compile_executable<'db>(
     unit: &CairoCompilationUnit,
-    db: &'db RootDatabase,
+    db: &'db dyn Database,
     ws: &Workspace<'_>,
     offloader: &Offloader<'_>,
     props: &Props,
@@ -227,7 +226,7 @@ fn multiple_executables_error_message(executables: Vec<String>, scarb_toml: &Utf
 /// Search crates identified by `main_crate_ids` for functions annotated with `#[executable]` attribute.
 /// If `executable_path` is provided, only functions with exactly the same path will be returned.
 fn find_executable_functions<'db>(
-    db: &'db RootDatabase,
+    db: &'db dyn Database,
     main_crate_ids: Vec<CrateId<'db>>,
     executable_path: Option<&str>,
 ) -> Vec<ConcreteFunctionWithBodyId<'db>> {
@@ -252,7 +251,7 @@ fn find_executable_functions<'db>(
 ///
 /// If the executable is not wrapping a function, returns the full path of the executable.
 fn originating_function_path<'db>(
-    db: &'db RootDatabase,
+    db: &'db dyn Database,
     wrapper: ConcreteFunctionWithBodyId<'db>,
 ) -> String {
     let semantic = wrapper.base_semantic_function(db);

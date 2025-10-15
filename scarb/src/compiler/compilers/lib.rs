@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 use cairo_lang_compiler::CompilerConfig;
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_sierra::program::VersionedProgram;
@@ -51,7 +50,7 @@ impl Compiler for LibCompiler {
         unit: &CairoCompilationUnit,
         ctx: &IncrementalContext,
         offloader: &Offloader<'_>,
-        db: &mut RootDatabase,
+        db: &dyn Database,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;
