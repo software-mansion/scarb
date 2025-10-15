@@ -1,5 +1,9 @@
 # Testing Scarb projects
 
+> [!WARNING]
+> The `scarb cairo-test` extension is **deprecated** and will be removed in a future release.
+> We strongly recommend migrating to [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) for all your testing needs.
+
 The `scarb test` command executes all unit and integration tests of a local package.
 It is not a test runner by itself, but rather delegates work to a testing solution of choice.
 Scarb comes with preinstalled `scarb cairo-test` extension, which bundles Cairo's native test runner.
@@ -32,6 +36,10 @@ or multiple files with `cairo` extension, each defining a separate test module.
 
 ## Using third-party test runners
 
+> [!WARNING]
+> The `scarb cairo-test` extension is **deprecated** and will be removed in a future release.
+> We strongly recommend migrating to [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) for all your testing needs.
+
 The behaviour of the `scarb test` command can be changed by developers.
 To do so, provide a script named explicitly `test` in the current workspace `Scarb.toml`.
 If such script is found, Scarb will execute it instead of running the default test runner.
@@ -63,6 +71,10 @@ properly [set up Starknet Foundry in your project](https://foundry-rs.github.io/
 beforehand.
 
 ## Using multiple test runners
+
+> [!WARNING]
+> The `scarb cairo-test` extension is **deprecated** and will be removed in a future release.
+> We strongly recommend migrating to [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) as your primary test runner.
 
 The default test runner is regular Scarb extension, and thus it is always available directly, as `scarb cairo-test`
 command.
