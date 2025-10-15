@@ -45,7 +45,9 @@ impl Guest for MyOracle {
         stream.write_all(message.as_bytes()).map_err(|e| e.to_string())?;
         stream.flush().map_err(|e| e.to_string())?;
         
-        // Shut down the writing side to signal we're done sending
+        // Shut down the writing side to signal we're done sending.
+        // This is necessary for the echo server to know when to stop waiting for more data
+        // and send back the response. Without this, read_exact would block indefinitely.
         stream.shutdown(std::net::Shutdown::Write).map_err(|e| e.to_string())?;
         
         let mut buffer = vec![0u8; message.len()];
