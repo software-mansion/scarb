@@ -37,8 +37,8 @@ or multiple files with `cairo` extension, each defining a separate test module.
 ## Using third-party test runners
 
 > [!WARNING]
-> The default `cairo-test` runner is **deprecated**.
-> We recommend using [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) instead.
+> The `scarb cairo-test` extension is **deprecated** and will be removed in a future release.
+> We strongly recommend migrating to [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) for all your testing needs.
 
 The behaviour of the `scarb test` command can be changed by developers.
 To do so, provide a script named explicitly `test` in the current workspace `Scarb.toml`.
