@@ -73,8 +73,8 @@ beforehand.
 ## Using multiple test runners
 
 > [!WARNING]
-> The `scarb cairo-test` extension is **deprecated**.
-> Consider using [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) as your primary test runner.
+> The `scarb cairo-test` extension is **deprecated** and will be removed in a future release.
+> We strongly recommend migrating to [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) as your primary test runner.
 
 The default test runner is regular Scarb extension, and thus it is always available directly, as `scarb cairo-test`
 command.
