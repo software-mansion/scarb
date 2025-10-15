@@ -14,6 +14,12 @@ pub fn run(args: InitArgs, config: &Config) -> Result<()> {
     let path = Utf8PathBuf::from_path_buf(env::current_dir()?)
         .map_err(|path| anyhow!("path `{}` is not UTF-8 encoded", path.display()))?;
 
+    let test_runner = if args.no_test {
+        TestRunner::None
+    } else {
+        get_or_ask_for_test_runner(args.test_runner)?
+    };
+
     ops::init_package(
         ops::InitOptions {
             name: args.name,
@@ -25,10 +31,7 @@ pub fn run(args: InitArgs, config: &Config) -> Result<()> {
             } else {
                 VersionControl::Git
             },
-            snforge: matches!(
-                get_or_ask_for_test_runner(args.test_runner)?,
-                TestRunner::StarknetFoundry
-            ),
+            snforge: matches!(test_runner, TestRunner::StarknetFoundry),
         },
         config,
     )?;

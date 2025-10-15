@@ -318,6 +318,8 @@ pub enum TestRunner {
     StarknetFoundry,
     /// Uses the Cairo Test test runner.
     CairoTest,
+    /// No test runner.
+    None,
 }
 
 /// Arguments accepted by the `init` command.
@@ -334,6 +336,10 @@ pub struct InitArgs {
     /// Test runner to use. Starts interactive session if not specified.
     #[arg(long, env = "SCARB_INIT_TEST_RUNNER")]
     pub test_runner: Option<TestRunner>,
+
+    /// Do not set up a test runner.
+    #[arg(long, conflicts_with = "test_runner")]
+    pub no_test: bool,
 }
 
 /// Arguments accepted by the `metadata` command.

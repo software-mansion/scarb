@@ -8,6 +8,12 @@ use crate::interactive::get_or_ask_for_test_runner;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: NewArgs, config: &Config) -> Result<()> {
+    let test_runner = if args.init.no_test {
+        TestRunner::None
+    } else {
+        get_or_ask_for_test_runner(args.init.test_runner)?
+    };
+
     let result = ops::new_package(
         ops::InitOptions {
             name: args.init.name,
@@ -19,10 +25,7 @@ pub fn run(args: NewArgs, config: &Config) -> Result<()> {
             } else {
                 VersionControl::Git
             },
-            snforge: matches!(
-                get_or_ask_for_test_runner(args.init.test_runner)?,
-                TestRunner::StarknetFoundry
-            ),
+            snforge: matches!(test_runner, TestRunner::StarknetFoundry),
         },
         config,
     )?;

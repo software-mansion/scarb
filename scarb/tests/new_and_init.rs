@@ -159,7 +159,7 @@ fn new_interactive_not_in_terminal() {
         .failure()
         .stdout_eq(indoc! {r"
             error: you are not running in terminal
-            help: please provide the --test-runner flag
+            help: please provide the --test-runner flag or --no-test
         "});
 }
 
@@ -177,7 +177,7 @@ fn init_interactive_not_in_terminal() {
         .failure()
         .stdout_eq(indoc! {r"
             error: you are not running in terminal
-            help: please provide the --test-runner flag
+            help: please provide the --test-runner flag or --no-test
         "});
 }
 
