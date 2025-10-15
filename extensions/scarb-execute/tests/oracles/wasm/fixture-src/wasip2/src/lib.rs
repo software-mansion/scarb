@@ -43,7 +43,6 @@ impl Guest for MyOracle {
         let mut stream = TcpStream::connect("tcpbin.com:4242").map_err(|e| e.to_string())?;
         let message = "tcp connectivity works";
         stream.write_all(message.as_bytes()).map_err(|e| e.to_string())?;
-        stream.flush().map_err(|e| e.to_string())?;
         
         // Shut down the writing side to signal we're done sending.
         // This is necessary for the echo server to know when to stop waiting for more data
