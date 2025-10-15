@@ -211,7 +211,7 @@ fn mk(
 fn init_snforge(name: PackageName, root_dir: Utf8PathBuf, config: &Config) -> Result<()> {
     // Check if snforge binary is available
     if which("snforge").is_err() {
-        bail!(formatdoc! {r#"
+        bail!(indoc! {r#"
             snforge binary not found
 
             Starknet Foundry needs to be installed to set up a project with snforge.
@@ -222,7 +222,7 @@ fn init_snforge(name: PackageName, root_dir: Utf8PathBuf, config: &Config) -> Re
             Alternatively, you can manually add snforge to an existing project by following:
             https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
 
-            You can also create a project without a test runner using the --test-runner none flag.
+            You can also create a project without a test runner using the `--test-runner none` flag.
         "#});
     }
 
