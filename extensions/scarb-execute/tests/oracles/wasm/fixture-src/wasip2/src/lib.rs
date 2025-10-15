@@ -41,7 +41,7 @@ impl Guest for MyOracle {
     }
     fn network() -> Result<String, String> {
         let mut stream = TcpStream::connect("tcpbin.com:4242").map_err(|e| e.to_string())?;
-        let message = "Hello World!";
+        let message = "tcp connectivity works";
         stream.write_all(message.as_bytes()).map_err(|e| e.to_string())?;
         stream.flush().map_err(|e| e.to_string())?;
         

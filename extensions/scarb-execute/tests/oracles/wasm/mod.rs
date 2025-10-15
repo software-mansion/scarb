@@ -86,7 +86,7 @@ fn wasip2() {
             Result::Ok(0)
             Result::Ok(1)
             Result::Ok(Result::Ok("hello from the outside"))
-            Result::Ok(Result::Ok("Hello World!"))
+            Result::Ok(Result::Ok("tcp connectivity works"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .stderr_contains("stderr is working as expected\n")
