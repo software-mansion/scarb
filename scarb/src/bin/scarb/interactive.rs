@@ -17,7 +17,7 @@ fn ask_for_test_runner() -> Result<TestRunner> {
         io::stdout().is_terminal(),
         indoc! {r"
             you are not running in terminal
-            help: please provide the --test-runner flag or --no-test
+            help: please provide the --test-runner flag
         "}
     );
 

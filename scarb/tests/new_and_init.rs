@@ -159,7 +159,7 @@ fn new_interactive_not_in_terminal() {
         .failure()
         .stdout_eq(indoc! {r"
             error: you are not running in terminal
-            help: please provide the --test-runner flag or --no-test
+            help: please provide the --test-runner flag
         "});
 }
 
@@ -177,7 +177,7 @@ fn init_interactive_not_in_terminal() {
         .failure()
         .stdout_eq(indoc! {r"
             error: you are not running in terminal
-            help: please provide the --test-runner flag or --no-test
+            help: please provide the --test-runner flag
         "});
 }
 
@@ -416,52 +416,6 @@ fn init_core_name() {
         .current_dir(&t)
         .assert()
         .success();
-}
-
-#[test]
-fn new_with_no_test_flag() {
-    let pt = assert_fs::TempDir::new().unwrap();
-
-    Scarb::quick_snapbox()
-        .arg("new")
-        .arg("hello")
-        .arg("--no-test")
-        .env_remove("SCARB_INIT_TEST_RUNNER")
-        .current_dir(&pt)
-        .assert()
-        .success();
-
-    let t = pt.child("hello");
-    assert!(t.is_dir());
-    assert!(t.child("Scarb.toml").is_file());
-    assert!(t.child("src/lib.cairo").is_file());
-
-    let toml_content = std::fs::read_to_string(t.child("Scarb.toml").path()).unwrap();
-    assert!(!toml_content.contains("cairo_test"));
-    assert!(!toml_content.contains("[dev-dependencies]"));
-}
-
-#[test]
-fn init_with_no_test_flag() {
-    let pt = assert_fs::TempDir::new().unwrap();
-    let t = pt.child("hello");
-    t.create_dir_all().unwrap();
-
-    Scarb::quick_snapbox()
-        .arg("init")
-        .arg("--no-test")
-        .env_remove("SCARB_INIT_TEST_RUNNER")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    assert!(t.is_dir());
-    assert!(t.child("Scarb.toml").is_file());
-    assert!(t.child("src/lib.cairo").is_file());
-
-    let toml_content = std::fs::read_to_string(t.child("Scarb.toml").path()).unwrap();
-    assert!(!toml_content.contains("cairo_test"));
-    assert!(!toml_content.contains("[dev-dependencies]"));
 }
 
 #[test]
