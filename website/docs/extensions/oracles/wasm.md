@@ -47,10 +47,6 @@ let res = oracle::invoke(
   subject to the host OS/firewall.
 - Failures (including traps) never abort Cairo execution; they propagate to Cairo as an `oracle::Error` value.
 
-> [!NOTE]
-> In the future the default capabilities will become strongly limited and a permissions system will be added to allow
-> enabling some of these capabilities.
-
 ## Selectors
 
 - The selector you pass to `oracle::invoke` identifies which exported function to call.
