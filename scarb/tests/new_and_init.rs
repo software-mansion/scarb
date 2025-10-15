@@ -417,3 +417,68 @@ fn init_core_name() {
         .assert()
         .success();
 }
+
+#[test]
+fn new_with_no_test_flag() {
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("hello")
+        .arg("--no-test")
+        .env_remove("SCARB_INIT_TEST_RUNNER")
+        .current_dir(&pt)
+        .assert()
+        .success();
+
+    let t = pt.child("hello");
+    assert!(t.is_dir());
+    assert!(t.child("Scarb.toml").is_file());
+    assert!(t.child("src/lib.cairo").is_file());
+
+    let toml_content = std::fs::read_to_string(t.child("Scarb.toml").path()).unwrap();
+    assert!(!toml_content.contains("cairo_test"));
+    assert!(!toml_content.contains("[dev-dependencies]"));
+}
+
+#[test]
+fn init_with_no_test_flag() {
+    let pt = assert_fs::TempDir::new().unwrap();
+    let t = pt.child("hello");
+    t.create_dir_all().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("init")
+        .arg("--no-test")
+        .env_remove("SCARB_INIT_TEST_RUNNER")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert!(t.is_dir());
+    assert!(t.child("Scarb.toml").is_file());
+    assert!(t.child("src/lib.cairo").is_file());
+
+    let toml_content = std::fs::read_to_string(t.child("Scarb.toml").path()).unwrap();
+    assert!(!toml_content.contains("cairo_test"));
+    assert!(!toml_content.contains("[dev-dependencies]"));
+}
+
+#[test]
+fn new_with_test_runner_none() {
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("hello")
+        .arg("--test-runner")
+        .arg("none")
+        .current_dir(&pt)
+        .assert()
+        .success();
+
+    let t = pt.child("hello");
+    let toml_content = std::fs::read_to_string(t.child("Scarb.toml").path()).unwrap();
+    assert!(!toml_content.contains("cairo_test"));
+    assert!(!toml_content.contains("[dev-dependencies]"));
+}
