@@ -205,8 +205,7 @@ stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev
 stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
 
 [profile.release]
-# FIXME(#2548): We want LTO back.
-#lto = true
+lto = "thin"
 
 [profile.ci]
 inherits = "test"
