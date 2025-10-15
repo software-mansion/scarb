@@ -45,6 +45,9 @@ impl Guest for MyOracle {
         stream.write_all(message.as_bytes()).map_err(|e| e.to_string())?;
         stream.flush().map_err(|e| e.to_string())?;
         
+        // Shut down the writing side to signal we're done sending
+        stream.shutdown(std::net::Shutdown::Write).map_err(|e| e.to_string())?;
+        
         let mut buffer = vec![0u8; message.len()];
         stream.read_exact(&mut buffer).map_err(|e| e.to_string())?;
         
