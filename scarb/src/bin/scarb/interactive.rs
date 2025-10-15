@@ -5,6 +5,7 @@ use anyhow::{Result, ensure};
 use dialoguer::Select;
 use dialoguer::theme::ColorfulTheme;
 use indoc::indoc;
+use which::which;
 
 pub fn get_or_ask_for_test_runner(test_runner: Option<TestRunner>) -> Result<TestRunner> {
     Ok(test_runner)
@@ -21,7 +22,14 @@ fn ask_for_test_runner() -> Result<TestRunner> {
         "}
     );
 
-    let options = vec!["Starknet Foundry (default)", "None"];
+    let options = if which("snforge").is_ok() {
+        vec!["Starknet Foundry (default)", "None"]
+    } else {
+        vec![
+            "None (default)",
+            "Starknet Foundry (recommended, requires snforge installed: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html)",
+        ]
+    };
 
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Which test runner do you want to set up?")

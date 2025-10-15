@@ -222,7 +222,7 @@ fn init_snforge(name: PackageName, root_dir: Utf8PathBuf, config: &Config) -> Re
             Alternatively, you can manually add snforge to an existing project by following:
             https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
 
-            You can also create a project without a test runner using the --no-test flag.
+            You can also create a project without a test runner using the --test-runner none flag.
         "#});
     }
 
