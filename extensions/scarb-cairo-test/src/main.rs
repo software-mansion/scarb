@@ -27,6 +27,13 @@ fn main() -> Result<()> {
     let args: Args = Args::parse();
     let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
 
+    // Print deprecation warning
+    ui.warn(formatdoc! {r#"
+        `scarb-cairo-test` is deprecated and will be removed in a future version.
+        Please migrate to `snforge` for testing Cairo code.
+        For more information, visit: https://foundry-rs.github.io/starknet-foundry/
+    "#}.trim());
+
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
     check_scarb_version(&metadata, &ui);
