@@ -6,8 +6,6 @@ use assert_fs::prelude::*;
 use indoc::indoc;
 use predicates::prelude::*;
 
-// TODO(#2630): Implement network access tests.
-
 #[test]
 fn wasip2() {
     let t = CheckBuilder::default()
@@ -61,6 +59,14 @@ fn wasip2() {
                 selector.serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<Result<ByteArray, ByteArray>>(result);
+
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "wasm:wasip2.wasm";
+                connection_string.serialize(ref inputs);
+                let selector: ByteArray = "network";
+                selector.serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<Result<ByteArray, ByteArray>>(result);
             }}
         "#})
         .asset("wasip2.wasm", include_bytes!("wasip2.wasm"))
@@ -80,6 +86,7 @@ fn wasip2() {
             Result::Ok(0)
             Result::Ok(1)
             Result::Ok(Result::Ok("hello from the outside"))
+            Result::Ok(Result::Ok("Hello World!"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .stderr_contains("stderr is working as expected\n")
