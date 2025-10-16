@@ -33,7 +33,7 @@ fn main() -> Result<()> {
         help: please migrate to `snforge` for all your testing needs.
         help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
         help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
-    "#});
+    "#}.trim());
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
