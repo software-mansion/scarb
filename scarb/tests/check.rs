@@ -57,6 +57,6 @@ fn check_fail_with_syntax_error() {
             not_a_keyword
                          ^
 
-            error: could not check `hello` due to previous error
+            error: could not check `hello` due to [..] previous error
         "#});
 }

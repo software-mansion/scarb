@@ -1544,7 +1544,7 @@ fn error_on_verification() {
         error: failed to verify package tarball
 
         Caused by:
-        [..] could not compile `foo` due to previous error
+        [..] could not compile `foo` due to [..] previous error
         "#});
 }
 
