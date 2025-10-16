@@ -440,7 +440,7 @@ fn new_with_test_runner_none() {
 #[test]
 fn new_with_starknet_foundry_without_snforge_binary() {
     use scarb_test_support::filesystem::path_with_temp_dir;
-    
+
     let pt = assert_fs::TempDir::new().unwrap();
 
     Scarb::quick_snapbox()
