@@ -14,6 +14,7 @@ use cairo_lang_test_runner::{CompiledTestRunner, TestRunConfig};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use indoc::formatdoc;
+use mimalloc::MiMalloc;
 use scarb_extensions_cli::cairo_test::Args;
 use scarb_metadata::{
     Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
@@ -22,6 +23,9 @@ use scarb_oracle_hint_service::OracleHintService;
 use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::{NewLine, Status};
 use scarb_ui::{OutputFormat, Ui};
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> Result<()> {
     let args: Args = Args::parse();

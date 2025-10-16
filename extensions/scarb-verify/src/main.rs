@@ -5,6 +5,7 @@ use anyhow::{Context, Result, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use indoc::formatdoc;
+use mimalloc::MiMalloc;
 use scarb_extensions_cli::verify::Args;
 use scarb_metadata::{MetadataCommand, PackageMetadata};
 use scarb_ui::components::Status;
@@ -18,6 +19,9 @@ use stwo_cairo_prover::cairo_air::verifier::verify_cairo;
 use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::{
     Blake2sMerkleChannel, Blake2sMerkleHasher,
 };
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> ExitCode {
     let args = Args::parse();
