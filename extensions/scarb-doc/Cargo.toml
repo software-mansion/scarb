@@ -24,6 +24,7 @@ cairo-lang-utils.workspace = true
 expect-test.workspace = true
 indoc.workspace = true
 itertools.workspace = true
+mimalloc.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["doc"] }

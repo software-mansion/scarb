@@ -6,6 +6,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::{formatdoc, indoc};
+use mimalloc::MiMalloc;
 use scarb_extensions_cli::execute::ToArgs;
 use scarb_extensions_cli::prove::Args;
 use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
@@ -20,6 +21,9 @@ use stwo_cairo_prover::cairo_air::prover::{
     ProverConfig, ProverParameters, default_prod_prover_parameters, prove_cairo,
 };
 use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 const MAX_ITERATION_COUNT: usize = 10000;
 

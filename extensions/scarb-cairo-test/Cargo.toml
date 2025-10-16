@@ -17,6 +17,7 @@ cairo-vm.workspace = true
 camino.workspace = true
 clap.workspace = true
 indoc.workspace = true
+mimalloc.workspace = true
 scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["cairo-test"] }
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-oracle-hint-service = { path = "../../utils/scarb-oracle-hint-service" }
