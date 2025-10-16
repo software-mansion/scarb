@@ -316,8 +316,6 @@ pub struct ScriptsRunnerArgs {
 pub enum TestRunner {
     /// Uses the `Starknet Foundry` test runner.
     StarknetFoundry,
-    /// Uses the Cairo Test test runner.
-    CairoTest,
     /// No test runner.
     None,
 }
