@@ -1,5 +1,6 @@
 use assert_fs::TempDir;
 use assert_fs::fixture::PathChild;
+use assert_fs::prelude::*;
 use cairo_lang_sierra::program::VersionedProgram;
 use indoc::indoc;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
@@ -1525,7 +1526,7 @@ fn can_expand_impl_inner_func_attr() {
             pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
                 ProcMacroResult::new(TokenStream::new(
                     token_stream.to_string()
-                    .replace("1", "2")
+                    .replace("1", "1234567890")
                 ))
             }
         "##})
@@ -1577,52 +1578,20 @@ fn can_expand_impl_inner_func_attr() {
                     }
                 }
             }
-
-            #[cfg(test)]
-            mod tests {
-                use array::ArrayTrait;
-                use core::result::ResultTrait;
-                use core::traits::Into;
-                use option::OptionTrait;
-                use starknet::syscalls::deploy_syscall;
-                use traits::TryInto;
-
-                use super::{IHello, Hello, IHelloDispatcher, IHelloDispatcherTrait};
-
-                #[test]
-                fn test_flow() {
-                    let calldata = array![100];
-                    let (address0, _) = deploy_syscall(
-                        Hello::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
-                    ).unwrap();
-
-                    let mut contract0 = IHelloDispatcher { contract_address: address0 };
-
-                    assert_eq!(@contract0.get(), @100, "contract0.get() == 100");
-                    @contract0.increase();
-                    assert_eq!(@contract0.get(), @102, "contract0.get() == 102");
-                }
-            }
-
         "#})
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-test")
+        .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-            [..] Compiling some v1.0.0 ([..]Scarb.toml)
-            [..] Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished `dev` profile target(s) in [..]
-            [..]Testing hello
-            running 1 test
-            test hello::tests::test_flow ... ok (gas usage est.: [..])
-            test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
-        "#});
+        .success();
+
+    project
+        .child("target/dev/hello_Hello.contract_class.json")
+        .assert(predicates::str::contains("1234567890").count(2));
 }
 
 #[test]
