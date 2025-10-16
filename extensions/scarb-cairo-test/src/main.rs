@@ -30,8 +30,9 @@ fn main() -> Result<()> {
     // Print deprecation warning.
     ui.warn(indoc! {r#"
         `scarb cairo-test` is deprecated and will be removed in a future version.
-        help: Please migrate to `snforge` for all your testing needs.
-        help: For more information, visit: https://foundry-rs.github.io/starknet-foundry/
+        help: please migrate to `snforge` for all your testing needs.
+        help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+        help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
     "#});
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;

@@ -39,8 +39,9 @@ fn oracle() {
         .success()
         .stdout_matches(indoc! {r#"
             warn: `scarb cairo-test` is deprecated and will be removed in a future version.
-            help: Please migrate to `snforge` for all your testing needs.
-            help: For more information, visit: https://foundry-rs.github.io/starknet-foundry/
+            help: please migrate to `snforge` for all your testing needs.
+            help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+            help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
             [..] Compiling test(oracle_test_unittest) oracle_test v0.1.0 ([..])
             [..] Finished `dev` profile target(s) in [..] seconds
             [..] Testing oracle_test
