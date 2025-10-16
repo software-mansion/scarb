@@ -202,7 +202,7 @@ fn display_diagnostics(
 }
 
 /// Returns an error message indicating which packages failed linting due to previous errors.
-fn get_package_linting_error_message(packages_with_error: &Vec<PackageName>) -> String {
+fn get_package_linting_error_message(packages_with_error: &[PackageName]) -> String {
     if packages_with_error.is_empty() {
         "".to_string()
     } else if packages_with_error.len() == 1 {
@@ -280,7 +280,7 @@ fn get_linting_diagnostics<'db>(
 fn get_compilation_units_for_linting<'a>(
     ws: &Workspace<'_>,
     compilation_units: &'a Vec<CompilationUnit>,
-    packages: &'a Vec<Package>,
+    packages: &'a [Package],
     include_test_units: bool,
     target_names: &Vec<String>,
 ) -> Vec<(&'a Package, &'a CairoCompilationUnit)> {
@@ -290,7 +290,7 @@ fn get_compilation_units_for_linting<'a>(
         let package_name = &package.id.name;
         let package_compilation_units = get_package_compilation_units(
             package,
-            &compilation_units,
+            compilation_units,
             include_test_units,
             target_names,
         )
@@ -317,9 +317,9 @@ fn get_compilation_units_for_linting<'a>(
 
 fn get_package_compilation_units<'a>(
     package: &Package,
-    compilation_units: &'a Vec<CompilationUnit>,
+    compilation_units: &'a [CompilationUnit],
     include_test_units: bool,
-    target_names: &Vec<String>,
+    target_names: &[String],
 ) -> Option<Vec<&'a CompilationUnit>> {
     let package_compilation_units = if include_test_units {
         let mut result = vec![];
@@ -373,11 +373,7 @@ fn get_package_compilation_units<'a>(
             Some(cu) => Some(vec![cu]),
             None => None,
         }
-    };
-
-    let Some(package_compilation_units) = package_compilation_units else {
-        return None;
-    };
+    }?;
 
     if target_names.is_empty() {
         Some(package_compilation_units)
