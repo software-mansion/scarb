@@ -1,9 +1,7 @@
 use anyhow::{Context, Result, ensure};
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleId, NamedLanguageElementId};
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId, SmolStrId};
-use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::module::ModuleSemantic;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::Visibility;
@@ -81,7 +79,7 @@ impl Compiler for StarknetContractCompiler {
         unit: &CairoCompilationUnit,
         ctx: &IncrementalContext,
         offloader: &Offloader<'_>,
-        db: &mut RootDatabase,
+        db: &dyn Database,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;
@@ -179,7 +177,7 @@ impl Compiler for StarknetContractCompiler {
 }
 
 pub fn find_project_contracts<'db>(
-    db: &'db dyn SemanticGroup,
+    db: &'db dyn Database,
     ui: Ui,
     unit: &CairoCompilationUnit,
     main_crate_ids: Vec<CrateId<'db>>,

@@ -1,4 +1,6 @@
 use std::fs;
+use std::io::{Read, Write};
+use std::net::TcpStream;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 wit_bindgen::generate!({
@@ -11,6 +13,7 @@ wit_bindgen::generate!({
             export io: func();
             export count: func() -> u64;
             export fs: func() -> result<string, string>;
+            export network: func() -> result<string, string>;
         }
     "#
 });
@@ -35,6 +38,21 @@ impl Guest for MyOracle {
     fn fs() -> Result<String, String> {
         fs::write("write_file.txt", "hello from wasm").map_err(|e| e.to_string())?;
         fs::read_to_string("read_file.txt").map_err(|e| e.to_string())
+    }
+    fn network() -> Result<String, String> {
+        let mut stream = TcpStream::connect("tcpbin.com:4242").map_err(|e| e.to_string())?;
+        let message = "tcp connectivity works";
+        stream.write_all(message.as_bytes()).map_err(|e| e.to_string())?;
+        
+        // Shut down the writing side to signal we're done sending.
+        // This is necessary for the echo server to know when to stop waiting for more data
+        // and send back the response. Without this, read_exact would block indefinitely.
+        stream.shutdown(std::net::Shutdown::Write).map_err(|e| e.to_string())?;
+        
+        let mut buffer = vec![0u8; message.len()];
+        stream.read_exact(&mut buffer).map_err(|e| e.to_string())?;
+        
+        String::from_utf8(buffer).map_err(|e| e.to_string())
     }
 }
 

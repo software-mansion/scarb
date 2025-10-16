@@ -2,10 +2,10 @@ use crate::compiler::incremental::IncrementalContext;
 use crate::core::{TargetKind, Workspace};
 use crate::internal::offloader::Offloader;
 use anyhow::Result;
-use cairo_lang_compiler::db::RootDatabase;
 pub use compilation_unit::*;
 pub use profile::*;
 pub use repository::*;
+use salsa::Database;
 
 mod compilation_unit;
 mod compilers;
@@ -25,7 +25,7 @@ pub trait Compiler: Sync {
         unit: &CairoCompilationUnit,
         ctx: &IncrementalContext,
         offloader: &Offloader<'_>,
-        db: &mut RootDatabase,
+        db: &dyn Database,
         ws: &Workspace<'_>,
     ) -> Result<()>;
 }

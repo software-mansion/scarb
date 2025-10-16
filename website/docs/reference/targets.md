@@ -152,6 +152,10 @@ If your package defines `#[executable]` attribute multiple times, the `function`
 
 ## Test targets
 
+> [!WARNING]
+> The `scarb cairo-test` extension is **deprecated** and will be removed in a future release.
+> We strongly recommend migrating to [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry/) for all your testing needs.
+
 The test target produces artifacts that can be used by the `scarb cairo-test` or [Starknet Foundry] to run tests.
 If your project implements Starknet contracts, the test target will compile them as well.
 Each package can define multiple test targets, each of which will produce a separate test runner artifact.
