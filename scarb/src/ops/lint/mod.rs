@@ -279,10 +279,10 @@ fn get_linting_diagnostics<'db>(
 
 fn get_compilation_units_for_linting<'a>(
     ws: &Workspace<'_>,
-    compilation_units: &'a Vec<CompilationUnit>,
+    compilation_units: &'a [CompilationUnit],
     packages: &'a [Package],
     include_test_units: bool,
-    target_names: &Vec<String>,
+    target_names: &[String],
 ) -> Vec<(&'a Package, &'a CairoCompilationUnit)> {
     let mut compilation_units_for_linting: Vec<(&Package, &CairoCompilationUnit)> = vec![];
 
