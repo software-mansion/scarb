@@ -436,3 +436,36 @@ fn new_with_test_runner_none() {
     assert!(!toml_content.contains("cairo_test"));
     assert!(!toml_content.contains("[dev-dependencies]"));
 }
+
+#[test]
+fn new_with_starknet_foundry_without_snforge_binary() {
+    use scarb_test_support::filesystem::path_with_temp_dir;
+    
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("hello")
+        .arg("--test-runner")
+        .arg("starknet-foundry")
+        .env("PATH", path_with_temp_dir(&pt))
+        .current_dir(&pt)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: failed to create package `hello` at: hello
+
+            Caused by:
+                snforge binary not found
+                
+                Starknet Foundry needs to be installed to set up a project with snforge.
+                
+                To install snforge, please visit:
+                https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+                
+                Alternatively, you can manually add snforge to an existing project by following:
+                https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
+                
+                You can also create a project without a test runner using the `--test-runner none` flag.
+        "#});
+}
