@@ -35,9 +35,11 @@ pub use verbosity::*;
 pub use widget::*;
 
 use crate::components::TypedMessage;
+use crate::counter::{DiagnosticsCount, DiagnosticsCounter};
 
 pub mod args;
 pub mod components;
+mod counter;
 mod message;
 mod verbosity;
 mod widget;
@@ -61,6 +63,7 @@ pub struct Ui {
     verbosity: Verbosity,
     output_format: OutputFormat,
     state: Arc<RwLock<State>>,
+    counter: Arc<DiagnosticsCounter>,
 }
 
 impl Debug for Ui {
@@ -88,6 +91,7 @@ impl Ui {
             verbosity,
             output_format,
             state: Default::default(),
+            counter: Default::default(),
         }
     }
 
@@ -140,6 +144,7 @@ impl Ui {
 
     /// Print a warning to the user.
     pub fn warn(&self, message: impl AsRef<str>) {
+        self.counter.warning();
         if self.verbosity.should_print_warnings() {
             self.print(TypedMessage::styled("warn", "yellow", message.as_ref()))
         }
@@ -147,11 +152,13 @@ impl Ui {
 
     /// Print an error to the user.
     pub fn error(&self, message: impl AsRef<str>) {
+        self.counter.error();
         self.print(TypedMessage::styled("error", "red", message.as_ref()))
     }
 
     /// Print a warning to the user.
     pub fn warn_with_code(&self, code: impl AsRef<str>, message: impl AsRef<str>) {
+        self.counter.warning();
         if self.verbosity > Verbosity::NoWarnings {
             self.print(
                 TypedMessage::styled("warn", "yellow", message.as_ref()).with_code(code.as_ref()),
@@ -161,6 +168,7 @@ impl Ui {
 
     /// Print an error to the user.
     pub fn error_with_code(&self, code: impl AsRef<str>, message: impl AsRef<str>) {
+        self.counter.error();
         self.print(TypedMessage::styled("error", "red", message.as_ref()).with_code(code.as_ref()))
     }
 
@@ -178,6 +186,30 @@ impl Ui {
         //   This isn't a big problem for users, but it's causing issues in tests, where trailing
         //   whitespace collides with `indoc`.
         self.warn(format!("{error:?}").trim())
+    }
+
+    /// Returns the counts of diagnostics gathered so far.
+    pub fn get_diagnostics_count(&self) -> DiagnosticsCount {
+        self.counter.finish()
+    }
+
+    /// Returns the counts of diagnostics gathered so far in a human-readable format.
+    pub fn format_diagnostic_counts(&self) -> String {
+        let counts = self.get_diagnostics_count();
+        let errors = format!(
+            "{} previous error{}",
+            counts.errors,
+            if counts.errors == 1 { "" } else { "s" }
+        );
+        if counts.warnings == 0 {
+            errors
+        } else {
+            format!(
+                "{errors} and {} warning{}",
+                counts.warnings,
+                if counts.warnings == 1 { "" } else { "s" }
+            )
+        }
     }
 
     fn do_print<T: Message>(&self, message: T) {

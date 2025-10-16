@@ -293,8 +293,10 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         if !suppress_error(&err) {
             ws.config().ui().anyhow(&err);
         }
-
-        anyhow!("could not compile `{package_name}` due to previous error")
+        anyhow!(
+            "could not compile `{package_name}` due to {}",
+            ws.config().ui().format_diagnostic_counts()
+        )
     })
 }
 
@@ -359,8 +361,10 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         if !suppress_error(&err) {
             ws.config().ui().anyhow(&err);
         }
-
-        anyhow!("could not check `{package_name}` due to previous error")
+        anyhow!(
+            "could not check `{package_name}` due to {}",
+            ws.config().ui().format_diagnostic_counts()
+        )
     })?;
 
     Ok(())
