@@ -185,7 +185,9 @@ impl<'c> From<CargoCommand<'c>> for Command {
             cmd.arg("--offline");
         }
         match args.action {
-            CargoAction::Fetch => (),
+            CargoAction::Fetch => {
+                cmd.env("RUSTUP_TOOLCHAIN", target_triple::TARGET);
+            }
             CargoAction::Package(ref opts) => {
                 cmd.arg("--target-dir");
                 cmd.arg(args.target_dir);
@@ -197,7 +199,8 @@ impl<'c> From<CargoCommand<'c>> for Command {
                     cmd.arg("--allow-dirty");
                 }
             }
-            _ => {
+            CargoAction::Check | CargoAction::Build => {
+                cmd.env("RUSTUP_TOOLCHAIN", target_triple::TARGET);
                 cmd.arg("--release");
                 cmd.arg("--message-format");
                 let output_format: CargoOutputFormat = args.output_format.into();
