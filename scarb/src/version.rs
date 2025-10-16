@@ -1,6 +1,5 @@
 //! Version information about Scarb and Cairo.
 
-use indoc::formatdoc;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Write;
@@ -60,15 +59,15 @@ impl VersionInfo {
     }
 
     pub fn long(&self) -> String {
-        formatdoc!(
-            r#"
-                {short}
-                cairo: {cairo}
-                sierra: {sierra}
-            "#,
+        format!(
+            "{short}\n\
+            cairo: {cairo}\n\
+            sierra: {sierra}\n\
+            arch: {arch}",
             short = self.short(),
             cairo = self.cairo.short(),
             sierra = self.sierra.short(),
+            arch = target_triple::TARGET,
         )
     }
 }
