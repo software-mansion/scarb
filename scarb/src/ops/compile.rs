@@ -436,12 +436,12 @@ fn collect_assets(unit: &CairoCompilationUnit) -> Result<Vec<(String, Utf8PathBu
             );
             if let Some((other_pkg_id, other_asset)) = by_name.get(file_name)
                 && other_pkg_id != &pkg_id
-                // Allow two compilation unit components to declare the same asset name if they
-                // point to exactly the same file. This makes it possible to compile package
-                // targets where a single package is spread into many units (such as integration
-                // tests). This condition is unsound, as one package may use some path shenanigans
-                // in its Scarb.toml to refer to another package's asset, but this is deliberate,
-                // malicious behavior that has no bad effects anyway, and we can accept the cost.
+                // Allow multiple compilation unit components to declare the same asset name if they
+                // point to exactly the same file. This makes it possible to compile package targets
+                // where a single package is spread into many units (such as integration tests).
+                // This condition is unsound, as one package may use some path shenanigans in its
+                // Scarb.toml to refer to another package's asset, but this is deliberate, malicious
+                // behavior that has no bad effects anyway, and we can accept the cost.
                 && other_asset != &asset
             {
                 bail!(
