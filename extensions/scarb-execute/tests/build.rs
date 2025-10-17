@@ -546,3 +546,37 @@ fn no_build_artifact_for_profiler_trace_file() {
         error: Missing sierra code for executable `hello`, file [..]hello.executable.sierra.json does not exist. help: run `scarb build` to compile the package and try again.
         "#});
 }
+
+#[test]
+fn invalid_tracked_resource_for_profiler_trace_file() {
+    let t = TempDir::new().unwrap();
+    executable_project_builder()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            sierra = true
+            [cairo]
+            enable-gas = false
+            [tool.cairo-profiler]
+            tracked-resource = "whatever"
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 { 1 }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--save-profiler-trace-data")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        Saving output to: target/execute/hello/execution1
+        error: Invalid tracked resource set for profiler: whatever
+        help: valid options are: `cairo-steps` or `sierra-gas`
+        "#});
+}

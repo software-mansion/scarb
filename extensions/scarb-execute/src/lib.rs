@@ -189,7 +189,7 @@ pub fn execute(
             }
         })?;
 
-    let execution_resources = (cairo_run_config.relocate_mem && cairo_run_config.trace_enabled)
+    let execution_resources = (args.run.print_resource_usage || args.run.save_profiler_trace_data)
         .then(|| ExecutionResources::try_new(&runner, hint_processor.cairo_hint_processor).ok())
         .flatten();
 
@@ -277,7 +277,7 @@ pub fn execute(
              help: run `scarb build` to compile the package and try again.",
             build_target.name
         );
-        let tracked_resource = get_profiler_tracked_resource(package);
+        let tracked_resource = get_profiler_tracked_resource(package)?;
         let function_name: Option<String> = build_target
             .params
             .get("function")

@@ -18,11 +18,18 @@ pub enum TrackedResource {
     SierraGas,
 }
 
-impl From<&str> for TrackedResource {
-    fn from(m: &str) -> Self {
+impl TryFrom<&str> for TrackedResource {
+    type Error = anyhow::Error;
+
+    fn try_from(m: &str) -> Result<Self, Self::Error> {
         match m {
-            "sierra-gas" => TrackedResource::SierraGas,
-            _ => TrackedResource::CairoSteps,
+            "sierra-gas" => Ok(TrackedResource::SierraGas),
+            "cairo-steps" => Ok(TrackedResource::CairoSteps),
+            other => Err(anyhow!(
+                "Invalid tracked resource set for profiler: {}\
+            \nhelp: valid options are: `cairo-steps` or `sierra-gas`",
+                other
+            )),
         }
     }
 }
@@ -81,14 +88,16 @@ pub fn build_profiler_call_trace(
     })
 }
 
-pub fn get_profiler_tracked_resource(package_metadata: &PackageMetadata) -> TrackedResource {
+pub fn get_profiler_tracked_resource(
+    package_metadata: &PackageMetadata,
+) -> Result<TrackedResource> {
     let tracked_resource = package_metadata
         .tool_metadata("cairo-profiler")
         .and_then(|val| val.get("tracked-resource"))
         .and_then(|val| val.as_str())
         .unwrap_or("cairo-steps");
 
-    TrackedResource::from(tracked_resource)
+    TrackedResource::try_from(tracked_resource)
 }
 
 fn build_profiler_call_entry_point(
