@@ -1,6 +1,7 @@
 use anyhow::{Error, Result};
 use args::ScarbArgs;
 use clap::Parser;
+use mimalloc::MiMalloc;
 use scarb::core::Config;
 use scarb::core::errors::ScriptExecutionError;
 use scarb::ops;
@@ -19,6 +20,9 @@ mod commands;
 mod errors;
 mod fsx;
 mod interactive;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> ExitCode {
     // NOTE: Never ever create droppable objects in `main`.

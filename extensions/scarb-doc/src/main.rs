@@ -1,6 +1,7 @@
 use anyhow::{Context, Result, ensure};
 use camino::Utf8PathBuf;
 use clap::Parser;
+use mimalloc::MiMalloc;
 use scarb_doc::diagnostics::print_diagnostics;
 use scarb_doc::docs_generation::markdown::MarkdownContent;
 use scarb_doc::errors::{MetadataCommandError, PackagesSerializationError};
@@ -14,6 +15,9 @@ use scarb_ui::args::ToEnvVars;
 use scarb_ui::components::Status;
 use serde_json::Value;
 use std::process::ExitCode;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 const OUTPUT_DIR: &str = "doc";
 const JSON_OUTPUT_FILENAME: &str = "output.json";
