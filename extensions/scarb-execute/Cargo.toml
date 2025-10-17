@@ -13,6 +13,7 @@ version.workspace = true
 [dependencies]
 anyhow.workspace = true
 bincode.workspace = true
+cairo-annotations.workspace = true
 cairo-lang-casm.workspace = true
 cairo-lang-executable.workspace = true
 cairo-lang-runner.workspace = true

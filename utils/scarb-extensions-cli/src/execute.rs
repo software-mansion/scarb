@@ -121,6 +121,10 @@ pub struct RunArgs {
     /// Whether to print detailed execution resources.
     #[arg(long, default_value_t = false)]
     pub print_resource_usage: bool,
+
+    /// Whether to save cairo-profiler trace data.
+    #[arg(long, default_value_t = false)]
+    pub save_profiler_trace_data: bool,
 }
 
 impl ToArgs for RunArgs {
@@ -131,6 +135,7 @@ impl ToArgs for RunArgs {
             target,
             print_program_output,
             print_resource_usage,
+            save_profiler_trace_data,
         } = self;
         let mut args = arguments.to_args();
         if let Some(output) = output {
@@ -144,6 +149,9 @@ impl ToArgs for RunArgs {
         }
         if *print_resource_usage {
             args.push("--print-resource-usage".to_string());
+        }
+        if *save_profiler_trace_data {
+            args.push("--save-profiler-trace-data".to_string());
         }
         args
     }

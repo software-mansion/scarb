@@ -44,6 +44,7 @@ async-trait = "0.1"
 axum = { version = "0.8.6", default-features = false, features = ["http1", "tokio", "tracing"] }
 bincode = "2.0.1"
 bumpalo = "=3.17.0"
+cairo-annotations = "0.7.0"
 cairo-lang-casm = "*"
 cairo-lang-compiler = "*"
 cairo-lang-defs = "*"
