@@ -805,6 +805,7 @@ fn cannot_duplicate_macros_across_packages() {
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: duplicate expansions defined for procedural macros: hello (other v1.0.0 ([..]Scarb.toml) and some v1.0.0 ([..]Scarb.toml))
+            error: could not compile `hello` due to previous error
         "#});
 }
 
@@ -1330,6 +1331,7 @@ fn executable_name_cannot_clash_attr() {
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: duplicate expansions defined for procedural macro some v1.0.0 ([..]Scarb.toml): some
+            error: could not compile `hello` due to previous error
         "#});
 }
 

@@ -63,7 +63,10 @@ where
     // So if there were any diagnostics here to show, it would mean that the cache is outdated - thus
     // we should not use it in the first place.
     // We also skip showing warnings produced for dependency crates.
-    let crates_to_check = db.crates().iter().filter(|crate_id| {
+    let crates_to_check: Vec<CrateId<'_>> =
+        unit.components.iter().map(|c| c.crate_id(db)).collect();
+
+    let crates_to_check = crates_to_check.iter().filter(|crate_id| {
         !ctx.cached_crates()
             .contains(&crate_id.long(db).clone().into_crate_input(db))
     });

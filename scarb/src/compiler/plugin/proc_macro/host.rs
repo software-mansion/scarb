@@ -1,6 +1,7 @@
 use crate::compiler::plugin::proc_macro::{ExpansionQuery, ProcMacroInstance};
 use crate::compiler::plugin::{ProcMacroApiVersion, proc_macro};
 use anyhow::Result;
+use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::plugin::PluginSuite;
 use itertools::Itertools;
@@ -35,10 +36,10 @@ impl ProcMacroHostPlugin {
         })
     }
 
-    pub fn post_process(&self, db: &dyn SemanticGroup) -> Result<()> {
+    pub fn post_process(&self, db: &dyn SemanticGroup, crate_ids: &[CrateId<'_>]) -> Result<()> {
         match self {
-            ProcMacroHostPlugin::V1(host) => host.post_process(db),
-            ProcMacroHostPlugin::V2(host) => host.post_process(db),
+            ProcMacroHostPlugin::V1(host) => host.post_process(db, crate_ids),
+            ProcMacroHostPlugin::V2(host) => host.post_process(db, crate_ids),
         }
     }
 
