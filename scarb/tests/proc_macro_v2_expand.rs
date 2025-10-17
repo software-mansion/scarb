@@ -104,7 +104,7 @@ fn diags_from_generated_code_mapped_correctly() {
                 i_don_exist();
                 ^^^^^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error[..]
     "#});
 }
 
@@ -327,7 +327,7 @@ fn empty_inline_macro_result() {
                 let _x = some!();
                          ^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -921,7 +921,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations() {
                     ^^^^^
             note: this error originates in the attribute macro: `some`
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1003,7 +1003,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations_with_parser()
                     ^^^^^
             note: this error originates in the attribute macro: `some`
             
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1121,7 +1121,7 @@ fn can_emit_plugin_error() {
             #[some]
             ^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1172,7 +1172,7 @@ fn code_mappings_preserve_attribute_error_locations() {
                 ^^^^^
             note: this error originates in the attribute macro: `some`
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1224,7 +1224,7 @@ fn code_mappings_preserve_inline_macro_error_locations() {
                 let _x = some!(abcdefghi);
                               ^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1276,7 +1276,7 @@ fn inline_macro_error_on_call_site_location() {
                 let _x = some!(abcdefghi);
                          ^^^^^^^^^^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1422,7 +1422,7 @@ fn code_mappings_preserve_derive_error_locations() {
             ^
             note: this error originates in the derive macro: `CustomDerive`
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error[..]
         "#});
 }
 
@@ -1568,7 +1568,7 @@ fn can_emit_diagnostic_with_custom_location() {
                 y: (u32, u64),
                    ^^^^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1617,7 +1617,7 @@ fn inline_macro_can_emit_diagnostic_with_custom_location() {
                 let _x = some!("abcdefghi");
                               ^^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1690,7 +1690,7 @@ fn can_emit_diagnostic_with_custom_location_on_node_with_trivia() {
                     (u32, u64),
                     ^^^^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1761,7 +1761,7 @@ fn can_emit_diagnostic_with_inversed_span() {
                 y: (u32, u64),
                    ^^^^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1917,7 +1917,7 @@ fn can_emit_diagnostic_with_custom_location_with_parser() {
             #[doc(hidden)]
             ^^^^^^^^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error[..]
         "#});
 }
 
@@ -1985,7 +1985,7 @@ fn diags_can_be_mapped_to_call_site_correctly() {
                      ^^^^^^^^^^^^^^^^^^^^^
             note: this error originates in the derive macro: `ImproperDeriveMacroV2`
             
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error[..]
     "#});
 }
 
@@ -2045,7 +2045,7 @@ fn attribute_diags_mapped_correctly_to_call_site() {
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
             note: this error originates in the attribute macro: `improper_attribute_macro_v2`
             
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error[..]
        "#});
 }
 
@@ -2097,7 +2097,7 @@ fn inline_macro_diags_mapped_correctly_to_call_site() {
                 improper_inline_macro_v2!(10 + 10);
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
        "#});
 }
 
@@ -2161,7 +2161,7 @@ fn call_site_mapped_correctly_after_expansion_by_two_macros() {
             note: this error originates in the attribute macro: `complex_attribute_macro_v2`
             note: this error originates in the attribute macro: `simple_attribute_macro_v2`
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
        "#});
 }
 
@@ -2229,7 +2229,7 @@ fn span_offsets_calculated_correctly_for_function_with_non_macro_attrs() {
                                           ^
             note: this error originates in the attribute macro: `simple_attr`
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
        "#});
 }
 
@@ -2411,7 +2411,7 @@ fn zero_width_diags_mapped_correctly_at_token_starts() {
             note: this error originates in the attribute macro: `first_attr`
             note: this error originates in the attribute macro: `second_attr`
             
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error[..]
        "#});
 }
 

@@ -169,7 +169,7 @@ fn features_fail_both_features_enabled() {
             fn f() -> felt252 { 59 }
                ^
             
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#})
         .failure();
 }
@@ -189,7 +189,7 @@ fn features_fail_no_feature_enabled() {
                 f()
                 ^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#})
         .failure();
 }
@@ -281,7 +281,7 @@ fn features_no_default_features() {
                 f()
                 ^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#})
         .failure();
 }
@@ -316,7 +316,7 @@ fn features_all_features_failing() {
                 i()
                 ^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#})
         .failure();
 }
@@ -1000,7 +1000,7 @@ fn dependency_features_disabled_by_default() {
                 f()
                 ^
 
-            error: could not check `hello` due to previous error
+            error: could not check `hello` due to [..] previous error
         "#});
 }
 
@@ -1130,7 +1130,7 @@ fn dependency_features_can_disable_default_features() {
                 f()
                 ^
 
-            error: could not check `hello` due to previous error
+            error: could not check `hello` due to [..] previous error
         "#});
 }
 
@@ -1311,7 +1311,7 @@ fn features_unification_does_not_leak_between_units_for_ws_member() {
                 f()
                 ^
 
-            error: could not check `first` due to previous error
+            error: could not check `first` due to [..] previous error
         "#});
 }
 
@@ -1384,7 +1384,7 @@ fn features_unification_does_not_leak_between_units() {
                 f()
                 ^
             
-            error: could not check `first` due to previous error
+            error: could not check `first` due to [..] previous error
         "#});
 
     Scarb::quick_snapbox()
@@ -1554,7 +1554,7 @@ fn dev_dep_features_do_not_propagate() {
                 f()
                 ^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1705,7 +1705,7 @@ fn default_cannot_be_used_as_cfg_without_explicit_declaration() {
                 f()
                 ^
 
-            error: could not check `hello` due to previous error
+            error: could not check `hello` due to [..] previous errors
         "#},
         &stdout,
     );

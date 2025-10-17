@@ -239,7 +239,7 @@ fn compile_dep_not_a_lib() {
             fn hellp() -> felt252 { dep::forty_two() }
                                     ^^^
 
-            error: could not check `hello` due to previous error
+            error: could not check `hello` due to [..] previous error and [..] warning
         "#});
 }
 
@@ -427,7 +427,7 @@ fn integration_tests_do_not_enable_cfg_in_main_package() {
                     assert(f() == 42, 'it works!');
                            ^^^^^^^^^
 
-            error: could not compile `hello_integrationtest` due to previous error
+            error: could not compile `hello_integrationtest` due to [..] previous errors
         "#});
 }
 
@@ -486,7 +486,7 @@ fn integration_tests_cannot_use_itself_by_target_name() {
                     assert(world() == 12, '');
                            ^^^^^^^^^^^^^
 
-            error: could not compile `hello_integrationtest` due to previous error
+            error: could not compile `hello_integrationtest` due to 3 previous errors
         "#});
 }
 
@@ -544,7 +544,7 @@ fn features_enabled_in_integration_tests() {
                     assert(f() == 42, 'it works!');
                            ^^^^^^^^^
 
-            error: could not compile `hello_integrationtest` due to previous error
+            error: could not compile `hello_integrationtest` due to [..] previous errors
         "#});
 
     Scarb::quick_snapbox()
@@ -1113,7 +1113,7 @@ fn transitive_dev_deps_not_available() {
             use first::forty_two;
                 ^^^^^
 
-            error: could not check `hello` due to previous error
+            error: could not check `hello` due to [..] previous error
         "#});
 }
 
@@ -1211,7 +1211,7 @@ fn executable_target_requires_disabled_gas() {
             -> Scarb.toml
                 [cairo]
                 enable-gas = false
-        error: could not compile `executable_test` due to previous error
+        error: could not compile `executable_test` due to [..] previous error
         "#});
 
     t.child("target/dev/executable_test.executable.json")
@@ -1256,7 +1256,7 @@ fn compile_executable_with_missing_plugin() {
         #[executable]
         ^^^^^^^^^^^^^
         
-        error: could not compile `executable_test` due to previous error
+        error: could not compile `executable_test` due to [..] previous error and [..] warning
         "#});
 
     t.child("target/dev/executable_test.executable.json")
@@ -1353,7 +1353,7 @@ fn ambiguous_executable_function() {
             [[target.executable]]
             name = "secondary"
             function = "hello_world::secondary"
-            error: could not compile `hello_world` due to previous error
+            error: could not compile `hello_world` due to [..] previous error
         "#});
 }
 
@@ -1407,7 +1407,7 @@ fn test_target_builds_contracts_with_error() {
                     fn answer(ref self: ContractState) -> felt252 { boo() }
                                                                     ^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1554,7 +1554,7 @@ fn executable_target_validation() {
             [[target.executable]]
             name = "b"
             function = "pkg0::b"
-            error: could not compile `pkg0` due to previous error
+            error: could not compile `pkg0` due to [..] previous error and [..] warning
         "#});
 }
 

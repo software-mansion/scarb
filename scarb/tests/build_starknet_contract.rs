@@ -440,7 +440,7 @@ fn compile_starknet_contract_without_starknet_dep() {
                     self.value.write( self.value.read() + a );
                                                  ^^^^
 
-        error: could not check `hello` due to previous error
+        error: could not check `hello` due to 12 previous errors and 1 warning
         "#});
 }
 
