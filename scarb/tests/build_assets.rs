@@ -10,13 +10,13 @@ use scarb_test_support::workspace_builder::WorkspaceBuilder;
 fn assets_are_copied() {
     let t = TempDir::new().unwrap();
 
-    t.child("data.txt")
-        .write_str("“Marek, skup się na pracy.” ~ Marcin Skotniczny")
-        .unwrap();
-
     ProjectBuilder::start()
         .name("foobar")
         .manifest_package_extra(r#"assets = ["data.txt"]"#)
+        .src(
+            "data.txt",
+            "“Marek, skup się na pracy.” ~ Marcin Skotniczny",
+        )
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -36,14 +36,11 @@ fn asset_from_dependency_is_copied() {
     let t = TempDir::new().unwrap();
 
     // Dependency package with an asset.
-    t.child("dep/assets").create_dir_all().unwrap();
-    t.child("dep/assets/data.txt")
-        .write_str("Hello from dependency!")
-        .unwrap();
     ProjectBuilder::start()
         .name("dep")
         .version("0.1.0")
         .manifest_package_extra(r#"assets = ["assets/data.txt"]"#)
+        .src("assets/data.txt", "Hello from dependency!")
         .build(&t.child("dep"));
 
     // Root package depending on `dep` and not declaring any assets itself.
@@ -79,13 +76,13 @@ fn asset_from_dependency_is_copied() {
 fn asset_directory_is_error() {
     let t = TempDir::new().unwrap();
 
-    t.child("assets").create_dir_all().unwrap();
-
     ProjectBuilder::start()
         .name("badpkg")
         .version("0.1.0")
         .manifest_package_extra(r#"assets = ["assets/"]"#)
         .build(&t);
+
+    t.child("assets").create_dir_all().unwrap();
 
     Scarb::quick_snapbox()
         .env("RUST_BACKTRACE", "0")
@@ -103,15 +100,12 @@ fn asset_directory_is_error() {
 fn duplicate_asset_names_within_package_error() {
     let t = TempDir::new().unwrap();
 
-    t.child("a").create_dir_all().unwrap();
-    t.child("b").create_dir_all().unwrap();
-    t.child("a/file.txt").write_str("A").unwrap();
-    t.child("b/file.txt").write_str("B").unwrap();
-
     ProjectBuilder::start()
         .name("dupsame")
         .version("0.1.0")
         .manifest_package_extra(r#"assets = ["a/file.txt", "b/file.txt"]"#)
+        .src("a/file.txt", "A")
+        .src("b/file.txt", "B")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -157,21 +151,19 @@ fn duplicate_asset_names_between_dependencies_error() {
     let t = TempDir::new().unwrap();
 
     // dep1 with an asset named `common.txt`.
-    t.child("dep1/assets").create_dir_all().unwrap();
-    t.child("dep1/assets/common.txt").write_str("A").unwrap();
     ProjectBuilder::start()
         .name("dep1")
         .version("0.1.0")
         .manifest_package_extra(r#"assets = ["assets/common.txt"]"#)
+        .src("assets/common.txt", "A")
         .build(&t.child("dep1"));
 
     // dep2 with an asset named `common.txt` as well.
-    t.child("dep2/assets").create_dir_all().unwrap();
-    t.child("dep2/assets/common.txt").write_str("B").unwrap();
     ProjectBuilder::start()
         .name("dep2")
         .version("0.1.0")
         .manifest_package_extra(r#"assets = ["assets/common.txt"]"#)
+        .src("assets/common.txt", "B")
         .build(&t.child("dep2"));
 
     // Root package depending on both deps.
