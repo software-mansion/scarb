@@ -13,7 +13,7 @@ use cairo_lang_test_plugin::{TestCompilation, TestCompilationMetadata};
 use cairo_lang_test_runner::{CompiledTestRunner, TestRunConfig};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
-use indoc::formatdoc;
+use indoc::{formatdoc, indoc};
 use mimalloc::MiMalloc;
 use scarb_extensions_cli::cairo_test::Args;
 use scarb_metadata::{
@@ -30,6 +30,14 @@ static GLOBAL: MiMalloc = MiMalloc;
 fn main() -> Result<()> {
     let args: Args = Args::parse();
     let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
+
+    // Print deprecation warning.
+    ui.warn(indoc! {r#"
+        `scarb cairo-test` is deprecated and will be removed in a future version.
+        help: please migrate to `snforge` for all your testing needs.
+        help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+        help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
+    "#}.trim());
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 

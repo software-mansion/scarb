@@ -47,6 +47,10 @@ fn can_test_without_gas() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-test` is deprecated and will be removed in a future version.
+            help: please migrate to `snforge` for all your testing needs.
+            help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+            help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Testing hello
@@ -97,6 +101,10 @@ fn can_print_test_resources() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-test` is deprecated and will be removed in a future version.
+            help: please migrate to `snforge` for all your testing needs.
+            help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+            help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Testing hello
@@ -148,6 +156,10 @@ fn features_test_build_success() {
         .success()
         .stdout_matches(indoc! {r#"
             [..]Running cairo-test hello
+            warn: `scarb cairo-test` is deprecated and will be removed in a future version.
+            help: please migrate to `snforge` for all your testing needs.
+            help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+            help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
             [..]Finished `dev` profile target(s) in [..]
             [..]Testing hello
@@ -167,6 +179,10 @@ fn features_test_build_failed() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-test` is deprecated and will be removed in a future version.
+            help: please migrate to `snforge` for all your testing needs.
+            help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+            help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
             error[E0006]: Function not found.
              --> [..]/src/lib.cairo[..]
@@ -218,6 +234,10 @@ fn integration_tests() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-test` is deprecated and will be removed in a future version.
+            help: please migrate to `snforge` for all your testing needs.
+            help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+            help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -258,6 +278,10 @@ fn warn_if_cairo_test_plugin_missing() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-test` is deprecated and will be removed in a future version.
+            help: please migrate to `snforge` for all your testing needs.
+            help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+            help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
             warn: `cairo_test` plugin not found
             please add the following snippet to your Scarb.toml manifest:
             ```
@@ -295,6 +319,10 @@ fn do_not_warn_on_non_tested_package() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-test` is deprecated and will be removed in a future version.
+            help: please migrate to `snforge` for all your testing needs.
+            help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+            help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
             [..]Compiling test(second_unittest) second v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Testing second
@@ -346,6 +374,10 @@ fn can_choose_test_kind_to_run() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-test` is deprecated and will be removed in a future version.
+            help: please migrate to `snforge` for all your testing needs.
+            help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+            help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Testing hello
@@ -361,6 +393,10 @@ fn can_choose_test_kind_to_run() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-test` is deprecated and will be removed in a future version.
+            help: please migrate to `snforge` for all your testing needs.
+            help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+            help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
             [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Testing hello
