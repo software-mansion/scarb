@@ -2878,7 +2878,7 @@ fn module_level_inline_macro_code_mappings_preserve_attribute_error_locations() 
             let TokenTree::Ident(arg) = token_stream
                 .tokens
                 .get(1)
-                .expect("macro expected at least one argument")
+                .expect("macro expected at least one argument");
 
             let content = arg.content.as_ref();
             let slice_len: usize = core::cmp::min(7, content.len());
