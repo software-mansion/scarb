@@ -23,8 +23,6 @@ use cairo_lang_compiler::project::{
     get_main_crate_ids_from_project, update_crate_roots_from_project_config,
 };
 use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::flag::Flag;
-use cairo_lang_filesystem::ids::FlagLongId;
 use cairo_lang_semantic::plugin::PluginSuite;
 use camino::Utf8PathBuf;
 use indoc::formatdoc;
@@ -34,8 +32,7 @@ use scarb_ui::HumanDuration;
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 use smol_str::{SmolStr, ToSmolStr};
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::thread;
 use tracing::{trace, trace_span};
 
@@ -210,20 +207,56 @@ pub fn compile_units(
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let required_plugins = plugins_required_for_units(&units);
-
-    let mut b = RootDatabase::builder();
-    let mut db = b.build()?;
-
-    for unit in units {
-        // We can skip compiling proc macros that are not used by Cairo compilation units.
-        if matches!(&unit, &CompilationUnit::ProcMacro(_))
-                && !required_plugins.contains(&unit.main_package_id())
-                    // Unless they are explicitly requested with `--package` CLI arg.
-                    && !required_packages.contains(&unit.main_package_id())
-        {
-            continue;
+    let grouped_units: BTreeMap<PackageId, Vec<CompilationUnit>> = {
+        let mut grouped: BTreeMap<PackageId, Vec<CompilationUnit>> = BTreeMap::new();
+        for unit in units {
+            grouped.entry(unit.main_package_id()).or_default().push(unit);
         }
-        compile_unit(unit, ws, Some(&mut db))?;
+        grouped
+    };
+
+    for (package_id, units) in grouped_units {
+
+        if let Some(pkg) = ws.package(&package_id) {
+            // Build RootDatabase configured according to the package's compiler config.
+            let mut db = {
+
+                let mut b = RootDatabase::builder();
+                if !pkg.manifest.compiler_config.enable_gas {
+                    b.skip_auto_withdraw_gas();
+                }
+                if pkg.manifest.compiler_config.panic_backtrace {
+                    b.with_panic_backtrace();
+                }
+                if pkg.manifest.compiler_config.unsafe_panic {
+                    b.with_unsafe_panic();
+                }
+                b.build()?
+            };
+
+            for unit in units {
+                // We can skip compiling proc macros that are not used by Cairo compilation units,
+                // unless they were explicitly requested in required_packages.
+                if is_unused_proc_macro(&unit, &required_plugins, required_packages) {
+                    continue;
+                }
+                compile_unit(unit, ws, Some(&mut db))?;
+            }
+        } else {
+            // No package found for this package_id; build a default RootDatabase.
+            for unit in units {
+                // We can skip compiling proc macros that are not used by Cairo compilation units,
+                // unless they were explicitly requested in required_packages.
+                if is_unused_proc_macro(&unit, &required_plugins, required_packages) {
+                    continue;
+                }
+                let mut db = {
+                    let mut b = RootDatabase::builder();
+                    b.build()?
+                };
+                compile_unit(unit, ws, Some(&mut db))?;
+            }
+        }
     }
     Ok(())
 }
@@ -239,81 +272,60 @@ fn compile_cairo_unit_inner(
         .ui()
         .print(Status::new("Compiling", &unit.name()));
 
-    let add_withdraw_gas_flag_id = FlagLongId("add_withdraw_gas".into());
-    db.set_flag(
-        add_withdraw_gas_flag_id,
-        Some(Arc::new(Flag::AddWithdrawGas(
-            unit.compiler_config.enable_gas,
-        ))),
-    );
-
-    let panic_backtrace_flag_id = FlagLongId("panic_backtrace".into());
-    db.set_flag(
-        panic_backtrace_flag_id,
-        Some(Arc::new(Flag::PanicBacktrace(
-            unit.compiler_config.panic_backtrace,
-        ))),
-    );
-    let unsafe_panic_flag_id = FlagLongId("unsafe_panic".into());
-    db.set_flag(
-        unsafe_panic_flag_id,
-        Some(Arc::new(Flag::UnsafePanic(
-            unit.compiler_config.unsafe_panic,
-        ))),
-    );
-
     let project_config = build_project_config(unit)?;
     update_crate_roots_from_project_config(db, &project_config);
-
     db.use_cfg(&unit.cfg_set);
 
     let PluginsForComponents {
         mut plugins,
         proc_macros,
-    } = PluginsForComponents::collect(ws, unit)?;
+    } = {
+        PluginsForComponents::collect(ws, unit)?
+    };
     append_lint_plugin(plugins.get_mut(&unit.main_component().id).unwrap());
 
     let main_component_suite = plugins
         .get_mut(&unit.main_component().id)
         .expect("should be able to retrieve plugins for main component");
+
     for additional_suite in additional_plugins.iter() {
         main_component_suite.add(additional_suite.clone());
     }
     apply_plugins(db, plugins);
     inject_virtual_wrapper_lib(db, unit)?;
-    let proc_macros: Vec<ProcMacroHostPlugin> = proc_macros
+
+    let proc_macros: Vec<ProcMacroHostPlugin> = {
+    proc_macros
         .into_values()
         .flat_map(|hosts| hosts.into_iter())
-        .collect();
+        .collect()
+    };
+
     let package_name = unit.main_package_id().name.clone();
     check_starknet_dependency(unit, ws, db, &package_name);
     let assets = collect_assets(unit)?;
+
     thread::scope(|s| {
         let offloader = Offloader::new(s, ws);
         let target_dir = unit.target_dir(ws);
 
         let result = ws
-            .config()
-            .compilers()
-            .compile(unit.clone(), &offloader, db, ws);
+                .config()
+                .compilers()
+                .compile(unit.clone(), &offloader, db, ws);
 
-        let main_crate_ids = get_main_crate_ids_from_project(db, &project_config).clone();
+        let main_crate_ids = get_main_crate_ids_from_project(db, &project_config);
         for plugin in proc_macros {
             plugin
-                .post_process(db, &main_crate_ids.clone())
+                .post_process(db, &main_crate_ids)
                 .context("procedural macro post processing callback failed")?;
         }
 
-        let span = trace_span!("offloader_join");
-        {
-            let _guard = span.enter();
             offloader.join()?;
-        }
 
         if result.is_ok() {
             copy_assets(assets, &target_dir)?;
         }
-
         result
     })
 }
@@ -482,6 +494,18 @@ pub fn plugins_required_for_units(units: &[CompilationUnit]) -> HashSet<PackageI
             _ => Vec::new(),
         })
         .collect::<HashSet<PackageId>>()
+}
+
+/// Returns true if the compilation unit is a proc-macro that is not required by any Cairo unit
+/// and was not explicitly requested by the user via `--package`.
+fn is_unused_proc_macro(
+    unit: &CompilationUnit,
+    required_plugins: &HashSet<PackageId>,
+    required_packages: &[PackageId],
+) -> bool {
+    matches!(unit, CompilationUnit::ProcMacro(_))
+        && !required_plugins.contains(&unit.main_package_id())
+        && !required_packages.contains(&unit.main_package_id())
 }
 
 #[tracing::instrument(level = "trace", skip_all)]
