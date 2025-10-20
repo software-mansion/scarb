@@ -453,7 +453,7 @@ fn cannot_use_undefined_macro() {
         #[world]
         ^^^^^^^^
 
-        error: could not compile `hello` due to previous error
+        error: could not compile `hello` due to [..] previous error
         "#});
 }
 

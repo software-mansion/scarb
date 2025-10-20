@@ -129,7 +129,7 @@ fn deny_true() {
          --> contract: ExperimentalLibfunc
 
         error: aborting compilation, because contracts use disallowed Sierra libfuncs
-        error: could not compile `hello` due to previous error
+        error: could not compile `hello` due to [..] previous errors
         "#});
 }
 
@@ -189,7 +189,7 @@ fn unknown_list_name() {
 
         Caused by:
             No libfunc list named 'definitely does not exist' is known.
-        error: could not compile `hello` due to previous error
+        error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -257,6 +257,6 @@ fn list_path_does_not_exist() {
 
         Caused by:
             [..]
-        error: could not compile `hello` due to previous error
+        error: could not compile `hello` due to [..] previous error
         "#});
 }

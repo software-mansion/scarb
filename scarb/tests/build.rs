@@ -91,7 +91,7 @@ fn compile_with_syntax_error() {
             not_a_keyword
                          ^
 
-            error: could not check `hello` due to previous error
+            error: could not check `hello` due to [..] previous error
         "#});
 }
 
@@ -113,7 +113,7 @@ fn compile_with_syntax_error_json() {
         .stdout_matches(indoc! {r#"
             {"status":"checking","message":"hello v0.1.0 ([..]Scarb.toml)"}
             {"type":"error","message":"Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute./n --> [..]/lib.cairo:1:14/nnot_a_keyword/n             ^/n"}
-            {"type":"error","message":"could not check `hello` due to previous error"}
+            {"type":"error","message":"could not check `hello` due to [..] previous error"}
         "#});
 }
 
@@ -792,7 +792,7 @@ fn dev_dep_used_outside_tests() {
             use q::dev_dep_function;
                 ^
 
-            error: could not compile `x` due to previous error
+            error: could not compile `x` due to [..] previous error
         "#});
 }
 
@@ -931,7 +931,7 @@ fn warnings_can_be_disallowed() {
             let a = 41;
                 ^
 
-        error: could not compile [..] due to previous error
+        error: could not compile [..] due to [..] previous errors and [..] warning
         "#});
 }
 
@@ -976,7 +976,7 @@ fn does_show_errors_from_deps() {
                 ;
                 ^
             
-            error: could not compile `second` due to previous error
+            error: could not compile `second` due to [..] previous error
         "#});
 }
 
@@ -1022,7 +1022,7 @@ fn does_not_show_warnings_from_deps() {
             let a = 41;
                 ^
 
-        error: could not compile [..] due to previous error
+        error: could not compile [..] due to 0 previous errors and 1 warning
         "#});
     Scarb::quick_snapbox()
         .arg("build")
@@ -1178,7 +1178,7 @@ fn cannot_disable_gas_for_starknet_contract() {
         .stdout_matches(indoc! {r#"
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: the target starknet contract compilation requires gas to be enabled
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 

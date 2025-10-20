@@ -298,7 +298,7 @@ fn can_emit_plugin_error() {
             #[some]
             ^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -352,7 +352,7 @@ fn diags_from_generated_code_mapped_correctly() {
                 i_don_exist();
                 ^^^^^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error[..]
     "#});
 }
 
@@ -849,7 +849,7 @@ fn cannot_use_undefined_macro() {
         #[world]
         ^^^^^^^^
 
-        error: could not compile `hello` due to previous error
+        error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -1005,7 +1005,7 @@ fn empty_inline_macro_result() {
                 let _x = some!();
                          ^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to [..] previous error
         "#});
 }
 

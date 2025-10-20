@@ -488,7 +488,7 @@ fn can_parse_incoming_token_stream() {
             fn main() -> u32 {
                          ^^^
 
-            error: could not check `hello` due to previous error
+            error: could not check `hello` due to [..] previous error
         "#});
 }
 

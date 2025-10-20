@@ -439,7 +439,7 @@ fn compile_with_bad_glob_path() {
         .stdout_matches(indoc! {r#"
         [..] Compiling world v0.1.0 ([..]/Scarb.toml)
         error: external contract path `hello::**` has multiple global path selectors, only one '*' selector is allowed
-        error: could not compile `world` due to previous error
+        error: could not compile `world` due to [..] previous error
         "#});
 }
 
