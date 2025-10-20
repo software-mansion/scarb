@@ -34,7 +34,7 @@ fn publish() {
         .timeout(Duration::from_secs(60))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging bar v1.0.0 ([..])
         warn: manifest has no readme
         warn: manifest has no description
@@ -107,7 +107,7 @@ fn auth_token_missing() {
         .timeout(Duration::from_secs(60))
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging bar v1.0.0 ([..])
         warn: manifest has no readme
         warn: manifest has no description
@@ -146,7 +146,7 @@ fn error_from_registry() {
         .timeout(Duration::from_secs(60))
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging bar v1.0.0 ([..])
         warn: manifest has no readme
         warn: manifest has no description

@@ -100,7 +100,7 @@ fn compile_with_prebuilt_plugins() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling a v1.0.0 ([..]Scarb.toml)
             [..]Compiling b v1.0.0 ([..]Scarb.toml)
             [..] Finished `dev` profile target(s) in [..]
@@ -143,7 +143,7 @@ fn compile_with_prebuilt_plugins_only_one_allows() {
         .env("CARGO_TERM_QUIET", "true")
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling proc_macro_example v0.1.0 ([..])
             [..]Compiling a v1.0.0 ([..]Scarb.toml)
             [..]Compiling b v1.0.0 ([..]Scarb.toml)
@@ -180,7 +180,7 @@ fn compile_valid_prebuilt_disallowed_by_flag() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling proc_macro_example v0.1.0 ([..])
             [..]Compiling a v1.0.0 ([..]Scarb.toml)
             [..] Finished `dev` profile target(s) in [..]
@@ -236,7 +236,7 @@ fn compile_with_invalid_prebuilt_plugins() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling invalid_prebuilt_example v0.1.0 ([..])
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..] Finished `dev` profile target(s) in [..]

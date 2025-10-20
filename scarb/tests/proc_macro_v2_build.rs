@@ -5,7 +5,7 @@ use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
-use snapbox::assert_matches;
+use snapbox::Assert;
 
 #[test]
 fn compile_cairo_plugin() {
@@ -28,12 +28,12 @@ fn compile_cairo_plugin() {
     assert!(stdout.contains("Compiling some v1.0.0"));
     let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
     let (last, lines) = lines.split_last().unwrap();
-    assert_matches(r#"[..] Finished `dev` profile target(s) in [..]"#, last);
+    Assert::new().eq(last, r#"[..] Finished `dev` profile target(s) in [..]"#);
     let (last, _lines) = lines.split_last().unwrap();
     // Line from Cargo output
-    assert_matches(
-        r#"[..]Finished `release` profile [optimized] target(s) in[..]"#,
+    Assert::new().eq(
         last,
+        r#"[..]Finished `release` profile [optimized] target(s) in[..]"#,
     );
 }
 
@@ -57,15 +57,15 @@ fn check_cairo_plugin() {
     assert!(stdout.contains("Checking some v1.0.0"));
     let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
     let (last, lines) = lines.split_last().unwrap();
-    assert_matches(
-        r#"[..] Finished checking `dev` profile target(s) in [..]"#,
+    Assert::new().eq(
         last,
+        r#"[..] Finished checking `dev` profile target(s) in [..]"#,
     );
     let (last, _lines) = lines.split_last().unwrap();
     // Line from Cargo output
-    assert_matches(
-        r#"[..]Finished `release` profile [optimized] target(s) in[..]"#,
+    Assert::new().eq(
         last,
+        r#"[..]Finished `release` profile [optimized] target(s) in[..]"#,
     );
 }
 
@@ -93,7 +93,7 @@ fn can_check_cairo_project_with_plugins() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking other v1.0.0 ([..]Scarb.toml)
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
@@ -141,18 +141,18 @@ fn can_use_json_output() {
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
     let (first, lines) = lines.split_first().unwrap();
-    assert_matches(
-        r#"{"status":"checking","message":"some v1.0.0 ([..]Scarb.toml)"}"#,
+    Assert::new().eq(
         first,
+        r#"{"status":"checking","message":"some v1.0.0 ([..]Scarb.toml)"}"#,
     );
     let (last, lines) = lines.split_last().unwrap();
-    assert_matches(
-        r#"{"status":"finished","message":"checking `dev` profile target(s) in [..]"}"#,
+    Assert::new().eq(
         last,
+        r#"{"status":"finished","message":"checking `dev` profile target(s) in [..]"}"#,
     );
     // Line from Cargo.
     let (last, _lines) = lines.split_last().unwrap();
-    assert_matches(r#"{"reason":"build-finished","success":true}"#, last);
+    Assert::new().eq(last, r#"{"reason":"build-finished","success":true}"#);
 }
 
 #[test]
@@ -172,7 +172,7 @@ fn compile_cairo_plugin_with_lib_target() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to parse manifest at: [..]/Scarb.toml
 
         Caused by:
@@ -197,7 +197,7 @@ fn compile_cairo_plugin_with_other_target() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to parse manifest at: [..]/Scarb.toml
 
         Caused by:
@@ -296,7 +296,7 @@ fn can_define_multiple_macros() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
@@ -414,7 +414,7 @@ fn cannot_duplicate_macros_across_packages() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
             [..]Compiling pkg v1.0.0 ([..]Scarb.toml)
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
@@ -445,7 +445,7 @@ fn cannot_use_undefined_macro() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling some v1.0.0 ([..]Scarb.toml)
         [..]Compiling hello v1.0.0 ([..]Scarb.toml)
         error: Plugin diagnostic: Unsupported attribute.
@@ -497,7 +497,7 @@ fn can_disallow_loading_macros() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: procedural macros are disallowed with `--no-proc-macros` flag
         "#});

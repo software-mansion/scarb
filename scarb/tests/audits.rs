@@ -123,7 +123,7 @@ fn require_audits_allows_audited_version_only() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: version solving failed:
         Because there is no version of foo in >=1.0.0, <2.0.0 and hello_world 1.0.0 depends on foo >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
         "#});
@@ -149,7 +149,7 @@ fn require_audits_allows_audited_version_only() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: version solving failed:
         Because there is no version of foo in >=1.0.0, <2.0.0 and hello_world 1.0.0 depends on foo >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
     "#});
@@ -183,7 +183,7 @@ fn require_audits_disallows_git_dep() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                 Updating git repository [..]
             error: dependency `foo` from `git` source is not allowed when audit requirement is enabled
             help: depend on a registry package
@@ -223,7 +223,7 @@ fn require_audits_disallows_path_dep() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: dependency `foo` from `path` source is not allowed when audit requirement is enabled
             help: depend on a registry package
             alternatively, consider whitelisting dependency in workspace root manifest
@@ -276,7 +276,7 @@ fn require_audits_disallows_non_audited_version_transitive() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: version solving failed:
             Because there is no version of bar in >=1.0.0, <2.0.0 and hello_world 1.0.0 depends on bar >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
         "#});
@@ -287,7 +287,7 @@ fn require_audits_disallows_non_audited_version_transitive() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: version solving failed:
             Because there is no version of foo in >=1.0.0, <2.0.0 and bar 1.0.0 depends on foo >=1.0.0, <2.0.0, bar 1.0.0 is forbidden.
             And because there is no version of bar in >1.0.0, <2.0.0 and hello_world 1.0.0 depends on bar >=1.0.0, <2.0.0, hello_world 1.0.0 is forbidden.
@@ -334,7 +334,7 @@ fn require_audits_workspace() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: version solving failed:
             Because there is no version of foo in >=1.0.0, <2.0.0 and hello 1.0.0 depends on foo >=1.0.0, <2.0.0, hello 1.0.0 is forbidden.
         "#});
@@ -513,7 +513,7 @@ fn bypass_audit_requirement() {
         .current_dir(&first)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: version solving failed:
             Because there is no version of foo in >=1.0.0, <2.0.0 and bar 1.0.0 depends on foo >=1.0.0, <2.0.0, bar 1.0.0 is forbidden.
             And because there is no version of bar in >1.0.0, <2.0.0 and first 1.0.0 depends on bar >=1.0.0, <2.0.0, first 1.0.0 is forbidden.

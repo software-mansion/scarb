@@ -34,7 +34,7 @@ fn simple() {
         .current_dir(&root)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             root v0.1.0 ([..])
             └── dep1 v0.1.0 ([..])
         "#});
@@ -69,7 +69,7 @@ fn json_output() {
         .current_dir(&root)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [{"package":"root 0.1.0 ([..])","branches":[{"package":"dep1 0.1.0 ([..])"}]}]
         "#});
 }
@@ -83,7 +83,7 @@ fn requires_workspace() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to read manifest at: [..]/Scarb.toml
 
             Caused by:
@@ -137,7 +137,7 @@ fn no_dedupe() {
         .current_dir(&root)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             root v0.1.0 ([..])
             ├── dep1 v0.1.0 ([..])
             │   └── common v0.1.0 ([..])
@@ -177,7 +177,7 @@ fn depth() {
         .current_dir(t.child("dep0"))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             dep0 v0.1.0 ([..])
             └── dep1 v0.1.0 ([..])
                 └── dep2 v0.1.0 ([..])
@@ -190,7 +190,7 @@ fn depth() {
         .current_dir(t.child("dep0"))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             dep0 v0.1.0 ([..])
             └── dep1 v0.1.0 ([..])
                 └── ...
@@ -202,7 +202,7 @@ fn depth() {
         .current_dir(t.child("dep0"))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             dep0 v0.1.0 ([..])
             └── ...
         "#});
@@ -250,7 +250,7 @@ fn prune() {
         .current_dir(&root)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             root v0.1.0 ([..])
             └── dep2 v0.1.0 ([..])
                 └── dep3 v0.1.0 ([..])
@@ -263,7 +263,7 @@ fn prune() {
         .current_dir(&root)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             root v0.1.0 ([..])
             ├── dep1 v0.1.0 ([..])
             └── dep2 v0.1.0 ([..])
@@ -277,7 +277,7 @@ fn prune() {
         .current_dir(&root)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             root v0.1.0 ([..])
             └── dep2 v0.1.0 ([..])
         "#});
@@ -312,7 +312,7 @@ fn core() {
         .current_dir(&root)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             root v0.1.0 ([..])
             ├── dep1 v0.1.0 ([..])
             │   └── core v[..] (std)
@@ -364,7 +364,7 @@ fn beautiful_tree_formatting() {
         .current_dir(dep0)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             dep0 v0.1.0 ([..])
             ├── dep1 v0.1.0 ([..])
             │   └── dep2 v0.1.0 ([..])
@@ -398,7 +398,7 @@ fn dev_dependencies() {
         .current_dir(&root)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             root v0.1.0 ([..])
             ├── normal_dep v0.1.0 ([..])
             └── [dev-dependencies]
@@ -441,7 +441,7 @@ fn workspace_members() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             member1 v0.1.0 ([..])
             └── common v0.1.0 ([..])
             
@@ -475,7 +475,7 @@ fn cycle() {
         .current_dir(&root)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             root v0.1.0 ([..])
             └── dep1 v0.1.0 ([..])
                 └── root v0.1.0 ([..]) (*)
@@ -506,7 +506,7 @@ fn no_dedupe_cycle() {
         .current_dir(&root)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             root v0.1.0 ([..])
             └── dep1 v0.1.0 ([..])
                 └── root v0.1.0 ([..]) (*)

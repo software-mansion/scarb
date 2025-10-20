@@ -1,3 +1,4 @@
+use snapbox::Data;
 use std::collections::HashMap;
 use std::fs;
 
@@ -34,7 +35,7 @@ fn compile_simple_git_dep() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
         [..] Compiling hello v1.0.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
@@ -71,7 +72,7 @@ fn fetch_git_dep_branch() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
         "#});
 }
@@ -101,7 +102,7 @@ fn fetch_git_dep_tag() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
         "#});
 }
@@ -137,7 +138,7 @@ fn fetch_git_dep_pull_request() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
         "#});
 }
@@ -187,7 +188,7 @@ fn fetch_with_short_ssh_git() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]
 
             Caused by:
@@ -220,7 +221,7 @@ fn fetch_with_invalid_keyword() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]
 
             Caused by:
@@ -261,7 +262,7 @@ fn stale_cached_version() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
         [..] Compiling hello v1.0.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
@@ -282,7 +283,7 @@ fn stale_cached_version() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v1.0.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -304,7 +305,7 @@ fn stale_cached_version() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
         [..] Compiling hello v1.0.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
@@ -341,7 +342,7 @@ fn stale_cached_version_update() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
         "#});
 
@@ -354,7 +355,7 @@ fn stale_cached_version_update() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches("");
+        .stdout_eq("");
 
     Scarb::new()
         .cache(cache_dir.path())
@@ -363,7 +364,7 @@ fn stale_cached_version_update() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
         "#});
 
@@ -374,7 +375,7 @@ fn stale_cached_version_update() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches("");
+        .stdout_eq("");
 }
 
 #[test]
@@ -400,7 +401,7 @@ fn change_source() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
         "#});
 
@@ -417,7 +418,7 @@ fn change_source() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
         "#});
 }
@@ -457,7 +458,7 @@ fn force_push() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
         "#});
 }
@@ -504,7 +505,7 @@ fn force_push_with_cache() {
         .success()
         // Even though the locked commit is not accessible on remote no more, we do not update the
         // local git repository checkout, as the locked commit is still in the Scarb cache.
-        .stdout_matches("");
+        .stdout_eq("");
 }
 
 #[test]
@@ -586,7 +587,7 @@ fn transitive_path_dep_with_lock() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Updating git repository [..]dep1
         "#});
 
@@ -597,7 +598,7 @@ fn transitive_path_dep_with_lock() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 }
 
 #[test]
@@ -626,7 +627,7 @@ fn deps_only_cloned_to_checkouts_once() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
         [..]Running git[EXE] fetch --verbose --force --update-head-ok [..]dep1 +HEAD:refs/remotes/origin/HEAD
         [..]Running git[EXE] clone --local --verbose --config 'core.autocrlf=false' --recurse-submodules [..].git[..] [..]
@@ -641,7 +642,7 @@ fn deps_only_cloned_to_checkouts_once() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
         [..]Running git[EXE] fetch --verbose --force --update-head-ok [..]dep1 +HEAD:refs/remotes/origin/HEAD
         "#});

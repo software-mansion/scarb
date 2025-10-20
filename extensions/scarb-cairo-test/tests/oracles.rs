@@ -37,7 +37,7 @@ fn oracle() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: `scarb cairo-test` is deprecated and will be removed in a future version.
             help: please migrate to `snforge` for all your testing needs.
             help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html

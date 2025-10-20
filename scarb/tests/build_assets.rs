@@ -91,7 +91,7 @@ fn asset_directory_is_error() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling badpkg v0.1.0 ([..])
             error: package `badpkg v0.1.0 ([..])` asset is not a file: [..]/assets
         "#});
@@ -115,7 +115,7 @@ fn duplicate_asset_names_within_package_error() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling dupsame v0.1.0 ([..])
             error: package `dupsame v0.1.0 ([..])` declares multiple assets with the same file name: file.txt
         "#});
@@ -137,7 +137,7 @@ fn missing_asset() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling missing v0.1.0 ([..])
             error: failed to find asset file at [..]/data.txt
 
@@ -190,7 +190,7 @@ fn duplicate_asset_names_between_dependencies_error() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling app v0.1.0 ([..])
             error: multiple packages declare an asset with the same file name `common.txt`: dep2 [..], dep1 [..]
         "#});
@@ -219,7 +219,7 @@ fn build_with_test_flag_and_multiple_test_targets() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling test([..]) foo [..]
             [..] Compiling test([..]) foo_integrationtest [..]
             [..] Finished [..]

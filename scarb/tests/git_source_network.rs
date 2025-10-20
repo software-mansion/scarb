@@ -40,7 +40,7 @@ fn https_something_happens() {
             .current_dir(&t)
             .assert()
             .failure()
-            .stdout_matches(indoc! {r#"
+            .stdout_eq(indoc! {r#"
             [..] Updating git repository https://127.0.0.1:[..]/foo/bar
             error: failed to clone into: [..]
 
@@ -76,7 +76,7 @@ fn ssh_something_happens() {
             .current_dir(&t)
             .assert()
             .failure()
-            .stdout_matches(indoc! {r#"
+            .stdout_eq(indoc! {r#"
             [..] Updating git repository ssh://127.0.0.1:[..]/foo/bar
             error: failed to clone into: [..]
 

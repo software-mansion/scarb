@@ -39,7 +39,7 @@ fn compile_with_duplicate_targets_1() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to parse manifest at: [..]/Scarb.toml
 
         Caused by:
@@ -72,7 +72,7 @@ fn compile_with_duplicate_targets_2() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to parse manifest at: [..]/Scarb.toml
 
         Caused by:
@@ -108,7 +108,7 @@ fn compile_with_custom_lib_target() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -152,7 +152,7 @@ fn compile_with_named_default_lib_target() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -197,7 +197,7 @@ fn compile_with_lib_target_in_target_array() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -231,7 +231,7 @@ fn compile_dep_not_a_lib() {
         .current_dir(&hello)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: hello v1.0.0 ([..]) ignoring invalid dependency `dep` which is missing a lib or cairo-plugin target
                 Checking hello v1.0.0 ([..])
             error[E0006]: Identifier not found.
@@ -291,7 +291,7 @@ fn target_source_path_disallowed() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]/Scarb.toml
 
             Caused by:
@@ -414,7 +414,7 @@ fn integration_tests_do_not_enable_cfg_in_main_package() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
             error[E0006]: Identifier not found.
@@ -468,7 +468,7 @@ fn integration_tests_cannot_use_itself_by_target_name() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
             error[E0006]: Identifier not found.
@@ -531,7 +531,7 @@ fn features_enabled_in_integration_tests() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..] Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..])
             error[E0006]: Identifier not found.
@@ -836,7 +836,7 @@ fn cannot_use_both_test_and_target_kind() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stderr_matches(indoc! {r#"
+        .stderr_eq(indoc! {r#"
             error: the argument '--test' cannot be used with '--target-kinds <TARGET_KINDS>'
 
             Usage: scarb[EXE] build --test
@@ -865,7 +865,7 @@ fn cannot_use_both_target_names_and_target_kind() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stderr_matches(indoc! {r#"
+        .stderr_eq(indoc! {r#"
             error: the argument '--target-names <TARGET_NAMES>' cannot be used with '--target-kinds <TARGET_KINDS>'
 
             Usage: scarb[EXE] build --target-names <TARGET_NAMES>
@@ -971,7 +971,7 @@ fn test_target_builds_contracts() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling test(hello_unittest) hello v0.1.0 ([..]Scarb.toml)
         [..]Compiling test(hello_integrationtest) hello_integrationtest v0.1.0 ([..]Scarb.toml)
         [..]  Finished `dev` profile target(s) in [..]
@@ -1050,7 +1050,7 @@ fn test_target_builds_external() {
         .current_dir(t.child("hello"))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling test(hello_unittest) hello v0.1.0 ([..]Scarb.toml)
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -1106,7 +1106,7 @@ fn transitive_dev_deps_not_available() {
         .current_dir(hello)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Identifier not found.
              --> [..]lib.cairo:1:5
@@ -1203,7 +1203,7 @@ fn executable_target_requires_disabled_gas() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling executable_test v1.0.0 ([..]Scarb.toml)
         error: executable target cannot be compiled with enabled gas calculation
         help: if you want to disable gas calculation, consider adding following
@@ -1242,7 +1242,7 @@ fn compile_executable_with_missing_plugin() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling executable_test v1.0.0 ([..]Scarb.toml)
         warn: package `executable_test` declares `executable` target, but does not depend on `cairo_execute` package
         note: this may cause contract compilation to fail with cryptic errors
@@ -1339,7 +1339,7 @@ fn ambiguous_executable_function() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                Compiling hello_world v1.0.0 ([..]Scarb.toml)
             error: more than one executable found in the main crate:
             [..]hello_world::main
@@ -1400,7 +1400,7 @@ fn test_target_builds_contracts_with_error() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v0.1.0 ([..]Scarb.toml)
             error[E0006]: Function not found.
              --> [..]hello.cairo:11:57
@@ -1473,7 +1473,7 @@ fn test_target_builds_contracts_with_warning() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v0.1.0 ([..]Scarb.toml)
             warn: Unused import: `hello::hello::fib`
              --> [..]hello.cairo:1:20
@@ -1534,7 +1534,7 @@ fn executable_target_validation() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: you have specified multiple executable targets
             some of them specify different `function` names, some do not specify `function` name at all
             this is probably a mistake
@@ -1587,7 +1587,7 @@ fn disallowed_test_target_names() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to parse manifest at: [..]/Scarb.toml
 
         Caused by:
@@ -1792,7 +1792,7 @@ fn test_target_defaults_fails_for_unsupported_target_kind() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
 error: failed to parse manifest at: [..]/Scarb.toml
 
 Caused by:

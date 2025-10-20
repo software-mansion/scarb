@@ -36,7 +36,7 @@ fn stdout_output_info() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             Saving output to: target/doc/hello_world
 
             Run the following to see the results: 
@@ -52,7 +52,7 @@ fn stdout_output_info() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             Saving output to: target/doc/output.json
         "#});
 
@@ -64,7 +64,7 @@ fn stdout_output_info() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(format!(
+        .stdout_eq(format!(
             indoc! {r#"
         Saving output to: target/doc/hello_world
         Saving build output to: target/doc/hello_world/book

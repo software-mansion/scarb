@@ -9,6 +9,7 @@ use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::LocalRegistry;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+use snapbox::{Assert, Data};
 
 fn build_example_program(t: &TempDir) {
     ProjectBuilder::start()
@@ -162,7 +163,7 @@ fn features_fail_both_features_enabled() {
         .arg("x,y")
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..])
             error: The name `f` is defined multiple times.
              --> [..]/src/lib.cairo[..]
@@ -182,7 +183,7 @@ fn features_fail_no_feature_enabled() {
         .arg("build")
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..])
             error[E0006]: Function not found.
              --> [..]/src/lib.cairo[..]
@@ -204,7 +205,7 @@ fn features_unknown_feature() {
         .arg("z")
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: none of the selected packages contains `z` feature
             note: to use features, you need to define [features] section in Scarb.toml
         "#})
@@ -221,7 +222,7 @@ fn features_fail_missing_manifest() {
         .arg("x")
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: none of the selected packages contains `x` feature
             note: to use features, you need to define [features] section in Scarb.toml
         "#})
@@ -238,7 +239,7 @@ fn features_fail_incorrect_manifest() {
         .arg("x")
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]/Scarb.toml
 
             Caused by:
@@ -274,7 +275,7 @@ fn features_no_default_features() {
         .arg("--no-default-features")
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..])
             error[E0006]: Function not found.
              --> [..]/src/lib.cairo[..]
@@ -309,7 +310,7 @@ fn features_all_features_failing() {
         .arg("build")
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..])
             error[E0006]: Function not found.
              --> [..]/src/lib.cairo[..]
@@ -331,7 +332,7 @@ fn features_no_default_and_all_failing() {
         .arg("--all-features")
         .current_dir(&t)
         .assert()
-        .stderr_matches(indoc! {r#"
+        .stderr_eq(indoc! {r#"
             error: the argument '--no-default-features' cannot be used with '--all-features'
 
             Usage: scarb[..] build --no-default-features
@@ -461,7 +462,7 @@ fn features_in_workspace_validated() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: none of the selected packages contains `x` feature
             note: to use features, you need to define [features] section in Scarb.toml
         "#});
@@ -613,7 +614,7 @@ fn parse_dependency_features_invalid() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]Scarb.toml
 
             Caused by:
@@ -748,7 +749,7 @@ fn cannot_use_not_existing_features_in_deps() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq("error: unknown features: third\n");
+        .stdout_eq(Data::from("error: unknown features: third\n").raw());
 }
 
 #[test]
@@ -872,7 +873,7 @@ fn dependency_features_simple() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Updating git repository [..]git_dep
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in[..]
@@ -922,7 +923,7 @@ fn dependency_features_in_workspace() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking first v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in[..]
         "#});
@@ -933,7 +934,7 @@ fn dependency_features_in_workspace() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking second v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in[..]
         "#});
@@ -993,7 +994,7 @@ fn dependency_features_disabled_by_default() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Function not found.
              --> [..]lib.cairo:8:5
@@ -1059,7 +1060,7 @@ fn dependency_features_can_be_default() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in[..]
         "#});
@@ -1123,7 +1124,7 @@ fn dependency_features_can_disable_default_features() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Function not found.
              --> [..]lib.cairo:8:5
@@ -1230,7 +1231,7 @@ fn dependency_features_unification() {
         .current_dir(&ws)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in[..]
         "#});
@@ -1293,7 +1294,7 @@ fn features_unification_does_not_leak_between_units_for_ws_member() {
         .current_dir(&ws)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking second v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in[..]
         "#});
@@ -1304,7 +1305,7 @@ fn features_unification_does_not_leak_between_units_for_ws_member() {
         .current_dir(&ws)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking first v1.0.0 ([..]Scarb.toml)
             error[E0006]: Function not found.
              --> [..]lib.cairo:8:5
@@ -1377,7 +1378,7 @@ fn features_unification_does_not_leak_between_units() {
         .current_dir(&ws)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking first v1.0.0 ([..]Scarb.toml)
             error[E0006]: Function not found.
              --> [..]lib.cairo:8:5
@@ -1393,7 +1394,7 @@ fn features_unification_does_not_leak_between_units() {
         .current_dir(&ws)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking second v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in[..]
         "#});
@@ -1485,7 +1486,7 @@ fn dependency_features_unification_for_test_target() {
         .current_dir(&hello)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in[..]
         "#});
@@ -1547,7 +1548,7 @@ fn dev_dep_features_do_not_propagate() {
         .current_dir(&hello)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Function not found.
              --> [..]lib.cairo:8:5
@@ -1619,7 +1620,7 @@ fn can_declare_default_by_name() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in[..]
         "#});
@@ -1692,7 +1693,8 @@ fn default_cannot_be_used_as_cfg_without_explicit_declaration() {
     let stdout = String::from_utf8_lossy(&output.stdout)
         .to_string()
         .replace("\\", "/");
-    snapbox::assert_matches(
+    Assert::new().eq(
+        &stdout,
         indoc! {r#"
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Function not found.
@@ -1707,7 +1709,6 @@ fn default_cannot_be_used_as_cfg_without_explicit_declaration() {
 
             error: could not check `hello` due to [..] previous errors
         "#},
-        &stdout,
     );
 
     assert_eq!(
@@ -1764,7 +1765,7 @@ fn can_deserialize_features_enabling_dependency_features() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
         "#});
@@ -1811,7 +1812,7 @@ fn default_features_can_enable_dependency_features() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
         "#});
@@ -1887,7 +1888,7 @@ fn features_unification_for_features_dependant_on_dependency_features() {
         .current_dir(&fourth)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking fourth v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in[..]
         "#});

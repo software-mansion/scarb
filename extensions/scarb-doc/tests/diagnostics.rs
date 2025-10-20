@@ -114,7 +114,7 @@ fn test_diagnostics_error() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: Expected either ';' or '{' after module name. Use ';' for an external module declaration or '{' for a module with a body.
              --> [..]lib.cairo:2:33
             pub(crate) mod DualCaseERC20Mock 
@@ -174,7 +174,7 @@ fn test_diagnostics_warnings() {
         .args(["--document-private-items", "--output-format", "json"])
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: Invalid attribute `#doc(group = "wrong syntax")]` in hello_world::wrong_syntax.
             Use `#[doc(group: "group name")]'` or `#[doc(hidden)]`, instead
             warn: Invalid attribute `group: 'wrong syntax2'` in hello_world::wrong_syntax2.

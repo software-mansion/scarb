@@ -50,7 +50,7 @@ fn checksum_changed_upstream() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: checksum for `bar v1.0.0 (registry+file://[..])` changed between lock files
 
         this could be indicative of a few possible errors:
@@ -113,7 +113,7 @@ fn checksum_locked_for_unexpected_source() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Updating git repository [..]
         error: checksum for `bar v1.0.0 ([..])` could not be calculated, but a checksum is listed in the existing lock file
 
@@ -170,7 +170,7 @@ fn unlisted_checksum_for_source_supporting_it() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: checksum for `bar v1.0.0 ([..])` was not previously calculated, but now it could be
 
         this could be indicative of a few possible situations:

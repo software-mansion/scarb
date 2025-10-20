@@ -5,6 +5,7 @@ use itertools::Itertools;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
+use snapbox::{Assert, Data};
 
 #[test]
 fn expand_package_simple() {
@@ -23,12 +24,13 @@ fn expand_package_simple() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw().raw());
 
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
     assert_eq!(t.child("target/dev").files(), vec!["hello.expanded.cairo"]);
     let expanded = t.child("target/dev/hello.expanded.cairo").read_to_string();
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
         mod hello {
             fn hello() -> felt252 {
@@ -36,7 +38,6 @@ fn expand_package_simple() {
             }
         }
         "#},
-        expanded,
     );
 }
 
@@ -57,7 +58,7 @@ fn can_expand_to_stdout() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: Missing token '}'.
              --> [..]lib.cairo:2:6
                 0
@@ -91,7 +92,7 @@ fn can_expand_to_stdout_json() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             {"type":"error","message":"Missing token '}'./n --> [..]lib.cairo:2:6/n    0/n     ^/n"}
             {"expanded":"/nmod hello {/nfn hello() -> felt252 {/n    0/n}/n","package_id":"hello v1.0.0 ([..]Scarb.toml)","target_name":"hello"}
         "#});
@@ -139,7 +140,7 @@ fn expand_integration_test() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     assert_eq!(
         t.child("target/dev").files(),
         vec!["hello_a.expanded.cairo"]
@@ -147,7 +148,8 @@ fn expand_integration_test() {
     let expanded = t
         .child("target/dev/hello_a.expanded.cairo")
         .read_to_string();
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
         mod hello_integrationtest {
             mod a {
@@ -162,7 +164,6 @@ fn expand_integration_test() {
             }
         }
         "#},
-        expanded,
     );
 }
 
@@ -194,7 +195,7 @@ fn can_select_target_by_kind() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     assert_eq!(
         t.child("target/dev").files(),
         vec!["hello_unittest.expanded.cairo"]
@@ -202,7 +203,8 @@ fn can_select_target_by_kind() {
     let expanded = t
         .child("target/dev/hello_unittest.expanded.cairo")
         .read_to_string();
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
             mod hello {
                 fn hello() -> felt252 {
@@ -219,7 +221,6 @@ fn can_select_target_by_kind() {
                 }
             }
         "#},
-        expanded,
     );
 }
 
@@ -264,7 +265,7 @@ fn can_expand_multiple_targets() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     assert_eq!(
         t.child("target/dev")
             .files()
@@ -280,7 +281,8 @@ fn can_expand_multiple_targets() {
     let expanded = t
         .child("target/dev/hello_unittest.expanded.cairo")
         .read_to_string();
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
             mod hello {
                 pub fn fib(mut n: u32) -> u32 {
@@ -305,12 +307,12 @@ fn can_expand_multiple_targets() {
                 }
             }
         "#},
-        expanded,
     );
     let expanded = t
         .child("target/dev/hello_a.expanded.cairo")
         .read_to_string();
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
         mod hello_integrationtest {
             mod a {
@@ -325,12 +327,12 @@ fn can_expand_multiple_targets() {
             }
         }
         "#},
-        expanded,
     );
     let expanded = t
         .child("target/dev/hello_b.expanded.cairo")
         .read_to_string();
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
         mod hello_integrationtest {
             mod b {
@@ -345,7 +347,6 @@ fn can_expand_multiple_targets() {
             }
         }
         "#},
-        expanded,
     );
 }
 
@@ -366,7 +367,7 @@ fn selected_target_must_exist() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq("error: no compilation units found for `hello`\n");
+        .stdout_eq(Data::from("error: no compilation units found for `hello`\n").raw());
 }
 
 #[test]
@@ -396,11 +397,12 @@ fn attempts_formatting() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     assert_eq!(t.child("target/dev").files(), vec!["hello.expanded.cairo"]);
     let expanded = t.child("target/dev/hello.expanded.cairo").read_to_string();
     // Defaults to lib target - hence no tests (stripped by config plugin).
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
             mod hello {
                 fn hello() -> felt252 {
@@ -408,7 +410,6 @@ fn attempts_formatting() {
                 }
             }
         "#},
-        expanded,
     );
 }
 
@@ -430,10 +431,11 @@ fn can_skip_formatting() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     assert_eq!(t.child("target/dev").files(), vec!["hello.expanded.cairo"]);
     let expanded = t.child("target/dev/hello.expanded.cairo").read_to_string();
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
 
             mod hello {
@@ -443,7 +445,6 @@ fn can_skip_formatting() {
             42}
             }
         "#},
-        expanded,
     );
 }
 
@@ -464,7 +465,7 @@ fn can_expand_erroneous_code() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: Missing token '}'.
              --> [..]lib.cairo:2:6
                 0
@@ -474,7 +475,8 @@ fn can_expand_erroneous_code() {
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
     assert_eq!(t.child("target/dev").files(), vec!["hello.expanded.cairo"]);
     let expanded = t.child("target/dev/hello.expanded.cairo").read_to_string();
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
 
         mod hello {
@@ -482,6 +484,5 @@ fn can_expand_erroneous_code() {
             0
         }
         "#},
-        expanded,
     );
 }

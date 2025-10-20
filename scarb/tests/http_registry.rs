@@ -1,3 +1,4 @@
+use snapbox::Data;
 use std::fs;
 use std::time::Duration;
 
@@ -37,7 +38,7 @@ fn usage() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Downloading bar v1.0.0 ([..])
         "#});
 
@@ -126,7 +127,7 @@ fn publish_verified() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Downloading bar v1.0.0 ([..])
         "#});
 
@@ -215,7 +216,7 @@ fn not_found() {
         .timeout(Duration::from_secs(10))
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to lookup for `baz ^1 (registry+http://[..])` in registry: registry+http://[..]
 
         Caused by:
@@ -269,7 +270,7 @@ fn missing_config_json() {
         .timeout(Duration::from_secs(10))
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to lookup for `baz ^1 (registry+http://[..])` in registry: registry+http://[..]
 
         Caused by:
@@ -321,7 +322,7 @@ fn caching() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Downloading bar v1.0.0 ([..])
         "#});
 
@@ -334,7 +335,7 @@ fn caching() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 
     Scarb::new()
         .cache(cache_dir.path())
@@ -344,7 +345,7 @@ fn caching() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 
     let expected = expect![[r#"
         GET /api/v1/index/config.json

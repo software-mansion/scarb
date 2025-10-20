@@ -35,7 +35,7 @@ fn can_build_release() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling hello v1.0.0 ([..])
             warn: artefacts produced by this build may be hard to utilize due to the build configuration
             please make sure your build configuration is correct
@@ -131,7 +131,7 @@ fn cannot_choose_both_dev_and_release() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stderr_matches(indoc! {r#"
+        .stderr_eq(indoc! {r#"
             error: the argument '--dev' cannot be used with '--release'
 
             Usage: scarb[..] --dev --global-cache-dir <DIRECTORY> --global-config-dir <DIRECTORY> <COMMAND>
@@ -251,7 +251,7 @@ fn cannot_choose_not_existing_profile() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches("error: workspace `[..]` has no profile `custom`\n");
+        .stdout_eq("error: workspace `[..]` has no profile `custom`\n");
 }
 
 #[test]
@@ -690,7 +690,7 @@ fn custom_profiles_can_inherit_dev_and_release_only() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]
 
             Caused by:

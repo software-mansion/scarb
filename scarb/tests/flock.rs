@@ -7,9 +7,9 @@ use assert_fs::fixture::PathChild;
 use indoc::indoc;
 use io_tee::TeeReader;
 use ntest::timeout;
-
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
+use snapbox::Assert;
 
 #[test]
 #[timeout(360_000)]
@@ -63,13 +63,13 @@ fn locking_build_artifacts() {
         let ecode = proc.wait().unwrap();
         assert!(ecode.success());
 
-        snapbox::assert_matches(
+        Assert::new().eq(
+            stdout_acc,
             indoc! {r#"
             [..] Compiling hello v0.1.0 ([..])
             [..]  Blocking waiting for file lock on output file
             [..]  Finished `dev` profile target(s) in [..]
             "#},
-            stdout_acc,
         );
     });
 }
@@ -122,10 +122,10 @@ async fn locking_package_cache() {
     let ecode = proc.wait().unwrap();
     assert!(ecode.success());
 
-    snapbox::assert_matches(
+    Assert::new().eq(
+        stdout_acc,
         indoc! {r#"
         [..]  Blocking waiting for file lock on package cache
         "#},
-        stdout_acc,
     );
 }

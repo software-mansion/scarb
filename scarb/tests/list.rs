@@ -39,7 +39,7 @@ fn list_package_versions() {
         .arg(&registry.url)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             VERSION          AUDIT    STATUS
             2.0.0+build.1    x        -[..]
             2.0.0-alpha.1    x        -[..]
@@ -56,7 +56,7 @@ fn list_package_versions() {
         .arg(&registry.url)
         .assert()
         .success()
-        .stdout_matches(
+        .stdout_eq(
             indoc!{
             r#"
             [{"v":"2.0.0+build.1","deps":[],"cksum":"sha256:[..]"},{"v":"2.0.0-alpha.1","deps":[],"cksum":"sha256:[..]"},{"v":"1.5.0","deps":[],"cksum":"sha256:[..]","audited":true},{"v":"1.2.4-beta","deps":[],"cksum":"sha256:[..]","yanked":true},{"v":"1.2.3","deps":[],"cksum":"sha256:[..]"}]
@@ -79,7 +79,7 @@ fn list_builtin_package_versions() {
         .arg(&registry.url)
         .assert()
         .success()
-        .stdout_matches(formatdoc! {r#"
+        .stdout_eq(formatdoc! {r#"
             warn: the package `starknet` is a part of Cairo standard library.
             its available version ({CAIRO_VERSION}) is coupled to the Cairo version included in your Scarb installation.
             help: to use another version of this package, consider using a different version of Scarb.
@@ -98,7 +98,7 @@ fn list_builtin_package_versions() {
         .arg(&registry.url)
         .assert()
         .success()
-        .stdout_matches(
+        .stdout_eq(
             formatdoc!{
             r#"
             {{"type":"warn","message":"the package `starknet` is a part of Cairo standard library./nits available version ({CAIRO_VERSION}) is coupled to the Cairo version included in your Scarb installation./nhelp: to use another version of this package, consider using a different version of Scarb./n"}}
@@ -126,7 +126,7 @@ fn list_package_versions_many() {
         .arg(&registry.url)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             VERSION    AUDIT    STATUS
             0.11.0     x        -[..]
             0.10.0     x        -[..]
@@ -150,7 +150,7 @@ fn list_package_versions_many() {
         .arg(&registry.url)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             VERSION    AUDIT    STATUS
             0.11.0     x        -[..]
             0.10.0     x        -[..]
@@ -174,7 +174,7 @@ fn list_package_versions_many() {
         .arg(&registry.url)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             VERSION    AUDIT    STATUS
             0.11.0     x        -[..]
             0.10.0     x        -[..]
@@ -192,7 +192,7 @@ fn list_package_versions_many() {
         .arg(&registry.url)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             VERSION    AUDIT    STATUS
             0.11.0     x        -[..]
             0.10.0     x        -[..]

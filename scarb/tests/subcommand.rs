@@ -1,3 +1,4 @@
+use snapbox::Data;
 use snapbox::cmd::Command as SnapboxCommand;
 use std::io::Read;
 use std::net::TcpListener;
@@ -30,7 +31,7 @@ fn subcommand() {
         .env("PATH", path_with_temp_dir(&t))
         .assert()
         .success()
-        .stdout_eq("Hello beautiful world\n");
+        .stdout_eq(Data::from("Hello beautiful world\n").raw());
 }
 
 #[test]
@@ -233,7 +234,7 @@ fn can_find_scarb_directory_scripts_without_path() {
         .args(["hello", "beautiful", "world"])
         .assert()
         .success()
-        .stdout_eq("Hello beautiful world\n");
+        .stdout_eq(Data::from("Hello beautiful world\n").raw());
 }
 
 #[test]
@@ -268,7 +269,7 @@ fn scarb_reads_verbosity_from_env() {
         .env("SCARB_UI_VERBOSITY", "quiet")
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 }
 
 #[test]
@@ -282,7 +283,7 @@ fn cli_verbosity_overrides_env() {
         .env("SCARB_UI_VERBOSITY", "quiet")
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Checking pkg0 v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in [..]
         "#});

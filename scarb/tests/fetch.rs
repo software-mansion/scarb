@@ -36,7 +36,7 @@ fn check_git_fetch_stdout() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
         "#});
 }

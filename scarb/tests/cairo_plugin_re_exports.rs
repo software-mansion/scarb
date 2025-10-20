@@ -6,6 +6,7 @@ use scarb_metadata::Metadata;
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::LocalRegistry;
+use snapbox::Data;
 
 #[test]
 fn cairo_plugin_re_export_simple() {
@@ -169,7 +170,7 @@ fn can_only_re_export_own_dep() {
         .current_dir(t.child("foo"))
         .assert()
         .failure()
-        .stdout_eq("error: package `hello` cannot re-export cairo plugin `world` which is not a dependency of `hello`\n");
+        .stdout_eq(Data::from("error: package `hello` cannot re-export cairo plugin `world` which is not a dependency of `hello`\n").raw());
 }
 
 #[test]

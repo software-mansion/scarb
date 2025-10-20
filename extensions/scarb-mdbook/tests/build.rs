@@ -3,6 +3,7 @@ use assert_fs::prelude::PathChild;
 use camino::Utf8PathBuf;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::expect_dir::ExpectDir;
+use snapbox::Data;
 
 const HELLO_WORLD_PATH: &str = "tests/data/hello_world";
 
@@ -20,7 +21,7 @@ fn build_hello_world() {
         .arg(format!("--output={output_path}",))
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     ExpectDir::lenient()
         .expected(expected_output_path.as_ref())
         .actual(output_path.as_ref())

@@ -108,7 +108,7 @@ fn test_workspace_without_features_in_manifest() {
         .current_dir(&root_dir)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: metadata command failed: `scarb metadata` exited with error
 
             stdout:
@@ -301,7 +301,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code()
         .current_dir(&root_dir)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: metadata command failed: `scarb metadata` exited with error
 
             stdout:
@@ -345,7 +345,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_root_package_code(
         .current_dir(&root_dir)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: metadata command failed: `scarb metadata` exited with error
     
             stdout:

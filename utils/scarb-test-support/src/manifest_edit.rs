@@ -5,6 +5,7 @@ use std::fs;
 use assert_fs::TempDir;
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
+use snapbox::Data;
 use snapbox::cmd::Command;
 
 use crate::command::Scarb;
@@ -53,7 +54,7 @@ impl ManifestEditHarness {
             cmd.success()
         };
 
-        cmd.stdout_matches(self.stdout_matches);
+        cmd.stdout_eq(Data::from(self.stdout_matches).raw());
 
         assert_eq!(
             fs::read_to_string(t.child("Scarb.toml").path()).unwrap(),

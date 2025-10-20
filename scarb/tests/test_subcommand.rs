@@ -1,5 +1,6 @@
 use assert_fs::TempDir;
 use indoc::indoc;
+use snapbox::Data;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::filesystem::{path_with_temp_dir, write_simple_hello_script};
@@ -24,10 +25,13 @@ fn delegates_to_cairo_test() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
              Running cairo-test pkg0
         Hello beautiful world
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -45,10 +49,13 @@ fn prefers_test_script() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
              Running test pkg0 (echo 'Hello from script')
         Hello from script beautiful world
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -68,10 +75,13 @@ fn errors_when_missing_script_and_cairo_test() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
              Running cairo-test pkg0
         error: no such command: `cairo-test`
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
