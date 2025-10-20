@@ -2853,7 +2853,7 @@ fn module_level_inline_macro_can_emit_diagnostics() {
                 some!();
                 ^^^^^^^^
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to 1 previous error
         "#});
 }
 
@@ -2927,7 +2927,7 @@ fn module_level_inline_macro_code_mappings_preserve_attribute_error_locations() 
                        ^^^^^
             note: this error originates in the inline macro: `some`
 
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to 1 previous error
         "#});
 }
 
