@@ -2599,7 +2599,7 @@ fn module_level_inline_macro() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -2672,7 +2672,7 @@ fn module_level_inline_macro_with_args() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -2740,7 +2740,7 @@ fn module_level_inline_macro_in_nested_module() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -2800,7 +2800,7 @@ fn module_level_inline_macro_empty() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -2845,7 +2845,7 @@ fn module_level_inline_macro_can_emit_diagnostics() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Plugin diagnostic: Some error from macro.
@@ -2918,7 +2918,7 @@ fn module_level_inline_macro_code_mappings_preserve_attribute_error_locations() 
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Identifier not found.
@@ -3001,7 +3001,7 @@ fn module_level_inline_macro_multiple() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
