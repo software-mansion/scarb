@@ -1,6 +1,7 @@
 use assert_fs::TempDir;
 use assert_fs::fixture::{PathChild, PathCreateDir};
 use indoc::indoc;
+use snapbox::Data;
 
 use scarb_metadata::Metadata;
 use scarb_test_support::command::{CommandExt, Scarb};
@@ -25,7 +26,7 @@ fn warn_on_member_without_manifest() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(
+        .stdout_eq(
             "warn: workspace members definition matched path `[..]`, \
         which misses a manifest file\n",
         );
@@ -46,7 +47,7 @@ fn error_on_virtual_manifest_with_dependencies() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]
 
             Caused by:
@@ -122,7 +123,7 @@ fn target_name_duplicate() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: workspace contains duplicate target definitions `starknet-contract (hello)`
             help: use different target names to resolve the conflict
         "#});
@@ -156,7 +157,7 @@ fn inherited_deps_cannot_override_source_version() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to parse manifest at: [..]Scarb.toml
 
         Caused by:
@@ -196,7 +197,7 @@ fn inherited_deps_cannot_override_default_features_flag() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to parse manifest at: [..]Scarb.toml
 
         Caused by:
@@ -286,9 +287,9 @@ fn warn_on_compiler_config_in_ws_member() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc!{r#"
+        .stdout_eq(Data::from(indoc!{r#"
             warn: in context of a workspace, only the `profile` set in the workspace manifest is applied,
             but the `first` package also defines `profile` in the manifest
 
-        "#});
+        "#}).raw());
 }

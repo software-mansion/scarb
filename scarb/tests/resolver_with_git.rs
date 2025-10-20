@@ -4,7 +4,7 @@ use indoc::indoc;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{DepBuilder, ProjectBuilder};
-use snapbox::assert_matches;
+use snapbox::Assert;
 
 #[test]
 fn valid_triangle() {
@@ -47,12 +47,12 @@ fn valid_triangle() {
     );
 
     let output = String::from_utf8_lossy(&output.stdout).to_string();
-    assert_matches(
+    Assert::new().eq(
+        &output,
         indoc! {r#"
         [..]  Updating git repository file://[..]
         [..]  Updating git repository file://[..]
         "#},
-        &output,
     );
 
     assert!(
@@ -102,7 +102,8 @@ fn two_revs_of_same_dep() {
     assert!(!output.status.success(), "{}", stderr.clone());
 
     let output = String::from_utf8_lossy(&output.stdout).to_string();
-    assert_matches(
+    Assert::new().eq(
+        &output,
         indoc! {r#"
         [..] Updating git repository file://[..]/culprit
         [..] Updating git repository file://[..]/culprit
@@ -110,7 +111,6 @@ fn two_revs_of_same_dep() {
         source 1: git+file://[..]/culprit[..]
         source 2: git+file://[..]/culprit[..]
         "#},
-        &output,
     );
 
     assert!(
@@ -169,7 +169,8 @@ fn two_revs_of_same_dep_diamond() {
     assert!(!output.status.success(), "{}", stderr.clone());
 
     let output = String::from_utf8_lossy(&output.stdout).to_string();
-    assert_matches(
+    Assert::new().eq(
+        &output,
         indoc! {r#"
             [..] Updating git repository file://[..]
             [..] Updating git repository file://[..]
@@ -179,7 +180,6 @@ fn two_revs_of_same_dep_diamond() {
             source 1: git+file://[..]/culprit[..]
             source 2: git+file://[..]/culprit[..]
         "#},
-        &output,
     );
 
     assert!(

@@ -1,4 +1,5 @@
 use assert_fs::{TempDir, prelude::*};
+use snapbox::Data;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -42,7 +43,7 @@ fn path_print() {
         .arg("path")
         .current_dir(&t)
         .assert()
-        .stdout_eq(format!("{}\n", cache_dir.path().display()))
+        .stdout_eq(Data::from(format!("{}\n", cache_dir.path().display())).raw())
         .success();
     cache_dir.assert(predicates::path::is_dir());
 }

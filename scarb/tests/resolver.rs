@@ -1,6 +1,7 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use indoc::indoc;
+use snapbox::Data;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::gitx;
@@ -30,7 +31,7 @@ fn issue_600_path() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 }
 
 /// https://github.com/software-mansion/scarb/issues/600
@@ -58,7 +59,7 @@ fn issue_600_git() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Updating git repository [..]
         "#});
 }

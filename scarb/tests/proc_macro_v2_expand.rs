@@ -7,6 +7,7 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+use snapbox::Assert;
 
 #[test]
 fn can_emit_plugin_warning() {
@@ -42,7 +43,7 @@ fn can_emit_plugin_warning() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             warn: Plugin diagnostic: Some warning from macro.
@@ -91,7 +92,7 @@ fn diags_from_generated_code_mapped_correctly() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Plugin diagnostic: Some error from macro.
@@ -156,7 +157,7 @@ fn can_remove_original_node() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -213,7 +214,7 @@ fn can_replace_original_node() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -274,7 +275,7 @@ fn can_implement_inline_macro() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -319,7 +320,7 @@ fn empty_inline_macro_result() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Inline macro `some` not found.
@@ -412,7 +413,7 @@ fn can_implement_derive_macro() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -524,7 +525,7 @@ fn can_use_both_derive_and_attr() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -573,7 +574,7 @@ fn can_read_attribute_args() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             (
@@ -672,7 +673,8 @@ fn can_be_expanded() {
     let expanded = project
         .child("target/dev/hello.expanded.cairo")
         .read_to_string();
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
         mod hello {
             trait Hello<T> {
@@ -694,7 +696,6 @@ fn can_be_expanded() {
             }
         }
         "#},
-        expanded,
     );
 }
 
@@ -760,7 +761,7 @@ fn can_expand_trait_inner_func_attr() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -912,7 +913,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Cannot assign to an immutable variable.
@@ -994,7 +995,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations_with_parser()
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Cannot assign to an immutable variable.
@@ -1067,7 +1068,8 @@ fn can_be_used_through_re_export() {
     let expanded = project
         .child("target/dev/hello.expanded.cairo")
         .read_to_string();
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
             mod hello {
                 fn main() -> felt252 {
@@ -1075,7 +1077,6 @@ fn can_be_used_through_re_export() {
                 }
             }
         "#},
-        expanded,
     );
 }
 
@@ -1113,7 +1114,7 @@ fn can_emit_plugin_error() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Plugin diagnostic: Some error from macro.
@@ -1163,7 +1164,7 @@ fn code_mappings_preserve_attribute_error_locations() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Cannot assign to an immutable variable.
@@ -1216,7 +1217,7 @@ fn code_mappings_preserve_inline_macro_error_locations() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Identifier not found.
@@ -1268,7 +1269,7 @@ fn inline_macro_error_on_call_site_location() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Identifier not found.
@@ -1326,7 +1327,7 @@ fn inline_macro_args_can_be_parsed() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -1407,7 +1408,7 @@ fn code_mappings_preserve_derive_error_locations() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: The value does not fit within the range of type core::integer::u8.
@@ -1456,7 +1457,7 @@ fn only_compiles_needed_macros() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -1493,7 +1494,7 @@ fn always_compile_macros_requested_with_package_filter() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
@@ -1560,7 +1561,7 @@ fn can_emit_diagnostic_with_custom_location() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Plugin diagnostic: Unsupported tuple type
@@ -1609,7 +1610,7 @@ fn inline_macro_can_emit_diagnostic_with_custom_location() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Plugin diagnostic: Error from inline.
@@ -1682,7 +1683,7 @@ fn can_emit_diagnostic_with_custom_location_on_node_with_trivia() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Plugin diagnostic: Unsupported tuple type
@@ -1753,7 +1754,7 @@ fn can_emit_diagnostic_with_inversed_span() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Plugin diagnostic: Unsupported tuple type
@@ -1797,7 +1798,7 @@ fn can_emit_diagnostic_with_out_of_bounds_span() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             warn: Plugin diagnostic: Hello world!
@@ -1904,7 +1905,7 @@ fn can_emit_diagnostic_with_custom_location_with_parser() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Plugin diagnostic: Unsupported tuple type
@@ -1958,7 +1959,7 @@ fn diags_can_be_mapped_to_call_site_correctly() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Missing tokens. Expected a path segment.
@@ -2030,7 +2031,7 @@ fn attribute_diags_mapped_correctly_to_call_site() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Identifier not found.
@@ -2089,7 +2090,7 @@ fn inline_macro_diags_mapped_correctly_to_call_site() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Identifier not found.
@@ -2151,7 +2152,7 @@ fn call_site_mapped_correctly_after_expansion_by_two_macros() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: The name `generated_function_v2` is defined multiple times.
@@ -2220,7 +2221,7 @@ fn span_offsets_calculated_correctly_for_function_with_non_macro_attrs() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Missing semicolon
@@ -2290,7 +2291,7 @@ fn token_stream_parsed_with_correct_spans() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r##"
+        .stdout_eq(indoc! {r##"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             Ident(Token { content: "  ", span: TextSpan { start: 0, end: 2 } })
@@ -2394,7 +2395,7 @@ fn zero_width_diags_mapped_correctly_at_token_starts() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Identifier not found.
@@ -2529,7 +2530,7 @@ fn can_use_two_derive_macros() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]

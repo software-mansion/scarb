@@ -5,6 +5,7 @@ use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
+use snapbox::Assert;
 
 #[test]
 fn can_use_quote() {
@@ -47,7 +48,7 @@ fn can_use_quote() {
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling some v1.0.0 [..]
         [..] Compiling hello v1.0.0 [..]
         [..] Finished `dev` profile [..]
@@ -103,7 +104,7 @@ fn can_use_quote_with_token_tree() {
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling some v1.0.0 [..]
         [..] Compiling hello v1.0.0 [..]
         [..] Finished `dev` profile [..]
@@ -159,7 +160,7 @@ fn can_use_quote_with_token_stream() {
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                Compiling some v1.0.0 ([..]Scarb.toml)
                Compiling hello v1.0.0 ([..]Scarb.toml)
                 Finished `dev` profile target(s) in [..]
@@ -232,7 +233,8 @@ fn can_use_quote_with_syntax_node() {
         .child("target/dev/hello.expanded.cairo")
         .read_to_string();
 
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
             mod hello {
                 fn main() -> felt252 {
@@ -240,7 +242,6 @@ fn can_use_quote_with_syntax_node() {
                 }
             }
         "#},
-        expanded,
     );
 }
 
@@ -342,7 +343,8 @@ fn can_use_quote_with_cairo_specific_syntax() {
         .child("target/dev/hello.expanded.cairo")
         .read_to_string();
 
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
               mod hello {
                   #[derive(Drop)]
@@ -395,7 +397,6 @@ fn can_use_quote_with_cairo_specific_syntax() {
                   }
               }
           "#},
-        expanded,
     );
 }
 
@@ -459,7 +460,8 @@ fn can_parse_incoming_token_stream() {
         .child("target/dev/hello.expanded.cairo")
         .read_to_string();
 
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
             mod hello {
                 mod new_module {
@@ -470,7 +472,6 @@ fn can_parse_incoming_token_stream() {
                 }
             }
         "#},
-        expanded,
     );
 
     Scarb::quick_snapbox()
@@ -480,7 +481,7 @@ fn can_parse_incoming_token_stream() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             error: Unexpected return type. Expected: "core::integer::u32", found: "core::bool".
@@ -553,7 +554,8 @@ fn can_parse_with_token_interpolation() {
         .child("target/dev/hello.expanded.cairo")
         .read_to_string();
 
-    snapbox::assert_eq(
+    Assert::new().eq(
+        expanded,
         indoc! {r#"
             mod hello {
                 pub trait NameTrait<T> {
@@ -567,6 +569,5 @@ fn can_parse_with_token_interpolation() {
                 }
             }
         "#},
-        expanded,
     );
 }

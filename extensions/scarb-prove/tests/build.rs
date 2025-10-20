@@ -44,7 +44,7 @@ fn prove_from_execution_output() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Proving hello
         warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
         Saving proof to: target/execute/hello/execution1/proof/proof.json
@@ -125,7 +125,7 @@ fn prove_fails_when_execution_output_not_found() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Proving hello
             warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
             error: execution directory not found: [..]/target/execute/hello/execution1
@@ -159,7 +159,7 @@ fn prove_fails_when_cairo_pie_output() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Proving hello
             warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
             error: proving cairo pie output is not supported: [..]/target/execute/hello/execution1/cairo_pie.zip
@@ -181,7 +181,7 @@ fn prove_with_execute() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..])
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
@@ -206,7 +206,7 @@ fn prove_fails_on_windows() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: `scarb prove` is not supported on Windows
             help: use WSL or a Linux/macOS machine instead
 

@@ -7,6 +7,7 @@ use scarb_test_support::filesystem::{path_with_temp_dir, write_simple_hello_scri
 use scarb_test_support::fsx::make_executable;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+use snapbox::Data;
 use std::collections::BTreeMap;
 use std::env;
 use std::io::BufRead;
@@ -26,7 +27,7 @@ fn run_simple_script() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("Hello, world!\n");
+        .stdout_eq(Data::from("Hello, world!\n").raw().raw());
 }
 
 #[test]
@@ -44,12 +45,15 @@ fn run_missing_script() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             error: missing script `some_other_script` for package: pkg0
 
             To see a list of scripts, run:
                 scarb run
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -74,12 +78,15 @@ fn run_missing_script_in_workspace() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             error: missing script `some_other_script` for package: first
 
             To see a list of scripts, run:
                 scarb run -p first
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -98,7 +105,7 @@ fn script_inherits_env_vars() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("Hello, world!\n");
+        .stdout_eq(Data::from("Hello, world!\n").raw().raw());
 }
 
 #[test]
@@ -117,7 +124,7 @@ fn scarb_env_var_cannot_be_overwritten() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("release\n");
+        .stdout_eq(Data::from("release\n").raw().raw());
 }
 
 #[test]
@@ -145,12 +152,15 @@ fn list_scripts() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             Scripts available via `scarb run`:
             some_other_script     : echo 'world!'
             some_script           : echo 'Hello'
 
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -191,12 +201,15 @@ fn list_scripts_in_workspace_with_package_filter() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             Scripts available via `scarb run` for package `first`:
             some_other_script     : echo 'world!'
             some_script           : echo 'Hello'
 
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -268,14 +281,17 @@ fn list_scripts_in_workspace() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             Scripts available via `scarb run` for package `first`:
             some_other_script     : echo 'world!'
             some_script           : echo 'Hello'
 
             Scripts available via `scarb run` for package `second`:
 
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -317,7 +333,7 @@ fn additional_args_passed() {
         .env("PATH", path_with_temp_dir(&t))
         .assert()
         .success()
-        .stdout_eq("Hello beautiful world\n");
+        .stdout_eq(Data::from("Hello beautiful world\n").raw());
 }
 
 #[test]
@@ -397,16 +413,19 @@ fn uses_package_filter() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("Hello first package!\n");
+        .stdout_eq(Data::from("Hello first package!\n").raw());
 
     Scarb::quick_snapbox()
         .args(["--json", "run", "-p", "bar", "some_script"])
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
         {"type":"error","message":"package `bar` not found in workspace"}
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -485,7 +504,7 @@ fn additional_args_not_parsed_as_package_filter() {
         .env("PATH", path_with_temp_dir(&t))
         .assert()
         .success()
-        .stdout_eq("Hello -p world\n");
+        .stdout_eq(Data::from("Hello -p world\n").raw());
 }
 
 #[test]
@@ -514,12 +533,15 @@ fn run_missing_script_in_workspace_root() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             error: missing script `some_other_script` for workspace root
 
             To see a list of scripts, run:
                 scarb run --workspace-root
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -550,12 +572,15 @@ fn list_scripts_in_workspace_root() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             Scripts available via `scarb run` for workspace root:
             some_other_script     : echo 'world!'
             some_script           : echo 'Hello'
 
-        "#});
+        "#})
+            .raw(),
+        );
 
     let output: BTreeMap<String, String> = Scarb::quick_snapbox()
         .args(["--json", "run", "--workspace-root"])

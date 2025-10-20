@@ -21,7 +21,7 @@ fn build_script_runs_before_compilation() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Running build script for hello v1.0.0 ([..]Scarb.toml)
             Prebuild script executed
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
@@ -53,7 +53,7 @@ fn ignore_dependency_build_script() {
         .current_dir(&main)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling main v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
         "#});

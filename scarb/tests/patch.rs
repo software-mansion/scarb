@@ -8,6 +8,7 @@ use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::LocalRegistry;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+use snapbox::{Assert, Data};
 use std::iter::zip;
 
 #[test]
@@ -26,7 +27,7 @@ fn can_only_be_defined_in_root() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]Scarb.toml
     
             Caused by:
@@ -96,7 +97,7 @@ fn patch_scarbs_with_path() {
         .arg("fetch")
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -117,7 +118,7 @@ fn patch_scarbs_with_path() {
         "third 1.0.0 (path+file:[..]third[..]Scarb.toml)".to_string(),
     ];
     for (expected, real) in zip(&expected, packages) {
-        snapbox::assert_matches(expected, real);
+        Assert::new().eq(real, expected);
     }
 }
 
@@ -156,7 +157,7 @@ fn patch_scarbs_with_git() {
         .arg("fetch")
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Updating git repository [..]dep1
         "#});
     let metadata = Scarb::quick_snapbox()
@@ -179,7 +180,7 @@ fn patch_scarbs_with_git() {
         "third 1.0.0 (path+file:[..]third[..]Scarb.toml)".to_string(),
     ];
     for (expected, real) in zip(&expected, packages) {
-        snapbox::assert_matches(expected, real);
+        Assert::new().eq(real, expected);
     }
 }
 
@@ -217,7 +218,7 @@ fn patch_scarbs_with_path_by_full_url() {
         .arg("fetch")
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -238,7 +239,7 @@ fn patch_scarbs_with_path_by_full_url() {
         "third 1.0.0 (path+file:[..]third[..]Scarb.toml)".to_string(),
     ];
     for (expected, real) in zip(&expected, packages) {
-        snapbox::assert_matches(expected, real);
+        Assert::new().eq(real, expected);
     }
 }
 
@@ -284,7 +285,7 @@ fn patch_not_existing_registry_with_path() {
         .arg("fetch")
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -305,7 +306,7 @@ fn patch_not_existing_registry_with_path() {
         "third 1.0.0 (path+file:[..]third[..]Scarb.toml)".to_string(),
     ];
     for (expected, real) in zip(&expected, packages) {
-        snapbox::assert_matches(expected, real);
+        Assert::new().eq(real, expected);
     }
 }
 
@@ -349,7 +350,7 @@ fn patch_git_with_path() {
         .arg("fetch")
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -370,7 +371,7 @@ fn patch_git_with_path() {
         "third 1.0.0 (path+file:[..]third[..]Scarb.toml)".to_string(),
     ];
     for (expected, real) in zip(&expected, packages) {
-        snapbox::assert_matches(expected, real);
+        Assert::new().eq(real, expected);
     }
 }
 
@@ -430,7 +431,7 @@ fn patch_git_with_registry() {
         .arg("fetch")
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -451,7 +452,7 @@ fn patch_git_with_registry() {
         "third 1.0.0 (path+file:[..]third[..]Scarb.toml)".to_string(),
     ];
     for (expected, real) in zip(&expected, packages) {
-        snapbox::assert_matches(expected, real);
+        Assert::new().eq(real, expected);
     }
 }
 
@@ -478,12 +479,15 @@ fn invalid_url() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! { r#"
+        .stdout_eq(
+            Data::from(indoc! { r#"
         error: failed to parse `scarbs.xyz` as patch source url
 
         Caused by:
             relative URL without a base
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -531,14 +535,14 @@ fn warn_unused_patch() {
         "third 1.0.0 (path+file:[..]third[..]Scarb.toml)".to_string(),
     ];
     for (expected, real) in zip(&expected, packages) {
-        snapbox::assert_matches(expected, real);
+        Assert::new().eq(real, expected);
     }
     Scarb::quick_snapbox()
         .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Updating git repository [..]dep1
             warn: patch `boo` (`[..]Scarb.toml`) for source `file:[..]dep1` has not been used
         "#});
@@ -579,7 +583,7 @@ fn packaging_no_version_dependency_ignores_patches() {
         .current_dir(&hello)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging hello v1.0.0 [..]
         error: dependency `foo` does not specify a version requirement
         note: all dependencies must have a version specified when packaging
@@ -618,7 +622,7 @@ fn patch_registry_with_registry() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -637,7 +641,7 @@ fn patch_registry_with_registry() {
         "foo 0.1.0 (path+[..]Scarb.toml)".to_string(),
     ];
     for (expected, real) in zip(&expected, packages) {
-        snapbox::assert_matches(expected, real);
+        Assert::new().eq(real, expected);
     }
 }
 
@@ -666,7 +670,10 @@ fn cannot_define_default_registry_both_short_and_long_name() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             error: the `[patch]` section cannot specify both `scarbs-xyz` and `https://scarbs.xyz/`
-        "#});
+        "#})
+            .raw(),
+        );
 }

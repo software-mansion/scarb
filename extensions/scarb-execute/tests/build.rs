@@ -7,7 +7,7 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::predicates::is_file_empty;
 use scarb_test_support::project_builder::ProjectBuilder;
-use snapbox::{Assert, Substitutions};
+use snapbox::{Assert, Data, Redactions};
 
 fn executable_project_builder() -> ProjectBuilder {
     ProjectBuilder::start()
@@ -42,7 +42,7 @@ fn can_execute_default_main_function_from_executable() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
@@ -69,7 +69,7 @@ fn can_execute_prebuilt_executable() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Executing hello
         Saving output to: target/execute/hello/execution1
         "#});
@@ -93,7 +93,7 @@ fn can_execute_bootloader_target() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
@@ -114,7 +114,7 @@ fn cannot_produce_trace_file_for_bootloader_target() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: Standard output format is not supported for bootloader execution target
         "#});
 }
@@ -129,7 +129,7 @@ fn cannot_produce_cairo_pie_for_standalone_target() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: Cairo pie output format is not supported for standalone execution target
         "#});
 }
@@ -159,7 +159,7 @@ fn fails_when_attr_missing() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
             error: requested `#[executable]` not found
             error: could not compile `hello` due to [..] previous error
@@ -172,7 +172,7 @@ fn fails_when_attr_missing() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Executing hello
             error: package has not been compiled, file does not exist: `hello.executable.json`
             help: run `scarb build` to compile the package
@@ -202,7 +202,7 @@ fn can_print_panic_reason() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello
@@ -241,7 +241,7 @@ fn no_target_defined() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: no executable target found for package `hello_world`
             help: you can add `executable` target to the package manifest with following excerpt
             -> Scarb.toml
@@ -287,7 +287,7 @@ fn undefined_target_specified() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: no executable target with name `secondary` found for package `hello_world`
         "#});
 
@@ -298,7 +298,7 @@ fn undefined_target_specified() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: no executable target with executable function `secondary` found for package `hello_world`
         "#});
 }
@@ -345,7 +345,7 @@ fn can_choose_build_target() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling executable(hello_world) hello_world v1.0.0 ([..]Scarb.toml)
             [..]Compiling executable(secondary) hello_world v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -364,7 +364,7 @@ fn can_choose_build_target() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Executing hello_world
             Program output:
             24
@@ -383,7 +383,7 @@ fn executable_must_be_chosen() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: more than one executable target found for package `hello_world`
             help: specify the target with `--executable-name` or `--executable-function`
     
@@ -399,7 +399,7 @@ fn can_set_ui_verbosity() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 }
 
 #[test]
@@ -411,7 +411,7 @@ fn maintains_parent_verbosity() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 }
 
 #[test]
@@ -440,7 +440,7 @@ fn can_use_features() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
@@ -470,7 +470,7 @@ fn can_create_profiler_trace_file() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
@@ -504,7 +504,7 @@ fn no_required_sierra_for_profiler_trace_file() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
@@ -540,10 +540,10 @@ fn no_build_artifact_for_profiler_trace_file() {
         .arg("--save-profiler-trace-data")
         .current_dir(&t)
         .assert();
-    let assert = assert.with_assert(Assert::default().substitutions(Substitutions::default()));
+    let assert = assert.with_assert(Assert::default().redact_with(Redactions::default()));
     assert
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Executing hello
         Saving output to: target/execute/hello/execution1
         error: Missing sierra code for executable `hello`, file [..]hello.executable.sierra.json does not exist. help: run `scarb build` to compile the package and try again.
@@ -574,7 +574,7 @@ fn invalid_tracked_resource_for_profiler_trace_file() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello

@@ -712,7 +712,7 @@ fn json_output_is_not_pretty() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches("{\"version\":1,[..]}\n");
+        .stdout_eq("{\"version\":1,[..]}\n");
 }
 
 #[test]
@@ -1191,7 +1191,7 @@ fn infer_readme_simple_bool() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             {"type":"error","message":"failed to parse manifest at: [..]/Scarb.toml[..]Caused by:[..]failed to find readme at [..]/README.md[..]"}
         "#});
 
@@ -2093,7 +2093,7 @@ fn cannot_specify_not_predefined_inlining_strategy() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]Scarb.toml
             
             Caused by:

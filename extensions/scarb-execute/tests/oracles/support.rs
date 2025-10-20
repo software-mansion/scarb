@@ -84,10 +84,7 @@ impl Check {
             .arg("execute")
             .current_dir(&t);
 
-        let assert = snapbox
-            .assert()
-            .success()
-            .stdout_matches(self.stdout_matches);
+        let assert = snapbox.assert().success().stdout_eq(self.stdout_matches);
 
         if !self.stderr_contains.is_empty() {
             let pattern = self.stderr_contains;

@@ -1,5 +1,6 @@
 use indoc::indoc;
 use scarb_test_support::command::Scarb;
+use snapbox::Data;
 
 static BUILTIN_COMMANDS: &[&str] = &[
     "add",
@@ -284,11 +285,14 @@ fn fails_without_arg_and_empty_env() {
         .env("SHELL", "")
         .assert()
         .failure()
-        .stdout_eq(indoc!(
-            r#"
+        .stdout_eq(
+            Data::from(indoc!(
+                r#"
             error: could not automatically determine shell to generate completions for
             help: specify the shell explicitly: `scarb completions <shell>`
             for the list of supported shells, run `scarb completions --help`
         "#
-        ));
+            ))
+            .raw(),
+        );
 }

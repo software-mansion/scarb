@@ -1,3 +1,4 @@
+use snapbox::Data;
 use std::collections::HashMap;
 use std::fs;
 
@@ -60,14 +61,14 @@ fn quiet_output() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 
     Scarb::quick_snapbox()
         .args(["--json", "-q", "build"])
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 }
 
 #[test]
@@ -84,7 +85,7 @@ fn compile_with_syntax_error() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                 Checking hello v0.1.0 ([..]Scarb.toml)
             error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
              --> [..]/lib.cairo:1:14
@@ -110,7 +111,7 @@ fn compile_with_syntax_error_json() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             {"status":"checking","message":"hello v0.1.0 ([..]Scarb.toml)"}
             {"type":"error","message":"Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute./n --> [..]/lib.cairo:1:14/nnot_a_keyword/n             ^/n"}
             {"type":"error","message":"could not check `hello` due to [..] previous error"}
@@ -126,7 +127,7 @@ fn compile_without_manifest() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(format!(
+        .stdout_eq(format!(
             "\
 error: failed to read manifest at: [..]/Scarb.toml
 
@@ -155,7 +156,7 @@ fn compile_with_lowercase_scarb_toml() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(format!(
+        .stdout_eq(format!(
             "\
 error: failed to read manifest at: [..]/Scarb.toml
 
@@ -175,7 +176,7 @@ fn compile_with_manifest_not_a_file() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(format!(
+        .stdout_eq(format!(
             "\
 error: failed to read manifest at: [..]/Scarb.toml
 
@@ -202,7 +203,7 @@ fn compile_with_invalid_empty_name() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]/Scarb.toml
 
             Caused by:
@@ -231,7 +232,7 @@ fn compile_with_invalid_version() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]/Scarb.toml
 
             Caused by:
@@ -261,7 +262,7 @@ fn compile_with_invalid_cairo_version() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]/Scarb.toml
 
             Caused by:
@@ -292,7 +293,7 @@ fn compile_with_incompatible_cairo_version() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: the required Cairo version of package hello is not compatible with current version
             Cairo version required: ^33.33.0
             Cairo version of Scarb: [..]
@@ -323,7 +324,7 @@ fn compile_ignore_cairo_version() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: `edition` field not set in `[package]` section for package `hello`
             warn: the required Cairo version of package hello is not compatible with current version
             Cairo version required: ^33.33.0
@@ -370,7 +371,7 @@ fn compile_with_invalid_non_numeric_dep_version() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]/Scarb.toml
 
             Caused by:
@@ -396,7 +397,7 @@ fn compile_with_unset_edition() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: `edition` field not set in `[package]` section for package `hello`
             [..] Compiling hello v0.1.0 ([..]Scarb.toml)
             [..]  Finished `dev` profile target(s) in [..]
@@ -464,7 +465,7 @@ fn compile_multiple_packages() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling fib v1.0.0 ([..]Scarb.toml)
             [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -552,7 +553,7 @@ fn compile_with_nested_deps() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling x v1.0.0 ([..]Scarb.toml)
             [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -748,7 +749,7 @@ fn edition_must_exist() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
              error: failed to parse manifest at: [..]/Scarb.toml
 
              Caused by:
@@ -785,7 +786,7 @@ fn dev_dep_used_outside_tests() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling x v1.0.0 ([..])
             error[E0006]: Identifier not found.
              --> [..]/src/lib.cairo[..]
@@ -824,7 +825,7 @@ fn dev_dep_inside_test() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling x v1.0.0 ([..])
             [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -867,7 +868,7 @@ fn build_test_without_compiling_tests_from_dependencies() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling test(x_unittest) x v1.0.0 ([..])
             [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -891,7 +892,7 @@ fn warnings_allowed_by_default() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
         warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
          --> [..]lib.cairo:2:9
@@ -924,7 +925,7 @@ fn warnings_can_be_disallowed() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
         warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
          --> [..]lib.cairo:2:9
@@ -969,7 +970,7 @@ fn does_show_errors_from_deps() {
         .current_dir(&second)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling second v1.0.0 ([..]Scarb.toml)
             error: Skipped tokens. Expected: statement.
              --> [..]lib.cairo:2:5
@@ -1015,7 +1016,7 @@ fn does_not_show_warnings_from_deps() {
         .current_dir(&first)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
         warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
          --> [..]lib.cairo:2:9
@@ -1056,7 +1057,7 @@ fn error_codes_shown_in_json_output() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             {"status":"compiling","message":"[..] v1.0.0 ([..]Scarb.toml)"}
             {"type":"warn","message":"Unused variable. Consider ignoring by prefixing with `_`./n --> [..]lib.cairo:2:9/n    let a = 41;/n        ^/n","code":"E0001"}
             {"status":"finished","message":"`dev` profile target(s) in [..]"}
@@ -1175,7 +1176,7 @@ fn cannot_disable_gas_for_starknet_contract() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: the target starknet contract compilation requires gas to be enabled
             error: could not compile `hello` due to [..] previous error
@@ -1637,7 +1638,7 @@ fn valid_lint_allows_dont_generate_diagnostics() {
         .arg("build")
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -1657,7 +1658,7 @@ fn invalid_lint_allows_generate_only_warnings() {
         .arg("build")
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             warn: `allow` attribute argument not supported.
              --> [..]src/lib.cairo:1:8
@@ -1687,7 +1688,7 @@ fn invalid_lint_allows_are_ignored_in_deps() {
         .arg("build")
         .current_dir(t.child("hello"))
         .assert()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -1902,7 +1903,7 @@ fn can_use_dependency_twice_with_different_kinds() {
         .current_dir(&second)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling second v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
         "#});

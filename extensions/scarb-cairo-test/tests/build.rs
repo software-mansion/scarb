@@ -46,7 +46,7 @@ fn can_test_without_gas() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: `scarb cairo-test` is deprecated and will be removed in a future version.
             help: please migrate to `snforge` for all your testing needs.
             help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
@@ -100,7 +100,7 @@ fn can_print_test_resources() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: `scarb cairo-test` is deprecated and will be removed in a future version.
             help: please migrate to `snforge` for all your testing needs.
             help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
@@ -154,7 +154,7 @@ fn features_test_build_success() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Running cairo-test hello
             warn: `scarb cairo-test` is deprecated and will be removed in a future version.
             help: please migrate to `snforge` for all your testing needs.
@@ -178,7 +178,7 @@ fn features_test_build_failed() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: `scarb cairo-test` is deprecated and will be removed in a future version.
             help: please migrate to `snforge` for all your testing needs.
             help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
@@ -233,7 +233,7 @@ fn integration_tests() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: `scarb cairo-test` is deprecated and will be removed in a future version.
             help: please migrate to `snforge` for all your testing needs.
             help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
@@ -277,7 +277,7 @@ fn warn_if_cairo_test_plugin_missing() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: `scarb cairo-test` is deprecated and will be removed in a future version.
             help: please migrate to `snforge` for all your testing needs.
             help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
@@ -318,7 +318,7 @@ fn do_not_warn_on_non_tested_package() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: `scarb cairo-test` is deprecated and will be removed in a future version.
             help: please migrate to `snforge` for all your testing needs.
             help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
@@ -373,7 +373,7 @@ fn can_choose_test_kind_to_run() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: `scarb cairo-test` is deprecated and will be removed in a future version.
             help: please migrate to `snforge` for all your testing needs.
             help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
@@ -392,7 +392,7 @@ fn can_choose_test_kind_to_run() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             warn: `scarb cairo-test` is deprecated and will be removed in a future version.
             help: please migrate to `snforge` for all your testing needs.
             help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html

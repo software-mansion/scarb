@@ -67,7 +67,7 @@ fn can_return_aux_data_from_plugin() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [SomeMacroDataFormat { msg: "Hello from some macro!" }]
@@ -110,7 +110,7 @@ fn can_read_token_stream_metadata() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             TokenStreamMetadata {
@@ -186,7 +186,7 @@ fn can_resolve_full_path_markers() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [FullPathMarker { key: "some-key", full_path: "hello::main" }]

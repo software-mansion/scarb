@@ -1,6 +1,7 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use indoc::indoc;
+use snapbox::Data;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx;
@@ -43,7 +44,7 @@ fn simple_check_invalid() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {"\
+        .stdout_eq(indoc! {"\
             Diff in [..]/src/lib.cairo:
              --- original
             +++ modified
@@ -70,13 +71,16 @@ fn simple_emit_invalid() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(format!(
-            "{}:\n\n{}",
-            fsx::canonicalize(t.child("src/lib.cairo"))
-                .unwrap()
-                .display(),
-            SIMPLE_FORMATTED
-        ));
+        .stdout_eq(
+            Data::from(format!(
+                "{}:\n\n{}",
+                fsx::canonicalize(t.child("src/lib.cairo"))
+                    .unwrap()
+                    .display(),
+                SIMPLE_FORMATTED
+            ))
+            .raw(),
+        );
     let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
 }
@@ -127,7 +131,7 @@ fn simple_format_with_parsing_error() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: Missing tokens. Expected a type expression.
          --> [..]lib.cairo:1:16
         fn main()    ->    {      42      }
@@ -144,7 +148,7 @@ fn simple_format_with_filter() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq("error: package `world` not found in workspace\n");
+        .stdout_eq(Data::from("error: package `world` not found in workspace\n").raw());
 
     assert!(t.child("src/lib.cairo").is_file());
     let content = t.child("src/lib.cairo").read_to_string();
@@ -221,7 +225,7 @@ fn format_with_import_sorting() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {"\
+        .stdout_eq(indoc! {"\
             Diff in file [..]lib.cairo:
              --- original
             +++ modified
@@ -353,13 +357,16 @@ fn workspace_emit_with_root() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(format!(
-            "{}:\n\n{}",
-            fsx::canonicalize(t.child("src/lib.cairo"))
-                .unwrap()
-                .display(),
-            SIMPLE_FORMATTED
-        ));
+        .stdout_eq(
+            Data::from(format!(
+                "{}:\n\n{}",
+                fsx::canonicalize(t.child("src/lib.cairo"))
+                    .unwrap()
+                    .display(),
+                SIMPLE_FORMATTED
+            ))
+            .raw(),
+        );
 
     let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
@@ -373,21 +380,24 @@ fn workspace_emit_with_root() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(format!(
-            "{}:\n\n{}{}:\n\n{}{}:\n\n{}",
-            fsx::canonicalize(t.child("first/src/lib.cairo"))
-                .unwrap()
-                .display(),
-            SIMPLE_FORMATTED,
-            fsx::canonicalize(t.child("second/src/lib.cairo"))
-                .unwrap()
-                .display(),
-            SIMPLE_FORMATTED,
-            fsx::canonicalize(t.child("src/lib.cairo"))
-                .unwrap()
-                .display(),
-            SIMPLE_FORMATTED,
-        ));
+        .stdout_eq(
+            Data::from(format!(
+                "{}:\n\n{}{}:\n\n{}{}:\n\n{}",
+                fsx::canonicalize(t.child("first/src/lib.cairo"))
+                    .unwrap()
+                    .display(),
+                SIMPLE_FORMATTED,
+                fsx::canonicalize(t.child("second/src/lib.cairo"))
+                    .unwrap()
+                    .display(),
+                SIMPLE_FORMATTED,
+                fsx::canonicalize(t.child("src/lib.cairo"))
+                    .unwrap()
+                    .display(),
+                SIMPLE_FORMATTED,
+            ))
+            .raw(),
+        );
 
     let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
