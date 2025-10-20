@@ -2540,3 +2540,398 @@ fn can_use_two_derive_macros() {
             Saving output to: target/execute/hello/execution1
         "#});
 }
+
+#[test]
+fn module_level_inline_macro() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan};
+
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+            let code = indoc::formatdoc!{r#"
+                pub fn foo() -> felt252 {{ 42 }}
+            "#};
+
+            ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+                code.clone(),
+                TextSpan {
+                    start: 0,
+                    end: code.len() as u32,
+                },
+            ))]))
+        }
+        "##})
+        .add_dep(r#"indoc = "*""#)
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            mod hello {
+                some!();
+            }
+
+            #[executable]
+            fn main() -> felt252 {
+                hello::foo()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing hello
+            Program output:
+            42
+            Saving output to: target/execute/hello/execution1
+        "#});
+}
+
+#[test]
+fn module_level_inline_macro_with_args() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+            .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan};
+
+            #[inline_macro]
+            pub fn some(token_stream: TokenStream) -> ProcMacroResult {
+                // Parse single value from token stream
+                let input = token_stream.to_string().trim().to_string();
+
+                let code = indoc::formatdoc!{r#"
+                    pub fn foo() -> felt252 {{
+                        {input}
+                    }}
+                "#};
+
+                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+                    code.clone(),
+                    TextSpan {
+                        start: 0,
+                        end: code.len() as u32,
+                    },
+                ))]))
+            }
+            "##})
+            .add_dep(r#"indoc = "*""#)
+            .build(&t);
+    
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            mod hello {
+                some!(100);
+            }
+
+            #[executable]
+            fn main() -> felt252 {
+                hello::foo()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing hello
+            Program output:
+            100
+            Saving output to: target/execute/hello/execution1
+        "#});
+}
+
+#[test]
+fn module_level_inline_macro_in_nested_module() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan};
+
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+            let code = indoc::formatdoc!{r#"
+                pub fn nested_foo() -> felt252 {{ 42 }}
+            "#};
+            ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+                code.clone(),
+                TextSpan {
+                    start: 0,
+                    end: code.len() as u32,
+                },
+            ))]))
+        }
+        "##})
+        .add_dep(r#"indoc = "*""#)
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            mod outer {
+                pub mod inner {
+                    some!();
+                }
+            }
+
+            #[executable]
+            fn main() -> felt252 {
+                outer::inner::nested_foo()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing hello
+            Program output:
+            42
+            Saving output to: target/execute/hello/execution1
+        "#});
+}
+
+#[test]
+fn module_level_inline_macro_empty() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
+
+        #[inline_macro]
+        pub fn empty_foo(_token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(TokenStream::empty())
+        }
+        "##})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            mod hello {
+                pub fn a() -> felt252 { 21 }
+                empty_foo!();
+                pub fn b() -> felt252 { 42 }
+            }
+
+            #[executable]
+            fn main() -> felt252 {
+                hello::a() + hello::b()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing hello
+            Program output:
+            63
+            Saving output to: target/execute/hello/execution1
+        "#});
+}
+
+#[test]
+fn module_level_inline_macro_can_emit_diagnostics() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, Diagnostic};
+
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+            let diag = Diagnostic::error("Some error from macro.");
+            ProcMacroResult::new(TokenStream::empty())
+                .with_diagnostics(diag.into())
+        }
+        "##})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            mod hello {
+                some!();
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Plugin diagnostic: Some error from macro.
+             --> [..]lib.cairo:2:5
+                some!();
+                ^^^^^^^^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn module_level_inline_macro_multiple() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan};
+
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+            let code = indoc::formatdoc!{r#"
+                pub fn foo() -> felt252 {{ 21 }}
+            "#};
+            ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+                code.clone(),
+                TextSpan {
+                    start: 0,
+                    end: code.len() as u32,
+                },
+            ))]))
+        }
+
+        #[inline_macro]
+        pub fn other(_token_stream: TokenStream) -> ProcMacroResult {
+            let code = indoc::formatdoc!{r#"
+                pub fn bar() -> felt252 {{ 42 }}
+            "#};
+            ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+                code.clone(),
+                TextSpan {
+                    start: 0,
+                    end: code.len() as u32,
+                },
+            ))]))
+        }
+        "##})
+        .add_dep(r#"indoc = "*""#)
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            mod hello {
+                some!();
+                other!();
+            }
+
+            #[executable]
+            fn main() -> felt252 {
+                hello::foo() + hello::bar()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing hello
+            Program output:
+            63
+            Saving output to: target/execute/hello/execution1
+        "#});
+}
