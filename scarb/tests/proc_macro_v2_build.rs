@@ -420,6 +420,7 @@ fn cannot_duplicate_macros_across_packages() {
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: duplicate expansions defined for procedural macros: hello (other v1.0.0 ([..]Scarb.toml) and some v1.0.0 ([..]Scarb.toml))
+            error: could not compile `hello` due to previous error
         "#});
 }
 #[test]
@@ -500,5 +501,6 @@ fn can_disallow_loading_macros() {
         .stdout_matches(indoc! {r#"
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: procedural macros are disallowed with `--no-proc-macros` flag
+            error: could not compile `hello` due to previous error
         "#});
 }

@@ -2,7 +2,7 @@ use crate::compiler::plugin::proc_macro::v2::{ProcMacroHostPlugin, ProcMacroId};
 use crate::core::PackageId;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::GeneratedFileAuxData;
-use cairo_lang_filesystem::db::FilesGroup;
+use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_macro::AuxData;
 use cairo_lang_semantic::db::SemanticGroup;
 use itertools::Itertools;
@@ -81,9 +81,10 @@ impl ProcMacroHostPlugin {
     pub(crate) fn collect_aux_data(
         &self,
         db: &dyn SemanticGroup,
+        crate_ids: &[CrateId<'_>],
     ) -> HashMap<PackageId, Vec<ProcMacroAuxData>> {
         let mut data = Vec::new();
-        for crate_id in db.crates() {
+        for crate_id in crate_ids {
             let crate_modules = db.crate_modules(*crate_id);
             for module in crate_modules.iter() {
                 if let Ok(module_data) = module.module_data(db) {

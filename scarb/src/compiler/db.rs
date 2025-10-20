@@ -89,7 +89,7 @@ pub(crate) fn append_lint_plugin(_suite: &mut PluginSuite) {}
 
 /// Sets the plugin suites for crates related to the library components
 /// according to the `plugins_for_components` mapping.
-fn apply_plugins(
+pub(crate) fn apply_plugins(
     db: &mut RootDatabase,
     plugins_for_components: HashMap<CompilationUnitComponentId, PluginSuite>,
 ) {
@@ -151,7 +151,10 @@ pub fn set_override_crate_plugins_from_suite(
 /// This approach allows compiling crates that do not define `lib.cairo` file.
 /// For example, single file crates can be created this way.
 /// The actual single file modules are defined as `mod` items in created lib file.
-fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit) -> Result<()> {
+pub(crate) fn inject_virtual_wrapper_lib(
+    db: &mut RootDatabase,
+    unit: &CairoCompilationUnit,
+) -> Result<()> {
     let components: Vec<&CompilationUnitComponent> = unit
         .components
         .iter()
