@@ -157,18 +157,29 @@ pub fn expand_module_level_inline_macro<'db>(
     token_stream_builder.add_node(arguments.as_syntax_node());
     let token_stream = token_stream_builder.build(&ctx);
 
+    let (adapter, adapted_token_stream) = InlineAdapter::adapt_token_stream(
+        token_stream,
+        arguments.as_syntax_node().span(db),
+        call_site.span.clone(),
+    );
+    let adapted_call_site = adapter.adapted_call_site();
+
     let result = host
         .instance(found.package_id)
         .try_v2()
         .expect("procedural macro using v1 api used in a context expecting v2 api")
         .generate_code(
             found.expansion.expansion_name.clone(),
-            call_site.span.clone(),
+            adapted_call_site.clone(),
             TokenStream::empty(),
-            token_stream.with_metadata(stream_metadata.clone()),
+            adapted_token_stream.with_metadata(stream_metadata.clone()),
         );
 
-    let diagnostics = into_cairo_diagnostics(db, result.diagnostics.clone(), call_site.stable_ptr);
+    let diagnostics = into_cairo_diagnostics(
+        db,
+        adapter.adapt_diagnostics(result.diagnostics.clone()),
+        call_site.stable_ptr,
+    );
 
     let token_stream = result.token_stream.clone();
     if token_stream.is_empty() {
@@ -186,7 +197,10 @@ pub fn expand_module_level_inline_macro<'db>(
             found.clone(),
         )))
     });
-    let code_mappings = generate_code_mappings(&result.token_stream, call_site.span.clone());
+    let code_mappings = adapter.adapt_code_mappings(generate_code_mappings(
+        &result.token_stream,
+        adapted_call_site.clone(),
+    ));
 
     Some(PluginResult {
         code: Some(PluginGeneratedFile {
