@@ -48,68 +48,6 @@ impl ProcMacroInlinePlugin {
     }
 }
 
-fn expand_inline_macro_common<'db>(
-    db: &'db dyn Database,
-    instance: &ProcMacroInstance,
-    expansion: &Expansion,
-    proc_macro_id: ProcMacroId,
-    token_stream: TokenStream,
-    args_node: SyntaxNode<'db>,
-    call_site: CallSiteLocation<'db>,
-) -> (Option<PluginGeneratedFile>, Vec<PluginDiagnostic<'db>>) {
-    let (adapter, adapted_token_stream) =
-        InlineAdapter::adapt_token_stream(token_stream, args_node.span(db), call_site.span.clone());
-    let adapted_call_site = adapter.adapted_call_site();
-
-    let result = instance
-        .try_v2()
-        .expect("procedural macro using v1 api used in a context expecting v2 api")
-        .generate_code(
-            expansion.expansion_name.clone(),
-            adapted_call_site.clone(),
-            TokenStream::empty(),
-            adapted_token_stream,
-        );
-    // Handle diagnostics.
-    let diagnostics = into_cairo_diagnostics(
-        db,
-        adapter.adapt_diagnostics(result.diagnostics.clone()),
-        call_site.stable_ptr,
-    );
-    let token_stream = result.token_stream.clone();
-    if token_stream.is_empty() {
-        // Remove original code
-        (None, diagnostics)
-    } else {
-        // Replace
-        let aux_data = result.aux_data.map(|aux_data| {
-            DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
-                aux_data.into(),
-                proc_macro_id.clone(),
-            )))
-        });
-        let content = token_stream.to_string();
-        let code_mappings = adapter.adapt_code_mappings(generate_code_mappings(
-            &result.token_stream,
-            adapted_call_site,
-        ));
-        (
-            Some(PluginGeneratedFile {
-                name: "inline_proc_macro".into(),
-                code_mappings,
-                content,
-                aux_data,
-                diagnostics_note: Some(format!(
-                    "this error originates in the inline macro: `{}`",
-                    expansion.cairo_name
-                )),
-                is_unhygienic: false,
-            }),
-            diagnostics,
-        )
-    }
-}
-
 impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
     #[tracing::instrument(level = "trace", skip_all)]
     fn generate_code<'db>(
@@ -202,4 +140,66 @@ pub fn expand_module_level_inline_macro<'db>(
             remove_original_item: true,
         },
     })
+}
+
+fn expand_inline_macro_common<'db>(
+    db: &'db dyn Database,
+    instance: &ProcMacroInstance,
+    expansion: &Expansion,
+    proc_macro_id: ProcMacroId,
+    token_stream: TokenStream,
+    args_node: SyntaxNode<'db>,
+    call_site: CallSiteLocation<'db>,
+) -> (Option<PluginGeneratedFile>, Vec<PluginDiagnostic<'db>>) {
+    let (adapter, adapted_token_stream) =
+        InlineAdapter::adapt_token_stream(token_stream, args_node.span(db), call_site.span.clone());
+    let adapted_call_site = adapter.adapted_call_site();
+
+    let result = instance
+        .try_v2()
+        .expect("procedural macro using v1 api used in a context expecting v2 api")
+        .generate_code(
+            expansion.expansion_name.clone(),
+            adapted_call_site.clone(),
+            TokenStream::empty(),
+            adapted_token_stream,
+        );
+    // Handle diagnostics.
+    let diagnostics = into_cairo_diagnostics(
+        db,
+        adapter.adapt_diagnostics(result.diagnostics.clone()),
+        call_site.stable_ptr,
+    );
+    let token_stream = result.token_stream.clone();
+    if token_stream.is_empty() {
+        // Remove original code
+        (None, diagnostics)
+    } else {
+        // Replace
+        let aux_data = result.aux_data.map(|aux_data| {
+            DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
+                aux_data.into(),
+                proc_macro_id.clone(),
+            )))
+        });
+        let content = token_stream.to_string();
+        let code_mappings = adapter.adapt_code_mappings(generate_code_mappings(
+            &result.token_stream,
+            adapted_call_site,
+        ));
+        (
+            Some(PluginGeneratedFile {
+                name: "inline_proc_macro".into(),
+                code_mappings,
+                content,
+                aux_data,
+                diagnostics_note: Some(format!(
+                    "this error originates in the inline macro: `{}`",
+                    expansion.cairo_name
+                )),
+                is_unhygienic: false,
+            }),
+            diagnostics,
+        )
+    }
 }
