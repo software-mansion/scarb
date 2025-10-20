@@ -267,10 +267,9 @@ pub fn execute(
             Set `sierra = true` under your `[executable]` target in the config and try again.",
             build_target.name
         );
-        let executable_sierra_path = Utf8PathBuf::from(format!(
-            "{}/{}.executable.sierra.json",
-            &scarb_build_dir, &build_target.name
-        ));
+        let executable_sierra_path = scarb_build_dir
+            .join(&build_target.name)
+            .with_extension("executable.sierra.json");
         ensure!(
             executable_sierra_path.exists(),
             "Missing sierra code for executable `{0}`, file {executable_sierra_path} does not exist. \
