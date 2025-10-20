@@ -2779,9 +2779,11 @@ fn module_level_inline_macro_empty() {
         "#})
         .lib_cairo(indoc! {r#"
             mod hello {
+                empty_foo!();
                 pub fn a() -> felt252 { 21 }
                 empty_foo!();
                 pub fn b() -> felt252 { 42 }
+                empty_foo!();
             }
 
             #[executable]
@@ -2850,6 +2852,80 @@ fn module_level_inline_macro_can_emit_diagnostics() {
              --> [..]lib.cairo:2:5
                 some!();
                 ^^^^^^^^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn module_level_inline_macro_code_mappings_preserve_attribute_error_locations() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{inline_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
+
+        #[inline_macro]
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
+            let mut tokens = Vec::new();
+
+            tokens.push(TokenTree::Ident(Token::new(
+                "fn inner() -> felt252 { ".to_string(),
+                TextSpan::call_site(),
+            )));
+
+            // The first token is the opening parenthesis "(", so take the next token
+            let TokenTree::Ident(arg) = token_stream
+                .tokens
+                .get(1)
+                .expect("inline macro expects an identifier argument");
+
+            let content = arg.content.as_ref();
+            let slice_len: usize = core::cmp::min(7, content.len());
+            let slice = &content[..slice_len];
+
+            tokens.push(TokenTree::Ident(Token::new(
+                slice.to_string(),
+                TextSpan::new(2, 7),
+            )));
+
+            tokens.push(TokenTree::Ident(Token::new(
+                " }".to_string(),
+                TextSpan::call_site(),
+            )));
+            ProcMacroResult::new(TokenStream::new(tokens))
+        }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            mod my_module {
+                some!(abcdefghi);
+            }
+
+
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error[E0006]: Identifier not found.
+             --> [..]lib.cairo:2:12
+                some!(abcdefghi);
+                       ^^^^^
+            note: this error originates in the inline macro: `some`
 
             error: could not compile `hello` due to previous error
         "#});
