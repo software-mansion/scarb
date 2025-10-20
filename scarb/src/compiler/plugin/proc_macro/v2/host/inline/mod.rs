@@ -131,7 +131,6 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
     }
 }
 
-/// Expand module-level inline procedural macro.
 #[tracing::instrument(level = "trace", skip_all)]
 pub fn expand_module_level_inline_macro<'db>(
     host: &ProcMacroHostPlugin,
