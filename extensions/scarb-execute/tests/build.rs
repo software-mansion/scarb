@@ -7,6 +7,7 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::predicates::is_file_empty;
 use scarb_test_support::project_builder::ProjectBuilder;
+use snapbox::{Assert, Substitutions};
 
 fn executable_project_builder() -> ProjectBuilder {
     ProjectBuilder::start()
@@ -533,12 +534,14 @@ fn no_build_artifact_for_profiler_trace_file() {
     if artifact_path.exists() {
         std::fs::remove_file(&artifact_path).unwrap();
     }
-    Scarb::quick_snapbox()
+    let assert = Scarb::quick_snapbox()
         .arg("execute")
         .arg("--no-build")
         .arg("--save-profiler-trace-data")
         .current_dir(&t)
-        .assert()
+        .assert();
+    let assert = assert.with_assert(Assert::default().substitutions(Substitutions::default()));
+    assert
         .failure()
         .stdout_matches(indoc! {r#"
         [..]Executing hello
