@@ -137,7 +137,7 @@ pub fn expand_module_level_inline_macro<'db>(
     host: &ProcMacroHostPlugin,
     db: &'db dyn Database,
     inline_macro: &ast::ItemInlineMacro<'db>,
-    stream_metadata: &TokenStreamMetadata,
+    _stream_metadata: &TokenStreamMetadata,
 ) -> Option<PluginResult<'db>> {
     let path = inline_macro.path(db).segments(db).elements(db).last()?;
     let PathSegment::Simple(segment) = path else {
@@ -172,7 +172,7 @@ pub fn expand_module_level_inline_macro<'db>(
             found.expansion.expansion_name.clone(),
             adapted_call_site.clone(),
             TokenStream::empty(),
-            adapted_token_stream.with_metadata(stream_metadata.clone()),
+            adapted_token_stream,
         );
 
     let diagnostics = into_cairo_diagnostics(
