@@ -3,6 +3,7 @@ use assert_fs::prelude::*;
 use indoc::indoc;
 
 use scarb_test_support::command::Scarb;
+use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
@@ -193,4 +194,47 @@ fn duplicate_asset_names_between_dependencies_error() {
             [..] Compiling app v0.1.0 ([..])
             error: multiple packages declare an asset with the same file name `common.txt`: dep2 [..], dep1 [..]
         "#});
+}
+
+#[test]
+fn build_with_test_flag_and_multiple_test_targets() {
+    let t = TempDir::new().unwrap();
+
+    // Create a Cairo package that looks like it has unit tests and multiple integration tests.
+    ProjectBuilder::start()
+        .name("foo")
+        .version("0.1.0")
+        .manifest_package_extra(r#"assets = ["data.txt"]"#)
+        .src("data.txt", "")
+        .lib_cairo("")
+        .src("tests/test_one.cairo", "")
+        .src("tests/test_two.cairo", "")
+        .build(&t);
+
+    // Now build with the `--test` flag. This will compile multiple compilation units, each with
+    // the same asset, but this SHOULDN'T result in `multiple packages declare an asset` error.
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling test([..]) foo [..]
+            [..] Compiling test([..]) foo_integrationtest [..]
+            [..] Finished [..]
+        "#});
+
+    assert_eq!(
+        t.child("target/dev").files(),
+        vec![
+            ".fingerprint",
+            "data.txt",
+            "foo_integrationtest.test.json",
+            "foo_integrationtest.test.sierra.json",
+            "foo_unittest.test.json",
+            "foo_unittest.test.sierra.json",
+            "incremental"
+        ]
+    );
 }
