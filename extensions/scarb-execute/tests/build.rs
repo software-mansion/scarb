@@ -171,6 +171,7 @@ fn fails_when_attr_missing() {
         .arg("--no-build")
         .current_dir(&t)
         .assert()
+        .with_assert(Assert::default().redact_with(Redactions::default()))
         .failure()
         .stdout_eq(indoc! {r#"
             [..]Executing hello
