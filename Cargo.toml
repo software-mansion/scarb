@@ -117,7 +117,7 @@ quote = "1"
 ra_ap_toolchain = "0.0.301"
 rayon = "1.11.0"
 redb = "2.6.3"
-reqwest = { version = "0.12", features = ["gzip", "brotli", "deflate", "json", "stream", "multipart"] }
+reqwest = { version = "0.12", default-features = false, features = ["gzip", "brotli", "deflate", "json", "stream", "multipart"] }
 salsa = "=0.24.0"
 semver = { version = "1", features = ["serde"] }
 semver-pubgrub = { git = "https://github.com/software-mansion-labs/semver-pubgrub.git" }
