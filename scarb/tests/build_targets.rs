@@ -13,6 +13,7 @@ use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use serde_json::json;
+use snapbox::{Assert, Redactions};
 use std::path::PathBuf;
 use test_case::test_case;
 
@@ -1338,6 +1339,7 @@ fn ambiguous_executable_function() {
         .arg("build")
         .current_dir(&t)
         .assert()
+        .with_assert(Assert::default().redact_with(Redactions::default()))
         .failure()
         .stdout_eq(indoc! {r#"
                Compiling hello_world v1.0.0 ([..]Scarb.toml)
@@ -1533,6 +1535,7 @@ fn executable_target_validation() {
         .arg("build")
         .current_dir(&t)
         .assert()
+        .with_assert(Assert::default().redact_with(Redactions::default()))
         .failure()
         .stdout_eq(indoc! {r#"
             warn: you have specified multiple executable targets

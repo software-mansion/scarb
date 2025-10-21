@@ -20,6 +20,7 @@ use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::LocalRegistry;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+use snapbox::filter::{Filter, FilterPaths};
 use snapbox::{Assert, Data};
 use test_case::test_case;
 
@@ -125,7 +126,7 @@ impl PackageChecker {
     fn file_eq_path(&self, path: impl AsRef<Path>, expected_path: impl AsRef<Path>) -> &Self {
         Assert::new().eq(
             self.read_file(path),
-            Data::read_from(expected_path.as_ref(), None),
+            FilterPaths.filter(Data::read_from(expected_path.as_ref(), None)),
         );
         self
     }
