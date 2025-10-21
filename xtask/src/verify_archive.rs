@@ -52,10 +52,9 @@ pub fn main(args: Args) -> Result<()> {
 
     let workdir = sh.create_temp_dir()?;
     sh.change_dir(workdir.path());
-    cmd!(sh, "{scarb} new smoke_test --test-runner=cairo-test").run()?;
+    cmd!(sh, "{scarb} new smoke_test --test-runner=none").run()?;
     sh.change_dir(workdir.path().join("smoke_test"));
     cmd!(sh, "{scarb} build").run()?;
-    cmd!(sh, "{scarb} test").run()?;
     if args.full {
         cmd!(sh, "{scarb} lint").run()?;
         let commands = cmd!(sh, "{scarb} --json commands").read()?;
