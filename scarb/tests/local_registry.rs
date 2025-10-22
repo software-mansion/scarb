@@ -2,6 +2,7 @@ use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use indoc::{formatdoc, indoc};
 use serde_json::json;
+use snapbox::Data;
 use url::Url;
 
 use scarb_test_support::command::Scarb;
@@ -34,7 +35,7 @@ fn usage() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 }
 
 #[test]
@@ -115,7 +116,7 @@ fn not_found() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to lookup for `baz ^1 (registry+file://[..])` in registry: registry+file://[..]
 
         Caused by:
@@ -143,7 +144,7 @@ fn empty_registry() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to lookup for `baz ^1 (registry+file://[..])` in registry: registry+file://[..]
 
         Caused by:
@@ -171,7 +172,7 @@ fn url_pointing_to_file() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to load source: registry+file://[..]
 
         Caused by:
@@ -205,7 +206,7 @@ fn publish() {
             .current_dir(&t)
             .assert()
             .success()
-            .stdout_matches(formatdoc! {r#"
+            .stdout_eq(formatdoc! {r#"
             [..] Packaging {name} v{version} ([..])
             warn: manifest has no [..]
             warn: manifest has no [..]
@@ -294,7 +295,7 @@ fn publish_disabled() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: publishing disabled for package foobar v1.0.0 ([..]Scarb.toml)
         help: set `publish = true` in package manifest
         "#});

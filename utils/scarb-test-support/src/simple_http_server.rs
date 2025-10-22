@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use std::fmt;
-use std::net::{SocketAddr, TcpListener};
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
@@ -71,11 +71,15 @@ impl SimpleHttpServer {
                 logger,
             ));
 
-        let tcp = TcpListener::bind("127.0.0.1:0").unwrap();
+        // Start listening synchronously to learn the port, but serving itself is done in the
+        // background asynchronously.
+        let tcp = {
+            let sync = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            sync.set_nonblocking(true).unwrap();
+            tokio::net::TcpListener::from_std(sync).unwrap()
+        };
         let addr = tcp.local_addr().unwrap();
-        let server = axum::Server::from_tcp(tcp)
-            .unwrap()
-            .serve(app.into_make_service());
+        let server = axum::serve(tcp, app);
 
         tokio::spawn(async move {
             let graceful = server.with_graceful_shutdown(async {
@@ -133,10 +137,10 @@ async fn post_handler(post_response: Option<HttpPostResponse>) -> impl IntoRespo
     (status_code, json_response.to_string())
 }
 
-async fn logger<B>(
+async fn logger(
     State((logs, print_logs)): State<LoggerState>,
-    request: Request<B>,
-    next: Next<B>,
+    request: Request<Body>,
+    next: Next,
 ) -> Response {
     static COUNTER: AtomicU32 = AtomicU32::new(0);
     let count = COUNTER.fetch_add(1, Ordering::Relaxed);
@@ -190,7 +194,7 @@ async fn logger<B>(
     response
 }
 
-async fn set_etag<B>(request: Request<B>, next: Next<B>) -> Response<Body> {
+async fn set_etag(request: Request<Body>, next: Next) -> Response<Body> {
     let if_none_match = request.headers().get(IF_NONE_MATCH).cloned();
 
     if if_none_match.is_none() && request.headers().contains_key(IF_MODIFIED_SINCE) {
@@ -200,7 +204,7 @@ async fn set_etag<B>(request: Request<B>, next: Next<B>) -> Response<Body> {
     let res = next.run(request).await;
 
     let (mut parts, body) = res.into_parts();
-    let bytes = hyper::body::to_bytes(body).await.unwrap();
+    let bytes = axum::body::to_bytes(body, usize::MAX).await.unwrap();
 
     let mut digest = sha2::Sha256::new();
     digest.update(&bytes);

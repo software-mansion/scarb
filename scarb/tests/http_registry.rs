@@ -1,3 +1,4 @@
+use snapbox::Data;
 use std::fs;
 use std::time::Duration;
 
@@ -37,7 +38,7 @@ fn usage() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Downloading bar v1.0.0 ([..])
         "#});
 
@@ -80,7 +81,6 @@ fn usage() {
         user-agent: ...
 
         304 Not Modified
-        content-length: 0
         etag: ...
 
         ###
@@ -127,7 +127,7 @@ fn publish_verified() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Downloading bar v1.0.0 ([..])
         "#});
 
@@ -170,7 +170,6 @@ fn publish_verified() {
         user-agent: ...
 
         304 Not Modified
-        content-length: 0
         etag: ...
 
         ###
@@ -217,7 +216,7 @@ fn not_found() {
         .timeout(Duration::from_secs(10))
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to lookup for `baz ^1 (registry+http://[..])` in registry: registry+http://[..]
 
         Caused by:
@@ -248,7 +247,6 @@ fn not_found() {
         user-agent: ...
 
         404 Not Found
-        content-length: 0
         etag: ...
     "]];
     expected.assert_eq(&registry.logs());
@@ -272,7 +270,7 @@ fn missing_config_json() {
         .timeout(Duration::from_secs(10))
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to lookup for `baz ^1 (registry+http://[..])` in registry: registry+http://[..]
 
         Caused by:
@@ -289,7 +287,6 @@ fn missing_config_json() {
         user-agent: ...
 
         404 Not Found
-        content-length: 0
         etag: ...
     "]];
     expected.assert_eq(&registry.logs());
@@ -325,7 +322,7 @@ fn caching() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Downloading bar v1.0.0 ([..])
         "#});
 
@@ -338,7 +335,7 @@ fn caching() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 
     Scarb::new()
         .cache(cache_dir.path())
@@ -348,7 +345,7 @@ fn caching() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_eq(Data::from("").raw());
 
     let expected = expect![[r#"
         GET /api/v1/index/config.json
@@ -389,7 +386,6 @@ fn caching() {
         user-agent: ...
 
         304 Not Modified
-        content-length: 0
         etag: ...
 
         ###

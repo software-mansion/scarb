@@ -76,7 +76,7 @@ fn cairo_plugin_re_export_simple() {
         .current_dir(t.child("hello"))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
            [..]Compiling world v1.0.0 [..]
            [..]Compiling hello v1.0.0 [..]
            [..]Finished `dev` profile target(s) in [..]
@@ -169,7 +169,7 @@ fn components_in_the_same_unit_can_depend_on_conflicting_plugins() {
         .assert()
         .success()
         // 112 = 34 + 78
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling first_macro v1.0.0 ([..]Scarb.toml)
             [..] Compiling second_macro v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)

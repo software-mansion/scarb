@@ -21,7 +21,7 @@ fn check_simple() {
         .arg("check")
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! { r#"
+        .stdout_eq(indoc! { r#"
         [..]Checking hello v0.1.0 ([..]Scarb.toml)
         [..]Finished checking `dev` profile target(s) in [..]
         "#
@@ -50,13 +50,13 @@ fn check_fail_with_syntax_error() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                 Checking hello v0.1.0 ([..]Scarb.toml)
             error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
              --> [..]/lib.cairo:1:14
             not_a_keyword
                          ^
 
-            error: could not check `hello` due to previous error
+            error: could not check `hello` due to [..] previous error
         "#});
 }

@@ -41,7 +41,7 @@ fn checksum_mismatch() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         error: failed to download package: bar v1.0.0 (registry+file://[..])
 
         Caused by:

@@ -1,10 +1,14 @@
 use clap::Parser;
+use mimalloc::MiMalloc;
 use scarb_execute::main_inner;
 use scarb_extensions_cli::execute::Args;
 use scarb_ui::Ui;
 use scarb_ui::args::VerbositySpec;
 use std::process::ExitCode;
 use std::str::FromStr;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> ExitCode {
     let args = Args::parse();

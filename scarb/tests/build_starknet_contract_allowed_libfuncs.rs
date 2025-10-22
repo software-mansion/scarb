@@ -51,7 +51,7 @@ fn check_true() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         warn: libfunc `revoke_ap_tracking` is not allowed in the libfuncs list `[..]testing_list.json`
          --> contract: ExperimentalLibfunc
@@ -89,7 +89,7 @@ fn check_false() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -123,13 +123,13 @@ fn deny_true() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         error: libfunc `revoke_ap_tracking` is not allowed in the libfuncs list `[..]testing_list.json`
          --> contract: ExperimentalLibfunc
 
         error: aborting compilation, because contracts use disallowed Sierra libfuncs
-        error: could not compile `hello` due to previous error
+        error: could not compile `hello` due to [..] previous errors
         "#});
 }
 
@@ -155,7 +155,7 @@ fn pass_named_list() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -183,13 +183,13 @@ fn unknown_list_name() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         error: failed to check allowed libfuncs for contract: ExperimentalLibfunc
 
         Caused by:
             No libfunc list named 'definitely does not exist' is known.
-        error: could not compile `hello` due to previous error
+        error: could not compile `hello` due to [..] previous error
         "#});
 }
 
@@ -220,7 +220,7 @@ fn list_path() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         warn: libfunc `revoke_ap_tracking` is not allowed in the libfuncs list `[..]testing_list.json`
          --> contract: ExperimentalLibfunc
@@ -251,12 +251,12 @@ fn list_path_does_not_exist() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         error: failed to get absolute path of `[..]does_not_exist.json`
 
         Caused by:
             [..]
-        error: could not compile `hello` due to previous error
+        error: could not compile `hello` due to [..] previous error
         "#});
 }

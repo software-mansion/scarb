@@ -42,7 +42,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .current_dir(world)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
             [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -65,7 +65,7 @@ fn compile_starknet_contract() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -109,7 +109,7 @@ fn compile_starknet_contract_to_casm() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -161,7 +161,7 @@ fn compile_many_contracts() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling lib(hello) hello v0.1.0 ([..])
         [..] Compiling starknet-contract(a) hello v0.1.0 ([..])
         [..] Compiling starknet-contract(b) hello v0.1.0 ([..])
@@ -225,7 +225,7 @@ fn compile_same_name_contracts() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -271,7 +271,7 @@ fn casm_add_pythonic_hints() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -371,7 +371,7 @@ fn compile_starknet_contract_without_starknet_dep() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Checking hello v0.1.0 ([..])
         warn: package `hello` declares `starknet-contract` target, but does not depend on `starknet` package
         note: this may cause contract compilation to fail with cryptic errors
@@ -440,7 +440,7 @@ fn compile_starknet_contract_without_starknet_dep() {
                     self.value.write( self.value.read() + a );
                                                  ^^^^
 
-        error: could not check `hello` due to previous error
+        error: could not check `hello` due to 12 previous errors and 1 warning
         "#});
 }
 

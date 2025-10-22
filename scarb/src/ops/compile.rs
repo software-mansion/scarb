@@ -293,8 +293,10 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         if !suppress_error(&err) {
             ws.config().ui().anyhow(&err);
         }
-
-        anyhow!("could not compile `{package_name}` due to previous error")
+        anyhow!(
+            "could not compile `{package_name}` due to {}",
+            ws.config().ui().format_diagnostic_counts()
+        )
     })
 }
 
@@ -359,8 +361,10 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         if !suppress_error(&err) {
             ws.config().ui().anyhow(&err);
         }
-
-        anyhow!("could not check `{package_name}` due to previous error")
+        anyhow!(
+            "could not check `{package_name}` due to {}",
+            ws.config().ui().format_diagnostic_counts()
+        )
     })?;
 
     Ok(())
@@ -434,8 +438,15 @@ fn collect_assets(unit: &CairoCompilationUnit) -> Result<Vec<(String, Utf8PathBu
                 seen_in_pkg.insert(file_name.into()),
                 "package `{pkg_id}` declares multiple assets with the same file name: {file_name}"
             );
-            if let Some((other_pkg_id, _)) = by_name.get(file_name)
+            if let Some((other_pkg_id, other_asset)) = by_name.get(file_name)
                 && other_pkg_id != &pkg_id
+                // Allow multiple compilation unit components to declare the same asset name if they
+                // point to exactly the same file. This makes it possible to compile package targets
+                // where a single package is spread into many units (such as integration tests).
+                // This condition is unsound, as one package may use some path shenanigans in its
+                // Scarb.toml to refer to another package's asset, but this is deliberate, malicious
+                // behavior that has no bad effects anyway, and we can accept the cost.
+                && other_asset != &asset
             {
                 bail!(
                     "multiple packages declare an asset with the same file name `{file_name}`: \

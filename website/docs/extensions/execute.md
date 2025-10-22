@@ -68,3 +68,35 @@ This list should correspond to the Cairo’s Serde of main’s arguments, for ex
 
 Note that when using `--arguments-file`, the expected input is an array of felts represented as hex string.
 See the [documentation](https://docs.starknet.io/architecture-and-concepts/smart-contracts/serialization-of-cairo-types/) for more information about Cairo’s Serde.
+
+## Profiling your cairo program
+
+To effectively analyze the performance of your Cairo program, you can use the
+[cairo-profiler](https://github.com/software-mansion/cairo-profiler) tool.
+
+Before profiling, you need to generate a trace data file that the profiler can read.
+In order to do that, you can use the `--save-profiler-trace-data` flag.
+
+:::warning
+cairo-profiler depends on generated sierra code to get function mappings. Make sure to set `sierra = true` in your
+`[executable]` target in Scarb.toml.
+:::
+
+For detailed usage instructions on how to use the cairo-profiler, please consult its
+[documentation](https://github.com/software-mansion/cairo-profiler?tab=readme-ov-file#generating-output-file).
+
+### Tracked resource
+
+By default, `scarb execute` allows to profile your Cairo code's cairo steps samples. It is, however, possible to profile
+based on sierra gas samples. The following is a TOML setting that allows to achieve that.
+
+```toml
+[tool.cairo-profiler]
+tracked-resource = "sierra-gas"
+```
+
+:::info
+This setting influences the contents of cairo-profiler trace data file created by scarb, not the behaviour of the
+cairo-profiler itself. Therefore, after setting this in your Scarb.toml, make sure to execute your Cairo program once
+again to generate a new trace file that will allow tracking the sierra gas sample.
+:::

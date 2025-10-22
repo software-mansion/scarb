@@ -41,7 +41,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .current_dir(world)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
             [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -226,7 +226,7 @@ fn build_external_full_path() {
         .current_dir(&world)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
             [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -396,7 +396,7 @@ fn compile_multiple_with_glob_subpath() {
         .current_dir(&x)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling x v1.0.0 ([..]Scarb.toml)
             [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -436,10 +436,10 @@ fn compile_with_bad_glob_path() {
         .current_dir(t.child("world"))
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling world v0.1.0 ([..]/Scarb.toml)
         error: external contract path `hello::**` has multiple global path selectors, only one '*' selector is allowed
-        error: could not compile `world` due to previous error
+        error: could not compile `world` due to [..] previous error
         "#});
 }
 
@@ -494,7 +494,7 @@ fn will_warn_about_unmatched_paths() {
         .current_dir(&world)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
             warn: external contracts not found for selectors: `hello::lorem::mopsum::*`
             [..]  Finished `dev` profile target(s) in [..]
@@ -564,7 +564,7 @@ fn can_build_external_reexported_contracts() {
         .current_dir(&world)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling world v0.1.0 ([..]/Scarb.toml)
         [..]  Finished `dev` profile target(s) in [..]
     "#});
@@ -620,7 +620,7 @@ fn can_dedup_contract_reexports() {
         .current_dir(&world)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Compiling world v0.1.0 ([..]/Scarb.toml)
         [..]  Finished `dev` profile target(s) in [..]
     "#});

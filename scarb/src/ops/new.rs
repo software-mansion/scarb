@@ -3,13 +3,13 @@ use cairo_lang_filesystem::db::Edition;
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
+use which::which;
 
 use crate::core::{Config, PackageName, edition_variant};
 use crate::internal::fsx;
 use crate::internal::restricted_names;
 use crate::subcommands::get_env_vars;
 use crate::{DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME, ops};
-use scarb_build_metadata::CAIRO_VERSION;
 use std::process::{Command, Stdio};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -142,15 +142,6 @@ fn mk(
     // Create the `Scarb.toml` file.
     let manifest_path = canonical_path.join(MANIFEST_FILE_NAME);
     let edition = edition_variant(Edition::latest());
-    let dev_deps = if snforge {
-        String::new()
-    } else {
-        formatdoc! {r#"
-
-            [dev-dependencies]
-            cairo_test = "{CAIRO_VERSION}"
-        "#}
-    };
     fsx::write(
         &manifest_path,
         formatdoc! {r#"
@@ -162,7 +153,7 @@ fn mk(
             # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
             [dependencies]
-        "#} + &dev_deps,
+        "#},
     )?;
 
     // Create hello world source files (with respective parent directories) if none exist.
@@ -218,6 +209,23 @@ fn mk(
 }
 
 fn init_snforge(name: PackageName, root_dir: Utf8PathBuf, config: &Config) -> Result<()> {
+    // Check if snforge binary is available
+    if which("snforge").is_err() {
+        bail!(indoc! {r#"
+            snforge binary not found
+
+            Starknet Foundry needs to be installed to set up a project with snforge.
+
+            To install snforge, please visit:
+            https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+
+            Alternatively, you can manually add snforge to an existing project by following:
+            https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
+
+            You can also create a project without a test runner using the `--test-runner none` flag.
+        "#});
+    }
+
     let mut process = Command::new("snforge")
         .arg("new")
         .args(["--name", name.as_str()])

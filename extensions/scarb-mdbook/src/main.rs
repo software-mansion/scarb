@@ -4,6 +4,7 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use mdbook::MDBook;
+use mimalloc::MiMalloc;
 use scarb_extensions_cli::mdbook::Args;
 use scarb_ui::Ui;
 use scarb_ui::args::VerbositySpec;
@@ -11,6 +12,9 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::ExitCode;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> ExitCode {
     let args = Args::parse();

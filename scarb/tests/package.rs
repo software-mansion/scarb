@@ -20,6 +20,8 @@ use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::LocalRegistry;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+use snapbox::filter::{Filter, FilterPaths};
+use snapbox::{Assert, Data};
 use test_case::test_case;
 
 struct PackageChecker {
@@ -111,7 +113,7 @@ impl PackageChecker {
     }
 
     fn file_eq(&self, path: impl AsRef<Path>, expected_contents: &str) -> &Self {
-        snapbox::assert_eq(expected_contents, self.read_file(path));
+        Assert::new().eq(self.read_file(path), expected_contents);
         self
     }
 
@@ -122,12 +124,15 @@ impl PackageChecker {
     }
 
     fn file_eq_path(&self, path: impl AsRef<Path>, expected_path: impl AsRef<Path>) -> &Self {
-        snapbox::assert_eq_path(expected_path, self.read_file(path));
+        Assert::new().eq(
+            self.read_file(path),
+            FilterPaths.filter(Data::read_from(expected_path.as_ref(), None)),
+        );
         self
     }
 
     fn file_matches(&self, path: impl AsRef<Path>, expected_contents: &str) -> &Self {
-        snapbox::assert_matches(expected_contents, self.read_file(path));
+        Assert::new().eq(self.read_file(path), expected_contents);
         self
     }
 
@@ -178,7 +183,7 @@ fn simple() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
         [..] Verifying foo-1.0.0.tar.zst
         [..] Compiling foo v1.0.0 ([..])
@@ -237,13 +242,16 @@ fn list_simple() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
+        .stdout_eq(
+            Data::from(unix_paths_to_os_lossy(indoc! {r#"
             VERSION
             Scarb.orig.toml
             Scarb.toml
             src/foo.cairo
             src/lib.cairo
-        "#}));
+        "#}))
+            .raw(),
+        );
 }
 
 #[test]
@@ -267,7 +275,8 @@ fn list_workspace() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
+        .stdout_eq(
+            Data::from(unix_paths_to_os_lossy(indoc! {r#"
             first:
             VERSION
             Scarb.orig.toml
@@ -279,7 +288,9 @@ fn list_workspace() {
             Scarb.orig.toml
             Scarb.toml
             src/lib.cairo
-        "#}));
+        "#}))
+            .raw(),
+        );
 }
 
 #[test]
@@ -298,7 +309,7 @@ fn reserved_files_collision() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(formatdoc! {r#"
+        .stdout_eq(formatdoc! {r#"
         [..] Packaging foo v1.0.0 [..]
         error: invalid inclusion of reserved files in package: VERSION, Scarb.orig.toml
         "#});
@@ -442,7 +453,7 @@ fn dev_dependencies() {
         .current_dir(&hello)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Packaging hello v1.0.0 [..]
             [..]Packaged 4 files, [..]
         "#});
@@ -531,7 +542,7 @@ fn workspace() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging hello v1.0.0 [..]
         [..]  Packaged [..]
         [..] Packaging workspace_dep v1.0.0 [..]
@@ -596,7 +607,7 @@ fn cairo_plugin() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging some v1.0.0 [..]
         [..]warn: package name or version differs between Cargo manifest and Scarb manifest
         [..]Scarb manifest: `some-1.0.0`, Cargo manifest: `some-0.1.0`
@@ -710,7 +721,7 @@ fn builtin_cairo_plugin() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(formatdoc! {r#"
+        .stdout_eq(formatdoc! {r#"
             [..]Packaging assert_macros v{CAIRO_VERSION} ([..]Scarb.toml)
             [..]Packaged [..] files, [..] ([..] compressed)
         "#});
@@ -810,7 +821,7 @@ fn dirty_repo() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Packaging foo v1.0.0 [..]
             error: cannot package a repository containing uncommitted changes
             help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
@@ -890,14 +901,17 @@ fn list_clean_repo() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
+        .stdout_eq(
+            Data::from(unix_paths_to_os_lossy(indoc! {r#"
             VERSION
             Scarb.orig.toml
             Scarb.toml
             VCS.json
             src/foo.cairo
             src/lib.cairo
-        "#}));
+        "#}))
+            .raw(),
+        );
 }
 
 #[test]
@@ -915,7 +929,8 @@ fn list_dirty_repo() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
+        .stdout_eq(
+            Data::from(unix_paths_to_os_lossy(indoc! {r#"
             VERSION
             Scarb.orig.toml
             Scarb.toml
@@ -923,7 +938,9 @@ fn list_dirty_repo() {
             src/bar.cairo
             src/foo.cairo
             src/lib.cairo
-        "#}));
+        "#}))
+            .raw(),
+        );
 }
 
 #[test]
@@ -998,7 +1015,7 @@ fn path_dependency_no_version() {
         .current_dir(&hello)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging hello v1.0.0 [..]
         error: dependency `path_dep` does not specify a version requirement
         note: all dependencies must have a version specified when packaging
@@ -1029,7 +1046,7 @@ fn git_dependency_no_version() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Updating git repository [..]
         [..] Packaging hello v1.0.0 [..]
         error: dependency `git_dep` does not specify a version requirement
@@ -1056,12 +1073,15 @@ fn list_ignore_nested() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
+        .stdout_eq(
+            Data::from(unix_paths_to_os_lossy(indoc! {r#"
             VERSION
             Scarb.orig.toml
             Scarb.toml
             src/lib.cairo
-        "#}));
+        "#}))
+            .raw(),
+        );
 }
 
 #[test]
@@ -1217,7 +1237,7 @@ fn weird_characters_in_filenames() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging [..]
         error: cannot package a filename with a special character `:`: src/:foo
         "#});
@@ -1241,7 +1261,7 @@ fn windows_restricted_filenames() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging [..]
         error: cannot package file `src/aux.cairo`, it is a Windows reserved filename
         "#});
@@ -1294,7 +1314,7 @@ fn broken_symlink() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging [..]
         error: failed to list source files in: [..]
 
@@ -1320,7 +1340,7 @@ fn broken_but_excluded_symlink() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging [..]
         error: failed to list source files in: [..]
 
@@ -1345,7 +1365,7 @@ fn filesystem_loop() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging [..]
         error: failed to list source files in: [..]
 
@@ -1370,12 +1390,15 @@ fn exclude_dot_files_and_directories_by_default() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
+        .stdout_eq(
+            Data::from(unix_paths_to_os_lossy(indoc! {r#"
             VERSION
             Scarb.orig.toml
             Scarb.toml
             src/lib.cairo
-        "#}));
+        "#}))
+            .raw(),
+        );
 }
 
 #[test]
@@ -1450,7 +1473,7 @@ fn ignore_file(ignore_path: &str, setup_git: bool, expect_ignore_to_work: bool) 
         .current_dir(g.p)
         .assert()
         .success()
-        .stdout_eq(expected);
+        .stdout_eq(Data::from(expected).raw());
 }
 
 #[test]
@@ -1482,13 +1505,16 @@ fn ignore_whitelist_pattern() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
+        .stdout_eq(
+            Data::from(unix_paths_to_os_lossy(indoc! {r#"
             VERSION
             Scarb.orig.toml
             Scarb.toml
             noignore.txt
             src/lib.cairo
-        "#}));
+        "#}))
+            .raw(),
+        );
 }
 
 #[test]
@@ -1508,7 +1534,7 @@ fn no_target() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
         error: cannot archive package `foo` without a `lib` or `cairo-plugin` target
         help: consider adding `[lib]` section to package manifest
@@ -1532,7 +1558,7 @@ fn error_on_verification() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
         [..] Verifying foo-1.0.0.tar.zst
         [..] Compiling foo v1.0.0 ([..])
@@ -1544,7 +1570,7 @@ fn error_on_verification() {
         error: failed to verify package tarball
 
         Caused by:
-        [..] could not compile `foo` due to previous error
+        [..] could not compile `foo` due to [..] previous error
         "#});
 }
 
@@ -1564,7 +1590,7 @@ fn package_without_verification() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
         [..]  Packaged [..]
         "#});
@@ -1583,7 +1609,7 @@ fn package_cairo_plugin_without_verification() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging some v1.0.0 [..]
         [..]warn: package name or version differs between Cargo manifest and Scarb manifest
         [..]Scarb manifest: `some-1.0.0`, Cargo manifest: `some-0.1.0`
@@ -1606,7 +1632,7 @@ fn package_without_publish_metadata() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
         warn: manifest has no readme
         warn: manifest has no description
@@ -1637,7 +1663,7 @@ fn package_with_publish_disabled() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Packaging foo v1.0.0 ([..]Scarb.toml)
             [..]Packaged [..] files, [..] ([..] compressed)
         "#});
@@ -1677,7 +1703,7 @@ fn can_include_additional_files() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
         [..] Verifying foo-1.0.0.tar.zst
         [..] Compiling foo v1.0.0 ([..])
@@ -1796,7 +1822,7 @@ fn files_outside_package_cannot_be_included() {
         .current_dir(&pkg)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
         error: file `[..]file.txt` is not part of `foo`
         "#});
@@ -1817,7 +1843,7 @@ fn files_that_dont_exist_during_packaging_cannot_be_included() {
         .current_dir(&pkg)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
         error: failed to list source files in: [..]pkg
 
@@ -1843,7 +1869,7 @@ fn package_script_is_run() {
         .arg("--no-metadata")
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
            [..]Packaging foo v1.0.0 ([..]Scarb.toml)
            [..]Running package script for foo v1.0.0 ([..]Scarb.toml)
            Hello!
@@ -1943,7 +1969,7 @@ fn package_ignores_patches() {
         .current_dir(&hello)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Packaging hello v1.0.0 [..]
             [..]Packaged 4 files, [..]
         "#});
@@ -1995,7 +2021,7 @@ fn package_with_generated_asset() {
         .arg("--no-metadata")
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
            [..]Packaging foo v1.0.0 ([..]Scarb.toml)
            [..]Running build script for foo v1.0.0 ([..]Scarb.toml)
            [..]Running package script for foo v1.0.0 ([..]Scarb.toml)

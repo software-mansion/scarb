@@ -50,7 +50,7 @@ fn verify_from_execution_output() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Verifying hello
         [..]Verified proof successfully
         "#});
@@ -82,7 +82,7 @@ fn verify_from_path() {
         .arg(proof_path)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
         [..]Verifying proof
         [..]Verified proof successfully
         "#});
@@ -98,7 +98,7 @@ fn verify_fails_when_execution_output_not_found() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Verifying hello
             error: execution directory does not exist at path: [..]/target/execute/hello/execution1
             help: make sure to run `scarb prove --execute` first
@@ -117,7 +117,7 @@ fn verify_fails_when_proof_file_not_found() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Verifying proof
             error: proof file does not exist at path: nonexistent.json
         "#});

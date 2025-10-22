@@ -179,17 +179,6 @@ pub fn load_incremental_artifacts(
             .collect_vec()
     };
 
-    // Warmup loaded crates cache in parallel.
-    let _: Vec<()> = par_map(
-        db,
-        CrateInput::into_crate_ids(db, cached_crates.clone()),
-        |db, crate_id| {
-            let span = trace_span!("cached_multi_lowerings");
-            let _guard = span.enter();
-            db.cached_multi_lowerings(crate_id);
-        },
-    );
-
     Ok(IncrementalContext::Enabled {
         fingerprints,
         cached_crates,
@@ -408,4 +397,17 @@ pub fn incremental_allowed(unit: &CairoCompilationUnit) -> bool {
     let allowed_via_config = unit.compiler_config.incremental;
 
     allowed_via_env && allowed_via_config
+}
+
+/// Warmup loaded crates cache in parallel.
+pub fn warmup_incremental_cache(db: &dyn Database, cached_crates: Vec<CrateInput>) {
+    let _: Vec<()> = par_map(
+        db,
+        CrateInput::into_crate_ids(db, cached_crates),
+        |db, crate_id| {
+            let span = trace_span!("cached_multi_lowerings");
+            let _guard = span.enter();
+            db.cached_multi_lowerings(crate_id);
+        },
+    );
 }

@@ -34,7 +34,7 @@ fn can_take_big_number_as_arg() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling hello v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello
@@ -77,7 +77,7 @@ fn can_read_arguments_from_file() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling hello v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello

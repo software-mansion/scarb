@@ -305,7 +305,7 @@ fn proc_macros_are_fingerprinted() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -331,7 +331,7 @@ fn proc_macros_are_fingerprinted() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -366,7 +366,7 @@ fn proc_macros_are_fingerprinted() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -418,7 +418,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling snforge_scarb_plugin v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -445,7 +445,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling snforge_scarb_plugin v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -464,7 +464,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling snforge_scarb_plugin v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -534,7 +534,7 @@ fn fingerprint_callback_can_force_recompilation() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling plugin_package v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -561,7 +561,7 @@ fn fingerprint_callback_can_force_recompilation() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling plugin_package v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -580,7 +580,7 @@ fn fingerprint_callback_can_force_recompilation() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..] Compiling plugin_package v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]

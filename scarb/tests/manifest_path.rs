@@ -1,4 +1,5 @@
 use assert_fs::prelude::*;
+use snapbox::Data;
 
 use scarb_test_support::command::Scarb;
 
@@ -21,10 +22,13 @@ fn with_manifest() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(format!(
-            "{}\n",
-            dunce::canonicalize(manifest.path()).unwrap().display()
-        ));
+        .stdout_eq(
+            Data::from(format!(
+                "{}\n",
+                dunce::canonicalize(manifest.path()).unwrap().display()
+            ))
+            .raw(),
+        );
 }
 
 #[test]
@@ -42,13 +46,16 @@ fn without_manifest() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(format!(
-            "{}\n",
-            dunce::canonicalize(t.path())
-                .unwrap()
-                .join("Scarb.toml")
-                .display()
-        ));
+        .stdout_eq(
+            Data::from(format!(
+                "{}\n",
+                dunce::canonicalize(t.path())
+                    .unwrap()
+                    .join("Scarb.toml")
+                    .display()
+            ))
+            .raw(),
+        );
 }
 
 #[test]
@@ -73,10 +80,13 @@ fn subdir() {
         .current_dir(&subdir)
         .assert()
         .success()
-        .stdout_eq(format!(
-            "{}\n",
-            dunce::canonicalize(manifest.path()).unwrap().display()
-        ));
+        .stdout_eq(
+            Data::from(format!(
+                "{}\n",
+                dunce::canonicalize(manifest.path()).unwrap().display()
+            ))
+            .raw(),
+        );
 }
 
 #[test]
@@ -104,10 +114,13 @@ fn path_override() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(format!(
-            "{}\n",
-            dunce::canonicalize(manifest.path()).unwrap().display()
-        ));
+        .stdout_eq(
+            Data::from(format!(
+                "{}\n",
+                dunce::canonicalize(manifest.path()).unwrap().display()
+            ))
+            .raw(),
+        );
 }
 
 #[test]
@@ -126,7 +139,7 @@ fn path_override_no_manifest() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(format!("{}\n", manifest.path().display()));
+        .stdout_eq(Data::from(format!("{}\n", manifest.path().display())).raw());
 }
 
 #[test]
@@ -153,10 +166,13 @@ fn path_override_via_env() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(format!(
-            "{}\n",
-            dunce::canonicalize(manifest.path()).unwrap().display()
-        ));
+        .stdout_eq(
+            Data::from(format!(
+                "{}\n",
+                dunce::canonicalize(manifest.path()).unwrap().display()
+            ))
+            .raw(),
+        );
 }
 
 #[test]
@@ -179,5 +195,5 @@ fn json_output() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches("{\"path\":\"[..]\"}\n");
+        .stdout_eq("{\"path\":\"[..]\"}\n");
 }

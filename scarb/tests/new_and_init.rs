@@ -1,3 +1,4 @@
+use snapbox::Data;
 use std::fs;
 
 use assert_fs::prelude::*;
@@ -7,6 +8,7 @@ use toml::{Table, Value};
 
 use scarb::core::TomlManifest;
 use scarb_test_support::command::Scarb;
+use scarb_test_support::filesystem::path_with_temp_dir;
 use scarb_test_support::fsx::AssertFsUtf8Ext;
 
 #[test]
@@ -117,8 +119,8 @@ fn new_no_path_arg() {
         .arg("new")
         .assert()
         .failure()
-        .stdout_eq("")
-        .stderr_matches(indoc! {r#"
+        .stdout_eq(Data::from("").raw())
+        .stderr_eq(indoc! {r#"
             error: the following required arguments were not provided:
               <PATH>
 
@@ -140,10 +142,13 @@ fn new_existing() {
         .current_dir(&pt)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             error: destination `hello` already exists
             help: use `scarb init` to initialize the directory
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -157,10 +162,13 @@ fn new_interactive_not_in_terminal() {
         .current_dir(&pt)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r"
+        .stdout_eq(
+            Data::from(indoc! {r"
             error: you are not running in terminal
             help: please provide the --test-runner flag
-        "});
+        "})
+            .raw(),
+        );
 }
 
 #[test]
@@ -175,10 +183,13 @@ fn init_interactive_not_in_terminal() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r"
+        .stdout_eq(
+            Data::from(indoc! {r"
             error: you are not running in terminal
             help: please provide the --test-runner flag
-        "});
+        "})
+            .raw(),
+        );
 }
 
 #[test]
@@ -218,20 +229,23 @@ fn invalid_package_name() {
         .current_dir(&pt)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(Data::from(indoc! {r#"
             error: invalid character `-` in package name: `a-b`, characters must be ASCII lowercase letters, ASCII numbers or underscore
-        "#});
+        "#}).raw());
     Scarb::quick_snapbox()
         .arg("new")
         .arg("a_B")
         .current_dir(&pt)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             error: invalid package name: `a_B`
             note: usage of ASCII uppercase letters in the package name has been disallowed
             help: change package name to: a_b
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -244,18 +258,18 @@ fn keyword_name() {
         .current_dir(&pt)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(Data::from(indoc! {r#"
             error: the name `as` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html
-        "#});
+        "#}).raw());
     Scarb::quick_snapbox()
         .arg("new")
         .arg("loop")
         .current_dir(&pt)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(Data::from(indoc! {r#"
             error: the name `loop` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html
-        "#});
+        "#}).raw());
 }
 
 #[test]
@@ -294,7 +308,9 @@ fn windows_test() {
         .current_dir(&pt)
         .assert()
         .failure()
-        .stdout_eq("error: cannot use name `con`, it is a Windows reserved filename\n");
+        .stdout_eq(
+            Data::from("error: cannot use name `con`, it is a Windows reserved filename\n").raw(),
+        );
 }
 
 #[test]
@@ -329,9 +345,12 @@ fn init_existing_manifest() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             error: `scarb init` cannot be run on existing Scarb packages
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -382,11 +401,14 @@ fn init_incorrect_name() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(
+            Data::from(indoc! {r#"
             error: invalid package name: `a_B`
             note: usage of ASCII uppercase letters in the package name has been disallowed
             help: change package name to: a_b
-        "#});
+        "#})
+            .raw(),
+        );
 }
 
 #[test]
@@ -400,9 +422,9 @@ fn init_keyword_name() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(Data::from(indoc! {r#"
             error: the name `loop` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html
-        "#});
+        "#}).raw());
 }
 
 #[test]
@@ -416,4 +438,54 @@ fn init_core_name() {
         .current_dir(&t)
         .assert()
         .success();
+}
+
+#[test]
+fn new_with_test_runner_none() {
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("hello")
+        .arg("--test-runner")
+        .arg("none")
+        .current_dir(&pt)
+        .assert()
+        .success();
+
+    let t = pt.child("hello");
+    let toml_content = std::fs::read_to_string(t.child("Scarb.toml").path()).unwrap();
+    assert!(!toml_content.contains("cairo_test"));
+    assert!(!toml_content.contains("[dev-dependencies]"));
+}
+
+#[test]
+fn new_with_starknet_foundry_without_snforge_binary() {
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("hello")
+        .arg("--test-runner")
+        .arg("starknet-foundry")
+        .env("PATH", path_with_temp_dir(&pt))
+        .current_dir(&pt)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: failed to create package `hello` at: hello
+
+            Caused by:
+                snforge binary not found
+                
+                Starknet Foundry needs to be installed to set up a project with snforge.
+                
+                To install snforge, please visit:
+                https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
+                
+                Alternatively, you can manually add snforge to an existing project by following:
+                https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
+                
+                You can also create a project without a test runner using the `--test-runner none` flag.
+        "#});
 }

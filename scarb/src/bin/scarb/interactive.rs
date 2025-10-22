@@ -23,11 +23,11 @@ fn ask_for_test_runner() -> Result<TestRunner> {
     );
 
     let options = if which("snforge").is_ok() {
-        vec!["Starknet Foundry (default)", "Cairo Test"]
+        vec!["Starknet Foundry (default)", "None"]
     } else {
         vec![
-            "Cairo Test (default)",
-            "Starknet Foundry (recommended, requires snforge installed: https://github.com/foundry-rs/starknet-foundry)",
+            "None (default)",
+            "Starknet Foundry (recommended, requires snforge installed: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html)",
         ]
     };
 
@@ -37,8 +37,8 @@ fn ask_for_test_runner() -> Result<TestRunner> {
         .default(0)
         .interact()?;
 
-    if options[selection].starts_with("Cairo Test") {
-        Ok(TestRunner::CairoTest)
+    if options[selection].starts_with("None") {
+        Ok(TestRunner::None)
     } else {
         Ok(TestRunner::StarknetFoundry)
     }

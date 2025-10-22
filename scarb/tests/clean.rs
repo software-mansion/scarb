@@ -37,7 +37,7 @@ fn requires_workspace() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to read manifest at: [..]/Scarb.toml
 
             Caused by:

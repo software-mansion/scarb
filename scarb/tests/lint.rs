@@ -47,7 +47,7 @@ fn lint_main_package() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
           warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/lib.cairo:3:8
@@ -101,7 +101,7 @@ fn lint_warnings_disallowed_manifest() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
           warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/lib.cairo:3:8
@@ -153,7 +153,7 @@ fn lint_warnings_disallowed_cli() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
           warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/lib.cairo:3:8
@@ -209,7 +209,7 @@ fn lint_warnings_disallowed_cli_and_manifest() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
           warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/lib.cairo:3:8
@@ -265,7 +265,7 @@ fn lint_workspace() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
            Linting first v1.0.0 ([..]/first/Scarb.toml)
       warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
        --> [..]/lib.cairo:3:8
@@ -323,7 +323,7 @@ fn lint_integration_tests() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
                Linting test(hello_unittest) hello v1.0.0 ([..]/Scarb.toml)
                Linting test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]/Scarb.toml)
@@ -378,7 +378,7 @@ fn lint_unit_test() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
                Linting test(hello) hello v1.0.0 ([..]/Scarb.toml)
           warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
@@ -406,7 +406,7 @@ fn lint_no_panics() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches("     Linting hello v1.0.0 ([..]/Scarb.toml)\n");
+        .stdout_eq("     Linting hello v1.0.0 ([..]/Scarb.toml)\n");
 }
 
 #[test]
@@ -430,7 +430,7 @@ fn lint_panics() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
           warn: Plugin diagnostic: Leaving `panic` in the code is discouraged.
            --> [..]/lib.cairo:2:5
@@ -477,7 +477,7 @@ fn lint_selected_features() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches("     Linting hello v1.0.0 ([..]/Scarb.toml)\n");
+        .stdout_eq("     Linting hello v1.0.0 ([..]/Scarb.toml)\n");
 
     Scarb::quick_snapbox()
         .arg("lint")
@@ -486,7 +486,7 @@ fn lint_selected_features() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! { r#"
+        .stdout_eq(indoc! { r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
           warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/lib.cairo:9:8
@@ -515,7 +515,7 @@ fn test_missing_feature() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: none of the selected packages contains `x` feature
             note: to use features, you need to define [features] section in Scarb.toml
         "#});
@@ -567,7 +567,7 @@ fn lint_selected_targets() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
            Linting first v1.0.0 ([..]/first/Scarb.toml)
       warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
        --> [..]/lib.cairo:3:8
@@ -615,7 +615,7 @@ fn lint_specific_file() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
              Linting hello v1.0.0 ([..]/Scarb.toml)
         warn: Plugin diagnostic: unnecessary double parentheses found after break. Consider removing them.
          --> [..]/src/other.cairo:3:9
@@ -691,7 +691,7 @@ fn lint_specific_directory() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
               Linting hello v1.0.0 ([..]/Scarb.toml)
          warn: Plugin diagnostic: unnecessary double parentheses found after break. Consider removing them.
           --> [..]/src/my_module/a.cairo:3:9
@@ -743,7 +743,7 @@ fn lint_non_existing_file() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             error: failed to get absolute path of `wrong.cairo`
 
             Caused by:
@@ -775,7 +775,7 @@ fn test_fixer_formatting() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
                  Linting hello v1.0.0 ([..]/Scarb.toml)
             warn: Plugin diagnostic: consider using `unwrap_syscall` instead of `unwrap`
              --> [..]/src/lib.cairo:8:3
@@ -857,7 +857,7 @@ fn test_linter_with_attribute_macros() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
            Compiling some v1.0.0 ([..]/Scarb.toml)
              Linting hello v1.0.0 ([..]/Scarb.toml)
         warn: Plugin diagnostic: Each `if`-statement adds one level of nesting, which makes code look more complex than it really is.
@@ -942,7 +942,7 @@ fn test_linter_with_attribute_macros_complex() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
            Compiling some v1.0.0 ([..]/Scarb.toml)
              Linting hello v1.0.0 ([..]/Scarb.toml)
         warn: Plugin diagnostic: Each `if`-statement adds one level of nesting, which makes code look more complex than it really is.
@@ -984,7 +984,7 @@ fn test_with_derive_macro() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
              Linting hello v1.0.0 ([..]/Scarb.toml)
         warn: Plugin diagnostic: redundant parentheses in enum variant definition
          --> [..]/src/lib.cairo:4:5
@@ -1040,7 +1040,7 @@ fn lint_workspace_with_deny_warnings() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
            Linting first v1.0.0 ([..]/first/Scarb.toml)
       warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
        --> [..]/lib.cairo:3:8

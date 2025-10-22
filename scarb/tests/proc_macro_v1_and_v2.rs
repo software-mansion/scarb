@@ -82,7 +82,7 @@ fn can_use_both_v1_and_v2_proc_macros() {
         .current_dir(&project)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling bar v1.0.0 ([..]Scarb.toml)
             [..]Compiling foo v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
@@ -157,7 +157,7 @@ fn v1_and_v2_macros_cannot_duplicate_expansions() {
         .current_dir(&project)
         .assert()
         .failure()
-        .stdout_matches(indoc! {r#"
+        .stdout_eq(indoc! {r#"
             [..]Compiling bar v1.0.0 ([..]Scarb.toml)
             [..]Compiling foo v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)

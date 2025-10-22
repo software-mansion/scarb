@@ -10,6 +10,7 @@ repository.workspace = true
 
 [dependencies]
 mdbook.workspace = true
+mimalloc.workspace = true
 scarb-ui = { path = "../../utils/scarb-ui" }
 scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["mdbook"] }
 clap.workspace = true
@@ -20,3 +21,4 @@ tracing-subscriber.workspace = true
 [dev-dependencies]
 scarb-test-support = { path = "../../utils/scarb-test-support" }
 assert_fs.workspace = true
+snapbox.workspace = true
