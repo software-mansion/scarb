@@ -117,7 +117,6 @@ quote = "1"
 ra_ap_toolchain = "0.0.301"
 rayon = "1.11.0"
 redb = "2.6.3"
-reqwest = { version = "0.12", default-features = false, features = ["gzip", "brotli", "deflate", "json", "stream", "multipart"] }
 salsa = "=0.24.0"
 semver = { version = "1", features = ["serde"] }
 semver-pubgrub = { git = "https://github.com/software-mansion-labs/semver-pubgrub.git" }
@@ -166,6 +165,13 @@ xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "6.0", default-features = false, features = ["deflate"] }
 zstd = "0.13"
+
+[workspace.dependencies.reqwest]
+version = "0.12"
+# Disable default features and re-enable all (+ extra compression formats) except for ones defining the SSL backend.
+# This backend has to be explicitly set in each crate using reqwest according to its needs.
+default-features = false
+features = ["gzip", "brotli", "deflate", "json", "stream", "multipart"]
 
 [patch.crates-io]
 cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo", rev = "2e1ecd0c18d9a6dfd8667062827adbb3cc36cf0b" }

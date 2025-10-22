@@ -111,6 +111,12 @@ which.workspace = true
 windows-sys.workspace = true
 zstd.workspace = true
 
+# Configure an SSL backend used on each supported target. On Windows and macOS we want to use native SSL backends,
+# enabled by the `native-tls` feature which is the default one in reqwest. On Linux, though, `native-tls` would attempt
+# to make a dynamic linkage to the OpenSSL version which is available on the build machine. This is tricky to control
+# and preserve wide support for various distros. We could use the `vendor` feature to statically link OpenSSL, but this
+# has a drawback of hardcoding root certificates and Scarb binary. Instead, we use rustls backend but use user system
+# root certificates. This proved to be the best compromise between portability and security for us.
 [target.'cfg(not(target_os = "linux"))'.dependencies]
 reqwest = { workspace = true, default-features = true }
 
