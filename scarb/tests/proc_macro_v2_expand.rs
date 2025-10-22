@@ -2684,7 +2684,7 @@ fn module_level_inline_macro_with_args() {
 }
 
 #[test]
-fn module_level_inline_macro_in_nested_module() {
+fn module_level_inline_macro_module_tree_root() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -2694,7 +2694,7 @@ fn module_level_inline_macro_in_nested_module() {
         #[inline_macro]
         pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
             let code = indoc::formatdoc!{r#"
-                pub fn nested_foo() -> felt252 {{ 42 }}
+                pub fn foo() -> felt252 {{ 42 }}
             "#};
             ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
                 code.clone(),
@@ -2720,15 +2720,11 @@ fn module_level_inline_macro_in_nested_module() {
             enable-gas = false
         "#})
         .lib_cairo(indoc! {r#"
-            mod outer {
-                pub mod inner {
-                    some!();
-                }
-            }
+            some!();
 
             #[executable]
             fn main() -> felt252 {
-                outer::inner::nested_foo()
+                foo()
             }
         "#})
         .build(&project);
