@@ -136,7 +136,7 @@ pub fn expand_module_level_inline_macro<'db>(
     host: &ProcMacroHostPlugin,
     db: &'db dyn Database,
     inline_macro: &ast::ItemInlineMacro<'db>,
-    _stream_metadata: &TokenStreamMetadata,
+    _metadata: &TokenStreamMetadata,
 ) -> Option<PluginResult<'db>> {
     let path = inline_macro.path(db).segments(db).elements(db).last()?;
     let PathSegment::Simple(segment) = path else {
