@@ -2615,10 +2615,10 @@ fn module_level_inline_macro_with_args() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
-            .add_cairo_lang_parser_dep()
-            .add_cairo_lang_syntax_dep()
-            .add_primitive_token_dep()
-            .lib_rs(indoc! {r##"
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
             use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, quote};
             use cairo_lang_parser::utils::SimpleParserDatabase;
             use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
@@ -2637,8 +2637,8 @@ fn module_level_inline_macro_with_args() {
                 result
             }
             "##})
-            .add_dep(r#"indoc = "*""#)
-            .build(&t);
+        .add_dep(r#"indoc = "*""#)
+        .build(&t);
 
     let project = temp.child("hello");
     ProjectBuilder::start()
