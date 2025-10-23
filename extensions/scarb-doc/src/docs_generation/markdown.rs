@@ -11,6 +11,7 @@ mod book_toml;
 mod context;
 mod summary;
 mod traits;
+use std::ops::Add;
 
 const BASE_HEADER_LEVEL: usize = 1;
 const SOURCE_DIRECTORY: &str = "src";
@@ -32,7 +33,7 @@ type GeneratedFile = (Filename, String);
 pub type SummaryIndexMap = IndexMap<String, SummaryListItem>;
 
 pub struct SummaryListItem {
-    /// A SUMMARY.md chapter title.  
+    /// A SUMMARY.md chapter title.
     chapter: String,
     /// List item indent in SUMMARY.md file.
     nesting_level: usize,
@@ -64,8 +65,32 @@ impl MarkdownContent {
         })
     }
 
+    pub fn from_workspace(packages: &[PackageInformation]) -> Result<Self> {
+        // TODO: consider generating book.toml content from workspace metadata
+        let book_toml = generate_book_toml_content(&packages[0].metadata);
+
+        let (w_summary, w_doc_files) = packages
+            .iter()
+            .map(|p| generate_summary_file_content(&p.crate_))
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .fold(
+                (SummaryIndexMap::new(), Vec::new()),
+                |(mut acc_summary, mut acc_files), (summary, doc_files)| {
+                    acc_summary = acc_summary.add(summary);
+                    acc_files.extend(doc_files);
+                    (acc_summary, acc_files)
+                },
+            );
+        Ok(Self {
+            book_toml,
+            summary: w_summary,
+            doc_files: w_doc_files,
+        })
+    }
+
     fn get_summary_markdown(&self) -> String {
-        let mut markdown = "# Summary\n\n".to_string();
+        let mut markdown = String::new();
         for (
             md_file_path,
             SummaryListItem {
@@ -154,5 +179,26 @@ where
         for (k, v) in iter {
             self.insert(k, v);
         }
+    }
+}
+
+impl<K, V> Add for IndexMap<K, V>
+where
+    K: std::hash::Hash + Eq + Clone,
+{
+    type Output = Self;
+
+    /// Returns a new IndexMap that contains all entries from `self` followed by
+    /// all key-value pairs from `rhs` in their original insertion order.
+    /// If a key from `rhs` already exists in `self`, its value is replaced while
+    /// preserving the original position of the key in `self`.
+    fn add(mut self, mut rhs: Self) -> Self::Output {
+        // Append in the exact order `rhs` had been built.
+        for k in rhs.keys.drain(..) {
+            if let Some((v, _)) = rhs.map.remove(&k) {
+                self.insert(k, v);
+            }
+        }
+        self
     }
 }

@@ -36,7 +36,7 @@ pub struct PackagesFilter {
     package: Vec<String>,
     /// Run for all packages in the workspace.
     #[arg(short, long, conflicts_with = "package")]
-    workspace: bool,
+    pub workspace: bool,
 }
 
 /// [`clap`] structured arguments that provide package selection.

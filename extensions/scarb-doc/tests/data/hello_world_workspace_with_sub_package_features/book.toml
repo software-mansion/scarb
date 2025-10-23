@@ -3,7 +3,7 @@ authors = ["<unknown>"]
 language = "en"
 multilingual = false
 src = "src"
-title = "hello_world_sub_package - Cairo"
+title = "hello_world - Cairo"
 
 [output.html]
 no-section-label = true
