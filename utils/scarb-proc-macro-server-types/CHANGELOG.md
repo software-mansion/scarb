@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.4.0 (2025-10-23)
+- Add `Workspace` type.
+- Limit `DefinedMacros` request and `ProcMacroScope` to specific Scarb workspace.
+
 ## 0.3.0 (2025-08-04)
 - Promote `0.3.0-rc.1` to stable release.
 
