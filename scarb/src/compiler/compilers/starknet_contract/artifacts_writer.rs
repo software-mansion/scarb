@@ -18,8 +18,8 @@ use serde::Serialize;
 use smol_str::SmolStr;
 use tracing::trace_span;
 
-const MAX_SIERRA_PROGRAM_FELTS: usize = 81290;
-const MAX_CASM_PROGRAM_FELTS: usize = 81290;
+const MAX_SIERRA_PROGRAM_FELTS: usize = 81920;
+const MAX_CASM_PROGRAM_FELTS: usize = 81920;
 const MAX_CONTRACT_CLASS_BYTES: usize = 4089446;
 const MAX_COMPILED_CONTRACT_CLASS_BYTES: usize = 4089446;
 
