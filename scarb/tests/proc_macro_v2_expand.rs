@@ -2861,7 +2861,7 @@ fn module_level_inline_macro_code_mappings_preserve_error_locations() {
         use cairo_lang_macro::{inline_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
 
         #[inline_macro]
-        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
             let mut tokens = Vec::new();
 
             tokens.push(TokenTree::Ident(Token::new(
@@ -2869,18 +2869,8 @@ fn module_level_inline_macro_code_mappings_preserve_error_locations() {
                 TextSpan::call_site(),
             )));
 
-            // The first token is the opening parenthesis "(", so take the next token
-            let TokenTree::Ident(arg) = token_stream
-                .tokens
-                .get(1)
-                .expect("macro expected at least one argument");
-
-            let content = arg.content.as_ref();
-            let slice_len: usize = core::cmp::min(7, content.len());
-            let slice = &content[..slice_len];
-
             tokens.push(TokenTree::Ident(Token::new(
-                slice.to_string(),
+                "undef".to_string(),
                 TextSpan::new(2, 7),
             )));
 
@@ -2899,7 +2889,7 @@ fn module_level_inline_macro_code_mappings_preserve_error_locations() {
         .version("1.0.0")
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
-            mod my_module {
+            mod hello {
                 some!(abcdefghi);
             }
 
