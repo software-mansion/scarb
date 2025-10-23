@@ -2853,7 +2853,7 @@ fn module_level_inline_macro_can_emit_diagnostics() {
 }
 
 #[test]
-fn module_level_inline_macro_code_mappings_preserve_attribute_error_locations() {
+fn module_level_inline_macro_code_mappings_preserve_error_locations() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
