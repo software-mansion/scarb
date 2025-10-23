@@ -229,6 +229,11 @@ impl PackagesFilter {
 
         Ok(matches)
     }
+
+    /// Returns the value of the `workspace` field.
+    pub fn get_workspace(&self) -> bool {
+        self.workspace
+    }
 }
 
 impl PackagesFilterLong {

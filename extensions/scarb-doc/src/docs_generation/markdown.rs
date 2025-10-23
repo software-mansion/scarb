@@ -11,6 +11,7 @@ mod book_toml;
 mod context;
 mod summary;
 mod traits;
+use std::ops::Add;
 
 const BASE_HEADER_LEVEL: usize = 1;
 const SOURCE_DIRECTORY: &str = "src";
@@ -32,7 +33,7 @@ type GeneratedFile = (Filename, String);
 pub type SummaryIndexMap = IndexMap<String, SummaryListItem>;
 
 pub struct SummaryListItem {
-    /// A SUMMARY.md chapter title.  
+    /// A SUMMARY.md chapter title.
     chapter: String,
     /// List item indent in SUMMARY.md file.
     nesting_level: usize,
@@ -63,9 +64,61 @@ impl MarkdownContent {
             doc_files,
         })
     }
+}
 
+/// Builds [`MarkdownContent`] for multiple packages without keeping multiple [`crate::PackageContext`]s
+/// or [`PackageInformation`]s items alive simultaneously.
+pub struct WorkspaceMarkdownBuilder {
+    book_toml: Option<String>,
+    summary: SummaryIndexMap,
+    doc_files: Vec<GeneratedFile>,
+}
+
+impl Default for WorkspaceMarkdownBuilder {
+    fn default() -> Self {
+        Self {
+            book_toml: None,
+            summary: SummaryIndexMap::new(),
+            doc_files: Vec::new(),
+        }
+    }
+}
+
+impl WorkspaceMarkdownBuilder {
+    pub fn add_package(&mut self, package_information: &PackageInformation) -> Result<()> {
+        if self.book_toml.is_none() {
+            self.book_toml = Some(generate_book_toml_content(&package_information.metadata));
+        }
+        let (summary, files) = generate_summary_file_content(&package_information.crate_)?;
+        let current = std::mem::replace(&mut self.summary, SummaryIndexMap::new());
+        self.summary = current.add(summary);
+        self.doc_files.extend(files);
+        Ok(())
+    }
+
+    pub fn build(self) -> Result<MarkdownContent> {
+        // TODO(#2790): consider generating book.toml content from workspace metadata
+        let book_toml = self
+            .book_toml
+            .unwrap_or_else(|| generate_book_toml_content(&package_information_placeholder()));
+        Ok(MarkdownContent {
+            book_toml,
+            summary: self.summary,
+            doc_files: self.doc_files,
+        })
+    }
+}
+
+fn package_information_placeholder() -> crate::AdditionalMetadata {
+    crate::AdditionalMetadata {
+        name: "workspace".to_string(),
+        authors: None,
+    }
+}
+
+impl MarkdownContent {
     fn get_summary_markdown(&self) -> String {
-        let mut markdown = "# Summary\n\n".to_string();
+        let mut markdown = String::new();
         for (
             md_file_path,
             SummaryListItem {
@@ -154,5 +207,26 @@ where
         for (k, v) in iter {
             self.insert(k, v);
         }
+    }
+}
+
+impl<K, V> Add for IndexMap<K, V>
+where
+    K: std::hash::Hash + Eq + Clone,
+{
+    type Output = Self;
+
+    /// Returns a new IndexMap that contains all entries from `self` followed by
+    /// all key-value pairs from `rhs` in their original insertion order.
+    /// If a key from `rhs` already exists in `self`, its value is replaced while
+    /// preserving the original position of the key in `self`.
+    fn add(mut self, mut rhs: Self) -> Self::Output {
+        // Append in the exact order `rhs` had been built.
+        for k in rhs.keys.drain(..) {
+            if let Some((v, _)) = rhs.map.remove(&k) {
+                self.insert(k, v);
+            }
+        }
+        self
     }
 }
