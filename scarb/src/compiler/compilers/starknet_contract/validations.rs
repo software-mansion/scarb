@@ -1,7 +1,7 @@
 use crate::compiler::compilers::{Props, SerdeListSelector};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
-use crate::core::{Utf8PathWorkspaceExt, Workspace};
-use anyhow::{Context, bail, ensure};
+use crate::core::{InliningStrategy, ManifestCompilerConfig, Utf8PathWorkspaceExt, Workspace};
+use anyhow::{Context, Result, bail, ensure};
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::flag::Flag;
@@ -11,7 +11,7 @@ use cairo_lang_starknet_classes::allowed_libfuncs::{
     AllowedLibfuncsError, BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST, ListSelector,
 };
 use cairo_lang_starknet_classes::contract_class::ContractClass;
-use indoc::{formatdoc, writedoc};
+use indoc::{formatdoc, indoc, writedoc};
 use salsa::Database;
 use std::fmt::Write;
 use std::iter::zip;
@@ -115,5 +115,17 @@ pub fn check_allowed_libfuncs<'db>(
         bail!("aborting compilation, because contracts use disallowed Sierra libfuncs");
     }
 
+    Ok(())
+}
+
+pub fn check_compiler_config(config: &ManifestCompilerConfig, ws: &Workspace<'_>) -> Result<()> {
+    let is_release = ws.current_profile()?.is_release();
+    if is_release && config.inlining_strategy != InliningStrategy::Default {
+        ws.config().ui().warn(indoc! {r#"
+            this build runs in `release` profile, but uses non-default inlining strategy
+            changing the inlining strategy may significantly slow down the compiled contract execution
+            please make sure the compiler configuration in your manifest file is intended
+            see https://docs.swmansion.com/scarb/docs/reference/manifest.html#inlining-strategy for more info"#});
+    }
     Ok(())
 }
