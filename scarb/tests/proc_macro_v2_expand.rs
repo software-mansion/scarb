@@ -2615,27 +2615,26 @@ fn module_level_inline_macro_with_args() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
+            .add_cairo_lang_parser_dep()
+            .add_cairo_lang_syntax_dep()
+            .add_primitive_token_dep()
             .lib_rs(indoc! {r##"
-            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan};
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, quote};
+            use cairo_lang_parser::utils::SimpleParserDatabase;
+            use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
 
             #[inline_macro]
             pub fn some(token_stream: TokenStream) -> ProcMacroResult {
-                // Parse single value from token stream
-                let input = token_stream.to_string().trim().to_string();
-
-                let code = indoc::formatdoc!{r#"
-                    pub fn foo() -> felt252 {{
-                        {input}
-                    }}
-                "#};
-
-                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
-                    code.clone(),
-                    TextSpan {
-                        start: 0,
-                        end: code.len() as u32,
-                    },
-                ))]))
+                let db_val = SimpleParserDatabase::default();
+                let db = &db_val;
+                let (body, _diagnostics) = db.parse_token_stream_expr(&token_stream);
+                let body = SyntaxNodeWithDb::new(&body, db);
+                let result = ProcMacroResult::new(quote!{
+                    pub fn foo() -> felt252 {
+                        #body
+                    }
+                });
+                result
             }
             "##})
             .add_dep(r#"indoc = "*""#)
