@@ -1,5 +1,3 @@
-# Summary
-
 - [hello_world](./hello_world.md)
   - [Modules](./hello_world-modules.md)
     - [inner_module](./hello_world-inner_module.md)

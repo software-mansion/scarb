@@ -7,7 +7,9 @@ use scarb_doc::docs_generation::markdown::MarkdownContent;
 use scarb_doc::errors::{MetadataCommandError, PackagesSerializationError};
 use scarb_doc::metadata::get_target_dir;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
-use scarb_doc::{PackageInformation, generate_package_context, generate_package_information};
+use scarb_doc::{
+    PackageContext, PackageInformation, generate_package_context, generate_package_information,
+};
 use scarb_extensions_cli::doc::{Args, OutputFormat};
 use scarb_metadata::{MetadataCommand, ScarbCommand};
 use scarb_ui::Ui;
@@ -35,6 +37,8 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
 
+    let is_workspace_doc = args.packages_filter.workspace;
+
     let workspace_root = metadata.workspace.root.clone();
     let mut output = match args.output_format {
         OutputFormat::Json => OutputEmit::for_json(output_dir, workspace_root, ui.clone()),
@@ -42,17 +46,25 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
             OutputEmit::for_markdown(output_dir, workspace_root, args.build, ui.clone())
         }
     };
+    let contexts: Vec<PackageContext> = metadata_for_packages
+        .iter()
+        .map(|pm| generate_package_context(&metadata, pm, args.document_private_items))
+        .collect::<Result<_, _>>()?;
 
-    for package_metadata in metadata_for_packages {
-        let context =
-            generate_package_context(&metadata, &package_metadata, args.document_private_items)?;
-
-        let package_information = generate_package_information(&context, ui.clone())?;
+    let mut packages_info = Vec::new();
+    for ctx in &contexts {
+        let package_information = generate_package_information(ctx, ui.clone())?;
         print_diagnostics(&ui);
-
-        output.write(package_information)?;
+        packages_info.push(package_information);
     }
 
+    if is_workspace_doc {
+        output.write_workspace(packages_info)?;
+    } else {
+        for info in packages_info {
+            output.write(info)?;
+        }
+    }
     output.flush()?;
 
     Ok(())
@@ -111,6 +123,33 @@ impl OutputEmit {
                 packages.push(
                     serde_json::to_value(&package).map_err(PackagesSerializationError::from)?,
                 );
+            }
+        };
+        Ok(())
+    }
+
+    pub fn write_workspace(&mut self, packages_info: Vec<PackageInformation>) -> Result<()> {
+        match self {
+            OutputEmit::Markdown {
+                output_dir,
+                build,
+                workspace_root,
+                ui,
+            } => {
+                workspace_output_markdown(
+                    &packages_info,
+                    output_dir,
+                    workspace_root,
+                    *build,
+                    ui.clone(),
+                )?;
+            }
+            OutputEmit::Json { packages, .. } => {
+                for package in packages_info {
+                    let value =
+                        serde_json::to_value(&package).map_err(PackagesSerializationError::from)?;
+                    packages.push(value);
+                }
             }
         };
         Ok(())
@@ -183,6 +222,55 @@ fn output_markdown(
         ui.print(format!(
             "\nRun the following to see the results: \n`mdbook serve {output_path}`\
                          \n\nOr open the following in your browser: \n`{pkg_output_dir}/book/index.html`",
+        ));
+    } else {
+        ui.print(format!(
+            "\nRun the following to see the results: \n`mdbook serve {output_path}`\n(you will need to have mdbook installed)\
+                        \n\nOr build html docs by running `scarb doc --build`",
+        ));
+    }
+
+    Ok(())
+}
+
+fn workspace_output_markdown(
+    pkg_information: &[PackageInformation],
+    output_dir: &Utf8PathBuf,
+    workspace_root: &Utf8PathBuf,
+    build: bool,
+    ui: Ui,
+) -> Result<()> {
+    let source_directory_path = output_dir;
+
+    MarkdownContent::from_workspace(pkg_information)?
+        .save(source_directory_path)
+        .with_context(|| "failed to save docs for workspace".to_string())?;
+
+    let output_path = output_dir
+        .strip_prefix(workspace_root)
+        .unwrap_or(workspace_root)
+        .to_string();
+
+    ui.print(Status::new("Saving output to:", &output_path));
+
+    if build {
+        let build_output_dir = output_dir.join("book");
+        ScarbCommand::new()
+            .arg("mdbook")
+            .arg("--input")
+            .arg(output_dir.clone())
+            .arg("--output")
+            .arg(build_output_dir.clone())
+            .env("SCARB_UI_VERBOSITY", ui.verbosity().to_string())
+            .run()?;
+        let build_output_path = build_output_dir
+            .strip_prefix(workspace_root)
+            .unwrap_or(&build_output_dir)
+            .to_string();
+        ui.print(Status::new("Saving build output to:", &build_output_path));
+        ui.print(format!(
+            "\nRun the following to see the results: \n`mdbook serve {output_path}`\
+                         \n\nOr open the following in your browser: \n`{output_path}/book/index.html`",
         ));
     } else {
         ui.print(format!(

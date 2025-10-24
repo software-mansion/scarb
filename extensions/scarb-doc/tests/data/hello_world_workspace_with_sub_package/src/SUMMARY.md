@@ -1,5 +1,3 @@
-# Summary
-
 - [hello_world](./hello_world.md)
   - [Modules](./hello_world-modules.md)
     - [tests](./hello_world-tests.md)
@@ -9,7 +7,6 @@
     - [FOO](./hello_world-FOO.md)
   - [Free functions](./hello_world-free_functions.md)
     - [main](./hello_world-main.md)
-    - [test](./hello_world-test.md)
     - [fib](./hello_world-fib.md)
   - [Structs](./hello_world-structs.md)
     - [Circle](./hello_world-Circle.md)
@@ -24,3 +21,7 @@
     - [CircleDrop](./hello_world-CircleDrop.md)
     - [CircleSerde](./hello_world-CircleSerde.md)
     - [CirclePartialEq](./hello_world-CirclePartialEq.md)
+- [hello_world_sub_package](./hello_world_sub_package.md)
+  - [Free functions](./hello_world_sub_package-free_functions.md)
+    - [test](./hello_world_sub_package-test.md)
+    - [main](./hello_world_sub_package-main.md)

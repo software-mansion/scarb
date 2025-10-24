@@ -8,12 +8,10 @@ use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
-const EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH: &str = "tests/data/hello_world_no_features";
-const EXPECTED_ROOT_PACKAGE_WITH_FEATURES_PATH: &str = "tests/data/hello_world_with_features";
-const EXPECTED_SUB_PACKAGE_NO_FEATURES_PATH: &str =
-    "tests/data/hello_world_sub_package_no_features";
-const EXPECTED_SUB_PACKAGE_WITH_FEATURES_PATH: &str =
-    "tests/data/hello_world_sub_package_with_features";
+const EXPECTED_WORKSPACE_ROOT_WITH_SUB_PACKAGE_PATH: &str =
+    "tests/data/hello_world_workspace_with_sub_package";
+const EXPECTED_WORKSPACE_WITH_SUB_PACKAGE_WITH_FEATURES_PATH: &str =
+    "tests/data/hello_world_workspace_with_sub_package_features";
 
 mod markdown_target;
 use markdown_target::MarkdownTargetChecker;
@@ -54,25 +52,8 @@ fn test_workspace_no_features() {
         .success();
 
     MarkdownTargetChecker::default()
-        .actual(
-            root_dir
-                .path()
-                .join("target/doc/hello_world")
-                .to_str()
-                .unwrap(),
-        )
-        .expected(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH)
-        .assert_all_files_match();
-
-    MarkdownTargetChecker::default()
-        .actual(
-            root_dir
-                .path()
-                .join("target/doc/hello_world_sub_package")
-                .to_str()
-                .unwrap(),
-        )
-        .expected(EXPECTED_SUB_PACKAGE_NO_FEATURES_PATH)
+        .actual(root_dir.path().join("target/doc/").to_str().unwrap())
+        .expected(EXPECTED_WORKSPACE_ROOT_WITH_SUB_PACKAGE_PATH)
         .assert_all_files_match();
 }
 
@@ -167,25 +148,8 @@ fn test_workspace_with_working_feature_in_root_and_sub_package() {
         .success();
 
     MarkdownTargetChecker::default()
-        .actual(
-            root_dir
-                .path()
-                .join("target/doc/hello_world")
-                .to_str()
-                .unwrap(),
-        )
-        .expected(EXPECTED_ROOT_PACKAGE_WITH_FEATURES_PATH)
-        .assert_all_files_match();
-
-    MarkdownTargetChecker::default()
-        .actual(
-            root_dir
-                .path()
-                .join("target/doc/hello_world_sub_package")
-                .to_str()
-                .unwrap(),
-        )
-        .expected(EXPECTED_SUB_PACKAGE_WITH_FEATURES_PATH)
+        .actual(root_dir.path().join("target/doc/").to_str().unwrap())
+        .expected(EXPECTED_WORKSPACE_WITH_SUB_PACKAGE_WITH_FEATURES_PATH)
         .assert_all_files_match();
 }
 
