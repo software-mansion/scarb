@@ -211,6 +211,14 @@ impl MacroPlugin for ProcMacroHostPlugin {
 
         let stream_metadata = Self::calculate_metadata(db, item_ast.clone(), metadata.edition);
 
+        // Expand module-level inline macro.
+        if let ast::ModuleItem::InlineMacro(inline_macro) = &item_ast
+            && let Some(result) =
+                expand_module_level_inline_macro(self, db, inline_macro, &stream_metadata)
+        {
+            return result;
+        }
+
         // Handle inner functions.
         if let InnerAttrExpansionResult::Some(result) = self.expand_inner_attr(db, item_ast.clone())
         {
