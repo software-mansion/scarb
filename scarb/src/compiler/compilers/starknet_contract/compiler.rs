@@ -22,7 +22,9 @@ use tracing::{debug, trace, trace_span};
 use super::contract_selector::ContractSelector;
 use crate::compiler::compilers::starknet_contract::artifacts_writer::Artifacts;
 use crate::compiler::compilers::starknet_contract::contract_selector::GLOB_PATH_SELECTOR;
-use crate::compiler::compilers::starknet_contract::validations::check_allowed_libfuncs;
+use crate::compiler::compilers::starknet_contract::validations::{
+    check_allowed_libfuncs, check_compiler_config,
+};
 use crate::compiler::compilers::{ArtifactsWriter, ensure_gas_enabled};
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::incremental::IncrementalContext;
@@ -91,6 +93,7 @@ impl Compiler for StarknetContractCompiler {
         }
 
         ensure_gas_enabled(db)?;
+        check_compiler_config(&unit.compiler_config, ws)?;
 
         if let Some(external_contracts) = props.build_external_contracts.clone() {
             for path in external_contracts.iter() {

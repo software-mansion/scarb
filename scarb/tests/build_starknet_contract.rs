@@ -473,3 +473,46 @@ fn do_not_compile_dep_contracts() {
         .child("target/dev/world_HelloContract.contract_class.json")
         .assert_is_json::<ContractClass>();
 }
+
+#[test]
+fn warn_inlining_strategy_in_release() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            inlining-strategy = "avoid"
+
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(BALANCE_CONTRACT)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..] Compiling hello v0.1.0 ([..])
+        [..]  Finished `dev` profile target(s) in [..]
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("--release")
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..])
+        warn: this build runs in `release` profile, but uses non-default inlining strategy
+        changing the inlining strategy may significantly slow down the compiled contract execution
+        please make sure the compiler configuration in your manifest file is intended
+        see https://docs.swmansion.com/scarb/docs/reference/manifest.html#inlining-strategy for more info
+        [..]Finished `release` profile target(s) in [..]
+        "#});
+}
