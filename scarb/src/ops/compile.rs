@@ -2,7 +2,13 @@ use crate::compiler::db::{
     ScarbDatabase, build_scarb_root_database, has_plugin, is_starknet_plugin,
 };
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
-use crate::compiler::incremental::IncrementalContext;
+use crate::compiler::incremental::artifacts_fingerprint::{
+    UnitArtifactsFingerprint, load_unit_artifacts_local_paths, save_unit_artifacts_fingerprint,
+    unit_artifacts_fingerprint_is_fresh,
+};
+use crate::compiler::incremental::{
+    IncrementalContext, load_incremental_artifacts, save_incremental_artifacts,
+};
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
 use crate::core::{
@@ -24,6 +30,7 @@ use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 use smol_str::{SmolStr, ToSmolStr};
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 use std::thread;
 use tracing::{trace, trace_span};
 
@@ -257,16 +264,50 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 let offloader = Offloader::new(s, ws);
                 let target_dir = unit.target_dir(ws);
 
-                let result = ws
-                    .config()
-                    .compilers()
-                    .compile(unit, &offloader, &mut db, ws);
+                let ctx = load_incremental_artifacts(&unit, &mut db, ws)?;
 
-                for plugin in proc_macros {
-                    plugin
-                        .post_process(&db)
-                        .context("procedural macro post processing callback failed")?;
-                }
+                let is_fresh_unit_artifacts = ctx
+                    .fingerprints()
+                    .and_then(|unit_fingerprint| {
+                        load_unit_artifacts_local_paths(&unit, ws)
+                            .transpose()
+                            .map(|artifacts| {
+                                let fingerprint = UnitArtifactsFingerprint::new(
+                                    &unit,
+                                    unit_fingerprint,
+                                    artifacts?,
+                                );
+                                anyhow::Ok(unit_artifacts_fingerprint_is_fresh(
+                                    &unit,
+                                    fingerprint,
+                                    ws,
+                                )?)
+                            })
+                    })
+                    .transpose()?
+                    .unwrap_or_default();
+
+                let ctx = Arc::new(ctx);
+                let result = if !is_fresh_unit_artifacts {
+                    let result = ws.config().compilers().compile(
+                        &unit,
+                        ctx.clone(),
+                        &offloader,
+                        &mut db,
+                        ws,
+                    );
+                    save_incremental_artifacts(&unit, &db, ctx.clone(), ws)?;
+
+                    for plugin in proc_macros {
+                        plugin
+                            .post_process(&db)
+                            .context("procedural macro post processing callback failed")?;
+                    }
+
+                    result
+                } else {
+                    Ok(())
+                };
 
                 let span = trace_span!("drop_db");
                 {
@@ -278,6 +319,12 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 {
                     let _guard = span.enter();
                     offloader.join()?;
+                }
+
+                if !is_fresh_unit_artifacts && let Some(unit_fingerprint) = ctx.fingerprints() {
+                    let fingerprint =
+                        UnitArtifactsFingerprint::new(&unit, unit_fingerprint, ctx.artifacts());
+                    save_unit_artifacts_fingerprint(&unit, fingerprint, ws)?;
                 }
 
                 if result.is_ok() {

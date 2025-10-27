@@ -17,6 +17,7 @@ use camino::Utf8PathBuf;
 use futures::{StreamExt, stream};
 use itertools::Itertools;
 use scarb_stable_hash::{StableHasher, u64_hash};
+use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
@@ -76,9 +77,11 @@ pub struct Fingerprint {
     digest: OnceLock<String>,
 }
 
-#[derive(Debug)]
+/// Fingerprint of a local file.
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LocalFingerprint {
     pub path: Utf8PathBuf,
+    #[serde(skip)]
     pub checksum: u64,
 }
 
@@ -114,9 +117,15 @@ pub enum ComponentFingerprint {
     Plugin(PluginFingerprint),
 }
 
-pub struct UnitFingerprint(HashMap<CompilationUnitComponentId, Arc<ComponentFingerprint>>);
+/// Fingerprint of all unit components.
+///
+/// This can be seen as a fingerprint for all inputs of a specific compilation unit,
+/// although it does not differentiate by output (namely it lacks any notion of compilation targets).
+pub struct UnitComponentsFingerprint(
+    HashMap<CompilationUnitComponentId, Arc<ComponentFingerprint>>,
+);
 
-impl UnitFingerprint {
+impl UnitComponentsFingerprint {
     #[tracing::instrument(level = "trace", skip_all)]
     pub async fn new(unit: &CairoCompilationUnit, ws: &Workspace<'_>) -> Self {
         let mut fingerprints = HashMap::new();
@@ -200,6 +209,15 @@ impl UnitFingerprint {
 
     pub fn get(&self, id: &CompilationUnitComponentId) -> Option<Arc<ComponentFingerprint>> {
         self.0.get(id).cloned()
+    }
+
+    pub fn digest(&self) -> u64 {
+        let mut hasher = StableHasher::new();
+        hasher.write_usize(self.0.len());
+        for (_, component) in self.0.iter().sorted_by_key(|(key, _)| (*key).clone()) {
+            component.digest().hash(&mut hasher);
+        }
+        hasher.finish()
     }
 }
 

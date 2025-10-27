@@ -6,6 +6,7 @@ pub use compilation_unit::*;
 pub use profile::*;
 pub use repository::*;
 use salsa::Database;
+use std::sync::Arc;
 
 mod compilation_unit;
 mod compilers;
@@ -23,7 +24,7 @@ pub trait Compiler: Sync {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        ctx: &IncrementalContext,
+        ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &dyn Database,
         ws: &Workspace<'_>,

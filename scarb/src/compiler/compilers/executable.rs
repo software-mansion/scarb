@@ -44,7 +44,7 @@ impl Compiler for ExecutableCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        ctx: &IncrementalContext,
+        ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &dyn Database,
         ws: &Workspace<'_>,
@@ -67,7 +67,7 @@ impl Compiler for ExecutableCompiler {
         let props: Props = unit.main_component().targets.target_props()?;
 
         let main_crate_ids = collect_main_crate_ids(unit, db);
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ctx, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, &ctx, ws);
         let span = trace_span!("compile_executable");
         let executable = {
             let _guard = span.enter();

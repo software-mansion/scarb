@@ -454,7 +454,13 @@ impl ComponentTarget {
             targets.iter().all(|t| t.group_id.is_some()),
             "all targets in a compilation unit component with multiple targets must have group_id defined"
         );
-        Ok(Self::Group(targets))
+        Ok(Self::Group(
+            // Sort for hash stability.
+            targets
+                .into_iter()
+                .sorted_by_key(|t| (t.kind.clone(), t.name.clone()))
+                .collect_vec(),
+        ))
     }
 
     pub fn new_single(target: Target) -> Self {
