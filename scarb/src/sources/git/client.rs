@@ -243,7 +243,7 @@ impl GitDatabase {
                 .try_find_reference(&format!("refs/remotes/origin/tags/{t}"))
                 .with_context(|| format!("failed to find tag `{t}`"))?
                 .ok_or_else(|| anyhow!("tag `{t}` does not exist"))?
-                .peel_to_id_in_place()
+                .peel_to_id()
                 .with_context(|| format!("tag `{t}` does not have a target"))?
                 .detach()
                 .into()),
@@ -252,7 +252,7 @@ impl GitDatabase {
                 .try_find_reference(&format!("origin/{b}"))
                 .with_context(|| format!("failed to find branch `{b}`"))?
                 .ok_or_else(|| anyhow!("branch `{b}` does not exist"))?
-                .peel_to_id_in_place()
+                .peel_to_id()
                 .with_context(|| format!("branch `{b}` does not have a target"))?
                 .detach()
                 .into()),
@@ -266,7 +266,7 @@ impl GitDatabase {
 
             DefaultBranch => Ok(repo
                 .find_reference("refs/remotes/origin/HEAD")?
-                .peel_to_id_in_place()?
+                .peel_to_id()?
                 .detach()
                 .into()),
         }
