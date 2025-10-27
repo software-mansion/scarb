@@ -17,6 +17,7 @@ use rayon::prelude::*;
 use salsa::Database;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::sync::Arc;
 use tracing::{debug, trace, trace_span};
 
 use super::contract_selector::ContractSelector;
@@ -79,7 +80,7 @@ impl Compiler for StarknetContractCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        ctx: &IncrementalContext,
+        ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &dyn Database,
         ws: &Workspace<'_>,
@@ -109,7 +110,7 @@ impl Compiler for StarknetContractCompiler {
 
         let main_crate_ids = collect_main_crate_ids(unit, db);
 
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ctx, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, &ctx, ws);
 
         let contracts = find_project_contracts(
             db,

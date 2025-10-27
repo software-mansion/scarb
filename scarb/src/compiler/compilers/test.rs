@@ -9,6 +9,7 @@ use cairo_lang_test_plugin::{TestsCompilationConfig, compile_test_prepared_db};
 use cairo_lang_utils::Intern;
 use itertools::Itertools;
 use salsa::Database;
+use std::sync::Arc;
 use tracing::{trace, trace_span};
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
@@ -32,7 +33,7 @@ impl Compiler for TestCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        ctx: &IncrementalContext,
+        ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &dyn Database,
         ws: &Workspace<'_>,
@@ -63,7 +64,7 @@ impl Compiler for TestCompiler {
         };
 
         let diagnostics_reporter =
-            build_compiler_config(db, unit, &test_crate_ids, ctx, ws).diagnostics_reporter;
+            build_compiler_config(db, unit, &test_crate_ids, &ctx, ws).diagnostics_reporter;
 
         let span = trace_span!("compile_test");
         let test_compilation = {
@@ -135,7 +136,7 @@ impl Compiler for TestCompiler {
                 target_dir,
                 unit,
                 offloader,
-                ctx,
+                &ctx,
                 db,
                 ws,
             )?;
