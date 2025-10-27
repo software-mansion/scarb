@@ -173,6 +173,7 @@ impl Compiler for StarknetContractCompiler {
             },
             offloader,
             db,
+            ctx,
             ws,
         )?;
 
