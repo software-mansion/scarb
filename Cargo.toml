@@ -90,7 +90,7 @@ dialoguer = "0.12.0"
 directories = "6"
 dunce = "1"
 expect-test = "1.5"
-flate2 = { version = "1.1.4", default-features = false, features = ["zlib"] }
+flate2 = { version = "1.1.5", default-features = false, features = ["zlib"] }
 fs_extra = "1"
 futures = { version = "0.3", default-features = false, features = ["std", "async-await", "executor"] }
 gix = { version = ">=0.73", default-features = false, features = ["revision"] }
@@ -114,9 +114,9 @@ predicates = "3"
 proc-macro2 = "1"
 pubgrub = { git = "https://github.com/software-mansion-labs/pubgrub.git", branch = "dev" }
 quote = "1"
-ra_ap_toolchain = "0.0.301"
+ra_ap_toolchain = "0.0.302"
 rayon = "1.11.0"
-redb = "2.6.3"
+redb = "3.1.0"
 salsa = "=0.24.0"
 semver = { version = "1", features = ["serde"] }
 semver-pubgrub = { git = "https://github.com/software-mansion-labs/semver-pubgrub.git" }
@@ -157,8 +157,8 @@ typed-builder = ">=0.17"
 typetag = "0.2"
 url = { version = "2", features = ["serde"] }
 walkdir = "2"
-wasmtime = "37"
-wasmtime-wasi = "37"
+wasmtime = "38"
+wasmtime-wasi = "38"
 which = "8"
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System", "Win32_System_Console"] }
 xshell = "0.2"
