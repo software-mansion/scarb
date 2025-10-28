@@ -1,9 +1,7 @@
 use crate::compiler::compilers::{
     ExecutableCompiler, LibCompiler, StarknetContractCompiler, TestCompiler,
 };
-use crate::compiler::incremental::{
-    load_incremental_artifacts, save_incremental_artifacts, warmup_incremental_cache,
-};
+use crate::compiler::incremental::{IncrementalContext, warmup_incremental_cache};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::Workspace;
 use crate::internal::offloader::Offloader;
@@ -14,6 +12,7 @@ use smol_str::SmolStr;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::fmt;
+use std::sync::Arc;
 
 pub struct CompilerRepository {
     compilers: HashMap<SmolStr, Box<dyn Compiler>>,
@@ -48,7 +47,8 @@ impl CompilerRepository {
 
     pub fn compile(
         &self,
-        unit: CairoCompilationUnit,
+        unit: &CairoCompilationUnit,
+        ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &mut dyn Database,
         ws: &Workspace<'_>,
@@ -57,17 +57,15 @@ impl CompilerRepository {
         let Some(compiler) = self.compilers.get(target_kind.as_str()) else {
             bail!("unknown compiler for target `{target_kind}`");
         };
-        let ctx = load_incremental_artifacts(&unit, db, ws)?;
         let cached_crates = ctx.cached_crates().to_vec();
         // We run incremental cache warmup in parallel with the compilation.
         // We do not want to block on cache warmup.
         join(
             db,
             |db| warmup_incremental_cache(db, cached_crates),
-            |db| compiler.compile(&unit, &ctx, offloader, db, ws),
+            |db| compiler.compile(unit, ctx, offloader, db, ws),
         )
         .1?;
-        save_incremental_artifacts(&unit, db, ctx, ws)?;
         Ok(())
     }
 }

@@ -1,6 +1,7 @@
 use crate::compiler::compilers::Props;
 use crate::compiler::compilers::starknet_contract::{ContractFileStemCalculator, ContractSelector};
-use crate::compiler::helpers::write_json_with_byte_count;
+use crate::compiler::helpers::{write_json, write_json_with_byte_count};
+use crate::compiler::incremental::IncrementalContext;
 use crate::core::{PackageName, Workspace};
 use crate::flock::Filesystem;
 use crate::internal::offloader::Offloader;
@@ -16,6 +17,7 @@ use salsa::Database;
 use scarb_stable_hash::short_hash;
 use serde::Serialize;
 use smol_str::SmolStr;
+use std::sync::Arc;
 use tracing::trace_span;
 
 const MAX_SIERRA_PROGRAM_FELTS: usize = 81920;
@@ -138,6 +140,7 @@ impl ArtifactsWriter {
         }: Artifacts<'db>,
         offloader: &Offloader<'_>,
         db: &'db dyn Database,
+        ctx: Arc<IncrementalContext>,
         ws: &Workspace<'_>,
     ) -> anyhow::Result<()> {
         let span = trace_span!("serialize_starknet");
@@ -175,6 +178,7 @@ impl ArtifactsWriter {
                     let file_name = file_name.clone();
                     let contract_stem = contract_stem.clone();
                     let target_dir = self.target_dir.clone();
+                    let ctx = ctx.clone();
                     offloader.offload("output file", move |ws| {
                         let sierra_felts = class.sierra_program.len();
                         if sierra_felts > MAX_SIERRA_PROGRAM_FELTS {
@@ -192,6 +196,7 @@ impl ArtifactsWriter {
                             ws,
                             &class,
                         )?;
+                        ctx.register_artifact(target_dir.path_unchecked().join(file_name))?;
                         if class_size > MAX_CONTRACT_CLASS_BYTES {
                             // Debug info is omitted on Starknet.
                             // Only warn if size without debug info exceeds the limit as well.
@@ -221,6 +226,7 @@ impl ArtifactsWriter {
                     let file_name = file_name.clone();
                     let contract_stem = contract_stem.clone();
                     let target_dir = self.target_dir.clone();
+                    let ctx = ctx.clone();
                     offloader.offload("output file", move |ws| {
 
                             let casm_felts = casm_class.bytecode.len();
@@ -239,7 +245,8 @@ impl ArtifactsWriter {
                                 ws,
                                 casm_class,
                             )?;
-                            if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
+                        ctx.register_artifact(target_dir.path_unchecked().join(file_name))?;
+                        if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
                                 ws.config().ui().warn(formatdoc! {r#"
                                 Compiled contract class size exceeds maximum allowed size on Starknet for contract `{}`:
                                 {MAX_COMPILED_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {compiled_class_size} bytes.
@@ -256,16 +263,18 @@ impl ArtifactsWriter {
 
         artifacts.finish();
 
-        write_json_with_byte_count(
-            &format!(
-                "{}{extension_prefix}.starknet_artifacts.json",
-                self.target_name
-            ),
+        let file_name = format!(
+            "{}{extension_prefix}.starknet_artifacts.json",
+            self.target_name
+        );
+        write_json(
+            &file_name,
             "starknet artifacts file",
             &self.target_dir,
             ws,
             &artifacts,
         )?;
+        ctx.register_artifact(self.target_dir.path_unchecked().join(file_name))?;
 
         Ok(())
     }

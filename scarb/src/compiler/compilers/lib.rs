@@ -48,7 +48,7 @@ impl Compiler for LibCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        ctx: &IncrementalContext,
+        ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &dyn Database,
         ws: &Workspace<'_>,
@@ -65,7 +65,7 @@ impl Compiler for LibCompiler {
 
         let main_crate_ids = collect_main_crate_ids(unit, db);
 
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ctx, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, &ctx, ws);
 
         validate_compiler_config(db, &compiler_config, unit, ws);
 
@@ -85,19 +85,17 @@ impl Compiler for LibCompiler {
             let _guard = span.enter();
             let target_name = unit.main_component().target_name();
             let target_dir = target_dir.clone();
+            let ctx = ctx.clone();
             // We only clone Arc, not the underlying program, so it's inexpensive.
             let program = program_artifact.clone();
             offloader.offload("output file", move |ws| {
                 // Cloning the underlying program is expensive, but we can afford it here,
                 // as we are on a dedicated thread anyway.
                 let sierra_program: VersionedProgram = program.as_ref().clone().into();
-                write_json(
-                    &format!("{target_name}.sierra.json"),
-                    "output file",
-                    &target_dir,
-                    ws,
-                    &sierra_program,
-                )?;
+                let filename = format!("{target_name}.sierra.json");
+                write_json(&filename, "output file", &target_dir, ws, &sierra_program)?;
+                let path = target_dir.path_unchecked().join(filename);
+                ctx.register_artifact(path)?;
                 Ok(())
             });
         }
@@ -107,19 +105,17 @@ impl Compiler for LibCompiler {
             let _guard = span.enter();
             let target_name = unit.main_component().target_name();
             let target_dir = target_dir.clone();
+            let ctx = ctx.clone();
             // We only clone Arc, not the underlying program, so it's inexpensive.
             let program = program_artifact.clone();
             offloader.offload("output file", move |ws| {
                 // Cloning the underlying program is expensive, but we can afford it here,
                 // as we are on a dedicated thread anyway.
                 let sierra_program: VersionedProgram = program.as_ref().clone().into();
-                write_string(
-                    &format!("{target_name}.sierra"),
-                    "output file",
-                    &target_dir,
-                    ws,
-                    &sierra_program,
-                )?;
+                let filename = format!("{target_name}.sierra");
+                write_string(&filename, "output file", &target_dir, ws, &sierra_program)?;
+                let path = target_dir.path_unchecked().join(filename);
+                ctx.register_artifact(path)?;
                 Ok(())
             });
         }
@@ -160,13 +156,10 @@ impl Compiler for LibCompiler {
             let span = trace_span!("serialize_casm");
             {
                 let _guard = span.enter();
-                write_string(
-                    format!("{}.casm", unit.main_component().target_name()).as_str(),
-                    "output file",
-                    &target_dir,
-                    ws,
-                    cairo_program,
-                )?;
+                let filename = format!("{}.casm", unit.main_component().target_name());
+                write_string(&filename, "output file", &target_dir, ws, cairo_program)?;
+                let path = target_dir.path_unchecked().join(filename);
+                ctx.register_artifact(path)?;
             }
         }
 
