@@ -1613,9 +1613,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lint"
-version = "2.13.0"
+version = "2.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c82848adc8b68f592240fb971a927eca4fcfed39229e0f8e89701e011ece78b3"
+checksum = "a238f90f6891a001d828cd00eba8d31904436ee074090480e90bd71a2eec4e81"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
