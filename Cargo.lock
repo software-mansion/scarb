@@ -1557,7 +1557,8 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.13.1"
-source = "git+https://github.com/software-mansion/cairols?rev=9974c75368fe2fd1f6bcaf3117f641f26ba79166#9974c75368fe2fd1f6bcaf3117f641f26ba79166"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "06a57e1713c2168f3afe15ce5f6f4ce792bb8745a9038702e9e74b4d3c7fe532"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1580,7 +1581,7 @@ dependencies = [
  "cairo-lang-syntax-codegen",
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
- "cairo-lint 2.13.0",
+ "cairo-lint",
  "colored",
  "convert_case",
  "crossbeam",
@@ -1615,34 +1616,6 @@ name = "cairo-lint"
 version = "2.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c82848adc8b68f592240fb971a927eca4fcfed39229e0f8e89701e011ece78b3"
-dependencies = [
- "anyhow",
- "cairo-lang-compiler",
- "cairo-lang-defs",
- "cairo-lang-diagnostics",
- "cairo-lang-filesystem",
- "cairo-lang-formatter",
- "cairo-lang-parser",
- "cairo-lang-semantic",
- "cairo-lang-syntax",
- "cairo-lang-test-plugin",
- "cairo-lang-utils",
- "if_chain",
- "indoc",
- "itertools 0.14.0",
- "log",
- "num-bigint",
- "salsa",
- "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "tempfile",
- "tracing",
- "which",
-]
-
-[[package]]
-name = "cairo-lint"
-version = "2.13.1"
-source = "git+https://github.com/software-mansion/cairo-lint?rev=b57d02cb5cf4693398b92d22c79dcdf22c142778#b57d02cb5cf4693398b92d22c79dcdf22c142778"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -6751,7 +6724,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
- "cairo-lint 2.13.1",
+ "cairo-lint",
  "camino",
  "cargo_metadata",
  "chrono",
