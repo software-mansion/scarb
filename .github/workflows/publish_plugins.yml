@@ -3,6 +3,12 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        required: false
+        type: string
+        description: Scarb version to publish from.
 
 jobs:
   publish:
@@ -18,7 +24,7 @@ jobs:
       - uses: software-mansion/setup-scarb@v1
         with:
           cache: false
-          scarb-version: ${{ github.ref_name }}
+          scarb-version: ${{ inputs.version_tag || github.ref_name }}
 
       - name: Init Scarb to cache plugins
         id: scarb-init
