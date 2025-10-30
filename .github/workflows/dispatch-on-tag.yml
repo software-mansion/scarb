@@ -15,12 +15,9 @@ jobs:
         run: echo "TAG_NAME=${{ github.ref_name }}" >> $GITHUB_OUTPUT
 
       - name: Repository Dispatch to Cairo lint repository
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.CAIRO_LINT_DISPATCH_TOKEN }}
-          repository: "software-mansion/cairo-lint"
-          event-type: "scarb-new-tag-published"
-          client-payload: |
-            {
-              "tag": "${{ steps.tag_name.outputs.TAG_NAME }}",
-            }
+          repository: software-mansion/cairo-lint
+          event-type: scarb-new-tag-published
+          client-payload: '{"tag": "${{ steps.tag_name.outputs.TAG_NAME }}"}'
