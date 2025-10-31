@@ -77,7 +77,7 @@ pub fn execute(
     output.validate(&args.run.target)?;
 
     if !args.no_build {
-        let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
+        let filter = PackagesFilter::generate_for::<Metadata>([package.clone()].iter());
         ScarbCommand::new()
             .arg("build")
             .env("SCARB_PACKAGES_FILTER", filter.to_env())
