@@ -11,7 +11,7 @@ use quote::quote as rust_quote;
 use ra_ap_rustc_parse_format::{ParseError, ParseMode, Parser, Piece, Position};
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
-use syn::{Expr, LitStr, Token, parse_macro_input};
+use syn::{Error, Expr, LitStr, Token, parse_macro_input};
 
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq))]
@@ -219,17 +219,28 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             }
             Piece::NextArgument(arg) => {
                 let expr = match arg.position {
-                    Position::ArgumentIs(idx) | Position::ArgumentImplicitlyIs(idx) => args
-                        .get(idx)
-                        .copied()
-                        .expect("format arg index out of range"),
+                    Position::ArgumentIs(idx) | Position::ArgumentImplicitlyIs(idx) => {
+                        if let Some(expr) = args.get(idx).copied() {
+                            expr
+                        } else {
+                            let err_msg = formatdoc! {r#"
+                                format arg index {} is out of range (the format string contains {} args).
+                                "#,idx,args.len()
+                                };
+                            return Error::new(fmtstr.span(), err_msg)
+                                .to_compile_error()
+                                .into();
+                        }
+                    }
                     Position::ArgumentNamed(name) => {
-                        let err_msg = format!(
-                            "named placeholder '{{{}}}' is not supported by this macro.\
-                            help: use positional args ({{}}) instead or indexed placeholders ({{0}}, {{1}}, ...)",
-                            name
-                        );
-                        return rust_quote!( compile_error!(#err_msg); ).into();
+                        let err_msg = formatdoc! {r#"
+                        named placeholder '{{{}}}' is not supported by this macro.
+                        help: use positional ('{{}}') or indexed placeholders ('{{0}}', '{{1}}', ...) instead.
+                        "#,name
+                        };
+                        return Error::new(fmtstr.span(), err_msg)
+                            .to_compile_error()
+                            .into();
                     }
                 };
                 output_token_stream.extend(rust_quote! {
@@ -249,16 +260,18 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             secondary_label: _,
             suggestion: _,
         } = parser.errors.remove(0);
-        let mut msg = formatdoc!(
+        let mut err_msg = formatdoc!(
             r#"
             failed to parse format string: {label}
             {description}
             "#,
         );
         if let Some(note) = note {
-            msg.push_str(&format!("\nnote: {note}"));
+            err_msg.push_str(&format!("\nnote: {note}"));
         }
-        return rust_quote!( compile_error!(#msg); ).into();
+        return Error::new(fmtstr.span(), err_msg)
+            .to_compile_error()
+            .into();
     }
     proc_macro::TokenStream::from(rust_quote!({
       #output_token_stream
