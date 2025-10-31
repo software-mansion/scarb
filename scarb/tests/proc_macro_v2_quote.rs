@@ -892,7 +892,7 @@ fn quote_format_macro_fails_on_named_args() {
         .arg("check")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
-       // Disable colors in Cargo output.
+        // Disable colors in Cargo output.
         .env("CARGO_TERM_COLOR", "never")
         .current_dir(&project)
         .assert()
@@ -946,7 +946,7 @@ fn quote_format_macro_fails_on_invalid_index() {
         .arg("check")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
-       // Disable colors in Cargo output.
+        // Disable colors in Cargo output.
         .env("CARGO_TERM_COLOR", "never")
         .current_dir(&project)
         .assert()
