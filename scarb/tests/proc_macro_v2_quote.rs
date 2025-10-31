@@ -8,7 +8,7 @@ use scarb_test_support::project_builder::ProjectBuilder;
 use snapbox::Assert;
 
 #[test]
-fn can_use_quote() {
+fn quote_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -61,7 +61,7 @@ fn can_use_quote() {
 }
 
 #[test]
-fn can_use_quote_with_token_tree() {
+fn quote_macro_with_token_tree() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -117,7 +117,7 @@ fn can_use_quote_with_token_tree() {
 }
 
 #[test]
-fn can_use_quote_with_token_stream() {
+fn quote_macro_with_token_stream() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -173,7 +173,7 @@ fn can_use_quote_with_token_stream() {
 }
 
 #[test]
-fn can_use_quote_with_syntax_node() {
+fn quote_macro_with_syntax_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -246,7 +246,7 @@ fn can_use_quote_with_syntax_node() {
 }
 
 #[test]
-fn can_use_quote_with_cairo_specific_syntax() {
+fn quote_macro_with_cairo_specific_syntax() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default().add_primitive_token_dep()
@@ -401,7 +401,7 @@ fn can_use_quote_with_cairo_specific_syntax() {
 }
 
 #[test]
-fn can_parse_incoming_token_stream() {
+fn quote_macro_parse_incoming_token_stream() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -494,7 +494,7 @@ fn can_parse_incoming_token_stream() {
 }
 
 #[test]
-fn can_parse_with_token_interpolation() {
+fn quote_macro_with_token_interpolation() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
