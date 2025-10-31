@@ -115,6 +115,7 @@ proc-macro2 = "1"
 pubgrub = { git = "https://github.com/software-mansion-labs/pubgrub.git", branch = "dev" }
 quote = "1"
 ra_ap_toolchain = "0.0.302"
+ra-ap-rustc_parse_format = "0.138.0"
 rayon = "1.11.0"
 redb = "2.6.3"
 salsa = "=0.24.0"

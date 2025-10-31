@@ -1,9 +1,17 @@
 use std::iter::Peekable;
+use std::sync::Arc;
 
+use cairo_lang_parser::lexer::tokenize_all;
+use cairo_lang_parser::utils::SimpleParserDatabase;
+use indoc::formatdoc;
 use proc_macro2::{Delimiter, Ident, Span, TokenTree};
 
 extern crate proc_macro;
 use quote::quote as rust_quote;
+use ra_ap_rustc_parse_format::{ParseError, ParseMode, Parser, Piece, Position};
+use syn::parse::{Parse, ParseStream};
+use syn::punctuated::Punctuated;
+use syn::{Error, Expr, LitStr, Token, parse_macro_input};
 
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq))]
@@ -120,6 +128,150 @@ pub fn quote(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
               quote_macro_result.push_token(::cairo_lang_macro::TokenTree::Ident(::cairo_lang_macro::Token::new(" ".to_string(), ::cairo_lang_macro::TextSpan::call_site())));
             }),
         }
+    }
+    proc_macro::TokenStream::from(rust_quote!({
+      #output_token_stream
+      quote_macro_result
+    }))
+}
+
+struct QuoteFormatArgs {
+    fmtstr: LitStr,
+    args: Punctuated<Expr, Token![,]>,
+}
+
+impl Parse for QuoteFormatArgs {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let fmtstr = input.parse::<LitStr>()?;
+
+        let args = if input.peek(Token![,]) {
+            let _ = input.parse::<Token![,]>()?;
+            Punctuated::parse_terminated(input)?
+        } else {
+            Punctuated::new()
+        };
+
+        Ok(QuoteFormatArgs { fmtstr, args })
+    }
+}
+
+fn tokenize(string: &str) -> Vec<QuoteToken> {
+    let db = SimpleParserDatabase::default();
+    let tokens = tokenize_all(&db, (), Arc::<str>::from(string));
+
+    let mut result = Vec::new();
+    let mut first = true;
+
+    for token in tokens.iter() {
+        let text = token.text(&db);
+
+        if text.is_empty() {
+            continue;
+        }
+        if !first && !token.leading_trivia.is_empty() {
+            result.push(QuoteToken::Whitespace);
+        }
+        result.push(QuoteToken::Content(text.to_string()));
+        first = false;
+    }
+    result
+}
+
+/// Build a Cairo TokenStream from a string literal with format placeholders.
+///
+/// Unlike `quote!` macro, this macro bypasses Rust's parser,
+/// allowing Cairo-specific syntax that is not valid Rust syntax.
+///
+/// Unlike `quote!` macro, this macro does not support token `#token` interpolation.
+/// Placeholders are substituted with arguments implementing `ToPrimitiveTokenStream`.
+/// Supported format placeholders are: `{}`, `{0}`, `{1}`, etc.
+#[proc_macro]
+pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let QuoteFormatArgs { fmtstr, args } = parse_macro_input!(input as QuoteFormatArgs);
+    let fmtsrc = fmtstr.value();
+    let args: Vec<&Expr> = args.iter().collect();
+
+    let mut output_token_stream = rust_quote! {
+      let mut quote_macro_result = ::cairo_lang_macro::TokenStream::empty();
+    };
+    let mut parser = Parser::new(&fmtsrc, None, None, false, ParseMode::Format);
+
+    for piece in &mut parser {
+        match piece {
+            Piece::Lit(string) => {
+                for token in tokenize(string) {
+                    match token {
+                        QuoteToken::Content(content) => {
+                            output_token_stream.extend(rust_quote! {
+                              quote_macro_result.push_token(::cairo_lang_macro::TokenTree::Ident(::cairo_lang_macro::Token::new(::std::string::ToString::to_string(#content), ::cairo_lang_macro::TextSpan::call_site())));
+                            });
+                        }
+                        // Vars are handled via placeholders, so they should not appear here.
+                        QuoteToken::Var(_) => {}
+                        QuoteToken::Whitespace => {
+                            output_token_stream.extend(rust_quote! {
+                              quote_macro_result.push_token(::cairo_lang_macro::TokenTree::Ident(::cairo_lang_macro::Token::new(" ".to_string(), ::cairo_lang_macro::TextSpan::call_site())));
+                            });
+                        }
+                    }
+                }
+            }
+            Piece::NextArgument(arg) => {
+                let expr = match arg.position {
+                    Position::ArgumentIs(idx) | Position::ArgumentImplicitlyIs(idx) => {
+                        if let Some(expr) = args.get(idx).copied() {
+                            expr
+                        } else {
+                            return Error::new(
+                                fmtstr.span(),
+                                formatdoc! (r#"format arg index {} is out of range (the format string contains {} args)."#,
+                                idx,
+                                args.len()
+                                )
+                            )
+                                .to_compile_error()
+                                .into();
+                        }
+                    }
+                    Position::ArgumentNamed(name) => {
+                        return Error::new(
+                            fmtstr.span(),
+                            formatdoc! (r#"
+                            named placeholder '{{{}}}' is not supported by this macro.
+                            help: use positional ('{{}}') or indexed placeholders ('{{0}}', '{{1}}', ...) instead.
+                            "#, name)
+                        )
+                            .to_compile_error()
+                            .into();
+                    }
+                };
+                output_token_stream.extend(rust_quote! {
+                  quote_macro_result.extend(
+                    ::cairo_lang_macro::TokenStream::from_primitive_token_stream(::cairo_lang_primitive_token::ToPrimitiveTokenStream::to_primitive_token_stream(&#expr)).into_iter()
+                  );
+                });
+            }
+        }
+    }
+    if !parser.errors.is_empty() {
+        let ParseError {
+            description,
+            note,
+            label,
+            span: _,
+            secondary_label: _,
+            suggestion: _,
+        } = parser.errors.remove(0);
+        let mut err_msg = formatdoc!(
+            r#"
+            failed to parse format string: {label}
+            {description}
+            "#,
+        );
+        if let Some(note) = note {
+            err_msg.push_str(&format!("\nnote: {note}"));
+        }
+        return Error::new(fmtstr.span(), err_msg).to_compile_error().into();
     }
     proc_macro::TokenStream::from(rust_quote!({
       #output_token_stream
