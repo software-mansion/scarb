@@ -223,22 +223,24 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                         if let Some(expr) = args.get(idx).copied() {
                             expr
                         } else {
-                            let err_msg = formatdoc! {r#"
+                            return Error::new(
+                                fmtstr.span(),
+                                formatdoc! (r#"
                                 format arg index {} is out of range (the format string contains {} args).
-                                "#,idx,args.len()
-                                };
-                            return Error::new(fmtstr.span(), err_msg)
+                                "#,idx,args.len())
+                            )
                                 .to_compile_error()
                                 .into();
                         }
                     }
                     Position::ArgumentNamed(name) => {
-                        let err_msg = formatdoc! {r#"
-                        named placeholder '{{{}}}' is not supported by this macro.
-                        help: use positional ('{{}}') or indexed placeholders ('{{0}}', '{{1}}', ...) instead.
-                        "#,name
-                        };
-                        return Error::new(fmtstr.span(), err_msg)
+                        return Error::new(
+                            fmtstr.span(),
+                            formatdoc! (r#"
+                            named placeholder '{{{}}}' is not supported by this macro.
+                            help: use positional ('{{}}') or indexed placeholders ('{{0}}', '{{1}}', ...) instead.
+                            "#,name)
+                        )
                             .to_compile_error()
                             .into();
                     }
