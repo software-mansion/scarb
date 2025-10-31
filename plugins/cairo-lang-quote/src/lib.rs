@@ -184,7 +184,7 @@ fn tokenize(string: &str) -> Vec<QuoteToken> {
 ///
 /// Argument syntax is the same as for [`std::format!`].
 /// Placeholders are substituted with arguments implementing `ToPrimitiveTokenStream`.
-/// Note: currently, only non-indexed and unnamed `{}` placeholders are supported.
+/// Note: only unnamed (`{}`) and indexed (`{0}`, `{1}`, ...) placeholders are supported.
 ///
 #[proc_macro]
 pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
