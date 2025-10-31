@@ -786,7 +786,7 @@ fn quote_format_macro_fails_on_invalid_syntax() {
         [..]Compiling some v1.0.0 [..]
         [..]Compiling hello v1.0.0 [..]
         error: Parser error in macro-expanded code: Missing token ')'.
-         --> [..]src/lib.cairo:[..]
+         --> [..]src/lib.cairo:2:24
         fn main() -> felt252 { some!() }
                                ^^^^^^^
         
@@ -807,10 +807,10 @@ fn quote_format_macro_with_indexed_args() {
 
             #[inline_macro]
             pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
-                let first = TokenTree::Ident(Token::new("10".to_string(), TextSpan::call_site()));
-                let second = TokenTree::Ident(Token::new("20".to_string(), TextSpan::call_site()));
+                let first = TokenTree::Ident(Token::new("1".to_string(), TextSpan::call_site()));
+                let second = TokenTree::Ident(Token::new("100".to_string(), TextSpan::call_site()));
                 let tokens = quote_format! {
-                    "{1} + {0}",
+                    "{1} - {0}",
                     first,
                     second
                 };
@@ -849,7 +849,7 @@ fn quote_format_macro_with_indexed_args() {
         [..] Finished `dev` profile [..]
         [..]Executing hello
         Program output:
-        30
+        99
         Saving output to: target/execute/hello/execution1
         "#})
         .success();
@@ -867,7 +867,7 @@ fn quote_format_macro_fails_on_named_args() {
             #[inline_macro]
             pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
                 let x = TokenTree::Ident(Token::new("42".to_string(), TextSpan::call_site()));
-                let tokens = quote_format! {"{name}", x};
+                let tokens = quote_format! {"{name}", x };
                 ProcMacroResult::new(tokens)
             }
         "##})
