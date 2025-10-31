@@ -2,7 +2,6 @@ use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_filesystem::span::{TextOffset, TextWidth};
 use cairo_lang_macro::{Diagnostic, Severity, TextSpan};
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
-use cairo_lang_syntax::node::stable_ptr::SyntaxStablePtr;
 use cairo_lang_syntax::node::{SyntaxNode, TypedStablePtr, TypedSyntaxNode};
 use itertools::Itertools;
 use salsa::Database;
@@ -73,18 +72,11 @@ fn get_root_ptr<'db>(
     db: &'db dyn Database,
     stable_ptr: SyntaxStablePtrId<'db>,
 ) -> SyntaxStablePtrId<'db> {
-    let mut current_ptr = stable_ptr;
-
-    while let SyntaxStablePtr::Child {
-        parent: parent_ptr,
-        kind: _,
-        key_fields: _,
-        index: _,
-    } = current_ptr.long(db)
-    {
-        current_ptr = *parent_ptr;
+    let mut node = stable_ptr.lookup(db);
+    while let Some(parent) = node.parent(db) {
+        node = parent;
     }
-    current_ptr
+    node.stable_ptr(db)
 }
 
 /// Finds the most specific node that fully encompasses the given text span.
