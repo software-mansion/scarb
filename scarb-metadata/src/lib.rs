@@ -388,7 +388,7 @@ pub struct CompilationUnitComponentMetadata {
     pub id: Option<CompilationUnitComponentId>,
     /// Identifier of this component as a dependency.
     /// This directly translates to a `discriminator` field in Cairo compiler terminology.
-    /// If [`CompilationUnitComponentMetadata.id`] is [`Some`]
+    /// If [`CompilationUnitComponentMetadata`].id is [`Some`]
     /// then this field is [`None`] for `core` crate **only**.
     pub discriminator: Option<String>,
     /// Dependencies of this component.

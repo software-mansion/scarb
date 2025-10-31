@@ -10,4 +10,4 @@ warning: unused imports: `ProcMacroResult` and `TokenStream`
 1 | use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream};
   |                                         ^^^^^^^^^^^^^^^  ^^^^^^^^^^^
   |
-  = note: `#[warn(unused_imports)]` on by default
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default

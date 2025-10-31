@@ -10,4 +10,4 @@ warning: unused imports: `MACRO_DEFINITIONS_SLICE`, `ProcMacroResult`, and `Toke
 1 | use cairo_lang_macro::{inline_macro, ProcMacroResult, TokenStream, MACRO_DEFINITIONS_SLICE};
   |                                      ^^^^^^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^
   |
-  = note: `#[warn(unused_imports)]` on by default
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
