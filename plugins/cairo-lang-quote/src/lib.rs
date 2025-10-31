@@ -159,22 +159,22 @@ fn tokenize(string: &str) -> Vec<QuoteToken> {
     let db = SimpleParserDatabase::default();
     let tokens = tokenize_all(&db, (), Arc::<str>::from(string));
 
-    let mut output = Vec::new();
+    let mut result = Vec::new();
     let mut first = true;
 
-    for terminal in tokens.iter() {
-        let text = terminal.text(&db);
+    for token in tokens.iter() {
+        let text = token.text(&db);
 
         if text.is_empty() {
             continue;
         }
-        if !first && !terminal.leading_trivia.is_empty() {
-            output.push(QuoteToken::Whitespace);
+        if !first && !token.leading_trivia.is_empty() {
+            result.push(QuoteToken::Whitespace);
         }
-        output.push(QuoteToken::Content(text.to_string()));
+        result.push(QuoteToken::Content(text.to_string()));
         first = false;
     }
-    output
+    result
 }
 
 /// Build a Cairo TokenStream from a string literal with format placeholders.
@@ -182,10 +182,9 @@ fn tokenize(string: &str) -> Vec<QuoteToken> {
 /// Unlike `quote!` macro, this macro bypasses Rust's parser,
 /// allowing Cairo-specific syntax that is not valid Rust syntax.
 ///
-/// Argument syntax is the same as for [`std::format!`].
+/// Unlike `format!` macro, this macro does not support token `#token` interpolation.
 /// Placeholders are substituted with arguments implementing `ToPrimitiveTokenStream`.
-/// Note: only unnamed (`{}`) and indexed (`{0}`, `{1}`, ...) placeholders are supported.
-///
+/// Supported format placeholders are: `{}`, `{0}`, `{1}`, etc.
 #[proc_macro]
 pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let QuoteFormatArgs { fmtstr, args } = parse_macro_input!(input as QuoteFormatArgs);
@@ -225,9 +224,10 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                         } else {
                             return Error::new(
                                 fmtstr.span(),
-                                formatdoc! (r#"
-                                format arg index {} is out of range (the format string contains {} args).
-                                "#,idx,args.len())
+                                formatdoc! (r#"format arg index {} is out of range (the format string contains {} args)."#,
+                                idx,
+                                args.len()
+                                )
                             )
                                 .to_compile_error()
                                 .into();
@@ -239,7 +239,7 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                             formatdoc! (r#"
                             named placeholder '{{{}}}' is not supported by this macro.
                             help: use positional ('{{}}') or indexed placeholders ('{{0}}', '{{1}}', ...) instead.
-                            "#,name)
+                            "#, name)
                         )
                             .to_compile_error()
                             .into();
@@ -271,9 +271,7 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         if let Some(note) = note {
             err_msg.push_str(&format!("\nnote: {note}"));
         }
-        return Error::new(fmtstr.span(), err_msg)
-            .to_compile_error()
-            .into();
+        return Error::new(fmtstr.span(), err_msg).to_compile_error().into();
     }
     proc_macro::TokenStream::from(rust_quote!({
       #output_token_stream
