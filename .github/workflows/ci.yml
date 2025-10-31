@@ -31,7 +31,8 @@ jobs:
           event_name = "${{ github.event_name }}"
           ref = "${{ github.ref }}"
           is_labeled = "${{ contains(github.event.pull_request.labels.*.name, 'test-windows') }}"
-          is_labeled = bool(is_labeled)
+          is_labeled = is_labeled == 'true'
+          print('is_labeled', is_labeled)
           
           # Build matrix with platforms
           matrix = {"platform": []}
@@ -43,6 +44,7 @@ jobs:
           })
           
           is_pushed_to_main = event_name == "push" and ref == "refs/heads/main"
+          print('is_pushed_to_main', is_pushed_to_main)
           # Include Windows only for pushes to main branch or explicitly labeled PRs
           if is_pushed_to_main or is_labeled:
               matrix["platform"].append({
