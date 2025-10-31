@@ -2,7 +2,8 @@ use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::Expa
 use crate::compiler::plugin::proc_macro::v2::host::attribute::{
     AttrExpansionArgs, AttrExpansionFound,
 };
-use crate::compiler::plugin::proc_macro::v2::host::conversion::CallSiteLocation;
+use crate::compiler::plugin::proc_macro::v2::host::conversion::{CallSiteLocation, SpanSource};
+use crate::compiler::plugin::proc_macro::v2::host::span_utils::move_spans_by_offset;
 use crate::compiler::plugin::proc_macro::v2::{ProcMacroHostPlugin, TokenStreamBuilder};
 use crate::compiler::plugin::proc_macro::{ExpansionKind, ExpansionQuery};
 use cairo_lang_filesystem::span::TextSpan;
@@ -44,6 +45,8 @@ impl ProcMacroHostPlugin {
                         let mut args_builder = TokenStreamBuilder::new(db);
                         args_builder.add_node(attr.arguments(db).as_syntax_node());
                         let args = args_builder.build(ctx);
+                        let initial_span = attr.arguments(db).text_span(db).start;
+                        let args = move_spans_by_offset(args, initial_span);
                         expansion = Some(AttrExpansionArgs {
                             id: found,
                             args,

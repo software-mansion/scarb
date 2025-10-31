@@ -1,3 +1,4 @@
+use crate::compiler::plugin::proc_macro::v2::host::span_utils::move_spans_by_offset;
 use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
 use cairo_lang_filesystem::span::{TextSpan as CairoTextSpan, TextWidth};
 use cairo_lang_macro::{Diagnostic, TextOffset, TextSpan, Token, TokenStream, TokenTree};
@@ -28,18 +29,7 @@ impl InlineAdapter {
                 call_site_span,
             }
         };
-        let token_stream = TokenStream::new(
-            token_stream
-                .into_iter()
-                .map(|tree| match tree {
-                    TokenTree::Ident(mut token) => {
-                        token.span.start -= this.initial_offset;
-                        token.span.end -= this.initial_offset;
-                        TokenTree::Ident(token)
-                    }
-                })
-                .collect(),
-        );
+        let token_stream = move_spans_by_offset(token_stream, this.initial_offset);
         (this, token_stream)
     }
 

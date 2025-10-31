@@ -4,6 +4,7 @@ mod conversion;
 pub mod derive;
 mod inline;
 mod post;
+mod span_utils;
 
 use attribute::*;
 pub use aux_data::ProcMacroAuxData;
