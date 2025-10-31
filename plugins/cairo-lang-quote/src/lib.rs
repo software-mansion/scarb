@@ -182,7 +182,7 @@ fn tokenize(string: &str) -> Vec<QuoteToken> {
 /// Unlike `quote!` macro, this macro bypasses Rust's parser,
 /// allowing Cairo-specific syntax that is not valid Rust syntax.
 ///
-/// Unlike `format!` macro, this macro does not support token `#token` interpolation.
+/// Unlike `quote!` macro, this macro does not support token `#token` interpolation.
 /// Placeholders are substituted with arguments implementing `ToPrimitiveTokenStream`.
 /// Supported format placeholders are: `{}`, `{0}`, `{1}`, etc.
 #[proc_macro]
