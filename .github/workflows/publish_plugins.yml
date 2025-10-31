@@ -3,6 +3,12 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        required: false
+        type: string
+        description: Scarb version to publish from.
 
 jobs:
   publish:
@@ -18,7 +24,7 @@ jobs:
       - uses: software-mansion/setup-scarb@v1
         with:
           cache: false
-          scarb-version: ${{ github.ref_name }}
+          scarb-version: ${{ inputs.version_tag || github.ref_name }}
 
       - name: Init Scarb to cache plugins
         id: scarb-init
@@ -29,7 +35,7 @@ jobs:
           scarb init --no-vcs
           echo "CAIRO_VERSION=$(scarb metadata --format-version 1 | jq -r '.app_version_info.cairo.version')" >> $GITHUB_OUTPUT
         env:
-          SCARB_INIT_TEST_RUNNER: cairo-test
+          SCARB_INIT_TEST_RUNNER: none
 
       - name: Check if plugin versions exist in the registry
         id: check-plugins
