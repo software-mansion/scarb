@@ -72,7 +72,7 @@ jobs:
           tool: nextest@0.9.98
       - name: nextest archive
         run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude cairo-lang-macro
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: nextest-archive-${{ matrix.platform.os }}
           path: nextest-archive-${{ matrix.platform.os }}.tar.zst
@@ -147,7 +147,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: nextest archive
         run: cargo nextest archive --all-features --cargo-profile ci --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --package scarb-prove --package scarb-verify
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: nextest-nightly-archive-${{ matrix.platform.os }}
           path: nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst
