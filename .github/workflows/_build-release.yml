@@ -161,7 +161,7 @@ jobs:
         run: cargo build -p xtask
 
       - name: Download artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: build-${{ matrix.target }}
           path: target/verify
@@ -179,7 +179,7 @@ jobs:
     needs: build
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           path: artifacts-dl
 
