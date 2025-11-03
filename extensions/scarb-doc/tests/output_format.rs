@@ -12,6 +12,7 @@ use json_target::JsonTargetChecker;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 const EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH: &str = "tests/data/hello_world_no_features";
+const EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH_MDX: &str = "tests/data/hello_world_no_features_mdx";
 const FIBONACCI_CODE_WITHOUT_FEATURE: &str = include_str!("code/code_1.cairo");
 const COMMON_CODE_WITHOUT_FEATURE: &str = include_str!("code/code_2.cairo");
 
@@ -55,6 +56,28 @@ fn markdown_output() {
     MarkdownTargetChecker::default()
         .actual(t.path().join("target/doc/hello_world").to_str().unwrap())
         .expected(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH)
+        .assert_all_files_match();
+}
+
+#[test]
+fn mdx_output() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .edition("2023_01")
+        .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args(["--output-format", "mdx"])
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    MarkdownTargetChecker::default()
+        .actual(t.path().join("target/doc/hello_world").to_str().unwrap())
+        .expected(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH_MDX)
         .assert_all_files_match();
 }
 

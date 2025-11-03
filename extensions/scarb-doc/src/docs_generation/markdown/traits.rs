@@ -1,7 +1,7 @@
 use super::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::{
     BASE_MODULE_CHAPTER_PREFIX, GROUP_CHAPTER_PREFIX, SHORT_DOCUMENTATION_AVOID_PREFIXES,
-    SHORT_DOCUMENTATION_LEN, SummaryIndexMap,
+    SHORT_DOCUMENTATION_LEN, SummaryIndexMap, get_filename_with_extension,
 };
 use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem};
 use crate::location_links::DocLocationLink;
@@ -26,7 +26,7 @@ pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
     const ITEMS_SUMMARY_FILENAME: &'static str;
 
     fn filename(&self) -> String {
-        format!("{}.md", self.markdown_formatted_path())
+        get_filename_with_extension(&self.markdown_formatted_path())
     }
 
     fn md_ref_formatted(&self, relative_path: Option<String>) -> String {
@@ -55,18 +55,18 @@ macro_rules! impl_top_level_markdown_doc_item {
     };
 }
 
-impl_top_level_markdown_doc_item!(Constant<'_>, "constants.md");
-impl_top_level_markdown_doc_item!(Enum<'_>, "enums.md");
-impl_top_level_markdown_doc_item!(ExternFunction<'_>, "extern_functions.md");
-impl_top_level_markdown_doc_item!(ExternType<'_>, "extern_types.md");
-impl_top_level_markdown_doc_item!(FreeFunction<'_>, "free_functions.md");
-impl_top_level_markdown_doc_item!(Impl<'_>, "impls.md");
-impl_top_level_markdown_doc_item!(ImplAlias<'_>, "impl_aliases.md");
-impl_top_level_markdown_doc_item!(Module<'_>, "modules.md");
-impl_top_level_markdown_doc_item!(Struct<'_>, "structs.md");
-impl_top_level_markdown_doc_item!(Trait<'_>, "traits.md");
-impl_top_level_markdown_doc_item!(TypeAlias<'_>, "type_aliases.md");
-impl_top_level_markdown_doc_item!(MacroDeclaration<'_>, "macro_declarations.md");
+impl_top_level_markdown_doc_item!(Constant<'_>, "constants");
+impl_top_level_markdown_doc_item!(Enum<'_>, "enums");
+impl_top_level_markdown_doc_item!(ExternFunction<'_>, "extern_functions");
+impl_top_level_markdown_doc_item!(ExternType<'_>, "extern_types");
+impl_top_level_markdown_doc_item!(FreeFunction<'_>, "free_functions");
+impl_top_level_markdown_doc_item!(Impl<'_>, "impls");
+impl_top_level_markdown_doc_item!(ImplAlias<'_>, "impl_aliases");
+impl_top_level_markdown_doc_item!(Module<'_>, "modules");
+impl_top_level_markdown_doc_item!(Struct<'_>, "structs");
+impl_top_level_markdown_doc_item!(Trait<'_>, "traits");
+impl_top_level_markdown_doc_item!(TypeAlias<'_>, "type_aliases");
+impl_top_level_markdown_doc_item!(MacroDeclaration<'_>, "macro_declarations");
 
 macro_rules! impl_markdown_doc_item {
     ($ty:ty) => {
@@ -603,7 +603,7 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
             "[{}](./{}-{})",
             T::HEADER,
             module_name,
-            T::ITEMS_SUMMARY_FILENAME
+            get_filename_with_extension(T::ITEMS_SUMMARY_FILENAME),
         );
 
         writeln!(&mut markdown, "\n{prefix} {linked}\n\n| | |\n|:---|:---|",)?;
@@ -779,7 +779,11 @@ fn generate_markdown_from_item_data(
     writeln!(&mut markdown, "Fully qualified path: {full_path}\n",)?;
 
     if let Some(group_name) = doc_item.group_name() {
-        let group_path = format!("[{}](./{}.md)", group_name, group_name.replace(" ", "_"),);
+        let group_path = format!(
+            "[{}](./{})",
+            group_name,
+            get_filename_with_extension(&group_name.replace(" ", "_")),
+        );
         writeln!(&mut markdown, "Part of the group: {group_path}\n",)?;
     }
 
@@ -804,7 +808,10 @@ fn get_linked_path(full_path: &str) -> String {
             current_path.push('-');
         }
         current_path.push_str(element);
-        let formatted = format!("[{element}](./{current_path}.md)");
+        let formatted = format!(
+            "[{element}](./{})",
+            get_filename_with_extension(&current_path)
+        );
         result.push(formatted);
     }
     result.join("::")
@@ -819,8 +826,8 @@ fn get_full_subitem_path<T: MarkdownDocItem + SubPathDocItem>(
 ) -> String {
     if let Some((parent_path, item_path)) = item.full_path().rsplit_once("::") {
         let last_path = format!(
-            "{}.md#{}{}",
-            parent_path.replace("::", "-"),
+            "{}#{}{}",
+            get_filename_with_extension(&parent_path.replace("::", "-")),
             item_path.to_lowercase(),
             if let Some(item_suffix) = item_suffix {
                 format!("-{item_suffix}")
@@ -855,7 +862,10 @@ fn format_signature(input: &str, links: &[DocLocationLink], index_map: &SummaryI
                 .iter()
                 .find(|&link| i >= link.start && i < link.end)
             {
-                if index_map.contains_key(&format!("./{}.md", &link.full_path)) {
+                if index_map.contains_key(&format!(
+                    "./{}",
+                    get_filename_with_extension(&link.full_path)
+                )) {
                     let slice = escape_html(&input[link.start..link.end]);
                     escaped.push_str(&format!(
                         "<a href=\"{}.html\">{}</a>",

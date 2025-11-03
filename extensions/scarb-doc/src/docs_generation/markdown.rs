@@ -11,12 +11,55 @@ mod book_toml;
 mod context;
 mod summary;
 mod traits;
+use scarb_extensions_cli::doc::OutputFormat;
 use std::ops::Add;
+use std::sync::OnceLock;
+
+pub enum OutputFilesExtension {
+    Md,
+    Mdx,
+    Json,
+}
+
+impl OutputFilesExtension {
+    pub const fn get_string(&self) -> &'static str {
+        match self {
+            OutputFilesExtension::Md => ".md",
+            OutputFilesExtension::Mdx => ".mdx",
+            OutputFilesExtension::Json => ".json",
+        }
+    }
+}
+
+impl From<OutputFormat> for OutputFilesExtension {
+    fn from(format: OutputFormat) -> Self {
+        match format {
+            OutputFormat::Markdown => OutputFilesExtension::Md,
+            OutputFormat::Mdx => OutputFilesExtension::Mdx,
+            OutputFormat::Json => OutputFilesExtension::Json,
+        }
+    }
+}
+
+// Global, run-scoped output extension accessor.
+static OUTPUT_EXTENSION: OnceLock<&'static str> = OnceLock::new();
+
+pub fn set_output_extension(ext: OutputFormat) {
+    let _ = OUTPUT_EXTENSION.set(OutputFilesExtension::from(ext).get_string());
+}
+
+fn extension() -> &'static str {
+    OUTPUT_EXTENSION.get().copied().unwrap()
+}
+
+pub fn get_filename_with_extension(filename: &str) -> String {
+    format!("{filename}{}", extension())
+}
 
 const BASE_HEADER_LEVEL: usize = 1;
 const SOURCE_DIRECTORY: &str = "src";
 const BOOK_TOML_FILENAME: &str = "book.toml";
-pub const SUMMARY_FILENAME: &str = "SUMMARY.md";
+pub const SUMMARY_FILENAME: &str = "SUMMARY";
 const SHORT_DOCUMENTATION_LEN: usize = 200;
 pub const BASE_MODULE_CHAPTER_PREFIX: &str = "##";
 pub const GROUP_CHAPTER_PREFIX: &str = "- ###";
@@ -146,14 +189,14 @@ impl MarkdownContent {
             .map_err(|e| IOWriteError::new(e, "book.toml"))?;
 
         fs::write(
-            source_directory_path.join(SUMMARY_FILENAME),
+            source_directory_path.join(get_filename_with_extension(SUMMARY_FILENAME)),
             self.get_summary_markdown(),
         )
         .map_err(|e| IOWriteError::new(e, "summary"))?;
 
         for (filename, file_content) in self.doc_files {
-            fs::write(source_directory_path.join(filename.clone()), file_content)
-                .map_err(|e| IOWriteError::new(e, filename.as_ref()))?;
+            let path = source_directory_path.join(get_filename_with_extension(filename.as_str()));
+            fs::write(path, file_content).map_err(|e| IOWriteError::new(e, filename.as_ref()))?;
         }
 
         Ok(())

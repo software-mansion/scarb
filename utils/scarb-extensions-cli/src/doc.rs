@@ -20,6 +20,9 @@ pub enum OutputFormat {
     /// This may be useful if you want to generate documentation files by yourself.
     /// The precise output structure is not guaranteed to be stable.
     Json,
+    /// Generates documentation alike Markdown format with `.mdx` extension instead.
+    #[value(hide = true)] // do not advertise in --help but accept from CLI
+    Mdx,
 }
 
 /// Generate documentation based on code comments
