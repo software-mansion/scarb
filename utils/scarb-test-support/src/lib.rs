@@ -8,6 +8,7 @@ pub mod fsx;
 pub mod gitx;
 pub mod manifest_edit;
 pub mod predicates;
+#[cfg(feature = "proc-macro-server-types")]
 pub mod proc_macro_server;
 pub mod project_builder;
 pub mod registry;
