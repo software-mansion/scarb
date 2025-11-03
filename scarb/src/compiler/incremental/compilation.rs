@@ -22,73 +22,57 @@ use tracing::{debug, error, trace_span};
 
 const SCARB_INCREMENTAL: &str = "SCARB_INCREMENTAL";
 
+pub struct EnabledIncrementalContext {
+    fingerprints: UnitFingerprint,
+    cached_crates: Vec<CrateInput>,
+    cached_crates_with_warnings: Vec<CrateInput>,
+    warnings_found: AtomicBool,
+}
+
 pub enum IncrementalContext {
     Disabled,
-    Enabled {
-        fingerprints: UnitFingerprint,
-        cached_crates: Vec<CrateInput>,
-        cached_crates_with_warnings: Vec<CrateInput>,
-        warnings_found: AtomicBool,
-    },
+    Enabled(Arc<EnabledIncrementalContext>),
 }
 
 impl IncrementalContext {
+    pub fn enabled(&self) -> Option<Arc<EnabledIncrementalContext>> {
+        let IncrementalContext::Enabled(enabled) = self else {
+            return None;
+        };
+        Some(enabled.clone())
+    }
+
     pub fn fingerprints(&self) -> Option<&UnitFingerprint> {
-        match self {
-            IncrementalContext::Disabled => None,
-            IncrementalContext::Enabled {
-                fingerprints,
-                cached_crates_with_warnings: _,
-                warnings_found: _,
-                cached_crates: _,
-            } => Some(fingerprints),
-        }
+        let IncrementalContext::Enabled(enabled) = self else {
+            return None;
+        };
+        Some(&enabled.fingerprints)
     }
 
     pub fn cached_crates(&self) -> &[CrateInput] {
-        match self {
-            IncrementalContext::Disabled => &[],
-            IncrementalContext::Enabled {
-                fingerprints: _,
-                cached_crates_with_warnings: _,
-                warnings_found: _,
-                cached_crates,
-            } => cached_crates,
-        }
+        let IncrementalContext::Enabled(enabled) = self else {
+            return &[];
+        };
+        &enabled.cached_crates
     }
     pub fn cached_crates_with_warnings(&self) -> &[CrateInput] {
-        match self {
-            IncrementalContext::Disabled => &[],
-            IncrementalContext::Enabled {
-                fingerprints: _,
-                cached_crates: _,
-                warnings_found: _,
-                cached_crates_with_warnings,
-            } => cached_crates_with_warnings,
-        }
+        let IncrementalContext::Enabled(enabled) = self else {
+            return &[];
+        };
+        &enabled.cached_crates_with_warnings
     }
 
     pub fn report_warnings(&self) {
-        match self {
-            IncrementalContext::Disabled => {}
-            IncrementalContext::Enabled {
-                fingerprints: _,
-                cached_crates: _,
-                warnings_found,
-                cached_crates_with_warnings: _,
-            } => warnings_found.store(true, Ordering::Release),
+        if let IncrementalContext::Enabled(enabled) = self {
+            enabled.warnings_found.store(true, Ordering::Release)
         }
     }
 
     pub fn warnings_found(&self) -> bool {
-        match self {
-            IncrementalContext::Disabled => false,
-            IncrementalContext::Enabled {
-                fingerprints: _,
-                cached_crates: _,
-                warnings_found,
-                cached_crates_with_warnings: _,
-            } => warnings_found.load(Ordering::Acquire),
+        if let IncrementalContext::Enabled(enabled) = self {
+            enabled.warnings_found.load(Ordering::Acquire)
+        } else {
+            false
         }
     }
 }
@@ -179,12 +163,14 @@ pub fn load_incremental_artifacts(
             .collect_vec()
     };
 
-    Ok(IncrementalContext::Enabled {
-        fingerprints,
-        cached_crates,
-        cached_crates_with_warnings,
-        warnings_found: AtomicBool::new(false),
-    })
+    Ok(IncrementalContext::Enabled(Arc::new(
+        EnabledIncrementalContext {
+            fingerprints,
+            cached_crates,
+            cached_crates_with_warnings,
+            warnings_found: AtomicBool::new(false),
+        },
+    )))
 }
 
 /// Loads the cache for a specific component if it is fresh.
