@@ -795,7 +795,7 @@ fn quote_format_macro_fails_on_invalid_syntax() {
                                ^^^^^^^
         
         error: could not compile `hello` due to 1 previous error
-        error: `scarb metadata` exited with error
+        error: `scarb` command exited with error
         "#})
         .failure();
 }
