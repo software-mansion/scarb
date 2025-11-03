@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.2.2 (2025-10-03)
+- Add `quote_format!` macro.
+
 ## 0.2.1 (2025-09-03)
 - Add an interface for implementing optional custom fingerprint calculation callbacks.
 
