@@ -923,7 +923,7 @@ fn can_emit_diagnostic_with_inversed_span() {
             // Emit error diagnostic if tuple type is found
             if let (Some(start), Some(end)) = (start_span, end_span) {
                 // Create a custom span from start to end
-                let custom_span = TextSpan::new(start.start, end.end);
+                let custom_span = TextSpan::new(end.end, start.start);
 
                 let diag = Diagnostic::span_error(custom_span, "Unsupported tuple type");
                 result.with_diagnostics(diag.into())
