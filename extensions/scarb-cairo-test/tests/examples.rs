@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use snapbox::cmd::{Command, cargo_bin};
+use scarb_test_support::cargo::cargo_bin;
+use snapbox::cmd::Command;
 
 use test_for_each_example::test_for_each_example;
 

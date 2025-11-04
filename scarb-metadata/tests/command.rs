@@ -1,9 +1,9 @@
 use assert_fs::TempDir;
-use snapbox::cmd::{Command, cargo_bin};
+use scarb_metadata::MetadataCommand;
+use scarb_test_support::cargo::cargo_bin;
+use snapbox::cmd::Command;
 use std::env;
 use std::path::PathBuf;
-
-use scarb_metadata::MetadataCommand;
 
 fn scarb_bin() -> PathBuf {
     env::var_os("SCARB_TEST_BIN")
