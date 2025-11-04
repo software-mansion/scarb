@@ -45,10 +45,10 @@ Read the docs:
 Join the community:
 - Follow us on @swmansionxyz: https://twitter.com/swmansionxyz
 - Chat on Telegram: https://t.me/+1pMLtrNj5NthZWJk
-- Contact us privately on Telegram: @scarb_chat
 - Socialize on Starknet's Discord: https://discord.gg/KZWaFtPZJf
 
-Report bugs: https://github.com/software-mansion/scarb/issues/new/choose\
+Report bugs: https://github.com/software-mansion/scarb/issues/new/choose
+Ask for support: https://t.me/scarb_chat\
 ",
 )]
 pub struct ScarbArgs {
