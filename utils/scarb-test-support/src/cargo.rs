@@ -6,7 +6,7 @@ pub fn cargo_bin(name: &str) -> PathBuf {
     env::var_os(format!("NEXTEST_BIN_EXE_{name}"))
         .or_else(|| env::var_os(format!("CARGO_BIN_EXE_{name}")))
         .map(PathBuf::from)
-        .unwrap_or_else(|| snapbox::cmd::cargo_bin(name))
+        .expect("binary not found")
 }
 
 pub fn manifest_dir() -> PathBuf {
