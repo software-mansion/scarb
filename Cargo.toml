@@ -116,7 +116,7 @@ pubgrub = { git = "https://github.com/software-mansion-labs/pubgrub.git", branch
 quote = "1"
 ra_ap_toolchain = "0.0.304"
 rayon = "1.11.0"
-redb = "3.1.0"
+redb = "2.6.3"
 salsa = "=0.24.0"
 semver = { version = "1", features = ["serde"] }
 semver-pubgrub = { git = "https://github.com/software-mansion-labs/semver-pubgrub.git" }
@@ -158,7 +158,7 @@ typetag = "0.2"
 url = { version = "2", features = ["serde"] }
 walkdir = "2"
 wasmtime = "37"
-wasmtime-wasi = "38"
+wasmtime-wasi = "37"
 which = "8"
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System", "Win32_System_Console"] }
 xshell = "0.2"
