@@ -3,8 +3,8 @@ use crate::compiler::db::{
 };
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::incremental::artifacts_fingerprint::{
-    UnitArtifactsFingerprint, load_unit_artifacts_local_paths, save_unit_artifacts_fingerprint,
-    unit_artifacts_fingerprint_is_fresh,
+    UnitArtifactsFingerprint, artifacts_fingerprint_allowed, load_unit_artifacts_local_paths,
+    save_unit_artifacts_fingerprint, unit_artifacts_fingerprint_is_fresh,
 };
 use crate::compiler::incremental::{
     IncrementalContext, load_incremental_artifacts, save_incremental_artifacts,
@@ -285,6 +285,8 @@ fn compile_cairo_unit_inner(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> R
             && !ctx.cached_crates_with_warnings().is_empty();
 
         let is_fresh_unit_artifacts = !warnings_to_print
+            && artifacts_fingerprint_allowed()
+            && ctx.cached_crates_with_warnings().is_empty()
             && ctx
                 .fingerprints()
                 .and_then(|unit_fingerprint| {
@@ -325,7 +327,10 @@ fn compile_cairo_unit_inner(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> R
             offloader.join()?;
         }
 
-        if !is_fresh_unit_artifacts && let Some(unit_fingerprint) = ctx.fingerprints() {
+        if artifacts_fingerprint_allowed()
+            && !is_fresh_unit_artifacts
+            && let Some(unit_fingerprint) = ctx.fingerprints()
+        {
             let fingerprint =
                 UnitArtifactsFingerprint::new(&unit, unit_fingerprint, ctx.artifacts());
             save_unit_artifacts_fingerprint(&unit, fingerprint, ws)?;
