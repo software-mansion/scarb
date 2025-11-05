@@ -7,7 +7,7 @@ publish = false
 [features]
 default = []
 scarb-config = ["dep:scarb"]
-proc-macro-server-types = ["dep:scarb-proc-macro-server-types"]
+proc-macro-server = ["dep:scarb-proc-macro-server-types"]
 
 [dependencies]
 anyhow.workspace = true
