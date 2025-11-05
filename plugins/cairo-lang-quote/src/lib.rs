@@ -161,9 +161,9 @@ impl Parse for QuoteFormatArgs {
 fn tokenize_basic(string: &str) -> Vec<QuoteToken> {
     let mut result = Vec::new();
     let mut current_token = String::new();
-    let mut chars = string.chars().peekable();
+    let chars = string.chars().peekable();
 
-    while let Some(ch) = chars.next() {
+    for ch in chars {
         if ch.is_whitespace() {
             if !current_token.is_empty() {
                 // Finish current token
