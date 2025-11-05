@@ -633,6 +633,69 @@ fn quote_format_macro() {
 }
 
 #[test]
+fn quote_format_macro_with_code_blocks() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan, quote_format};
+
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                let fn_name = TokenTree::Ident(Token::new("foo".to_string(), TextSpan::call_site()));
+                let x = TokenTree::Ident(Token::new("42".to_string(), TextSpan::call_site()));
+                let tokens = quote_format! {
+                    r#"pub fn {}() -> felt252 {{
+                        return {};
+                    }}"#, fn_name, x
+                };
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            some!();
+
+            #[executable]
+            fn main() -> felt252 {
+                foo()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .stdout_eq(indoc! {r#"
+        [..] Compiling some v1.0.0 [..]
+        [..] Compiling hello v1.0.0 [..]
+        [..] Finished `dev` profile [..]
+        [..]Executing hello
+        Program output:
+        42
+        Saving output to: target/execute/hello/execution1
+        "#})
+        .success();
+}
+
+#[test]
 fn quote_format_macro_no_args() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");

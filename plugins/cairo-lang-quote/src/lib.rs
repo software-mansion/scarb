@@ -172,6 +172,10 @@ fn tokenize(string: &str) -> Vec<QuoteToken> {
             result.push(QuoteToken::Whitespace);
         }
         result.push(QuoteToken::Content(text.to_string()));
+
+        if !token.trailing_trivia.is_empty() {
+            result.push(QuoteToken::Whitespace);
+        }
         first = false;
     }
     result
