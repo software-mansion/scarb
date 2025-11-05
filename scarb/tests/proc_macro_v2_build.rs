@@ -502,3 +502,78 @@ fn can_disallow_loading_macros() {
             error: procedural macros are disallowed with `--no-proc-macros` flag
         "#});
 }
+
+#[test]
+fn only_compiles_needed_macros() {
+    let t = TempDir::new().unwrap();
+    let some = t.child("some");
+    CairoPluginProjectBuilder::default()
+        .name("some")
+        .build(&some);
+    let other = t.child("other");
+    CairoPluginProjectBuilder::default()
+        .name("other")
+        .build(&other);
+    let hello = t.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &some)
+        .build(&hello);
+    WorkspaceBuilder::start()
+        .add_member("other")
+        .add_member("some")
+        .add_member("hello")
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .args(vec!["-p", "hello"])
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
+fn always_compile_macros_requested_with_package_filter() {
+    let t = TempDir::new().unwrap();
+    let some = t.child("some");
+    CairoPluginProjectBuilder::default()
+        .name("some")
+        .build(&some);
+    let other = t.child("other");
+    CairoPluginProjectBuilder::default()
+        .name("other")
+        .build(&other);
+    let hello = t.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &some)
+        .build(&hello);
+    WorkspaceBuilder::start()
+        .add_member("other")
+        .add_member("some")
+        .add_member("hello")
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--workspace")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            [..]Compiling other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
+}
