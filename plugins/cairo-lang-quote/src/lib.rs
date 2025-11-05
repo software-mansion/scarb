@@ -1,8 +1,5 @@
 use std::iter::Peekable;
-use std::sync::Arc;
 
-use cairo_lang_parser::lexer::tokenize_all;
-use cairo_lang_parser::utils::SimpleParserDatabase;
 use indoc::formatdoc;
 use proc_macro2::{Delimiter, Ident, Span, TokenTree};
 
@@ -155,28 +152,42 @@ impl Parse for QuoteFormatArgs {
     }
 }
 
-fn tokenize(string: &str) -> Vec<QuoteToken> {
-    let db = SimpleParserDatabase::default();
-    let tokens = tokenize_all(&db, (), Arc::<str>::from(string));
-
+/// Basic tokenizer for `quote_format!` macro.
+///
+/// Intentionally simplified to avoid full parsing of Cairo syntax.
+/// Only splits strings into tokens and preserves whitespace.
+/// Token kinds and spans are ignored as spans always set to call site.
+/// Additionally, it's expected placeholders (`{}`, `{0}`, etc.) are already
+/// stripped out by the format parser before this function is called.
+fn tokenize_basic(string: &str) -> Vec<QuoteToken> {
     let mut result = Vec::new();
-    let mut first = true;
+    let mut current_token = String::new();
+    let mut chars = string.chars().peekable();
 
-    for token in tokens.iter() {
-        let text = token.text(&db);
-
-        if text.is_empty() {
-            continue;
+    while let Some(ch) = chars.next() {
+        if ch.is_whitespace() {
+            if !current_token.is_empty() {
+                // Finish current token
+                result.push(QuoteToken::Content(current_token.clone()));
+                current_token.clear();
+            }
+            // Skip consecutive whitespace
+            if !matches!(result.last(), Some(QuoteToken::Whitespace)) {
+                result.push(QuoteToken::Whitespace);
+            }
+        } else if ch.is_alphanumeric() || ch == '_' {
+            current_token.push(ch);
+        } else {
+            // For simplicity, all other characters (punctuation, operators, etc.) are treated as separate tokens
+            if !current_token.is_empty() {
+                result.push(QuoteToken::Content(current_token.clone()));
+                current_token.clear();
+            }
+            result.push(QuoteToken::Content(ch.to_string()));
         }
-        if !first && !token.leading_trivia.is_empty() {
-            result.push(QuoteToken::Whitespace);
-        }
-        result.push(QuoteToken::Content(text.to_string()));
-
-        if !token.trailing_trivia.is_empty() {
-            result.push(QuoteToken::Whitespace);
-        }
-        first = false;
+    }
+    if !current_token.is_empty() {
+        result.push(QuoteToken::Content(current_token));
     }
     result
 }
@@ -203,7 +214,7 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     for piece in &mut parser {
         match piece {
             Piece::Lit(string) => {
-                for token in tokenize(string) {
+                for token in tokenize_basic(string) {
                     match token {
                         QuoteToken::Content(content) => {
                             output_token_stream.extend(rust_quote! {

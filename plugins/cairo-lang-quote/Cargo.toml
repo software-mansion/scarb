@@ -15,7 +15,6 @@ repository.workspace = true
 proc-macro = true
 
 [dependencies]
-cairo-lang-parser.workspace = true
 ra-ap-rustc_parse_format.workspace = true
 indoc.workspace = true
 proc-macro2.workspace = true
