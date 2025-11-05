@@ -55,11 +55,15 @@ pub fn get_cargo_package_name(package: &Package) -> Result<String> {
 }
 
 fn get_cargo_package_version(package: &Package) -> Result<String> {
-    let metadata = MetadataCommand::new()
-        .cargo_path(Tool::Cargo.path())
-        .current_dir(package.root())
-        .exec()
-        .context("could not get Cargo metadata")?;
+    let span = trace_span!("cargo_metadata_exec");
+    let metadata = {
+        let _g = span.enter();
+        MetadataCommand::new()
+            .cargo_path(Tool::Cargo.path())
+            .current_dir(package.root())
+            .exec()
+            .context("could not get Cargo metadata")?
+    };
 
     let cargo_package_name = get_cargo_package_name(package)?;
 

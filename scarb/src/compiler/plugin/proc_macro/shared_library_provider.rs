@@ -12,6 +12,7 @@ use libloading::library_filename;
 use ra_ap_toolchain::Tool;
 use std::env::consts::DLL_SUFFIX;
 use target_triple::target;
+use tracing::trace_span;
 
 /// This trait is used to define the target and prebuilt path for a package.
 pub trait ProcMacroPathsProvider {
@@ -91,11 +92,15 @@ impl SharedLibraryProvider for CompilationUnitCairoPlugin {
 }
 
 pub fn get_cargo_library_name(package: &Package, config: &Config) -> anyhow::Result<String> {
-    let metadata = MetadataCommand::new()
-        .cargo_path(Tool::Cargo.path())
-        .current_dir(package.root())
-        .exec()
-        .context("could not get Cargo metadata")?;
+    let span = trace_span!("cargo_metadata_exec");
+    let metadata = {
+        let _g = span.enter();
+        MetadataCommand::new()
+            .cargo_path(Tool::Cargo.path())
+            .current_dir(package.root())
+            .exec()
+            .context("could not get Cargo metadata")?
+    };
 
     let cargo_package_name = get_cargo_package_name(package)?;
 
