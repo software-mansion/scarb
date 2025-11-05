@@ -4,6 +4,8 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
 use crate::core::Workspace;
 use crate::internal::fsx;
 use itertools::Itertools;
+use rayon::iter::ParallelIterator;
+use rayon::prelude::IntoParallelIterator;
 use scarb_stable_hash::{StableHasher, short_hash, u64_hash};
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
@@ -30,6 +32,7 @@ pub struct UnitArtifactsFingerprint {
 }
 
 impl UnitArtifactsFingerprint {
+    #[tracing::instrument(skip_all, level = "info")]
     pub fn new(
         unit: &CairoCompilationUnit,
         unit_fingerprint: &UnitComponentsFingerprint,
@@ -55,6 +58,7 @@ impl UnitArtifactsFingerprint {
     }
 }
 
+#[tracing::instrument(skip_all, level = "info")]
 pub fn save_unit_artifacts_fingerprint(
     unit: &CairoCompilationUnit,
     fingerprint: UnitArtifactsFingerprint,
@@ -83,6 +87,7 @@ pub fn save_unit_artifacts_fingerprint(
     Ok(())
 }
 
+#[tracing::instrument(skip_all, level = "info")]
 pub fn load_unit_artifacts_local_paths(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
@@ -98,19 +103,19 @@ pub fn load_unit_artifacts_local_paths(
     let file =
         fingerprint_dir.open_ro(&filename, "unit artifacts fingerprint file", ws.config())?;
     let file = BufReader::new(&*file);
-    let v: UnitArtifactsFingerprint = serde_json::from_reader(file)?;
-    let res = v
+    let artifacts_fingerprint: UnitArtifactsFingerprint = serde_json::from_reader(file)?;
+    let result = artifacts_fingerprint
         .local
-        .into_iter()
+        .into_par_iter()
         .map(|l| {
             let content = fsx::read_to_string(&l.path)?;
-            Ok(LocalFingerprint {
+            anyhow::Ok(LocalFingerprint {
                 path: l.path.clone(),
                 checksum: u64_hash(content),
             })
         })
         .collect::<anyhow::Result<Vec<_>>>()?;
-    Ok(Some(res))
+    Ok(Some(result))
 }
 
 pub fn unit_artifacts_fingerprint_is_fresh(
