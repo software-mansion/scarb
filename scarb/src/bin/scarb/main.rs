@@ -5,7 +5,7 @@ use mimalloc::MiMalloc;
 use scarb::core::Config;
 use scarb::core::errors::ScriptExecutionError;
 use scarb::ops;
-use scarb::process::WillExecReplace;
+use scarb::process::{WillExecReplace, is_truthy_env};
 use scarb_ui::Ui;
 use scarb_ui::args::VerbositySpec;
 use std::env;
@@ -74,13 +74,8 @@ fn init_logging(verbose: VerbositySpec, ui: &Ui) -> Option<impl Drop> {
         )
         .with_filter(cairo_lang_utils::logging::exclude_salsa());
 
-    let tracing_profile = env::var("SCARB_TRACING_PROFILE")
-        .ok()
-        .map(|var| {
-            let s = var.as_str();
-            s == "true" || s == "1"
-        })
-        .unwrap_or(false);
+    // Disabled unless explicitly enabled with env var.
+    let tracing_profile = is_truthy_env("SCARB_TRACING_PROFILE", false);
 
     let profile_layer = if tracing_profile {
         let mut path = PathBuf::from(format!(

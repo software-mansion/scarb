@@ -3,6 +3,7 @@ use crate::compiler::incremental::fingerprint::{
 };
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
+use crate::process::is_truthy_env;
 use anyhow::{Context, Result};
 use cairo_lang_filesystem::db::{CrateConfiguration, FilesGroup};
 use cairo_lang_filesystem::ids::{BlobLongId, CrateInput};
@@ -13,10 +14,10 @@ use cairo_lang_utils::Intern;
 use itertools::Itertools;
 use salsa::{Database, par_map};
 use std::io::{BufReader, Write};
+use std::mem;
 use std::ops::Deref;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::{env, mem};
 use tokio::task::spawn_blocking;
 use tracing::{debug, error, trace_span};
 
@@ -372,16 +373,9 @@ impl IncrementalArtifactsProvider for CompilationUnitComponent {
 }
 
 pub fn incremental_allowed(unit: &CairoCompilationUnit) -> bool {
-    let allowed_via_env = env::var(SCARB_INCREMENTAL)
-        .ok()
-        .map(|var| {
-            let s = var.as_str();
-            s == "true" || s == "1"
-        })
-        .unwrap_or(true);
-
+    // We allow if not explicitly disabled via the env var.
+    let allowed_via_env = is_truthy_env(SCARB_INCREMENTAL, true);
     let allowed_via_config = unit.compiler_config.incremental;
-
     allowed_via_env && allowed_via_config
 }
 
