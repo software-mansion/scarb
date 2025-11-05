@@ -16,5 +16,5 @@ proc-macro = true
 
 [dependencies]
 quote.workspace = true
-syn = { workspace = true, features = ["full", "extra-traits"] }
+syn = { workspace = true, default-features = true, features = ["full", "extra-traits"] }
 scarb-stable-hash = "1"
