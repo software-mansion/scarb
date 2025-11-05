@@ -1,6 +1,5 @@
 use std::iter::Peekable;
 
-use indoc::formatdoc;
 use proc_macro2::{Delimiter, Ident, Span, TokenTree};
 
 extern crate proc_macro;
@@ -239,7 +238,7 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                         } else {
                             return Error::new(
                                 fmtstr.span(),
-                                formatdoc! (r#"format arg index {} is out of range (the format string contains {} args)."#,
+                                format!(r#"format arg index {} is out of range (the format string contains {} args)."#,
                                 idx,
                                 args.len()
                                 )
@@ -251,13 +250,13 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                     Position::ArgumentNamed(name) => {
                         return Error::new(
                             fmtstr.span(),
-                            formatdoc! (r#"
-                            named placeholder '{{{}}}' is not supported by this macro.
-                            help: use positional ('{{}}') or indexed placeholders ('{{0}}', '{{1}}', ...) instead.
-                            "#, name)
+                            format!(
+                                "named placeholder '{{{}}}' is not supported by this macro.\nhelp: use positional ('{{}}') or indexed placeholders ('{{0}}', '{{1}}', ...) instead.",
+                                name
+                            ),
                         )
-                            .to_compile_error()
-                            .into();
+                        .to_compile_error()
+                        .into();
                     }
                 };
                 output_token_stream.extend(rust_quote! {
@@ -277,12 +276,7 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             secondary_label: _,
             suggestion: _,
         } = parser.errors.remove(0);
-        let mut err_msg = formatdoc!(
-            r#"
-            failed to parse format string: {label}
-            {description}
-            "#,
-        );
+        let mut err_msg = format!("failed to parse format string: {label}\n{description}");
         if let Some(note) = note {
             err_msg.push_str(&format!("\nnote: {note}"));
         }
