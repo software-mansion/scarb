@@ -633,7 +633,7 @@ fn quote_format_macro() {
 }
 
 #[test]
-fn quote_format_macro_with_code_blocks() {
+fn quote_format_macro_with_code_block() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
