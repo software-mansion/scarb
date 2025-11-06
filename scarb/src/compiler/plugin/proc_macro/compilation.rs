@@ -5,10 +5,11 @@ use crate::core::{Config, Package, Workspace};
 use crate::internal::fsx;
 use crate::ops::PackageOpts;
 use crate::process::exec_piping;
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result, anyhow, bail};
 use camino::Utf8PathBuf;
-use cargo_metadata::MetadataCommand;
+use cargo_metadata::{Metadata, MetadataCommand};
 use flate2::read::GzDecoder;
+use once_map::OnceMap;
 use ra_ap_toolchain::Tool;
 use scarb_ui::{Message, OutputFormat};
 use serde::{Serialize, Serializer};
@@ -18,19 +19,86 @@ use std::fs;
 use std::io::{Seek, SeekFrom};
 use std::ops::Deref;
 use std::process::Command;
+use std::sync::OnceLock;
 use tar::Archive;
 use tracing::trace_span;
 
 pub const PROC_MACRO_BUILD_PROFILE: &str = "release";
 
+// Global state for deduplicating cargo metadata requests.
+static CARGO_METADATA_DATA_LOADER: OnceLock<
+    OnceMap<Utf8PathBuf, std::result::Result<Metadata, CargoMetadataFetchError>>,
+> = OnceLock::new();
+
 pub fn compile_unit(unit: ProcMacroCompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package = unit.components.first().unwrap().package.clone();
+    spawn_cargo_metadata(&package);
     run_cargo(CargoAction::Build, &package, ws)
 }
 
 pub fn check_unit(unit: ProcMacroCompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package = unit.components.first().unwrap().package.clone();
     run_cargo(CargoAction::Check, &package, ws)
+}
+
+// We need a clonable error type for the `OnceMap` to work.
+#[derive(Clone)]
+struct CargoMetadataFetchError(String);
+
+impl From<anyhow::Error> for CargoMetadataFetchError {
+    fn from(e: anyhow::Error) -> Self {
+        Self(format!("{e:#}"))
+    }
+}
+
+/// Gets cargo metadata for a package and saves it in a global state.
+pub fn spawn_cargo_metadata(package: &Package) {
+    assert!(
+        package.is_cairo_plugin(),
+        "cargo metadata can only be fetched for Cairo plugins"
+    );
+    let cell = CARGO_METADATA_DATA_LOADER.get_or_init(OnceMap::default);
+    let path = package.root().to_path_buf();
+    // Note this function ends without waiting for the result.
+    if cell.register(path.clone()) {
+        rayon::spawn(move || {
+            let span = trace_span!("cargo_metadata_exec");
+            let metadata = {
+                let _g = span.enter();
+                MetadataCommand::new()
+                    .cargo_path(Tool::Cargo.path())
+                    .current_dir(path.clone())
+                    .exec()
+                    .context("could not get Cargo metadata")
+            };
+            match metadata {
+                Ok(metadata) => {
+                    cell.done(path, Ok(metadata));
+                }
+                Err(e) => {
+                    cell.done(path, Err(CargoMetadataFetchError::from(e)));
+                }
+            }
+        })
+    }
+}
+
+/// Waits for cargo metadata of a package to be obtained and returns it.
+/// Panics unless `spawn_cargo_metadata` has been called before.
+pub fn blocking_get_cargo_metadata(package: &Package) -> Result<Metadata> {
+    assert!(
+        package.is_cairo_plugin(),
+        "cargo metadata can only be fetched for Cairo plugins"
+    );
+    let cell = CARGO_METADATA_DATA_LOADER.get_or_init(OnceMap::default);
+    let path = package.root().to_path_buf();
+    match cell
+        .wait_blocking(&path)
+        .expect("spawn_cargo_metadata must be called first")
+    {
+        Ok(metadata) => Ok(metadata),
+        Err(e) => bail!(e.0),
+    }
 }
 
 pub fn get_cargo_package_name(package: &Package) -> Result<String> {
@@ -55,16 +123,7 @@ pub fn get_cargo_package_name(package: &Package) -> Result<String> {
 }
 
 fn get_cargo_package_version(package: &Package) -> Result<String> {
-    let span = trace_span!("cargo_metadata_exec");
-    let metadata = {
-        let _g = span.enter();
-        MetadataCommand::new()
-            .cargo_path(Tool::Cargo.path())
-            .current_dir(package.root())
-            .exec()
-            .context("could not get Cargo metadata")?
-    };
-
+    let metadata = blocking_get_cargo_metadata(package)?;
     let cargo_package_name = get_cargo_package_name(package)?;
 
     let package = metadata
@@ -83,8 +142,7 @@ pub fn get_crate_archive_basename(package: &Package) -> Result<String> {
     Ok(format!("{package_name}-{package_version}"))
 }
 
-pub fn unpack_crate(package: &Package, config: &Config) -> Result<()> {
-    let archive_basename = get_crate_archive_basename(package)?;
+pub fn unpack_crate(archive_basename: &str, package: &Package, config: &Config) -> Result<()> {
     let archive_name = format!("{archive_basename}.crate");
 
     let tar = package
@@ -98,7 +156,7 @@ pub fn unpack_crate(package: &Package, config: &Config) -> Result<()> {
 
     tar.deref().seek(SeekFrom::Start(0))?;
     let f = GzDecoder::new(tar.deref());
-    let dst = tar.parent().unwrap().join(&archive_basename);
+    let dst = tar.parent().unwrap().join(archive_basename);
     if dst.exists() {
         fsx::remove_dir_all(&dst)?;
     }
@@ -114,6 +172,9 @@ pub fn fetch_crate(package: &Package, ws: &Workspace<'_>) -> Result<()> {
 }
 
 pub fn package_crate(package: &Package, opts: &PackageOpts, ws: &Workspace<'_>) -> Result<()> {
+    // Start getting the cargo metadata.
+    spawn_cargo_metadata(package);
+    // Run Cargo package.
     run_cargo(CargoAction::Package(opts.clone()), package, ws)
 }
 
