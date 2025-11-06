@@ -573,6 +573,93 @@ fn quote_macro_with_token_interpolation() {
 }
 
 #[test]
+fn quote_macro_preserves_spans_of_parsed_args() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
+        .lib_rs(indoc! {r#"
+            use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
+            use cairo_lang_parser::utils::SimpleParserDatabase;
+            use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+
+            #[attribute_macro]
+            pub fn simple_attr(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+                let db_val = SimpleParserDatabase::default();
+                let db = &db_val;
+                let (body, _diagnostics) = db.parse_token_stream(&item);
+                let body = SyntaxNodeWithDb::new(&body, db);
+                let ts = quote! {
+                    #body
+                };
+                for token in &ts.tokens {
+                    println!("{:?}", &token);
+                }
+                ProcMacroResult::new(ts)
+            }
+
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_builtin("assert_macros")
+        // Note we add leading whitespace before function declaration.
+        // This cannot affect the span in resulting token stream.
+        .lib_cairo(indoc! {r#"
+            #[doc(hidden)]
+            fn other() {}
+
+            #[simple_attr]
+              fn foo() {
+                let _a = 1;
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r##"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            Ident(Token { content: "  ", span: TextSpan { start: 0, end: 2 } })
+            Ident(Token { content: "fn", span: TextSpan { start: 2, end: 4 } })
+            Ident(Token { content: " ", span: TextSpan { start: 4, end: 5 } })
+            Ident(Token { content: "foo", span: TextSpan { start: 5, end: 8 } })
+            Ident(Token { content: "(", span: TextSpan { start: 8, end: 9 } })
+            Ident(Token { content: ")", span: TextSpan { start: 9, end: 10 } })
+            Ident(Token { content: " ", span: TextSpan { start: 10, end: 11 } })
+            Ident(Token { content: "{", span: TextSpan { start: 11, end: 12 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 12, end: 13 } })
+            Ident(Token { content: "    ", span: TextSpan { start: 13, end: 17 } })
+            Ident(Token { content: "let", span: TextSpan { start: 17, end: 20 } })
+            Ident(Token { content: " ", span: TextSpan { start: 20, end: 21 } })
+            Ident(Token { content: "_a", span: TextSpan { start: 21, end: 23 } })
+            Ident(Token { content: " ", span: TextSpan { start: 23, end: 24 } })
+            Ident(Token { content: "=", span: TextSpan { start: 24, end: 25 } })
+            Ident(Token { content: " ", span: TextSpan { start: 25, end: 26 } })
+            Ident(Token { content: "1", span: TextSpan { start: 26, end: 27 } })
+            Ident(Token { content: ";", span: TextSpan { start: 27, end: 28 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 28, end: 29 } })
+            Ident(Token { content: "}", span: TextSpan { start: 29, end: 30 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 30, end: 31 } })
+            [..]Finished `dev` profile target(s) in [..]
+      "##});
+}
+
+#[test]
 fn quote_format_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
