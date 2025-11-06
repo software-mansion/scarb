@@ -33,6 +33,7 @@ pub struct ScarbDatabase {
 }
 
 /// If you change something here, make sure you also change the `build_lint_database` in `scarb/src/ops/lint.rs`.
+#[tracing::instrument(skip_all, level = "trace", fields(target_name = unit.main_component().target_name().to_string()))]
 pub(crate) fn build_scarb_root_database(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
