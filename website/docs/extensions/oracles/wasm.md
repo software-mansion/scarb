@@ -12,8 +12,10 @@ produce](https://component-model.bytecodealliance.org/language-support.html) a W
 wasm:<path-to-component.wasm>
 ```
 
-The path is resolved at runtime. This file **must** be a package's [asset](../../reference/manifest.md#assets).
-It can be either a binary `.wasm` or textual `.wat` file.
+The path is resolved at runtime by searching for the file in the target directory (e.g., `target/dev/` for the `dev` profile, or `target/release/` for the `release` profile).
+The file can be either a binary `.wasm` or textual `.wat` file.
+
+The **recommended approach** is to declare the file as a package [asset](../../reference/manifest.md#assets) in your `Scarb.toml`, which will cause Scarb to automatically copy the file to the target directory during the build process. Alternatively, you can manually place the file in the target directory.
 
 #### Examples
 
@@ -64,7 +66,8 @@ This example shows how to build a simple oracle in Rust.
 [package]
 name = "mypkg"
 version = "0.1.0"
-# Make sure the compiled component is a Scarb package's asset.
+# Declare the compiled component as a package asset.
+# This will automatically copy it to the target directory.
 assets = ["oracle/target/wasm32-wasip2/release/mypkg_oracle.wasm"] # [!code highlight]
 
 [dependencies]
@@ -80,7 +83,7 @@ build = "cargo build --manifest-path oracle/Cargo.toml --release --target wasm32
 ```cairo [src/lib.cairo]
 pub fn add(left: u64, right: u64) -> oracle::Result<u64> {
     oracle::invoke(
-        "wasm:mypkg_oracle.wasm",  // Resolved from assets. [!code highlight]
+        "wasm:mypkg_oracle.wasm",  // Resolved from target directory. [!code highlight]
         "add",
         (left, right)
     )
@@ -89,7 +92,7 @@ pub fn add(left: u64, right: u64) -> oracle::Result<u64> {
 
 ```toml [oracle/Cargo.toml]
 [package]
-# Because the component is an asset, its name must be globally unique,
+# When using assets, the component name should be globally unique,
 # so it is best to prefix it with the package name.
 name = "mypkg-oracle" # [!code highlight]
 version = "0.1.0"
