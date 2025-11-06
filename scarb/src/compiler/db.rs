@@ -16,6 +16,7 @@ use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{CrateIdentifier, CrateSettings, DependencySettings, FilesGroup};
 use cairo_lang_filesystem::ids::{CrateInput, CrateLongId, SmolStrId};
 use cairo_lang_filesystem::override_file_content;
+use cairo_lang_lowering::optimizations::config::Optimizations;
 use cairo_lang_semantic::db::{SemanticGroup, semantic_group_input};
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::plugin::PluginSuite;
@@ -41,7 +42,9 @@ pub(crate) fn build_scarb_root_database(
     let mut b = RootDatabase::builder();
     b.with_project_config(build_project_config(unit)?);
     b.with_cfg(unit.cfg_set.clone());
-    b.with_inlining_strategy(unit.compiler_config.inlining_strategy.clone().into());
+    b.with_optimizations(Optimizations::enabled_with_default_movable_functions(
+        unit.compiler_config.inlining_strategy.clone().into(),
+    ));
 
     let PluginsForComponents {
         mut plugins,
@@ -260,6 +263,8 @@ pub(crate) fn build_project_config(unit: &CairoCompilationUnit) -> Result<Projec
                             .contains(&SmolStr::new_static("associated_item_constraints")),
                         user_defined_inline_macros: experimental_features
                             .contains(&SmolStr::new_static("user_defined_inline_macros")),
+                        references: experimental_features
+                            .contains(&SmolStr::new_static("references"))
                     },
                 },
             )

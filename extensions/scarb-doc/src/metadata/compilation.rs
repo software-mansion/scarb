@@ -139,6 +139,9 @@ fn get_crate_settings_for_component(
         user_defined_inline_macros: package
             .experimental_features
             .contains(&String::from("user_defined_inline_macros")),
+        references: package
+            .experimental_features
+            .contains(&String::from("references")),
     };
 
     let dependencies = component
