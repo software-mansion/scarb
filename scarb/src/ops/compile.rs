@@ -281,19 +281,20 @@ fn compile_cairo_unit_inner(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> R
 
         let ctx = load_incremental_artifacts(&unit, &mut db, ws)?;
 
-        let is_fresh_unit_artifacts = ctx
-            .fingerprints()
-            .and_then(|unit_fingerprint| {
-                load_unit_artifacts_local_paths(&unit, ws)
-                    .transpose()
-                    .map(|artifacts| {
-                        let fingerprint =
-                            UnitArtifactsFingerprint::new(&unit, unit_fingerprint, artifacts?);
-                        anyhow::Ok(unit_artifacts_fingerprint_is_fresh(&unit, fingerprint, ws)?)
-                    })
-            })
-            .transpose()?
-            .unwrap_or_default();
+        let is_fresh_unit_artifacts = ctx.cached_crates_with_warnings().is_empty()
+            && ctx
+                .fingerprints()
+                .and_then(|unit_fingerprint| {
+                    load_unit_artifacts_local_paths(&unit, ws)
+                        .transpose()
+                        .map(|artifacts| {
+                            let fingerprint =
+                                UnitArtifactsFingerprint::new(&unit, unit_fingerprint, artifacts?);
+                            anyhow::Ok(unit_artifacts_fingerprint_is_fresh(&unit, fingerprint, ws)?)
+                        })
+                })
+                .transpose()?
+                .unwrap_or_default();
 
         let ctx = Arc::new(ctx);
         if !is_fresh_unit_artifacts {

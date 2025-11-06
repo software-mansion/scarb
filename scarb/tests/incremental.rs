@@ -601,6 +601,57 @@ fn fingerprint_callback_can_force_recompilation() {
     assert_ne!(digest(hello_component_id.as_str()), hello_digest);
 }
 
+#[test]
+fn warnings_are_emitted_on_rerun() {
+    // We affix cache dir location, as the corelib path is part of the fingerprint.
+    let cache_dir = TempDir::new().unwrap().child("c");
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 {
+                let x = 12;
+                12
+            }
+        "#})
+        .build(&t);
+
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+           Compiling hello v1.0.0 ([..]Scarb.toml)
+        warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
+         --> [..]lib.cairo:2:9
+            let x = 12;
+                ^
+
+            Finished `dev` profile target(s) in[..]
+    "#});
+
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+               Compiling hello v1.0.0 ([..]Scarb.toml)
+            warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
+             --> [..]lib.cairo:2:9
+                let x = 12;
+                    ^
+
+                Finished `dev` profile target(s) in[..]
+        "#});
+}
+
 fn component_id_factory(target_dir: ChildPath) -> impl Fn(&str) -> String {
     move |name: &str| {
         let component_id = target_dir
