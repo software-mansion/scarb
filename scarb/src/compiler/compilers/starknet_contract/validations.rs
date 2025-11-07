@@ -1,6 +1,9 @@
 use crate::compiler::compilers::{Props, SerdeListSelector};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
-use crate::core::{InliningStrategy, ManifestCompilerConfig, Utf8PathWorkspaceExt, Workspace};
+use crate::core::{
+    CompilerOptimizations, InliningStrategy, ManifestCompilerConfig, Utf8PathWorkspaceExt,
+    Workspace,
+};
 use anyhow::{Context, Result, bail, ensure};
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_filesystem::db::FilesGroup;
@@ -120,12 +123,26 @@ pub fn check_allowed_libfuncs<'db>(
 
 pub fn check_compiler_config(config: &ManifestCompilerConfig, ws: &Workspace<'_>) -> Result<()> {
     let is_release = ws.current_profile()?.is_release();
-    if is_release && config.inlining_strategy != InliningStrategy::Default {
-        ws.config().ui().warn(indoc! {r#"
-            this build runs in `release` profile, but uses non-default inlining strategy
-            changing the inlining strategy may significantly slow down the compiled contract execution
-            please make sure the compiler configuration in your manifest file is intended
-            see https://docs.swmansion.com/scarb/docs/reference/manifest.html#inlining-strategy for more info"#});
+    if is_release {
+        match config.compiler_optimizations {
+            CompilerOptimizations::Enabled {
+                inlining_strategy: InliningStrategy::Default,
+            } => {}
+            CompilerOptimizations::Disabled => {
+                ws.config().ui().error(indoc! {r#"
+                    this build runs in `release` profile, but has compiler optimizations turned off
+                    turning off the optimizations may significantly increase gas costs of calling entrypoints of the compiled contract
+                    see https://docs.swmansion.com/scarb/docs/reference/manifest.html#skip-optimizations for more info"#});
+                bail!("improper settings for `release` build of starknet contract target");
+            }
+            _ => {
+                ws.config().ui().warn(indoc! {r#"
+                    this build runs in `release` profile, but uses non-default inlining strategy
+                    changing the inlining strategy may significantly increase gas costs of calling entrypoints of the compiled contract
+                    please make sure the compiler configuration in your manifest file is intended
+                    see https://docs.swmansion.com/scarb/docs/reference/manifest.html#inlining-strategy for more info"#});
+            }
+        }
     }
     Ok(())
 }

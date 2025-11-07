@@ -510,7 +510,7 @@ fn warn_inlining_strategy_in_release() {
         .stdout_eq(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..])
         warn: this build runs in `release` profile, but uses non-default inlining strategy
-        changing the inlining strategy may significantly slow down the compiled contract execution
+        changing the inlining strategy may significantly increase gas costs of calling entrypoints of the compiled contract
         please make sure the compiler configuration in your manifest file is intended
         see https://docs.swmansion.com/scarb/docs/reference/manifest.html#inlining-strategy for more info
         [..]Finished `release` profile target(s) in [..]

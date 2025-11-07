@@ -76,8 +76,8 @@
 }
 
 :root {
-  --swm-font-family-geometric-humanist:
-    Avenir, Montserrat, Corbel, "URW Gothic", source-sans-pro, sans-serif;
+  --swm-font-family-geometric-humanist: Avenir, Montserrat, Corbel, "URW Gothic",
+    source-sans-pro, sans-serif;
 }
 
 :root {
