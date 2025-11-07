@@ -8,8 +8,8 @@ use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LanguageElementId,
     LookupItemId, MacroDeclarationId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId,
-    StructId, TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId,
-    TraitTypeId, VariantId,
+    NamedLanguageElementId, StructId, TopLevelLanguageElementId, TraitConstantId, TraitFunctionId,
+    TraitId, TraitItemId, TraitTypeId, VariantId,
 };
 use cairo_lang_diagnostics::Maybe;
 use cairo_lang_doc::db::DocGroup;
@@ -43,11 +43,29 @@ pub struct ItemData<'db> {
     pub group: Option<String>,
 }
 
+/// Mimics the [`TopLevelLanguageElementId::full_path`] but skips the macro modules.
+/// If not omitted, the path would look like, for example,
+/// `hello::define_fn_outter!(func_macro_fn_outter);::expose! {\n\t\t\tpub fn func_macro_fn_outter() -> felt252 { \n\t\t\t\tprintln!(\"hello world\");\n\t\t\t\t10 }\n\t\t}::func_macro_fn_outter`
+pub fn doc_full_path(module_id: &ModuleId, db: &ScarbDocDatabase) -> String {
+    match module_id {
+        ModuleId::CrateRoot(id) => id.long(db).name().to_string(db),
+        ModuleId::Submodule(id) => {
+            format!(
+                "{}::{}",
+                doc_full_path(&id.parent_module(db), db),
+                id.name(db).long(db)
+            )
+        }
+        ModuleId::MacroCall { id, .. } => doc_full_path(&id.parent_module(db), db),
+    }
+}
+
 impl<'db> ItemData<'db> {
     pub fn new(
         db: &'db ScarbDocDatabase,
         id: impl TopLevelLanguageElementId<'db>,
         documentable_item_id: DocumentableItemId<'db>,
+        parent_full_path: String,
     ) -> Self {
         let (signature, doc_location_links) =
             db.get_item_signature_with_links(documentable_item_id);
@@ -61,8 +79,8 @@ impl<'db> ItemData<'db> {
             name: id.name(db).to_string(db),
             doc: db.get_item_documentation_as_tokens(documentable_item_id),
             signature,
-            full_path: id.full_path(db),
-            parent_full_path: Some(id.parent_module(db).full_path(db)),
+            full_path: format!("{}::{}", parent_full_path, id.name(db).long(db)),
+            parent_full_path: Some(parent_full_path),
             doc_location_links,
             group,
         }
@@ -78,8 +96,12 @@ impl<'db> ItemData<'db> {
             name: id.name(db).to_string(db),
             doc: db.get_item_documentation_as_tokens(documentable_item_id),
             signature: None,
-            full_path: id.full_path(db),
-            parent_full_path: Some(id.parent_module(db).full_path(db)),
+            full_path: format!(
+                "{}::{}",
+                doc_full_path(&id.parent_module(db), db),
+                id.name(db).long(db)
+            ),
+            parent_full_path: Some(doc_full_path(&id.parent_module(db), db)),
             doc_location_links: vec![],
             group: find_groups_from_attributes(db, &id),
         }
@@ -139,6 +161,7 @@ impl<'db> Constant<'db> {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::Constant(id)).into(),
+                doc_full_path(&id.parent_module(db), db),
             ),
         }
     }
@@ -157,14 +180,17 @@ pub struct FreeFunction<'db> {
 impl<'db> FreeFunction<'db> {
     pub fn new(db: &'db ScarbDocDatabase, id: FreeFunctionId<'db>) -> Self {
         let node = id.stable_ptr(db);
+        let item_data = ItemData::new(
+            db,
+            id,
+            LookupItemId::ModuleItem(ModuleItemId::FreeFunction(id)).into(),
+            doc_full_path(&id.parent_module(db), db),
+        );
+
         Self {
             id,
             node,
-            item_data: ItemData::new(
-                db,
-                id,
-                LookupItemId::ModuleItem(ModuleItemId::FreeFunction(id)).into(),
-            ),
+            item_data,
         }
     }
 }
@@ -193,6 +219,7 @@ impl<'db> Struct<'db> {
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Struct(id)).into(),
+            doc_full_path(&id.parent_module(db), db),
         );
         let members = members
             .iter()
@@ -238,10 +265,15 @@ impl<'db> Member<'db> {
     pub fn new(db: &'db ScarbDocDatabase, id: MemberId<'db>) -> Self {
         let node = id.stable_ptr(db);
 
+        let parent_path = format!(
+            "{}::{}",
+            doc_full_path(&id.parent_module(db), db),
+            id.struct_id(db).name(db).to_string(db)
+        );
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Member(id)),
+            item_data: ItemData::new(db, id, DocumentableItemId::Member(id), parent_path),
         }
     }
 }
@@ -265,6 +297,7 @@ impl<'db> Enum<'db> {
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Enum(id)).into(),
+            doc_full_path(&id.parent_module(db), db),
         );
 
         let variants = variants
@@ -302,11 +335,15 @@ pub struct Variant<'db> {
 impl<'db> Variant<'db> {
     pub fn new(db: &'db ScarbDocDatabase, id: VariantId<'db>) -> Self {
         let node = id.stable_ptr(db);
-
+        let parent_path = format!(
+            "{}::{}",
+            doc_full_path(&id.parent_module(db), db),
+            id.enum_id(db).name(db).to_string(db)
+        );
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Variant(id)),
+            item_data: ItemData::new(db, id, DocumentableItemId::Variant(id), parent_path),
         }
     }
 }
@@ -331,6 +368,7 @@ impl<'db> TypeAlias<'db> {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::TypeAlias(id)).into(),
+                doc_full_path(&id.parent_module(db), db),
             ),
         }
     }
@@ -356,6 +394,7 @@ impl<'db> ImplAlias<'db> {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ImplAlias(id)).into(),
+                doc_full_path(&id.parent_module(db), db),
             ),
         }
     }
@@ -381,6 +420,7 @@ impl<'db> Trait<'db> {
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Trait(id)).into(),
+            doc_full_path(&id.parent_module(db), db),
         );
 
         let trait_constants = db.trait_constants(id)?;
@@ -440,7 +480,11 @@ pub struct TraitConstant<'db> {
 impl<'db> TraitConstant<'db> {
     pub fn new(db: &'db ScarbDocDatabase, id: TraitConstantId<'db>) -> Self {
         let node = id.stable_ptr(db);
-
+        let parent_path = format!(
+            "{}::{}",
+            doc_full_path(&id.parent_module(db), db),
+            id.trait_id(db).name(db).to_string(db)
+        );
         Self {
             id,
             node,
@@ -448,6 +492,7 @@ impl<'db> TraitConstant<'db> {
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Constant(id)).into(),
+                parent_path,
             ),
         }
     }
@@ -466,7 +511,11 @@ pub struct TraitType<'db> {
 impl<'db> TraitType<'db> {
     pub fn new(db: &'db ScarbDocDatabase, id: TraitTypeId<'db>) -> Self {
         let node = id.stable_ptr(db);
-
+        let parent_path = format!(
+            "{}::{}",
+            doc_full_path(&id.parent_module(db), db),
+            id.trait_id(db).name(db).to_string(db)
+        );
         Self {
             id,
             node,
@@ -474,6 +523,7 @@ impl<'db> TraitType<'db> {
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Type(id)).into(),
+                parent_path,
             ),
         }
     }
@@ -492,7 +542,11 @@ pub struct TraitFunction<'db> {
 impl<'db> TraitFunction<'db> {
     pub fn new(db: &'db ScarbDocDatabase, id: TraitFunctionId<'db>) -> Self {
         let node = id.stable_ptr(db);
-
+        let parent_path = format!(
+            "{}::{}",
+            doc_full_path(&id.parent_module(db), db),
+            id.trait_id(db).name(db).to_string(db)
+        );
         Self {
             id,
             node,
@@ -500,6 +554,7 @@ impl<'db> TraitFunction<'db> {
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Function(id)).into(),
+                parent_path,
             ),
         }
     }
@@ -525,6 +580,7 @@ impl<'db> Impl<'db> {
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Impl(id)).into(),
+            doc_full_path(&id.parent_module(db), db),
         );
 
         let impl_types = db.impl_types(id)?;
@@ -584,11 +640,20 @@ pub struct ImplType<'db> {
 impl<'db> ImplType<'db> {
     pub fn new(db: &'db ScarbDocDatabase, id: ImplTypeDefId<'db>) -> Self {
         let node = id.stable_ptr(db);
-
+        let parent_path = format!(
+            "{}::{}",
+            doc_full_path(&id.parent_module(db), db),
+            id.impl_def_id(db).name(db).to_string(db)
+        );
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id)).into()),
+            item_data: ItemData::new(
+                db,
+                id,
+                LookupItemId::ImplItem(ImplItemId::Type(id)).into(),
+                parent_path,
+            ),
         }
     }
 }
@@ -606,7 +671,11 @@ pub struct ImplConstant<'db> {
 impl<'db> ImplConstant<'db> {
     pub fn new(db: &'db ScarbDocDatabase, id: ImplConstantDefId<'db>) -> Self {
         let node = id.stable_ptr(db);
-
+        let parent_path = format!(
+            "{}::{}",
+            doc_full_path(&id.parent_module(db), db),
+            id.impl_def_id(db).name(db).to_string(db)
+        );
         Self {
             id,
             node,
@@ -614,6 +683,7 @@ impl<'db> ImplConstant<'db> {
                 db,
                 id,
                 LookupItemId::ImplItem(ImplItemId::Constant(id)).into(),
+                parent_path,
             ),
         }
     }
@@ -632,7 +702,11 @@ pub struct ImplFunction<'db> {
 impl<'db> ImplFunction<'db> {
     pub fn new(db: &'db ScarbDocDatabase, id: ImplFunctionId<'db>) -> Self {
         let node = id.stable_ptr(db);
-
+        let parent_path = format!(
+            "{}::{}",
+            doc_full_path(&id.parent_module(db), db),
+            id.impl_def_id(db).name(db).to_string(db)
+        );
         Self {
             id,
             node,
@@ -640,6 +714,7 @@ impl<'db> ImplFunction<'db> {
                 db,
                 id,
                 LookupItemId::ImplItem(ImplItemId::Function(id)).into(),
+                parent_path,
             ),
         }
     }
@@ -665,6 +740,7 @@ impl<'db> ExternType<'db> {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ExternType(id)).into(),
+                doc_full_path(&id.parent_module(db), db),
             ),
         }
     }
@@ -690,6 +766,7 @@ impl<'db> ExternFunction<'db> {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ExternFunction(id)).into(),
+                doc_full_path(&id.parent_module(db), db),
             ),
         }
     }
@@ -714,6 +791,7 @@ impl<'db> MacroDeclaration<'db> {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::MacroDeclaration(id)).into(),
+                doc_full_path(&id.parent_module(db), db),
             ),
         }
     }

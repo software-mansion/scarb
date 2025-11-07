@@ -1,0 +1,43 @@
+# hello_world
+
+Fully qualified path: [hello_world](./hello_world.md)
+
+
+## [Modules](./hello_world-modules.md)
+
+| | |
+|:---|:---|
+| [regina](./hello_world-regina.md) | This is a doc comment we should see in generated docs |
+
+## [Free functions](./hello_world-free_functions.md)
+
+| | |
+|:---|:---|
+| [my_macro_defined_function](./hello_world-my_macro_defined_function.md) | — |
+
+## [Structs](./hello_world-structs.md)
+
+| | |
+|:---|:---|
+| [OuterStruct](./hello_world-OuterStruct.md) | the outer struct |
+
+## [Macro declarations](./hello_world-macro_declarations.md)
+
+| | |
+|:---|:---|
+| [define_function](./hello_world-define_function.md) | — |
+| [define_trait](./hello_world-define_trait.md) | — |
+| [nested_module_macro](./hello_world-nested_module_macro.md) | — |
+
+
+---
+ 
+# Groups: 
+
+## [exposed can be a part of a group](exposed_can_be_a_part_of_a_group.md)
+
+- ### [Traits](./exposed_can_be_a_part_of_a_group-traits.md)
+
+| | |
+|:---|:---|
+| [ShapeShifters](./hello_world-ShapeShifters.md) | — |
