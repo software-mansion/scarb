@@ -159,36 +159,12 @@ impl Parse for QuoteFormatArgs {
 /// Additionally, it's expected placeholders (`{}`, `{0}`, etc.) are already
 /// stripped out by the format parser before this function is called.
 fn tokenize_basic(string: &str) -> Vec<QuoteToken> {
-    let mut result = Vec::new();
-    let mut current_token = String::new();
-    let chars = string.chars().peekable();
-
-    for ch in chars {
-        if ch.is_whitespace() {
-            if !current_token.is_empty() {
-                // Finish current token
-                result.push(QuoteToken::Content(current_token.clone()));
-                current_token.clear();
-            }
-            // Skip consecutive whitespace
-            if !matches!(result.last(), Some(QuoteToken::Whitespace)) {
-                result.push(QuoteToken::Whitespace);
-            }
-        } else if ch.is_alphanumeric() || ch == '_' {
-            current_token.push(ch);
-        } else {
-            // For simplicity, all other characters (punctuation, operators, etc.) are treated as separate tokens
-            if !current_token.is_empty() {
-                result.push(QuoteToken::Content(current_token.clone()));
-                current_token.clear();
-            }
-            result.push(QuoteToken::Content(ch.to_string()));
-        }
-    }
-    if !current_token.is_empty() {
-        result.push(QuoteToken::Content(current_token));
-    }
-    result
+    string
+        .split(char::is_whitespace)
+        .map(|s| QuoteToken::Content(s.to_string()))
+        .flat_map(|content| [QuoteToken::Whitespace, content])
+        .skip(1)
+        .collect()
 }
 
 /// Build a Cairo TokenStream from a string literal with format placeholders.
