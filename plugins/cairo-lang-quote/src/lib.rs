@@ -221,7 +221,9 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                             });
                         }
                         // Vars are handled via placeholders, so they should not appear here.
-                        QuoteToken::Var(_) => {}
+                        QuoteToken::Var(_) => {
+                            unreachable!("tokenizer cannot return a var quote token type")
+                        }
                         QuoteToken::Whitespace => {
                             output_token_stream.extend(rust_quote! {
                               quote_macro_result.push_token(::cairo_lang_macro::TokenTree::Ident(::cairo_lang_macro::Token::new(" ".to_string(), ::cairo_lang_macro::TextSpan::call_site())));
