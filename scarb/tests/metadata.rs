@@ -1876,12 +1876,13 @@ fn compiler_config_collected_properly() {
         json!({
             "allow_warnings": true,
             "enable_gas": true,
-            "inlining_strategy": "avoid",
             "sierra_replace_ids": false,
             "unstable_add_statements_code_locations_debug_info": false,
             "unstable_add_statements_functions_debug_info": false,
-            "panic_backtrace": false,"unsafe_panic": false,
-            "incremental": true
+            "panic_backtrace": false,
+            "unsafe_panic": false,
+            "incremental": true,
+            "compiler_optimizations": {"Enabled": {"inlining_strategy": "avoid"}}
         })
     );
 }
@@ -1933,12 +1934,13 @@ fn compiler_config_collected_properly_in_workspace() {
         json!({
             "allow_warnings": true,
             "enable_gas": false,
-            "inlining_strategy": "avoid",
             "sierra_replace_ids": true,
             "unstable_add_statements_code_locations_debug_info": false,
             "unstable_add_statements_functions_debug_info": false,
-            "panic_backtrace": false,"unsafe_panic": false,
-            "incremental": true
+            "panic_backtrace": false,
+            "unsafe_panic": false,
+            "incremental": true,
+            "compiler_optimizations": {"Enabled": {"inlining_strategy": "avoid"}}
         })
     );
 }
@@ -1977,12 +1979,13 @@ fn profile_can_override_cairo_section() {
         json!({
             "allow_warnings": true,
             "enable_gas": true,
-            "inlining_strategy": "default",
             "sierra_replace_ids": true,
             "unstable_add_statements_code_locations_debug_info": false,
             "unstable_add_statements_functions_debug_info": false,
-            "panic_backtrace": false,"unsafe_panic": false,
-            "incremental": true
+            "panic_backtrace": false,
+            "unsafe_panic": false,
+            "incremental": true,
+            "compiler_optimizations": {"Enabled": {"inlining_strategy": "default"}}
         })
     );
 }
@@ -2021,13 +2024,13 @@ fn cairo_section_overrides_profile_defaults() {
         json!({
             "allow_warnings": true,
             "enable_gas": true,
-            "inlining_strategy": "default",
             "sierra_replace_ids": true,
             "unstable_add_statements_code_locations_debug_info": false,
             "unstable_add_statements_functions_debug_info": false,
             "panic_backtrace": false,
             "unsafe_panic": false,
-            "incremental": true
+            "incremental": true,
+            "compiler_optimizations": {"Enabled": {"inlining_strategy": "default"}}
         })
     );
 }
@@ -2063,13 +2066,13 @@ fn can_specify_inlining_strategy_by_weight() {
         json!({
             "allow_warnings": true,
             "enable_gas": true,
-            "inlining_strategy": 12,
             "sierra_replace_ids": true,
             "unstable_add_statements_code_locations_debug_info": false,
             "unstable_add_statements_functions_debug_info": false,
             "panic_backtrace": false,
             "unsafe_panic": false,
-            "incremental": true
+            "incremental": true,
+            "compiler_optimizations": {"Enabled": {"inlining_strategy": 12}}
         })
     );
 }

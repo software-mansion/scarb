@@ -92,9 +92,9 @@ If the currently running version of the Scarb compiler does not match this requi
 telling the user what version is required.
 This field takes a [semver version requirement](./specifying-dependencies#version-requirements).
 
-```toml-vue
+```toml
 [package]
-cairo-version = "^{{ rel.stable.cairoVersion }}"
+cairo-version = "^{{ rel.preview.version }}"
 ```
 
 Setting the `cairo-version` key in `[package]` will affect all targets in the package.
@@ -401,6 +401,26 @@ inlining-strategy = 18
 > If you need to deploy your contracts on Starknet, it is recommended to use the `release` strategy for their compilation.
 > You can use profile settings overwriting, for more granular control of which builds use the `avoid` and `release` strategy.
 
+### `skip-optimizations`
+
+If enabled, Scarb will skip as much compiler optimization as possible when compiling to Sierra.
+Since inlining is an optimization as well, setting this field to `true` will cause inlining to behave
+as if [`inlining-strategy`](#inlining-strategy) was set to `avoid`.
+`avoid` is the only [`inlining-strategy`](#inlining-strategy) that is allowed to be set explicitly when
+[`skip-optimizations`](#skip-optimizations) is `true`.
+
+By default, this flag is set to `false`.
+
+```toml
+[cairo]
+skip-optimizations = false
+```
+
+> [!WARNING]
+> Setting this field to `true` may result in faster compilation, but **much** slower execution of the compiled code.
+> Please use with caution.
+> If you need to deploy your contracts on Starknet, you should **never** compile them with this field set to `true`.
+
 ### `panic-backtrace`
 
 If enabled, during the project compilation Scarb will add panic backtrace handling to the generated code.
@@ -428,8 +448,8 @@ unsafe-panic = false
 
 ### `incremental`
 
-If enabled, after project compilation Scarb will emit additional cache artifacts. This artifacts will be attempted to be
-reused in subsequent builds.
+If enabled, after project compilation, Scarb will emit additional cache artifacts.
+These artifacts will be attempted to be reused in subsequent builds.
 By default, this flag is set to `true`.
 This can also be disabled globally via `SCARB_INCREMENTAL` environment variable.
 
@@ -447,7 +467,7 @@ incremental = true
 > It will also make the compilation artifacts larger.
 > It should not be used unless your tooling requires it.
 
-If enabled, during the project compilation Scarb will a add mapping between Sierra statement indexes and vectors of
+If enabled, during the project compilation, Scarb will add a mapping between Sierra statement indexes and vectors of
 fully qualified paths of Cairo functions to debug info. A statement index maps to a vector consisting of a function
 which caused the statement to be generated and all functions that were inlined or generated along the way.
 By default, this flag is set to `false`.
@@ -466,7 +486,7 @@ unstable-add-statements-functions-debug-info = false
 > It will also make the compilation artifacts larger.
 > It should not be used unless your tooling requires it.
 
-If enabled, during the project compilation Scarb will add a mapping between Sierra statement indexes and locations in
+If enabled, during the project compilation, Scarb will add a mapping between Sierra statement indexes and locations in
 the code to debug info. A statement index maps to a vector consisting of code fragment which caused the statement to be
 generated and all code fragments that were inlined or generated along the way.
 By default, this flag is set to `false`.

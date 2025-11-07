@@ -345,11 +345,10 @@ fn compiler_config_defaults_in_dev() {
         );
         assert_eq!(
             compiler_config
-                .get("inlining_strategy")
+                .get("compiler_optimizations")
                 .unwrap()
-                .as_str()
-                .unwrap(),
-            "default"
+                .clone(),
+            serde_json::json!({ "Enabled": { "inlining_strategy": "default" } })
         );
     }
 }
@@ -419,11 +418,10 @@ fn compiler_config_set_for_all_profiles() {
         );
         assert_eq!(
             compiler_config
-                .get("inlining_strategy")
+                .get("compiler_optimizations")
                 .unwrap()
-                .as_str()
-                .unwrap(),
-            "avoid"
+                .clone(),
+            serde_json::json!({ "Enabled": { "inlining_strategy": "avoid" } })
         );
     }
 
@@ -445,11 +443,10 @@ fn compiler_config_set_for_all_profiles() {
         );
         assert_eq!(
             compiler_config
-                .get("inlining_strategy")
+                .get("compiler_optimizations")
                 .unwrap()
-                .as_str()
-                .unwrap(),
-            "avoid"
+                .clone(),
+            serde_json::json!({ "Enabled": { "inlining_strategy": "avoid" } })
         );
     }
 
@@ -478,11 +475,10 @@ fn compiler_config_set_for_all_profiles() {
         );
         assert_eq!(
             compiler_config
-                .get("inlining_strategy")
+                .get("compiler_optimizations")
                 .unwrap()
-                .as_str()
-                .unwrap(),
-            "avoid"
+                .clone(),
+            serde_json::json!({ "Enabled": { "inlining_strategy": "avoid" } })
         );
     }
 }
@@ -509,11 +505,10 @@ fn inlining_strategy_can_be_set_by_alias() {
         let compiler_config = cu.compiler_config;
         assert_eq!(
             compiler_config
-                .get("inlining_strategy")
+                .get("compiler_optimizations")
                 .unwrap()
-                .as_str()
-                .unwrap(),
-            "default"
+                .clone(),
+            serde_json::json!({ "Enabled": { "inlining_strategy": "default" } })
         );
     }
 }
@@ -829,4 +824,30 @@ fn tools_can_be_merged_recursively() {
             .unwrap(),
         "value"
     );
+}
+
+#[test]
+fn invalid_resolved_cairo_section() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            skip-optimizations = true
+            inlining-strategy = "default"
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .code(1)
+        .stdout_eq(indoc! {r#"
+        error: failed to parse manifest at: [..]/Scarb.toml
+
+        Caused by:
+            inlining-strategy field is set but its effects are overriden by skip-optimizations = true
+            if you want to skip compiler optimizations, unset the inlining-strategy or explicitly set it to "avoid"
+        "#});
 }

@@ -510,9 +510,51 @@ fn warn_inlining_strategy_in_release() {
         .stdout_eq(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..])
         warn: this build runs in `release` profile, but uses non-default inlining strategy
-        changing the inlining strategy may significantly slow down the compiled contract execution
+        changing the inlining strategy may significantly increase gas costs of calling entrypoints of the compiled contract
         please make sure the compiler configuration in your manifest file is intended
         see https://docs.swmansion.com/scarb/docs/reference/manifest.html#inlining-strategy for more info
         [..]Finished `release` profile target(s) in [..]
+        "#});
+}
+
+#[test]
+fn error_skip_optimizations_in_release() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            skip-optimizations = true
+
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(BALANCE_CONTRACT)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..] Compiling hello v0.1.0 ([..])
+        [..]  Finished `dev` profile target(s) in [..]
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("--release")
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .code(1)
+        .stdout_eq(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..])
+        error: this build runs in `release` profile, but has compiler optimizations turned off
+        turning off the optimizations may significantly increase gas costs of calling entrypoints of the compiled contract
+        see https://docs.swmansion.com/scarb/docs/reference/manifest.html#skip-optimizations for more info
+        error: could not compile `hello` due to 1 previous error
         "#});
 }

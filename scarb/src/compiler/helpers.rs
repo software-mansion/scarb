@@ -134,14 +134,12 @@ where
             diagnostics_reporter
         },
         replace_ids: unit.compiler_config.sierra_replace_ids,
-        inlining_strategy: unit.compiler_config.inlining_strategy.clone().into(),
         add_statements_functions: unit
             .compiler_config
             .unstable_add_statements_functions_debug_info,
         add_statements_code_locations: unit
             .compiler_config
             .unstable_add_statements_code_locations_debug_info,
-        ..CompilerConfig::default()
     }
 }
 

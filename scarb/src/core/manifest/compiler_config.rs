@@ -1,3 +1,4 @@
+use cairo_lang_lowering::optimizations::config::Optimizations;
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 
@@ -25,7 +26,7 @@ pub struct ManifestCompilerConfig {
     pub unstable_add_statements_functions_debug_info: bool,
     /// Add a mapping between sierra statement indexes and code location in cairo code
     /// to debug info. A statement index maps to a vector consisting of a code location which caused the
-    /// statement to be generated and all code location that were inlined or generated along the way.
+    /// statement to be generated and all code locations that were inlined or generated along the way.
     /// Used by [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
     /// This feature is unstable and is subject to change.
     pub unstable_add_statements_code_locations_debug_info: bool,
@@ -33,13 +34,32 @@ pub struct ManifestCompilerConfig {
     pub panic_backtrace: bool,
     /// Do not generate panic handling code. This might be useful for client side proving.  
     pub unsafe_panic: bool,
-    /// Inlining strategy.
-    pub inlining_strategy: InliningStrategy,
+    /// Compiler optimizations to apply.
+    pub compiler_optimizations: CompilerOptimizations,
     /// Whether to enable incremental compilation.
     ///
     /// If this is set to `true`, the compiler will emit compilation artifacts and attempt to reuse
     /// them in subsequent builds.
     pub incremental: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
+pub enum CompilerOptimizations {
+    Disabled,
+    Enabled { inlining_strategy: InliningStrategy },
+}
+
+impl CompilerOptimizations {
+    pub fn to_lowering_optimizations(&self) -> Optimizations {
+        match self {
+            CompilerOptimizations::Disabled => Optimizations::Disabled,
+            CompilerOptimizations::Enabled { inlining_strategy } => {
+                Optimizations::enabled_with_default_movable_functions(
+                    inlining_strategy.clone().into(),
+                )
+            }
+        }
+    }
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Eq, PartialEq, Hash, Clone)]
@@ -113,7 +133,9 @@ impl Default for ManifestCompilerConfig {
             unstable_add_statements_code_locations_debug_info: false,
             panic_backtrace: false,
             unsafe_panic: false,
-            inlining_strategy: InliningStrategy::default(),
+            compiler_optimizations: CompilerOptimizations::Enabled {
+                inlining_strategy: InliningStrategy::Default,
+            },
             incremental: true,
         }
     }

@@ -10,8 +10,9 @@ use crate::core::package::PackageId;
 use crate::core::registry::{DEFAULT_REGISTRY_INDEX, DEFAULT_REGISTRY_INDEX_PATCH_SOURCE};
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{
-    Config, DepKind, DependencyVersionReq, EnabledFeature, InliningStrategy, ManifestBuilder,
-    ManifestCompilerConfig, PackageName, TargetKind, TestTargetProps, TestTargetType,
+    CompilerOptimizations, Config, DepKind, DependencyVersionReq, EnabledFeature, InliningStrategy,
+    ManifestBuilder, ManifestCompilerConfig, PackageName, TargetKind, TestTargetProps,
+    TestTargetType,
 };
 
 use crate::internal::fsx;
@@ -503,7 +504,14 @@ pub struct TomlCairo {
     /// Do not generate panic handling code. This might be useful for client side proving.
     pub unsafe_panic: Option<bool>,
     /// Inlining strategy.
+    /// If `skip_sierra_optimizations` is set to `true`,
+    /// the value of this field has to be set to [`None`] or [`Some`] with [`InliningStrategy::Avoid`].
     pub inlining_strategy: Option<InliningStrategy>,
+    /// Disable most possible optimizations that happen during compilation.
+    /// Since inlining is an optimization as well, setting this field to `true` will make the cairo
+    /// compiler behave (in the aspect of inlining) as if the `inlining_strategy` was set
+    /// to [`InliningStrategy::Avoid`].
+    pub skip_optimizations: Option<bool>,
     /// Whether to enable incremental compilation.
     pub incremental: Option<bool>,
 }
@@ -841,7 +849,9 @@ impl TomlManifest {
         };
         let profile_definition = profile_source.collect_profile_definition(profile.clone())?;
 
-        let compiler_config = self.collect_compiler_config(profile_definition.clone())?;
+        Self::verify_toml_cairo_section(&profile_definition)?;
+        let compiler_config = Self::collect_compiler_config(profile_definition.clone());
+
         let workspace_tool = workspace.tool.clone();
         let tool = self.collect_tool(profile_definition, workspace_tool)?;
 
@@ -1289,18 +1299,43 @@ impl TomlManifest {
         Ok(profile)
     }
 
-    fn collect_compiler_config(
-        &self,
-        profile_definition: TomlProfile,
-    ) -> Result<ManifestCompilerConfig> {
+    fn verify_toml_cairo_section(profile_definition: &TomlProfile) -> Result<()> {
+        let Some(cairo) = &profile_definition.cairo else {
+            return Ok(());
+        };
+
+        if cairo.skip_optimizations == Some(true)
+            && cairo
+                .inlining_strategy
+                .as_ref()
+                .is_some_and(|inlining_strategy| inlining_strategy != &InliningStrategy::Avoid)
+        {
+            bail!(formatdoc! {r#"
+                inlining-strategy field is set but its effects are overriden by skip-optimizations = true
+                if you want to skip compiler optimizations, unset the inlining-strategy or explicitly set it to "avoid"
+                "#,
+            })
+        }
+
+        Ok(())
+    }
+
+    fn collect_compiler_config(profile_definition: TomlProfile) -> ManifestCompilerConfig {
         let mut compiler_config = ManifestCompilerConfig::default();
         if let Some(cairo) = profile_definition.cairo {
             if let Some(sierra_replace_ids) = cairo.sierra_replace_ids {
                 compiler_config.sierra_replace_ids = sierra_replace_ids;
             }
-            if let Some(inlining_strategy) = cairo.inlining_strategy {
-                compiler_config.inlining_strategy = inlining_strategy;
+
+            if cairo.skip_optimizations == Some(true) {
+                compiler_config.compiler_optimizations = CompilerOptimizations::Disabled;
             }
+            // Take `inlining_strategy` into account only if optimizations are **not** skipped.
+            else if let Some(inlining_strategy) = cairo.inlining_strategy {
+                compiler_config.compiler_optimizations =
+                    CompilerOptimizations::Enabled { inlining_strategy };
+            }
+
             if let Some(allow_warnings) = cairo.allow_warnings {
                 compiler_config.allow_warnings = allow_warnings;
             }
@@ -1329,7 +1364,7 @@ impl TomlManifest {
                 compiler_config.incremental = incremental;
             }
         }
-        Ok(compiler_config)
+        compiler_config
     }
 
     fn collect_tool(
