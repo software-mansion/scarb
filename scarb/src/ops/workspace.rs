@@ -85,7 +85,7 @@ fn read_workspace_root<'c>(
                 manifest_path,
                 source_id,
                 config.profile(),
-                Some(&toml_manifest),
+                &toml_manifest,
                 config,
             )
             .with_context(|| format!("failed to parse manifest at: {manifest_path}"))?;
@@ -121,7 +121,7 @@ fn read_workspace_root<'c>(
                         manifest_path,
                         source_id,
                         config.profile(),
-                        Some(&toml_manifest),
+                        &toml_manifest,
                         config,
                     )
                     .with_context(|| format!("failed to parse manifest at: {manifest_path}"))?;

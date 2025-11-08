@@ -632,7 +632,7 @@ impl TomlManifest {
         workspace_manifest_path: &Utf8Path,
         source_id: SourceId,
         profile: Profile,
-        workspace_manifest: Option<&TomlManifest>,
+        workspace_manifest: &TomlManifest,
         config: &Config,
     ) -> Result<Manifest> {
         let root = manifest_path
@@ -643,13 +643,12 @@ impl TomlManifest {
             bail!("no `package` section found");
         };
 
-        let toml_workspace = workspace_manifest.and_then(|m| m.workspace.clone());
         // For root package, no need to fetch workspace separately.
         let workspace = self
             .workspace
             .as_ref()
             .cloned()
-            .or(toml_workspace.clone())
+            .or(workspace_manifest.workspace.clone())
             .unwrap_or_default();
 
         let inheritable_package = workspace.package.clone().unwrap_or_default();
@@ -814,7 +813,7 @@ impl TomlManifest {
             .try_collect()?;
 
         // Following Cargo convention, pull profile config from workspace root only.
-        let profile_source = if let Some(workspace_manifest) = workspace_manifest {
+        let profile_source = {
             let warn_msg = |section: &str| {
                 config.ui().warn(formatdoc!(
                     r#"
@@ -831,8 +830,6 @@ impl TomlManifest {
                 warn_msg("profile");
             }
             workspace_manifest
-        } else {
-            self
         };
         let profile_definition = profile_source.collect_profile_definition(profile.clone())?;
 
