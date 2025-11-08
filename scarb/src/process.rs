@@ -205,3 +205,17 @@ fn shlex_join(cmd: &Command) -> String {
             .map(OsStr::to_string_lossy),
     )
 }
+
+/// Checks truthiness of env var value at runtime.
+///
+/// If var is not defined, returns `default`.
+/// If var is defined, `true` or `1` is truthy, everything else is false.
+pub fn is_truthy_env(name: &str, default: bool) -> bool {
+    std::env::var(name)
+        .ok()
+        .map(|var| {
+            let s = var.as_str();
+            s == "true" || s == "1"
+        })
+        .unwrap_or(default)
+}
