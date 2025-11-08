@@ -131,7 +131,7 @@ io_tee.workspace = true
 libc.workspace = true
 ntest.workspace = true
 predicates.workspace = true
-scarb-test-support = { path = "../utils/scarb-test-support", features = ["scarb-config"] }
+scarb-test-support = { path = "../utils/scarb-test-support", features = ["scarb-config", "proc-macro-server"] }
 serde_test.workspace = true
 similar-asserts.workspace = true
 snapbox.workspace = true

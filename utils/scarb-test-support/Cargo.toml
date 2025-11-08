@@ -7,6 +7,7 @@ publish = false
 [features]
 default = []
 scarb-config = ["dep:scarb"]
+proc-macro-server = ["dep:scarb-proc-macro-server-types"]
 
 [dependencies]
 anyhow.workspace = true
@@ -20,7 +21,7 @@ indoc.workspace = true
 itertools.workspace = true
 scarb = { path = "../../scarb", default-features = false, optional = true }
 scarb-build-metadata = { path = "../scarb-build-metadata" }
-scarb-proc-macro-server-types = { path = "../scarb-proc-macro-server-types" }
+scarb-proc-macro-server-types = { path = "../scarb-proc-macro-server-types", optional = true }
 scarb-ui = { path = "../scarb-ui" }
 semver.workspace = true
 serde.workspace = true

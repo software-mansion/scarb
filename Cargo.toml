@@ -115,6 +115,7 @@ proc-macro2 = "1"
 pubgrub = { git = "https://github.com/software-mansion-labs/pubgrub.git", branch = "dev" }
 quote = "1"
 ra_ap_toolchain = "0.0.302"
+ra-ap-rustc_parse_format = "0.138.0"
 rayon = "1.11.0"
 redb = "2.6.3"
 salsa = "=0.24.0"
@@ -135,7 +136,7 @@ snapbox = { version = "0.6", features = ["cmd", "path", "diff"] }
 starknet-core = "0.16.0"
 stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd", features = ["std"] }
 stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
-syn = "2"
+syn = { version = "2", default-features = false }
 tar = "0.4"
 target-triple = "0.1"
 tempfile = "3"

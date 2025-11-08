@@ -8,7 +8,7 @@ use scarb_test_support::project_builder::ProjectBuilder;
 use snapbox::Assert;
 
 #[test]
-fn can_use_quote() {
+fn quote_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -61,7 +61,7 @@ fn can_use_quote() {
 }
 
 #[test]
-fn can_use_quote_with_token_tree() {
+fn quote_macro_with_token_tree() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -117,7 +117,7 @@ fn can_use_quote_with_token_tree() {
 }
 
 #[test]
-fn can_use_quote_with_token_stream() {
+fn quote_macro_with_token_stream() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -173,7 +173,7 @@ fn can_use_quote_with_token_stream() {
 }
 
 #[test]
-fn can_use_quote_with_syntax_node() {
+fn quote_macro_with_syntax_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -246,7 +246,7 @@ fn can_use_quote_with_syntax_node() {
 }
 
 #[test]
-fn can_use_quote_with_cairo_specific_syntax() {
+fn quote_macro_with_cairo_specific_syntax() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default().add_primitive_token_dep()
@@ -401,7 +401,7 @@ fn can_use_quote_with_cairo_specific_syntax() {
 }
 
 #[test]
-fn can_parse_incoming_token_stream() {
+fn quote_macro_parse_incoming_token_stream() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -494,7 +494,7 @@ fn can_parse_incoming_token_stream() {
 }
 
 #[test]
-fn can_parse_with_token_interpolation() {
+fn quote_macro_with_token_interpolation() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -570,4 +570,634 @@ fn can_parse_with_token_interpolation() {
             }
         "#},
     );
+}
+
+#[test]
+fn quote_macro_preserves_spans_of_parsed_args() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
+        .lib_rs(indoc! {r#"
+            use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
+            use cairo_lang_parser::utils::SimpleParserDatabase;
+            use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+
+            #[attribute_macro]
+            pub fn simple_attr(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+                let db_val = SimpleParserDatabase::default();
+                let db = &db_val;
+                let (body, _diagnostics) = db.parse_token_stream(&item);
+                let body = SyntaxNodeWithDb::new(&body, db);
+                let ts = quote! {
+                    #body
+                };
+                for token in &ts.tokens {
+                    println!("{:?}", &token);
+                }
+                ProcMacroResult::new(ts)
+            }
+
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_builtin("assert_macros")
+        // Note we add leading whitespace before function declaration.
+        // This cannot affect the span in resulting token stream.
+        .lib_cairo(indoc! {r#"
+            #[doc(hidden)]
+            fn other() {}
+
+            #[simple_attr]
+              fn foo() {
+                let _a = 1;
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r##"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            Ident(Token { content: "  ", span: TextSpan { start: 0, end: 2 } })
+            Ident(Token { content: "fn", span: TextSpan { start: 2, end: 4 } })
+            Ident(Token { content: " ", span: TextSpan { start: 4, end: 5 } })
+            Ident(Token { content: "foo", span: TextSpan { start: 5, end: 8 } })
+            Ident(Token { content: "(", span: TextSpan { start: 8, end: 9 } })
+            Ident(Token { content: ")", span: TextSpan { start: 9, end: 10 } })
+            Ident(Token { content: " ", span: TextSpan { start: 10, end: 11 } })
+            Ident(Token { content: "{", span: TextSpan { start: 11, end: 12 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 12, end: 13 } })
+            Ident(Token { content: "    ", span: TextSpan { start: 13, end: 17 } })
+            Ident(Token { content: "let", span: TextSpan { start: 17, end: 20 } })
+            Ident(Token { content: " ", span: TextSpan { start: 20, end: 21 } })
+            Ident(Token { content: "_a", span: TextSpan { start: 21, end: 23 } })
+            Ident(Token { content: " ", span: TextSpan { start: 23, end: 24 } })
+            Ident(Token { content: "=", span: TextSpan { start: 24, end: 25 } })
+            Ident(Token { content: " ", span: TextSpan { start: 25, end: 26 } })
+            Ident(Token { content: "1", span: TextSpan { start: 26, end: 27 } })
+            Ident(Token { content: ";", span: TextSpan { start: 27, end: 28 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 28, end: 29 } })
+            Ident(Token { content: "}", span: TextSpan { start: 29, end: 30 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 30, end: 31 } })
+            [..]Finished `dev` profile target(s) in [..]
+      "##});
+}
+
+#[test]
+fn quote_format_macro() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan, quote_format};
+            
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                let x = TokenTree::Ident(Token::new("2".to_string(), TextSpan::call_site()));
+                let tokens = quote_format! {
+                    r#"assert(1 + 1 == {}, 'fail')"#,
+                    x
+                };
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                some!();
+                42
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .stdout_eq(indoc! {r#"
+        [..] Compiling some v1.0.0 [..]
+        [..] Compiling hello v1.0.0 [..]
+        [..] Finished `dev` profile [..]
+        [..]Executing hello
+        Program output:
+        42
+        Saving output to: target/execute/hello/execution1
+        "#})
+        .success();
+}
+
+#[test]
+fn quote_format_macro_with_code_block() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan, quote_format};
+
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                let fn_name = TokenTree::Ident(Token::new("foo".to_string(), TextSpan::call_site()));
+                let x = TokenTree::Ident(Token::new("42".to_string(), TextSpan::call_site()));
+                let tokens = quote_format! {
+                    r#"pub fn {}() -> felt252 {{
+                        return {};
+                    }}"#, fn_name, x
+                };
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            some!();
+
+            #[executable]
+            fn main() -> felt252 {
+                foo()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .stdout_eq(indoc! {r#"
+        [..] Compiling some v1.0.0 [..]
+        [..] Compiling hello v1.0.0 [..]
+        [..] Finished `dev` profile [..]
+        [..]Executing hello
+        Program output:
+        42
+        Saving output to: target/execute/hello/execution1
+        "#})
+        .success();
+}
+
+#[test]
+fn quote_format_macro_no_args() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan, quote_format};
+
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                let x = TokenTree::Ident(Token::new("42".to_string(), TextSpan::call_site()));
+                let tokens = quote_format! {"{}", x};
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 { some!() }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .stdout_eq(indoc! {r#"
+        [..] Compiling some v1.0.0 [..]
+        [..] Compiling hello v1.0.0 [..]
+        [..] Finished `dev` profile [..]
+        [..]Executing hello
+        Program output:
+        42
+        Saving output to: target/execute/hello/execution1
+        "#})
+        .success();
+}
+
+#[test]
+fn quote_format_macro_multiple_args() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan, quote_format};
+
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                let a = TokenTree::Ident(Token::new("21".to_string(), TextSpan::call_site()));
+                let b = TokenTree::Ident(Token::new("42".to_string(), TextSpan::call_site()));
+                let tokens = quote_format! {
+                    "{} + {}",
+                    a,
+                    b
+                };
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 { some!() }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .stdout_eq(indoc! {r#"
+        [..] Compiling some v1.0.0 [..]
+        [..] Compiling hello v1.0.0 [..]
+        [..] Finished `dev` profile [..]
+        [..]Executing hello
+        Program output:
+        63
+        Saving output to: target/execute/hello/execution1
+        "#})
+        .success();
+}
+
+#[test]
+fn quote_format_macro_fails_on_invalid_syntax() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, quote_format};
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                // Missing closing parenthesis
+                let tokens = quote_format! {"assert(false, 'fail'"};
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 { some!() }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+        [..]Compiling some v1.0.0 [..]
+        [..]Compiling hello v1.0.0 [..]
+        error: Parser error in macro-expanded code: Missing token ')'.
+         --> [..]src/lib.cairo:2:24
+        fn main() -> felt252 { some!() }
+                               ^^^^^^^
+        
+        error: could not compile `hello` due to 1 previous error
+        error: `scarb` command exited with error
+        "#})
+        .failure();
+}
+
+#[test]
+fn quote_format_macro_with_indexed_args() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan, quote_format};
+
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                let first = TokenTree::Ident(Token::new("1".to_string(), TextSpan::call_site()));
+                let second = TokenTree::Ident(Token::new("100".to_string(), TextSpan::call_site()));
+                let tokens = quote_format! {
+                    "{1} - {0}",
+                    first,
+                    second
+                };
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 { some!() }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .stdout_eq(indoc! {r#"
+        [..] Compiling some v1.0.0 [..]
+        [..] Compiling hello v1.0.0 [..]
+        [..] Finished `dev` profile [..]
+        [..]Executing hello
+        Program output:
+        99
+        Saving output to: target/execute/hello/execution1
+        "#})
+        .success();
+}
+
+#[test]
+fn quote_format_macro_fails_on_named_args() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan, quote_format};
+
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                let x = TokenTree::Ident(Token::new("42".to_string(), TextSpan::call_site()));
+                let tokens = quote_format! {"{name}", x };
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 { some!() }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        // Disable colors in Cargo output.
+        .env("CARGO_TERM_COLOR", "never")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+        [..]Compiling some v1.0.0 [..]
+        error: named placeholder '{name}' is not supported by this macro.
+               help: use positional ('{}') or indexed placeholders ('{0}', '{1}', ...) instead.
+         --> src/lib.rs:6:33
+          |
+        6 |     let tokens = quote_format! {"{name}", x };
+          |                                 ^^^^^^^^
+        error: could not compile `some` (lib) due to 1 previous error
+        error: process did not exit successfully: exit status: 101
+        error: could not compile `some` due to 1 previous error
+        "#});
+}
+
+#[test]
+fn quote_format_macro_fails_on_invalid_index() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan, quote_format};
+
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                let a = TokenTree::Ident(Token::new("10".to_string(), TextSpan::call_site()));
+                let b = TokenTree::Ident(Token::new("20".to_string(), TextSpan::call_site()));
+                let c = TokenTree::Ident(Token::new("30".to_string(), TextSpan::call_site()));
+                let tokens = quote_format! {"{3}", a, b, c};
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 { some!() }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        // Disable colors in Cargo output.
+        .env("CARGO_TERM_COLOR", "never")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+        [..]Compiling some v1.0.0 [..]
+        error: format arg index 3 is out of range (the format string contains 3 args).
+         --> src/lib.rs:8:33
+          |
+        8 |     let tokens = quote_format! {"{3}", a, b, c};
+          |                                 ^^^^^
+        error: could not compile `some` (lib) due to 1 previous error
+        error: process did not exit successfully: exit status: 101
+        error: could not compile `some` due to 1 previous error
+        "#});
+}
+
+#[test]
+fn quote_format_macro_preserves_spans_of_parsed_args() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
+        .lib_rs(indoc! {r#"
+            use cairo_lang_macro::{attribute_macro, quote_format, ProcMacroResult, TokenStream};
+            use cairo_lang_parser::utils::SimpleParserDatabase;
+            use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+
+            #[attribute_macro]
+            pub fn simple_attr(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+                let db_val = SimpleParserDatabase::default();
+                let db = &db_val;
+                let (body, _diagnostics) = db.parse_token_stream(&item);
+                let body = SyntaxNodeWithDb::new(&body, db);
+                let ts = quote_format! {
+                    "{}",
+                    body
+                };
+                for token in &ts.tokens {
+                    println!("{:?}", &token);
+                }
+                ProcMacroResult::new(ts)
+            }
+
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_builtin("assert_macros")
+        // Note we add leading whitespace before function declaration.
+        // This cannot affect the span in resulting token stream.
+        .lib_cairo(indoc! {r#"
+            #[doc(hidden)]
+            fn other() {}
+
+            #[simple_attr]
+              fn foo() {
+                let _a = 1;
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r##"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            Ident(Token { content: "  ", span: TextSpan { start: 0, end: 2 } })
+            Ident(Token { content: "fn", span: TextSpan { start: 2, end: 4 } })
+            Ident(Token { content: " ", span: TextSpan { start: 4, end: 5 } })
+            Ident(Token { content: "foo", span: TextSpan { start: 5, end: 8 } })
+            Ident(Token { content: "(", span: TextSpan { start: 8, end: 9 } })
+            Ident(Token { content: ")", span: TextSpan { start: 9, end: 10 } })
+            Ident(Token { content: " ", span: TextSpan { start: 10, end: 11 } })
+            Ident(Token { content: "{", span: TextSpan { start: 11, end: 12 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 12, end: 13 } })
+            Ident(Token { content: "    ", span: TextSpan { start: 13, end: 17 } })
+            Ident(Token { content: "let", span: TextSpan { start: 17, end: 20 } })
+            Ident(Token { content: " ", span: TextSpan { start: 20, end: 21 } })
+            Ident(Token { content: "_a", span: TextSpan { start: 21, end: 23 } })
+            Ident(Token { content: " ", span: TextSpan { start: 23, end: 24 } })
+            Ident(Token { content: "=", span: TextSpan { start: 24, end: 25 } })
+            Ident(Token { content: " ", span: TextSpan { start: 25, end: 26 } })
+            Ident(Token { content: "1", span: TextSpan { start: 26, end: 27 } })
+            Ident(Token { content: ";", span: TextSpan { start: 27, end: 28 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 28, end: 29 } })
+            Ident(Token { content: "}", span: TextSpan { start: 29, end: 30 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 30, end: 31 } })
+            [..]Finished `dev` profile target(s) in [..]
+      "##});
 }
