@@ -26,7 +26,7 @@ pub trait WorkspaceInherit {
 pub enum MaybeWorkspace<T, W: WorkspaceInherit> {
     /// The type when inheriting from a workspace.
     Workspace(W),
-    /// The "defined" type, or the type that that is used when not inheriting from a workspace.
+    /// The "defined" type, or the type that is used when not inheriting from a workspace.
     Defined(T),
 }
 
