@@ -49,6 +49,11 @@ sort-module-level-items = true
   Number of spaces per tab.\
   **Default:** `4`
 
+- `breaking-behaviour`
+
+  Control how multi-element collections (i.e. arrays, tuples) are broken into lines: `SingleBreakPoint` or `LineByLine`\
+  **Default:** `{ tuple = "LineByLine", fixed_array = "SingleBreakPoint", macro_call = "SingleBreakPoint" }`
+
 ## Ignoring files
 
 By default, Scarb will format all files with a `.cairo` extension from the directory containing the manifest file
