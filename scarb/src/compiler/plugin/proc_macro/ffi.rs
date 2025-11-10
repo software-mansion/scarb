@@ -19,7 +19,7 @@ impl SharedPluginLibrary {
     /// # Safety
     /// This function is unsafe because it calls the FFI interface of procedural macro package.
     pub unsafe fn try_new(lib_path: &Utf8Path) -> Result<Self> {
-        let library = unsafe { Library::new(lib_path)? };
+        let library = unsafe { Library::new(lib_path.as_std_path())? };
         let api_version: ProcMacroApiVersion = if let Ok(symbol) =
             unsafe { library.get::<*mut NonZeroU8>(b"CAIRO_LANG_MACRO_API_VERSION\0") }
         {
