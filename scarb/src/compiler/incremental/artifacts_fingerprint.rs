@@ -107,11 +107,12 @@ pub fn load_unit_artifacts_local_paths(
     let result = artifacts_fingerprint
         .local
         .into_par_iter()
-        .map(|l| {
-            let content = fsx::read_to_string(&l.path)?;
-            anyhow::Ok(LocalFingerprint {
-                path: l.path.clone(),
-                checksum: u64_hash(content),
+        .filter_map(|l| {
+            fsx::read_to_string(&l.path).ok().map(|content| {
+                anyhow::Ok(LocalFingerprint {
+                    path: l.path.clone(),
+                    checksum: u64_hash(content),
+                })
             })
         })
         .collect::<anyhow::Result<Vec<_>>>()?;
