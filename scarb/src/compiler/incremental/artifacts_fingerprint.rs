@@ -3,6 +3,7 @@ use crate::compiler::incremental::fingerprint::{LocalFingerprint, UnitComponents
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
 use crate::core::Workspace;
 use crate::internal::fsx;
+use crate::process::is_truthy_env;
 use itertools::Itertools;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::IntoParallelIterator;
@@ -10,6 +11,8 @@ use scarb_stable_hash::{StableHasher, short_hash, u64_hash};
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 use std::io::BufReader;
+
+const SCARB_ARTIFACTS_FINGERPRINT: &str = "SCARB_ARTIFACTS_FINGERPRINT";
 
 /// Fingerprint of compiled unit artifacts.
 ///
@@ -149,4 +152,9 @@ impl ArtifactsFingerprintFilenameProvider for CairoCompilationUnit {
     fn fingerprint_filename(&self) -> String {
         format!("{}.json", self.cache_filename())
     }
+}
+
+pub fn artifacts_fingerprint_allowed() -> bool {
+    // We allow if not explicitly disabled via the env var.
+    is_truthy_env(SCARB_ARTIFACTS_FINGERPRINT, true)
 }
