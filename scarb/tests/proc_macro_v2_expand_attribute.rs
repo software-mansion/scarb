@@ -1407,3 +1407,59 @@ fn zero_width_diags_mapped_correctly_at_token_starts() {
             error: could not compile `hello` due to [..] previous error[..]
        "#});
 }
+
+#[test]
+fn attr_macro_args_can_be_parsed() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream};
+        use cairo_lang_parser::utils::SimpleParserDatabase;
+        #[attribute_macro]
+        fn create_wrapper(args: TokenStream, body: TokenStream) -> ProcMacroResult {
+            parse_arguments(args);
+            ProcMacroResult::new(body)
+        }
+        fn parse_arguments(args: TokenStream) {
+            // Initialize parser.
+            let db = SimpleParserDatabase::default();
+            // Parse argument token stream.
+            let (_node, _diagnostics) = db.parse_token_stream_expr(&args);
+        }
+        "##})
+        .add_cairo_lang_parser_dep()
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_cairo_execute()
+        .lib_cairo(indoc! {r#"
+            #[create_wrapper(named_wrapper,16)]
+            fn fib(mut n: u32) -> u32 {
+                let mut a: u32 = 0;
+                let mut b: u32 = 1;
+                while n != 0 {
+                    n = n - 1;
+                    let temp = b;
+                    b = a + b;
+                    a = temp;
+                }
+                a
+            }
+        "#})
+        .build(&project);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
+}
