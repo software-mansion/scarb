@@ -1,3 +1,4 @@
+pub mod artifacts_fingerprint;
 mod compilation;
 mod fingerprint;
 mod source;

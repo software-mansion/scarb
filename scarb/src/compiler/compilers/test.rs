@@ -9,6 +9,7 @@ use cairo_lang_test_plugin::{TestsCompilationConfig, compile_test_prepared_db};
 use cairo_lang_utils::Intern;
 use itertools::Itertools;
 use salsa::Database;
+use std::sync::Arc;
 use tracing::{trace, trace_span};
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
@@ -32,7 +33,7 @@ impl Compiler for TestCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        ctx: &IncrementalContext,
+        ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &dyn Database,
         ws: &Workspace<'_>,
@@ -63,7 +64,7 @@ impl Compiler for TestCompiler {
         };
 
         let diagnostics_reporter =
-            build_compiler_config(db, unit, &test_crate_ids, ctx, ws).diagnostics_reporter;
+            build_compiler_config(db, unit, &test_crate_ids, &ctx, ws).diagnostics_reporter;
 
         let span = trace_span!("compile_test");
         let test_compilation = {
@@ -98,29 +99,28 @@ impl Compiler for TestCompiler {
             {
                 let target_name = unit.main_component().target_name();
                 let target_dir = target_dir.clone();
+                let ctx = ctx.clone();
                 offloader.offload("output file", move |ws| {
+                    let filename = format!("{target_name}.test.sierra.json");
+                    let ctx = ctx.clone();
                     // Cloning the underlying program is expensive, but we can afford it here,
                     // as we are on a dedicated thread anyway.
                     let sierra_program: VersionedProgram = test_compilation.sierra_program.into();
-                    write_json(
-                        &format!("{target_name}.test.sierra.json"),
-                        "output file",
-                        &target_dir,
-                        ws,
-                        &sierra_program,
-                    )?;
+                    write_json(&filename, "output file", &target_dir, ws, &sierra_program)?;
+                    ctx.register_artifact(target_dir.path_unchecked().join(filename))?;
                     Ok(())
                 });
             }
 
-            let file_name = format!("{}.test.json", unit.main_component().target_name());
+            let filename = format!("{}.test.json", unit.main_component().target_name());
             write_json(
-                &file_name,
+                &filename,
                 "output file",
                 &target_dir,
                 ws,
                 &test_compilation.metadata,
             )?;
+            ctx.register_artifact(target_dir.path_unchecked().join(filename))?;
         }
 
         if starknet {
@@ -156,7 +156,7 @@ fn compile_contracts<'db>(
     target_dir: Filesystem,
     unit: &CairoCompilationUnit,
     offloader: &Offloader<'_>,
-    ctx: &IncrementalContext,
+    ctx: Arc<IncrementalContext>,
     db: &'db dyn Database,
     ws: &Workspace<'_>,
 ) -> Result<()> {
@@ -171,7 +171,7 @@ fn compile_contracts<'db>(
         build_external_contracts,
         ..StarknetContractProps::default()
     };
-    let mut compiler_config = build_compiler_config(db, unit, &main_crate_ids, ctx, ws);
+    let mut compiler_config = build_compiler_config(db, unit, &main_crate_ids, &ctx, ws);
     // We already did check the Db for diagnostics when compiling tests, so we can ignore them here.
     compiler_config.diagnostics_reporter = DiagnosticsReporter::ignoring()
         .allow_warnings()
@@ -198,6 +198,7 @@ fn compile_contracts<'db>(
         },
         offloader,
         db,
+        ctx,
         ws,
     )?;
     Ok(())

@@ -1,8 +1,10 @@
 use crate::compiler::incremental::fingerprint::{
-    ComponentFingerprint, Fingerprint, FreshnessCheck, UnitFingerprint, is_fresh,
+    ComponentFingerprint, Fingerprint, FreshnessCheck, LocalFingerprint, UnitComponentsFingerprint,
+    is_fresh,
 };
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
+use crate::internal::fsx;
 use crate::process::is_truthy_env;
 use anyhow::{Context, Result};
 use cairo_lang_filesystem::db::{CrateConfiguration, FilesGroup};
@@ -11,23 +13,26 @@ use cairo_lang_filesystem::set_crate_config;
 use cairo_lang_lowering::cache::generate_crate_cache;
 use cairo_lang_lowering::db::LoweringGroup;
 use cairo_lang_utils::Intern;
+use camino::Utf8PathBuf;
 use itertools::Itertools;
 use salsa::{Database, par_map};
+use scarb_stable_hash::u64_hash;
 use std::io::{BufReader, Write};
 use std::mem;
 use std::ops::Deref;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use tokio::task::spawn_blocking;
 use tracing::{debug, error, trace_span};
 
 const SCARB_INCREMENTAL: &str = "SCARB_INCREMENTAL";
 
 pub struct EnabledIncrementalContext {
-    fingerprints: UnitFingerprint,
+    fingerprints: UnitComponentsFingerprint,
     cached_crates: Vec<CrateInput>,
     cached_crates_with_warnings: Vec<CrateInput>,
     warnings_found: AtomicBool,
+    artifacts: Mutex<Vec<LocalFingerprint>>,
 }
 
 pub enum IncrementalContext {
@@ -43,7 +48,7 @@ impl IncrementalContext {
         Some(enabled.clone())
     }
 
-    pub fn fingerprints(&self) -> Option<&UnitFingerprint> {
+    pub fn fingerprints(&self) -> Option<&UnitComponentsFingerprint> {
         let IncrementalContext::Enabled(enabled) = self else {
             return None;
         };
@@ -76,6 +81,33 @@ impl IncrementalContext {
             false
         }
     }
+
+    pub fn register_artifact(&self, path: Utf8PathBuf) -> Result<()> {
+        if let IncrementalContext::Enabled(enabled) = self {
+            let content = fsx::read_to_string(&path)?;
+            enabled
+                .artifacts
+                .lock()
+                .expect("failed to acquire artifacts mutex")
+                .push(LocalFingerprint {
+                    path,
+                    checksum: u64_hash(content),
+                });
+        }
+        Ok(())
+    }
+
+    pub fn artifacts(&self) -> Vec<LocalFingerprint> {
+        if let IncrementalContext::Enabled(enabled) = self {
+            enabled
+                .artifacts
+                .lock()
+                .expect("failed to acquire artifacts mutex")
+                .to_vec()
+        } else {
+            Vec::new()
+        }
+    }
 }
 
 #[derive(bincode::Encode, bincode::Decode)]
@@ -95,7 +127,7 @@ pub fn load_incremental_artifacts(
     }
 
     let (fingerprints, loaded_components) = ws.config().tokio_handle().block_on(async {
-        let fingerprints = UnitFingerprint::new(unit, ws).await;
+        let fingerprints = UnitComponentsFingerprint::new(unit, ws).await;
         let handles = unit
             .components
             .iter()
@@ -170,6 +202,7 @@ pub fn load_incremental_artifacts(
             cached_crates,
             cached_crates_with_warnings,
             warnings_found: AtomicBool::new(false),
+            artifacts: Default::default(),
         },
     )))
 }
@@ -243,7 +276,7 @@ enum CrateCache {
 pub fn save_incremental_artifacts(
     unit: &CairoCompilationUnit,
     db: &dyn Database,
-    ctx: IncrementalContext,
+    ctx: Arc<IncrementalContext>,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let warnings_found = ctx.warnings_found();
@@ -357,13 +390,13 @@ fn save_component_cache(
     Ok(())
 }
 
-trait IncrementalArtifactsProvider {
+trait IncrementalCachePathProvider {
     fn fingerprint_dirname(&self, fingerprint: &Fingerprint) -> String;
 
     fn cache_filename(&self, fingerprint: &Fingerprint) -> String;
 }
 
-impl IncrementalArtifactsProvider for CompilationUnitComponent {
+impl IncrementalCachePathProvider for CompilationUnitComponent {
     fn fingerprint_dirname(&self, fingerprint: &Fingerprint) -> String {
         format!("{}-{}", self.target_name(), fingerprint.id())
     }

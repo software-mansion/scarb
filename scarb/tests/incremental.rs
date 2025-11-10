@@ -39,6 +39,7 @@ fn incremental_artifacts_emitted() {
     let component_id = component_id_factory(t.child("target/dev/"));
     let core_component_id = component_id("core");
     let hello_component_id = component_id("hello");
+    let unit_artifacts_id = component_id("unit-hello");
 
     assert_eq!(
         t.child("target/dev/incremental").files(),
@@ -49,7 +50,12 @@ fn incremental_artifacts_emitted() {
     );
     assert_eq!(
         t.child("target/dev/.fingerprint").files(),
-        vec![core_component_id.as_str(), hello_component_id.as_str()]
+        vec![
+            core_component_id.as_str(),
+            hello_component_id.as_str(),
+            unit_artifacts_id.as_str(),
+            format!("{unit_artifacts_id}.json").as_str()
+        ]
     );
     assert_eq!(
         t.child(format!("target/dev/.fingerprint/{core_component_id}"))
@@ -93,7 +99,12 @@ fn incremental_artifacts_emitted() {
     );
     assert_eq!(
         t.child("target/dev/.fingerprint").files(),
-        vec![core_component_id.as_str(), hello_component_id.as_str()]
+        vec![
+            core_component_id.as_str(),
+            hello_component_id.as_str(),
+            unit_artifacts_id.as_str(),
+            format!("{unit_artifacts_id}.json").as_str()
+        ]
     );
     assert_eq!(
         t.child(format!("target/dev/.fingerprint/{core_component_id}"))
@@ -144,7 +155,7 @@ fn deps_are_fingerprinted() {
         .success();
 
     let fingerprints = || t.child("first/target/dev/.fingerprint").files();
-    assert_eq!(fingerprints().len(), 6); // core, first, second, third, fourth, fifth
+    assert_eq!(fingerprints().len(), 8); // core, first, second, third, fourth, fifth, two unit artifact fingerprints
     let component_id = component_id_factory(first.child("target/dev"));
     let digest = digest_factory(first.child("target/dev"));
 
@@ -182,7 +193,8 @@ fn deps_are_fingerprinted() {
 
     // Note we have changed the edition of the third.
     // Since editions are part of the fingerprint id, the third will change its id.
-    assert_eq!(fingerprints().len(), 7); // core, first, second, third, third, fourth, fifth
+    assert_eq!(fingerprints().len(), 9); // core, first, second, third, third, fourth, fifth +
+    // + unit artifacts fingerprints for first and third
     let new_third_component_id = fingerprints()
         .iter()
         .find(|t| t.starts_with("third-") && t.as_str() != third_component_id)
@@ -226,7 +238,7 @@ fn can_fingerprint_dependency_cycles() {
         .success();
 
     let fingerprints = || target_dir.child("dev/.fingerprint").files();
-    assert_eq!(fingerprints().len(), 5); // core, first, second, third, fourth
+    assert_eq!(fingerprints().len(), 7); // core, first, second, third, fourth, two unit artifact fingerprints
 
     let component_id = component_id_factory(target_dir.child("dev"));
     let digest = digest_factory(target_dir.child("dev"));
@@ -258,7 +270,7 @@ fn can_fingerprint_dependency_cycles() {
         .assert()
         .success();
 
-    assert_eq!(fingerprints().len(), 5);
+    assert_eq!(fingerprints().len(), 9); // 5 + first and second unit artifacts fingerprints
     assert_ne!(digest(third_component_id.as_str()), third_digest);
     assert_ne!(digest(first_component_id.as_str()), first_digest);
     assert_ne!(digest(second_component_id.as_str()), second_digest);
@@ -313,7 +325,7 @@ fn proc_macros_are_fingerprinted() {
 
     let fingerprints = || project.child("target/dev/.fingerprint").files();
     // Note we do not emit cache artifacts for macros, so we don't need their fingerprint files either.
-    assert_eq!(fingerprints().len(), 2); // core, hello
+    assert_eq!(fingerprints().len(), 4); // core, hello, two unit artifact fingerprints
 
     let component_id = component_id_factory(project.child("target/dev/"));
     let digest = digest_factory(project.child("target/dev/"));
@@ -336,7 +348,7 @@ fn proc_macros_are_fingerprinted() {
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
         "#});
-    assert_eq!(fingerprints().len(), 2);
+    assert_eq!(fingerprints().len(), 4);
     assert_eq!(digest(hello_component_id.as_str()), hello_digest);
 
     // Modify the macro.
@@ -371,7 +383,7 @@ fn proc_macros_are_fingerprinted() {
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
         "#});
-    assert_eq!(fingerprints().len(), 2);
+    assert_eq!(fingerprints().len(), 4); // 2 + unit artifacts fingerprint
     assert_ne!(digest(hello_component_id.as_str()), hello_digest);
 }
 
@@ -426,7 +438,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
 
     let fingerprints = || project.child("target/dev/.fingerprint").files();
     // Note we do not emit cache artifacts for macros, so we don't need their fingerprint files either.
-    assert_eq!(fingerprints().len(), 2); // core, hello
+    assert_eq!(fingerprints().len(), 4); // core, hello, two unit artifact fingerprints
 
     let component_id = component_id_factory(project.child("target/dev/"));
     let digest = digest_factory(project.child("target/dev/"));
@@ -450,7 +462,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
         "#});
-    assert_eq!(fingerprints().len(), 2);
+    assert_eq!(fingerprints().len(), 4);
     assert_eq!(digest(hello_component_id.as_str()), hello_digest);
 
     // Rebuild with change env var.
@@ -469,7 +481,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
         "#});
-    assert_eq!(fingerprints().len(), 2);
+    assert_eq!(fingerprints().len(), 4); // 2 + unit artifacts fingerprint
     assert_ne!(digest(hello_component_id.as_str()), hello_digest);
 }
 
@@ -542,7 +554,7 @@ fn fingerprint_callback_can_force_recompilation() {
 
     let fingerprints = || project.child("target/dev/.fingerprint").files();
     // Note we do not emit cache artifacts for macros, so we don't need their fingerprint files either.
-    assert_eq!(fingerprints().len(), 2); // core, hello
+    assert_eq!(fingerprints().len(), 4); // core, hello, two unit artifact fingerprints
 
     let component_id = component_id_factory(project.child("target/dev/"));
     let digest = digest_factory(project.child("target/dev/"));
@@ -566,7 +578,7 @@ fn fingerprint_callback_can_force_recompilation() {
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
         "#});
-    assert_eq!(fingerprints().len(), 2);
+    assert_eq!(fingerprints().len(), 4);
     assert_eq!(digest(hello_component_id.as_str()), hello_digest);
 
     // Rebuild with change env var.
@@ -585,8 +597,59 @@ fn fingerprint_callback_can_force_recompilation() {
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
         "#});
-    assert_eq!(fingerprints().len(), 2);
+    assert_eq!(fingerprints().len(), 4); // 2 + unit artifacts fingerprint
     assert_ne!(digest(hello_component_id.as_str()), hello_digest);
+}
+
+#[test]
+fn warnings_are_emitted_on_rerun() {
+    // We affix cache dir location, as the corelib path is part of the fingerprint.
+    let cache_dir = TempDir::new().unwrap().child("c");
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 {
+                let x = 12;
+                12
+            }
+        "#})
+        .build(&t);
+
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+           Compiling hello v1.0.0 ([..]Scarb.toml)
+        warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
+         --> [..]lib.cairo:2:9
+            let x = 12;
+                ^
+
+            Finished `dev` profile target(s) in[..]
+    "#});
+
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+               Compiling hello v1.0.0 ([..]Scarb.toml)
+            warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
+             --> [..]lib.cairo:2:9
+                let x = 12;
+                    ^
+
+                Finished `dev` profile target(s) in[..]
+        "#});
 }
 
 fn component_id_factory(target_dir: ChildPath) -> impl Fn(&str) -> String {

@@ -44,7 +44,7 @@ impl Compiler for ExecutableCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        ctx: &IncrementalContext,
+        ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &dyn Database,
         ws: &Workspace<'_>,
@@ -67,13 +67,14 @@ impl Compiler for ExecutableCompiler {
         let props: Props = unit.main_component().targets.target_props()?;
 
         let main_crate_ids = collect_main_crate_ids(unit, db);
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ctx, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, &ctx, ws);
         let span = trace_span!("compile_executable");
         let executable = {
             let _guard = span.enter();
             Executable::new(compile_executable(
                 unit,
                 db,
+                ctx.clone(),
                 ws,
                 offloader,
                 &props,
@@ -91,14 +92,12 @@ impl Compiler for ExecutableCompiler {
             let _guard = span.enter();
             let target_name = unit.main_component().target_name();
             let target_dir = unit.target_dir(ws);
+            let ctx = ctx.clone();
             offloader.offload("output file", move |ws| {
-                write_json(
-                    format!("{target_name}.executable.json").as_str(),
-                    "output file",
-                    &target_dir,
-                    ws,
-                    &executable,
-                )
+                let filename = format!("{target_name}.executable.json");
+                write_json(&filename, "output file", &target_dir, ws, &executable)?;
+                ctx.register_artifact(target_dir.path_unchecked().join(filename))?;
+                Ok(())
             });
         }
 
@@ -110,6 +109,7 @@ impl Compiler for ExecutableCompiler {
 fn compile_executable<'db>(
     unit: &CairoCompilationUnit,
     db: &'db dyn Database,
+    ctx: Arc<IncrementalContext>,
     ws: &Workspace<'_>,
     offloader: &Offloader<'_>,
     props: &Props,
@@ -166,19 +166,16 @@ fn compile_executable<'db>(
             let _guard = span.enter();
             let target_name = unit.main_component().target_name();
             let target_dir = unit.target_dir(ws);
+            let ctx = ctx.clone();
             // We only clone Arc, not the underlying program, so it's inexpensive.
             let program = program_artifact.clone();
             offloader.offload("output file", move |ws| {
+                let filename = format!("{target_name}.executable.sierra.json");
                 // Cloning the underlying program is expensive, but we can afford it here,
                 // as we are on a dedicated thread anyway.
                 let sierra_program: VersionedProgram = program.as_ref().clone().into();
-                write_json(
-                    &format!("{target_name}.executable.sierra.json"),
-                    "output file",
-                    &target_dir,
-                    ws,
-                    &sierra_program,
-                )?;
+                write_json(&filename, "output file", &target_dir, ws, &sierra_program)?;
+                ctx.register_artifact(target_dir.path_unchecked().join(filename))?;
                 Ok(())
             });
         }
