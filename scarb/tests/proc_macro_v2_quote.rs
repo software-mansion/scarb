@@ -1056,7 +1056,7 @@ fn quote_format_macro_fails_on_named_args() {
         6 |     let tokens = quote_format! {"{name}", x };
           |                                 ^^^^^^^^
         error: could not compile `some` (lib) due to 1 previous error
-        error: process did not exit successfully: exit status: 101
+        error: process did not exit successfully: exit [..]: 101
         error: could not compile `some` due to 1 previous error
         "#});
 }
@@ -1109,7 +1109,7 @@ fn quote_format_macro_fails_on_invalid_index() {
         8 |     let tokens = quote_format! {"{3}", a, b, c};
           |                                 ^^^^^
         error: could not compile `some` (lib) due to 1 previous error
-        error: process did not exit successfully: exit status: 101
+        error: process did not exit successfully: exit [..]: 101
         error: could not compile `some` due to 1 previous error
         "#});
 }
