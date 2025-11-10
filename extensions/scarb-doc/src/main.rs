@@ -3,7 +3,9 @@ use camino::Utf8PathBuf;
 use clap::Parser;
 use mimalloc::MiMalloc;
 use scarb_doc::diagnostics::print_diagnostics;
-use scarb_doc::docs_generation::markdown::{MarkdownContent, WorkspaceMarkdownBuilder};
+use scarb_doc::docs_generation::markdown::{
+    MarkdownContent, WorkspaceMarkdownBuilder, get_filename_with_extension, set_output_extension,
+};
 use scarb_doc::errors::{MetadataCommandError, PackagesSerializationError};
 use scarb_doc::metadata::get_target_dir;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
@@ -20,13 +22,14 @@ use std::process::ExitCode;
 static GLOBAL: MiMalloc = MiMalloc;
 
 const OUTPUT_DIR: &str = "doc";
-const JSON_OUTPUT_FILENAME: &str = "output.json";
+const JSON_OUTPUT_FILENAME: &str = "output";
 
 fn main_inner(args: Args, ui: Ui) -> Result<()> {
     ensure!(
         !args.build || matches!(args.output_format, OutputFormat::Markdown),
         "`--build` is only supported for Markdown output format"
     );
+    set_output_extension(args.output_format.clone());
     let metadata = MetadataCommand::new()
         .inherit_stderr()
         .envs(args.features.to_env_vars())
@@ -55,7 +58,8 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     } else {
         let mut output = match args.output_format {
             OutputFormat::Json => OutputEmit::for_json(output_dir, workspace_root, ui.clone()),
-            OutputFormat::Markdown => {
+            // This is a work in progress, mdx format will be added.
+            OutputFormat::Markdown | OutputFormat::Mdx => {
                 OutputEmit::for_markdown(output_dir, workspace_root, args.build, ui.clone())
             }
         };
@@ -147,11 +151,13 @@ impl OutputEmit {
                 workspace_root,
                 ui,
             } => {
-                VersionedJsonOutput::new(packages)
-                    .save_to_file(&output_dir, JSON_OUTPUT_FILENAME)?;
+                VersionedJsonOutput::new(packages).save_to_file(
+                    &output_dir,
+                    &get_filename_with_extension(JSON_OUTPUT_FILENAME),
+                )?;
 
                 let output_path = output_dir
-                    .join(JSON_OUTPUT_FILENAME)
+                    .join(get_filename_with_extension(JSON_OUTPUT_FILENAME))
                     .strip_prefix(&workspace_root)
                     .unwrap_or(&output_dir)
                     .to_string();

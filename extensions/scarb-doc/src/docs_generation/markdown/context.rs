@@ -1,5 +1,5 @@
-use crate::docs_generation::markdown::SUMMARY_FILENAME;
 use crate::docs_generation::markdown::traits::WithPath;
+use crate::docs_generation::markdown::{SUMMARY_FILENAME, get_filename_with_extension};
 use crate::types::crate_type::Crate;
 use cairo_lang_defs::ids::{ImplItemId, LookupItemId, TraitItemId};
 use cairo_lang_doc::documentable_item::DocumentableItemId;
@@ -58,7 +58,7 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
                                 resolved_item.name().to_lowercase()
                             )),
                             // Only root_module / crate doesn't have the parent.
-                            _ => Some(SUMMARY_FILENAME.to_string()),
+                            _ => Some(get_filename_with_extension(SUMMARY_FILENAME)),
                         }
                     }
                     _ => Some(path_to_file_link(&resolved_item.full_path())),
@@ -71,5 +71,5 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
 }
 
 pub fn path_to_file_link(path: &str) -> String {
-    format!("./{}.md", path.replace("::", "-"))
+    get_filename_with_extension(&format!("./{}", path.replace("::", "-")))
 }

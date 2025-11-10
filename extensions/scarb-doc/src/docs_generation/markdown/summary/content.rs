@@ -2,7 +2,9 @@ use crate::docs_generation::markdown::context::path_to_file_link;
 use crate::docs_generation::markdown::traits::{
     TopLevelMarkdownDocItem, mark_duplicated_item_with_relative_path,
 };
-use crate::docs_generation::markdown::{SummaryIndexMap, SummaryListItem};
+use crate::docs_generation::markdown::{
+    SummaryIndexMap, SummaryListItem, get_filename_with_extension,
+};
 use crate::docs_generation::{DocItem, TopLevelItems};
 use crate::types::groups::Group;
 use crate::types::module_type::Module;
@@ -67,7 +69,7 @@ pub fn generate_module_summary_content(
             format!(
                 "./{}-{}",
                 module.markdown_formatted_path(),
-                Module::ITEMS_SUMMARY_FILENAME
+                get_filename_with_extension(Module::ITEMS_SUMMARY_FILENAME),
             ),
             SummaryListItem::new(Module::HEADER.to_string(), nesting_level),
         );
@@ -161,7 +163,7 @@ pub fn generate_global_groups_summary_content(
                     format!(
                         "./{}-{}",
                         markdown_formatted_path,
-                        Module::ITEMS_SUMMARY_FILENAME,
+                        get_filename_with_extension(Module::ITEMS_SUMMARY_FILENAME),
                     ),
                     SummaryListItem::new(Module::HEADER.to_string(), nesting_level),
                 );
@@ -201,7 +203,11 @@ fn generate_markdown_list_summary_for_module_items<T: TopLevelMarkdownDocItem>(
     let mut summary_items: Vec<(String, SummaryListItem)> = vec![];
     if !subitems.is_empty() {
         summary_items.push((
-            format!("./{}-{}", module_name, T::ITEMS_SUMMARY_FILENAME,),
+            format!(
+                "./{}-{}",
+                module_name,
+                get_filename_with_extension(T::ITEMS_SUMMARY_FILENAME),
+            ),
             SummaryListItem::new(T::HEADER.to_string(), nesting_level),
         ));
         nesting_level += 1;
