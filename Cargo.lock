@@ -790,7 +790,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
  "strum",
  "strum_macros",
  "thiserror 2.0.17",
@@ -1001,7 +1001,7 @@ dependencies = [
  "num-traits",
  "salsa",
  "serde",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
  "thiserror 2.0.17",
 ]
 
@@ -1223,7 +1223,7 @@ dependencies = [
  "salsa",
  "serde",
  "sha2",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
  "thiserror 2.0.17",
 ]
 
@@ -1275,7 +1275,7 @@ dependencies = [
  "serde_json",
  "sha3",
  "smol_str",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
  "thiserror 2.0.17",
 ]
 
@@ -1347,7 +1347,7 @@ dependencies = [
  "itertools 0.14.0",
  "num-bigint",
  "num-traits",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
  "thiserror 2.0.17",
 ]
 
@@ -1386,7 +1386,7 @@ dependencies = [
  "salsa",
  "serde",
  "serde_json",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
  "thiserror 2.0.17",
  "typetag",
 ]
@@ -1410,7 +1410,7 @@ dependencies = [
  "serde_json",
  "sha3",
  "smol_str",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
  "thiserror 2.0.17",
 ]
 
@@ -1466,7 +1466,7 @@ dependencies = [
  "num-traits",
  "salsa",
  "serde",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
 ]
 
 [[package]]
@@ -1489,7 +1489,7 @@ dependencies = [
  "num-traits",
  "rayon",
  "salsa",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
 ]
 
 [[package]]
@@ -1681,7 +1681,7 @@ dependencies = [
  "sha2",
  "sha3",
  "starknet-crypto 0.8.1",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
  "thiserror 2.0.17",
  "zip 0.6.6",
 ]
@@ -4694,11 +4694,11 @@ dependencies = [
 
 [[package]]
 name = "lambdaworks-crypto"
-version = "0.13.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58b1a1c1102a5a7fbbda117b79fb3a01e033459c738a3c1642269603484fd1c1"
+checksum = "fce8f59622ed408c318c9b5eca17f1a1154159e3738b5c4d5a22a0dd3700c906"
 dependencies = [
- "lambdaworks-math 0.13.0",
+ "lambdaworks-math 0.12.0",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "serde",
@@ -4718,13 +4718,11 @@ dependencies = [
 
 [[package]]
 name = "lambdaworks-math"
-version = "0.13.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "018a95aa873eb49896a858dee0d925c33f3978d073c64b08dd4f2c9b35a017c6"
+checksum = "405d65a26831650ba348a503a2881ed7a0483ef3ec17f66e0fc8e2f9c97fc7ca"
 dependencies = [
  "getrandom 0.2.16",
- "num-bigint",
- "num-traits",
  "rand 0.8.5",
  "serde",
  "serde_json",
@@ -7711,7 +7709,7 @@ dependencies = [
  "sha3",
  "starknet-core-derive",
  "starknet-crypto 0.8.1",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
 ]
 
 [[package]]
@@ -7779,7 +7777,7 @@ dependencies = [
  "rfc6979",
  "sha2",
  "starknet-curve 0.6.0",
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
  "zeroize",
 ]
 
@@ -7818,7 +7816,7 @@ version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22c898ae81b6409532374cf237f1bd752d068b96c6ad500af9ebbd0d9bb712f6"
 dependencies = [
- "starknet-types-core 0.2.4",
+ "starknet-types-core 0.2.2",
 ]
 
 [[package]]
@@ -7855,14 +7853,14 @@ dependencies = [
 
 [[package]]
 name = "starknet-types-core"
-version = "0.2.4"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90d23b1bc014ee4cce40056ab3114bcbcdc2dbc1e845bbfb1f8bd0bab63507d4"
+checksum = "92eb6db1a763c350ffa50ed65ea3a92de9888239357cfbcb633e29a4da77f122"
 dependencies = [
  "blake2",
  "digest 0.10.7",
- "lambdaworks-crypto 0.13.0",
- "lambdaworks-math 0.13.0",
+ "lambdaworks-crypto 0.12.0",
+ "lambdaworks-math 0.12.0",
  "lazy_static",
  "num-bigint",
  "num-integer",
