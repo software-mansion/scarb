@@ -55,7 +55,7 @@ sort-module-level-items = true
   **Default:** `{ tuple = "LineByLine", fixed_array = "SingleBreakPoint", macro_call = "SingleBreakPoint" }`
 
 - `merge-use-items`
-  
+
   Consolidate multiple `use` statements that import from the same module into a single statement.\
   **Default:** `true`
 
