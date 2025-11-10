@@ -281,7 +281,10 @@ fn compile_cairo_unit_inner(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> R
 
         let ctx = load_incremental_artifacts(&unit, &mut db, ws)?;
 
-        let is_fresh_unit_artifacts = ctx.cached_crates_with_warnings().is_empty()
+        let warnings_to_print = ws.config().ui().verbosity().should_print_warnings()
+            && !ctx.cached_crates_with_warnings().is_empty();
+
+        let is_fresh_unit_artifacts = !warnings_to_print
             && ctx
                 .fingerprints()
                 .and_then(|unit_fingerprint| {

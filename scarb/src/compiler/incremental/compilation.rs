@@ -390,13 +390,13 @@ fn save_component_cache(
     Ok(())
 }
 
-trait IncrementalArtifactsProvider {
+trait IncrementalCachePathProvider {
     fn fingerprint_dirname(&self, fingerprint: &Fingerprint) -> String;
 
     fn cache_filename(&self, fingerprint: &Fingerprint) -> String;
 }
 
-impl IncrementalArtifactsProvider for CompilationUnitComponent {
+impl IncrementalCachePathProvider for CompilationUnitComponent {
     fn fingerprint_dirname(&self, fingerprint: &Fingerprint) -> String {
         format!("{}-{}", self.target_name(), fingerprint.id())
     }

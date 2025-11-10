@@ -24,10 +24,13 @@ use std::io::BufReader;
 ///  was bound to change, we would invalidate the fingerprint due to the first part anyway.
 #[derive(Serialize, Deserialize)]
 pub struct UnitArtifactsFingerprint {
+    /// A hash of the `UnitComponentsFingerprint` corresponding to the compilation unit input.
     #[serde(skip)]
     pub unit: u64,
+    /// A hash of the Scarb targets of the compilation unit.
     #[serde(skip)]
     pub target: u64,
+    /// A list of `LocalFingerprint`s of compilation artifacts.
     pub local: Vec<LocalFingerprint>,
 }
 
@@ -66,19 +69,15 @@ pub fn save_unit_artifacts_fingerprint(
 ) -> anyhow::Result<()> {
     let digest = fingerprint.digest();
     let fingerprint_dir = unit.fingerprint_dir(ws);
-    let target_name = unit.main_component().target_name();
-    let target_kind = unit.main_component().target_kind();
-    let unit_id = short_hash((target_kind, target_name.clone()));
-    let filename = format!("unit-{target_name}-{unit_id}");
     write_string(
-        &filename,
+        &unit.cache_filename(),
         "unit artifacts fingerprint digest file",
         &fingerprint_dir,
         ws,
         digest,
     )?;
     write_json(
-        &format!("{filename}.json"),
+        &unit.fingerprint_filename(),
         "unit artifacts fingerprint file",
         &fingerprint_dir,
         ws,
@@ -93,10 +92,7 @@ pub fn load_unit_artifacts_local_paths(
     ws: &Workspace<'_>,
 ) -> anyhow::Result<Option<Vec<LocalFingerprint>>> {
     let fingerprint_dir = unit.fingerprint_dir(ws);
-    let target_name = unit.main_component().target_name();
-    let target_kind = unit.main_component().target_kind();
-    let unit_id = short_hash((target_kind, target_name.clone()));
-    let filename = format!("unit-{target_name}-{unit_id}.json");
+    let filename = unit.fingerprint_filename();
     if !fingerprint_dir.path_unchecked().join(&filename).exists() {
         return Ok(None);
     }
@@ -126,10 +122,7 @@ pub fn unit_artifacts_fingerprint_is_fresh(
 ) -> anyhow::Result<bool> {
     let new_digest = fingerprint.digest();
     let fingerprint_dir = unit.fingerprint_dir(ws);
-    let target_name = unit.main_component().target_name();
-    let target_kind = unit.main_component().target_kind();
-    let unit_id = short_hash((target_kind, target_name.clone()));
-    let filename = format!("unit-{target_name}-{unit_id}");
+    let filename = unit.cache_filename();
 
     let path = fingerprint_dir.path_unchecked().join(filename);
     if !path.exists() {
@@ -138,4 +131,22 @@ pub fn unit_artifacts_fingerprint_is_fresh(
     let old_digest = fsx::read_to_string(path)?;
 
     Ok(new_digest == old_digest)
+}
+
+trait ArtifactsFingerprintFilenameProvider {
+    fn cache_filename(&self) -> String;
+    fn fingerprint_filename(&self) -> String;
+}
+
+impl ArtifactsFingerprintFilenameProvider for CairoCompilationUnit {
+    fn cache_filename(&self) -> String {
+        let target_name = self.main_component().target_name();
+        let target_kind = self.main_component().target_kind();
+        let unit_id = short_hash((target_kind, target_name.clone()));
+        format!("unit-{target_name}-{unit_id}")
+    }
+
+    fn fingerprint_filename(&self) -> String {
+        format!("{}.json", self.cache_filename())
+    }
 }
