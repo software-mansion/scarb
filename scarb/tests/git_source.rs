@@ -380,6 +380,7 @@ fn stale_cached_version_update() {
 
 #[test]
 fn change_source() {
+    let cache_dir = TempDir::new().unwrap();
     let dep = gitx::new("dep", |t| {
         ProjectBuilder::start()
             .name("dep")
@@ -393,10 +394,12 @@ fn change_source() {
     ProjectBuilder::start()
         .name("hello")
         .version("0.0.1")
-        .dep("dep", &dep)
+        .dep("dep", dep.with("tag", "v1.0.0"))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -413,7 +416,9 @@ fn change_source() {
     let manifest_toml = manifest_toml.replace("1.0.0", "2.0.0");
     manifest.write_str(&manifest_toml).unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::new()
+        .cache(cache_dir.path())
+        .snapbox()
         .arg("fetch")
         .current_dir(&t)
         .assert()
