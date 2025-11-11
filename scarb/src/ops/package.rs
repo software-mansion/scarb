@@ -291,7 +291,7 @@ fn prepare_archive_recipe(
         }
 
         // Unpack .crate to make normalized Cargo.toml and Cargo.lock available.
-        unpack_crate(pkg, ws.config())?;
+        unpack_crate(&crate_archive_basename, pkg, ws.config())?;
 
         // Add normalized Cargo.toml file.
         recipe.push(ArchiveFile {
