@@ -1020,21 +1020,6 @@ dependencies = [
 [[package]]
 name = "cairo-lang-macro"
 version = "0.2.1"
-dependencies = [
- "bumpalo",
- "cairo-lang-macro-attributes 0.2.1",
- "cairo-lang-macro-stable 2.0.0",
- "cairo-lang-primitive-token",
- "cairo-lang-quote 0.2.0",
- "linkme",
- "serde",
- "serde_json",
- "trybuild",
-]
-
-[[package]]
-name = "cairo-lang-macro"
-version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37614ae4cf9e4227de4c7ef88e215e601f6e5aee9ed612716ccc9f30704e1aea"
 dependencies = [
@@ -1045,6 +1030,21 @@ dependencies = [
  "cairo-lang-quote 0.1.0",
  "linkme",
  "serde",
+]
+
+[[package]]
+name = "cairo-lang-macro"
+version = "0.2.2"
+dependencies = [
+ "bumpalo",
+ "cairo-lang-macro-attributes 0.2.1",
+ "cairo-lang-macro-stable 2.0.0",
+ "cairo-lang-primitive-token",
+ "cairo-lang-quote 0.2.0",
+ "linkme",
+ "serde",
+ "serde_json",
+ "trybuild",
 ]
 
 [[package]]
@@ -1541,7 +1541,7 @@ dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-lowering",
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-macro 0.2.1",
  "cairo-lang-parser",
  "cairo-lang-plugins",
  "cairo-lang-project",
@@ -6713,7 +6713,7 @@ dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-lowering",
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.1",
+ "cairo-lang-macro 0.2.2",
  "cairo-lang-macro-stable 1.0.0",
  "cairo-lang-macro-stable 2.0.0",
  "cairo-lang-parser",
@@ -6998,7 +6998,7 @@ name = "scarb-proc-macro-server-types"
 version = "0.4.0"
 dependencies = [
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.1",
+ "cairo-lang-macro 0.2.2",
  "serde",
  "serde_json",
 ]
@@ -7010,7 +7010,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "278ce40a646c98bd76e2fab9dc338eb6b3763eccc31133ba6f15f7e03570b308"
 dependencies = [
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-macro 0.2.1",
  "serde",
  "serde_json",
 ]
