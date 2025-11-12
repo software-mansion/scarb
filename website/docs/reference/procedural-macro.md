@@ -53,7 +53,7 @@ Specifically, the following points are true:
 #### Procedural macro packages can be used as dependencies
 
 - Scarb packages can simply declare dependency relationships on other packages that implement Cairo procedural macros.
-- Because of the semantics of Scarb package resolution, it will guarantee by itself that only one instance of a given
+- The semantics of Scarb package resolution guarantee that only one instance of a given
   procedural macro package exists in the resolved package set.
   - In other words, Scarb will out of the box verify that there is no simultaneous dependency on `proc-macro 1.0.0`
     and `proc-macro 2.0.0` or `proc-macro 1.0.1`.
@@ -124,7 +124,7 @@ To implement a procedural macro, a programmer has to:
 - Write a Rust library, inside the `src/` directory that implements the procedural macro API.
 - A Rust crate exposing an API for writing procedural macros is published for programmers under the
   name `cairo-lang-macro`. This crate must be added to the `Cargo.toml` file.
-- The Rust library contained in the package have to implement a function responsible for code expansion.
+- The Rust library contained in the package has to implement a function responsible for code expansion.
 - This function accepts a `TokenStream` as an input and returns a `ProcMacroResult` as an output, both defined in the
   helper library.
 - The result struct contains the transformed `TokenStream`. Three kinds of results are possible:
@@ -153,7 +153,7 @@ These three macro helpers are:
 You can find documentation for these helpers in [attribute macros section](https://docs.rs/cairo-lang-macro/latest/cairo_lang_macro/#attributes)
 of the `cairo-lang-macro` crate documentation.
 
-#### First example: a macro that removes code
+#### Example 1: a macro that removes code
 
 For example, you can implement a primitive procedural macro, which acts as an attribute that removes whatever code is
 marked with it.
@@ -239,7 +239,7 @@ error: could not compile `hello_world` due to previous error
 
 Maybe it's not the most productive code you wrote, but the function has been removed during the compilation!
 
-#### Second example: returning a value
+#### Example 2: returning a value
 
 Note, we omit the toml files here, as their content is the same as in the previous example.
 
@@ -333,7 +333,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        assert(main() == 987, 'it works!');
+        assert(main() == 987, 'invalid value returned!');
     }
 }
 ```
@@ -493,7 +493,7 @@ pub fn fib(args: TokenStream) -> ProcMacroResult {
 }
 ```
 
-In a similar manner, you can use syntax nodes from the `cairo-lang-syntax` AST as variables in the z macro.
+In a similar manner, you can use syntax nodes from the `cairo-lang-syntax` AST as variables in the macro.
 This is especially useful when you need to copy some Cairo code from the input token stream, say, some function annotated
 with your attribute procedural macro.
 
@@ -515,7 +515,7 @@ fn attr_name() {
 }
 ```
 
-#### Third example: creating a new function
+#### Example 3: creating a new function
 
 Working example of this approach can be an attribute macro that creates a new function wrapper.
 This new function will call the original function with some argument.
@@ -621,7 +621,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        assert(main() == 987, 'it works!');
+        assert(main() == 987, 'invalid value returned!');
     }
 }
 ```
