@@ -1,41 +1,51 @@
-# CircleShape
+---
+ title: "hello_world::CircleShape"
+---
 
 Implementation of the Shape trait for Circle
 
-Fully qualified path: [hello_world](./hello_world.mdx)::[CircleShape](./hello_world-CircleShape.mdx)
+## Signature
 
-<pre><code class="language-cairo">impl CircleShape of Shape&lt;<a href="hello_world-Circle.html">Circle</a>&gt;;</code></pre>
+```rust
+impl CircleShape of Shape<Circle>;
+```
 
 ## Impl constants
 
-### SHAPE_CONST
+## SHAPE_CONST
 
 Shape constant
 
-Fully qualified path: [hello_world](./hello_world.mdx)::[CircleShape](./hello_world-CircleShape.mdx)::[SHAPE_CONST](./hello_world-CircleShape.mdx#shape_const)
+## Signature
 
-<pre><code class="language-cairo">const SHAPE_CONST: felt252 = &apos;xyz&apos;;</code></pre>
+```rust
+const SHAPE_CONST: felt252 = 'xyz';
+```
 
 
 ## Impl functions
 
-### area
+## area
 
 Implementation of the area method for Circle
 
-Fully qualified path: [hello_world](./hello_world.mdx)::[CircleShape](./hello_world-CircleShape.mdx)::[area](./hello_world-CircleShape.mdx#area)
+## Signature
 
-<pre><code class="language-cairo">fn area(self: <a href="hello_world-Circle.html">Circle</a>) -&gt; u32</code></pre>
+```rust
+fn area(self: Circle) -> u32
+```
 
 
 ## Impl types
 
-### ShapePair
+## ShapePair
 
 Type alias for a pair of circles
 
-Fully qualified path: [hello_world](./hello_world.mdx)::[CircleShape](./hello_world-CircleShape.mdx)::[ShapePair](./hello_world-CircleShape.mdx#shapepair)
+## Signature
 
-<pre><code class="language-cairo">type ShapePair = (<a href="hello_world-Circle.html">Circle</a>, <a href="hello_world-Circle.html">Circle</a>);</code></pre>
+```rust
+type ShapePair = (Circle, Circle);
+```
 
 

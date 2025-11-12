@@ -2,6 +2,7 @@ pub mod content;
 pub mod files;
 pub mod group_files;
 
+use crate::docs_generation::common::OutputFilesExtension;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::summary::content::{
     generate_foreign_crates_summary_content, generate_global_groups_summary_content,
@@ -18,9 +19,10 @@ use group_files::generate_global_groups_summary_files;
 
 pub fn generate_summary_file_content(
     crate_: &Crate,
+    output_format: OutputFilesExtension,
 ) -> Result<(SummaryIndexMap, Vec<(String, String)>)> {
     let mut summary_index_map = SummaryIndexMap::new();
-    let context = MarkdownGenerationContext::from_crate(crate_);
+    let context = MarkdownGenerationContext::from_crate(crate_, output_format);
 
     generate_module_summary_content(&crate_.root_module, 0, &mut summary_index_map);
     generate_foreign_crates_summary_content(&crate_.foreign_crates, &mut summary_index_map);

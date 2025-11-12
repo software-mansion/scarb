@@ -11,50 +11,11 @@ mod book_toml;
 mod context;
 mod summary;
 mod traits;
-use scarb_extensions_cli::doc::OutputFormat;
+use crate::docs_generation::common::{
+    GeneratedFile, OutputFilesExtension, SummaryIndexMap, SummaryListItem,
+    get_filename_with_extension,
+};
 use std::ops::Add;
-use std::sync::OnceLock;
-
-pub enum OutputFilesExtension {
-    Md,
-    Mdx,
-    Json,
-}
-
-impl OutputFilesExtension {
-    pub const fn get_string(&self) -> &'static str {
-        match self {
-            OutputFilesExtension::Md => ".md",
-            OutputFilesExtension::Mdx => ".mdx",
-            OutputFilesExtension::Json => ".json",
-        }
-    }
-}
-
-impl From<OutputFormat> for OutputFilesExtension {
-    fn from(format: OutputFormat) -> Self {
-        match format {
-            OutputFormat::Markdown => OutputFilesExtension::Md,
-            OutputFormat::Mdx => OutputFilesExtension::Mdx,
-            OutputFormat::Json => OutputFilesExtension::Json,
-        }
-    }
-}
-
-// Global, run-scoped output extension accessor.
-static OUTPUT_EXTENSION: OnceLock<&'static str> = OnceLock::new();
-
-pub fn set_output_extension(ext: OutputFormat) {
-    let _ = OUTPUT_EXTENSION.set(OutputFilesExtension::from(ext).get_string());
-}
-
-fn extension() -> &'static str {
-    OUTPUT_EXTENSION.get().copied().unwrap()
-}
-
-pub fn get_filename_with_extension(filename: &str) -> String {
-    format!("{filename}{}", extension())
-}
 
 const BASE_HEADER_LEVEL: usize = 1;
 const SOURCE_DIRECTORY: &str = "src";
@@ -64,32 +25,10 @@ const SHORT_DOCUMENTATION_LEN: usize = 200;
 pub const BASE_MODULE_CHAPTER_PREFIX: &str = "##";
 pub const GROUP_CHAPTER_PREFIX: &str = "- ###";
 
-/// Prefixes that indicate the start of complex markdown structures,
+/// Prefixes that indicate the start of complex Markdown structures,
 /// such as tables. These should be avoided in brief documentation to maintain simple text
 /// formatting and prevent disruption of the layout.
 const SHORT_DOCUMENTATION_AVOID_PREFIXES: &[&str] = &["#", "\n\n", "```", "- ", "1.  ", "{{#"];
-
-type Filename = String;
-type GeneratedFile = (Filename, String);
-
-/// Stores `SUMMARY.md` files data: filepath, chapter name and list indent.
-pub type SummaryIndexMap = IndexMap<String, SummaryListItem>;
-
-pub struct SummaryListItem {
-    /// A SUMMARY.md chapter title.
-    chapter: String,
-    /// List item indent in SUMMARY.md file.
-    nesting_level: usize,
-}
-
-impl SummaryListItem {
-    pub fn new(chapter: String, nesting_level: usize) -> Self {
-        Self {
-            chapter,
-            nesting_level,
-        }
-    }
-}
 
 pub struct MarkdownContent {
     book_toml: String,
@@ -98,8 +37,12 @@ pub struct MarkdownContent {
 }
 
 impl MarkdownContent {
-    pub fn from_crate(package_information: &PackageInformation) -> Result<Self> {
-        let (summary, doc_files) = generate_summary_file_content(&package_information.crate_)?;
+    pub fn from_crate(
+        package_information: &PackageInformation,
+        format: OutputFilesExtension,
+    ) -> Result<Self> {
+        let (summary, doc_files) =
+            generate_summary_file_content(&package_information.crate_, format)?;
 
         Ok(Self {
             book_toml: generate_book_toml_content(&package_information.metadata),
@@ -115,6 +58,7 @@ pub struct WorkspaceMarkdownBuilder {
     book_toml: Option<String>,
     summary: SummaryIndexMap,
     doc_files: Vec<GeneratedFile>,
+    output_format: OutputFilesExtension,
 }
 
 impl Default for WorkspaceMarkdownBuilder {
@@ -123,16 +67,27 @@ impl Default for WorkspaceMarkdownBuilder {
             book_toml: None,
             summary: SummaryIndexMap::new(),
             doc_files: Vec::new(),
+            output_format: OutputFilesExtension::Md,
         }
     }
 }
 
 impl WorkspaceMarkdownBuilder {
+    pub fn new(output_format: OutputFilesExtension) -> Self {
+        Self {
+            book_toml: None,
+            summary: SummaryIndexMap::new(),
+            doc_files: Vec::new(),
+            output_format,
+        }
+    }
+
     pub fn add_package(&mut self, package_information: &PackageInformation) -> Result<()> {
         if self.book_toml.is_none() {
             self.book_toml = Some(generate_book_toml_content(&package_information.metadata));
         }
-        let (summary, files) = generate_summary_file_content(&package_information.crate_)?;
+        let (summary, files) =
+            generate_summary_file_content(&package_information.crate_, self.output_format)?;
         let current = std::mem::replace(&mut self.summary, SummaryIndexMap::new());
         self.summary = current.add(summary);
         self.doc_files.extend(files);
@@ -237,7 +192,7 @@ where
     }
 
     /// Checks if the key exists.
-    pub fn contains_key(&self, key: &K) -> bool {
+    fn contains_key(&self, key: &K) -> bool {
         self.map.contains_key(key)
     }
 }
