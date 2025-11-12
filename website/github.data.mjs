@@ -172,9 +172,11 @@ function viewFullRelease(release) {
   }
 
   const cairoVersion = extractCairoVersionFromReleaseNotes(release.body);
+  const cairoLangMacroVersion = "0.2";
 
   return {
     cairoVersion,
+    cairoLangMacroVersion,
     starknetPackageVersionReq: `>=${cairoVersion}`,
   };
 }
