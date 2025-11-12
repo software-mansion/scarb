@@ -3,13 +3,16 @@ use cairo_lang_filesystem::db::Edition;
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
+use std::collections::HashMap;
 use which::which;
 
 use crate::core::{Config, PackageName, edition_variant};
 use crate::internal::fsx;
 use crate::internal::restricted_names;
+use crate::process::is_truthy_env;
 use crate::subcommands::get_env_vars;
 use crate::{DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME, ops};
+use scarb_build_metadata::CAIRO_VERSION;
 use std::process::{Command, Stdio};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -139,61 +142,16 @@ fn mk(
     init_vcs(&canonical_path, version_control)?;
     write_vcs_ignore(&canonical_path, config, version_control)?;
 
-    // Create the `Scarb.toml` file.
-    let manifest_path = canonical_path.join(MANIFEST_FILE_NAME);
-    let edition = edition_variant(Edition::latest());
-    fsx::write(
-        &manifest_path,
-        formatdoc! {r#"
-            [package]
-            name = "{name}"
-            version = "0.1.0"
-            edition = "{edition}"
+    let empty_init = snforge || is_truthy_env("SCARB_INIT_EMPTY", false);
+    let template = if empty_init {
+        Template::empty(&name)
+    } else {
+        Template::no_runner(&name)
+    };
 
-            # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
+    template.materialize(&canonical_path)?;
 
-            [dependencies]
-        "#},
-    )?;
-
-    // Create hello world source files (with respective parent directories) if none exist.
-    let source_path = canonical_path.join(DEFAULT_SOURCE_PATH.as_path());
-    if !source_path.exists() {
-        fsx::create_dir_all(source_path.parent().unwrap())?;
-
-        fsx::write(
-            source_path,
-            indoc! {r#"
-                fn main() -> u32 {
-                    fib(16)
-                }
-
-                fn fib(mut n: u32) -> u32 {
-                    let mut a: u32 = 0;
-                    let mut b: u32 = 1;
-                    while n != 0 {
-                        n = n - 1;
-                        let temp = b;
-                        b = a + b;
-                        a = temp;
-                    };
-                    a
-                }
-
-                #[cfg(test)]
-                mod tests {
-                    use super::fib;
-
-                    #[test]
-                    fn it_works() {
-                        assert(fib(16) == 987, 'it works!');
-                    }
-                }
-            "#},
-        )?;
-    }
-
-    if let Err(err) = ops::read_workspace(&manifest_path, config) {
+    if let Err(err) = ops::read_workspace(&canonical_path.join(MANIFEST_FILE_NAME), config) {
         config.ui().warn(formatdoc! {r#"
             compiling this new package may not work due to invalid workspace configuration
 
@@ -206,6 +164,93 @@ fn mk(
     }
 
     Ok(())
+}
+
+struct Template {
+    src: HashMap<SourcePath, Vec<u8>>,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+enum SourcePath {
+    Overwrite(Utf8PathBuf),
+    SkipDuplicated(Utf8PathBuf),
+}
+
+impl AsRef<Utf8Path> for SourcePath {
+    fn as_ref(&self) -> &Utf8Path {
+        match self {
+            SourcePath::Overwrite(path) => path,
+            SourcePath::SkipDuplicated(path) => path,
+        }
+    }
+}
+
+impl Template {
+    fn empty(name: &PackageName) -> Self {
+        let edition = edition_variant(Edition::latest());
+        Self {
+            src: HashMap::from_iter(vec![
+                (SourcePath::Overwrite(Utf8PathBuf::from(MANIFEST_FILE_NAME)), formatdoc!(r#"
+                    [package]
+                    name = "{name}"
+                    version = "0.1.0"
+                    edition = "{edition}"
+
+                    # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
+
+                    [dependencies]
+                "#).into()),
+                (SourcePath::SkipDuplicated(Utf8PathBuf::from("src/lib.cairo")), "".into())
+            ]),
+        }
+    }
+
+    fn no_runner(name: &PackageName) -> Self {
+        let edition = edition_variant(Edition::latest());
+        let cairo_version = CAIRO_VERSION;
+        Self {
+            src: HashMap::from_iter(vec![
+                (SourcePath::Overwrite(Utf8PathBuf::from(MANIFEST_FILE_NAME)), formatdoc!(r#"
+                    [package]
+                    name = "{name}"
+                    version = "0.1.0"
+                    edition = "{edition}"
+
+                    # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
+
+                    [executable]
+
+                    [cairo]
+                    enable-gas = false
+
+                    [dependencies]
+                    cairo_execute = "{cairo_version}"
+                "#).into()),
+                (SourcePath::SkipDuplicated(Utf8PathBuf::from(DEFAULT_SOURCE_PATH.as_path())), "mod hello_world;\n".into()),
+                (SourcePath::SkipDuplicated(Utf8PathBuf::from("src/hello_world.cairo")), indoc! {r#"
+                    #[executable]
+                    fn main() {
+                        println!("Hello, World!");
+                    }
+                "#}.into())
+            ]),
+        }
+    }
+
+    fn materialize(&self, source_path: &Utf8Path) -> Result<()> {
+        for (content_path, content) in self.src.iter() {
+            let path = source_path.join(content_path.as_ref());
+            fsx::create_dir_all(path.parent().expect("file path must have a parent"))?;
+
+            match content_path {
+                SourcePath::SkipDuplicated(path) if path.exists() => continue,
+                _ => {}
+            }
+
+            fsx::write(&path, content)?;
+        }
+        Ok(())
+    }
 }
 
 fn init_snforge(name: PackageName, root_dir: Utf8PathBuf, config: &Config) -> Result<()> {

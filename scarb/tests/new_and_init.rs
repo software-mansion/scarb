@@ -26,6 +26,7 @@ fn new_simple() {
     assert!(t.is_dir());
     assert!(t.child("Scarb.toml").is_file());
     assert!(t.child("src/lib.cairo").is_file());
+    assert!(t.child("src/hello_world.cairo").is_file());
     assert!(t.child(".gitignore").is_file());
     assert!(t.child(".git").is_dir());
 
@@ -38,7 +39,7 @@ fn new_simple() {
         .assert()
         .success();
 
-    t.child("target/dev/hello.sierra.json")
+    t.child("target/dev/hello.executable.json")
         .assert(predicates::str::is_empty().not());
 }
 
@@ -58,6 +59,7 @@ fn new_simple_without_vcs() {
     assert!(t.is_dir());
     assert!(t.child("Scarb.toml").is_file());
     assert!(t.child("src/lib.cairo").is_file());
+    assert!(t.child("src/hello_world.cairo").is_file());
     assert!(!t.child(".gitignore").exists());
     assert!(!t.child(".git").exists());
 }
@@ -77,6 +79,7 @@ fn init_simple() {
     assert!(t.is_dir());
     assert!(t.child("Scarb.toml").is_file());
     assert!(t.child("src/lib.cairo").is_file());
+    assert!(t.child("src/hello_world.cairo").is_file());
     assert!(t.child(".gitignore").is_file());
     assert!(t.child(".git").is_dir());
 
@@ -89,7 +92,7 @@ fn init_simple() {
         .assert()
         .success();
 
-    t.child("target/dev/hello.sierra.json")
+    t.child("target/dev/hello.executable.json")
         .assert(predicates::str::is_empty().not());
 }
 
@@ -109,6 +112,7 @@ fn init_simple_without_vcs() {
     assert!(t.is_dir());
     assert!(t.child("Scarb.toml").is_file());
     assert!(t.child("src/lib.cairo").is_file());
+    assert!(t.child("src/hello_world.cairo").is_file());
     assert!(!t.child(".gitignore").exists());
     assert!(!t.child(".git").exists());
 }
