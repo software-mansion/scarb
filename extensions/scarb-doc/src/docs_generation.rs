@@ -7,6 +7,7 @@ use crate::types::other_types::{
 };
 use cairo_lang_doc::parser::DocumentationCommentToken;
 
+pub mod common;
 pub mod markdown;
 
 #[derive(Default)]
@@ -27,7 +28,6 @@ struct TopLevelItems<'a, 'db> {
 
 // Trait for items with no descendants.
 // Used to enforce constraints on generic implementations of traits like `MarkdownDocItem`.
-
 trait PrimitiveDocItem: DocItem {}
 
 impl PrimitiveDocItem for Constant<'_> {}
@@ -37,6 +37,7 @@ impl PrimitiveDocItem for FreeFunction<'_> {}
 impl PrimitiveDocItem for ImplAlias<'_> {}
 impl PrimitiveDocItem for TypeAlias<'_> {}
 
+// Trait for items which file path resolutions is relative to their parent.
 trait SubPathDocItem: DocItem {}
 
 impl SubPathDocItem for Member<'_> {}

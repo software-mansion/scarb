@@ -1,22 +1,30 @@
-# CircleSerde
+---
+ title: "hello_world::CircleSerde"
+---
 
-Fully qualified path: [hello_world](./hello_world.mdx)::[CircleSerde](./hello_world-CircleSerde.mdx)
+## Signature
 
-<pre><code class="language-cairo">impl CircleSerde of Serde&lt;<a href="hello_world-Circle.html">Circle</a>&gt;;</code></pre>
+```rust
+impl CircleSerde of Serde<Circle>;
+```
 
 ## Impl functions
 
-### serialize
+## serialize
 
-Fully qualified path: [hello_world](./hello_world.mdx)::[CircleSerde](./hello_world-CircleSerde.mdx)::[serialize](./hello_world-CircleSerde.mdx#serialize)
+## Signature
 
-<pre><code class="language-cairo">fn serialize(self: Circle, ref output: Array&lt;felt252&gt;)</code></pre>
+```rust
+fn serialize(self: Circle, ref output: Array<felt252>)
+```
 
 
-### deserialize
+## deserialize
 
-Fully qualified path: [hello_world](./hello_world.mdx)::[CircleSerde](./hello_world-CircleSerde.mdx)::[deserialize](./hello_world-CircleSerde.mdx#deserialize)
+## Signature
 
-<pre><code class="language-cairo">fn deserialize(ref serialized: Span&lt;felt252&gt;) -&gt; Option&lt;Circle&gt;</code></pre>
+```rust
+fn deserialize(ref serialized: Span<felt252>) -> Option<Circle>
+```
 
 
