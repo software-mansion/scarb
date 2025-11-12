@@ -1,11 +1,11 @@
+use crate::docs_generation::common::Filename;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::traits::{
     MarkdownDocItem, TopLevelMarkdownDocItem,
     generate_markdown_table_summary_for_top_level_subitems,
 };
 use crate::docs_generation::markdown::{
-    BASE_HEADER_LEVEL, BASE_MODULE_CHAPTER_PREFIX, Filename, SummaryIndexMap,
-    get_filename_with_extension,
+    BASE_HEADER_LEVEL, BASE_MODULE_CHAPTER_PREFIX, SummaryIndexMap, get_filename_with_extension,
 };
 use crate::docs_generation::{DocItem, TopLevelItems};
 use crate::types::module_type::Module;

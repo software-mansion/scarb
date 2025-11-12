@@ -4,7 +4,6 @@ use crate::docs_generation::markdown::{
     SHORT_DOCUMENTATION_LEN, SummaryIndexMap, get_filename_with_extension,
 };
 use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem};
-use crate::location_links::DocLocationLink;
 use crate::types::groups::Group;
 use crate::types::module_type::{Module, ModulePubUses};
 use crate::types::other_types::{
@@ -78,13 +77,33 @@ macro_rules! impl_markdown_doc_item {
                 item_suffix: Option<usize>,
                 summary_index_map: &SummaryIndexMap,
             ) -> Result<String> {
-                generate_markdown_from_item_data(
-                    self,
-                    context,
-                    header_level,
-                    item_suffix,
-                    summary_index_map,
-                )
+                let mut markdown = String::new();
+
+                let header =
+                    context.get_header_primitive(header_level, self.name(), self.full_path());
+                writeln!(&mut markdown, "{}\n", header)?;
+
+                if let Some(doc) = self.get_documentation(context) {
+                    writeln!(&mut markdown, "{doc}\n")?;
+                }
+
+                let full_path = self.get_full_path(item_suffix);
+                if let Some(fully_qualified_path) = context.get_fully_qualified_path(full_path) {
+                    writeln!(&mut markdown, "{}\n", fully_qualified_path)?;
+                }
+
+                if let Some(group_name) = self.group_name() {
+                    writeln!(&mut markdown, "{}", context.get_group(group_name))?
+                }
+
+                if let Some(sig) = &self.signature()
+                    && !sig.is_empty()
+                {
+                    let signature =
+                        context.get_signature(sig, self.doc_location_links(), summary_index_map);
+                    writeln!(&mut markdown, "{}", signature)?;
+                }
+                Ok(markdown)
             }
 
             fn get_full_path(&self, item_suffix: Option<usize>) -> String {
@@ -102,7 +121,6 @@ impl_markdown_doc_item!(Variant<'_>);
 impl_markdown_doc_item!(ImplConstant<'_>);
 impl_markdown_doc_item!(TraitConstant<'_>);
 impl_markdown_doc_item!(TraitType<'_>);
-impl_markdown_doc_item!(MacroDeclaration<'_>);
 
 pub trait MarkdownDocItem: DocItem {
     fn generate_markdown(
@@ -767,34 +785,29 @@ fn generate_markdown_from_item_data(
 ) -> Result<String> {
     let mut markdown = String::new();
 
-    let header = str::repeat("#", header_level);
-
-    writeln!(&mut markdown, "{header} {}\n", doc_item.name())?;
+    let header = context.get_header(header_level, doc_item.name(), doc_item.full_path());
+    writeln!(&mut markdown, "{}\n", header)?;
 
     if let Some(doc) = doc_item.get_documentation(context) {
         writeln!(&mut markdown, "{doc}\n")?;
     }
 
-    let full_path = doc_item.get_full_path(item_suffix);
-    writeln!(&mut markdown, "Fully qualified path: {full_path}\n",)?;
+    if let Some(fully_qualified_path) =
+        context.get_fully_qualified_path(doc_item.get_full_path(item_suffix))
+    {
+        writeln!(&mut markdown, "{}\n", fully_qualified_path)?;
+    }
 
     if let Some(group_name) = doc_item.group_name() {
-        let group_path = format!(
-            "[{}](./{})",
-            group_name,
-            get_filename_with_extension(&group_name.replace(" ", "_")),
-        );
-        writeln!(&mut markdown, "Part of the group: {group_path}\n",)?;
+        writeln!(&mut markdown, "{}", context.get_group(group_name))?
     }
 
     if let Some(sig) = &doc_item.signature()
         && !sig.is_empty()
     {
-        writeln!(
-            &mut markdown,
-            "<pre><code class=\"language-cairo\">{}</code></pre>\n",
-            format_signature(sig, doc_item.doc_location_links(), summary_index_map)
-        )?;
+        let signature =
+            context.get_signature(sig, doc_item.doc_location_links(), summary_index_map);
+        writeln!(&mut markdown, "{signature}")?;
     }
     Ok(markdown)
 }
@@ -843,64 +856,6 @@ fn get_full_subitem_path<T: MarkdownDocItem + SubPathDocItem>(
         )
     } else {
         get_linked_path(item.full_path())
-    }
-}
-
-fn format_signature(input: &str, links: &[DocLocationLink], index_map: &SummaryIndexMap) -> String {
-    let mut escaped = String::with_capacity(input.len());
-    let mut index_pointer = 0;
-
-    let sorted_links = links.iter().sorted_by_key(|k| k.start).collect_vec();
-    let mut chars_iter = input.chars().enumerate();
-    let mut skip_chars = 0;
-
-    while index_pointer < input.len() {
-        if let Some((i, ch)) = chars_iter.nth(skip_chars) {
-            skip_chars = 0;
-
-            if let Some(link) = sorted_links
-                .iter()
-                .find(|&link| i >= link.start && i < link.end)
-            {
-                if index_map.contains_key(&format!(
-                    "./{}",
-                    get_filename_with_extension(&link.full_path)
-                )) {
-                    let slice = escape_html(&input[link.start..link.end]);
-                    escaped.push_str(&format!(
-                        "<a href=\"{}.html\">{}</a>",
-                        link.full_path, slice
-                    ));
-                    index_pointer = link.end;
-                    skip_chars = link.end - link.start - 1;
-                    continue;
-                } else {
-                    escaped.push_str(&escape_html_char(ch));
-                    index_pointer += ch.len_utf8();
-                }
-            } else {
-                escaped.push_str(&escape_html_char(ch));
-                index_pointer += ch.len_utf8();
-            }
-        } else {
-            break;
-        }
-    }
-    escaped
-}
-
-fn escape_html(input: &str) -> String {
-    input.chars().map(escape_html_char).collect::<String>()
-}
-
-fn escape_html_char(ch: char) -> String {
-    match ch {
-        '<' => "&lt;".to_string(),
-        '>' => "&gt;".to_string(),
-        '"' => "&quot;".to_string(),
-        '&' => "&amp;".to_string(),
-        '\'' => "&apos;".to_string(),
-        _ => ch.to_string(),
     }
 }
 
