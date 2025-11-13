@@ -13,7 +13,6 @@ mod summary;
 mod traits;
 use crate::docs_generation::common::{
     GeneratedFile, OutputFilesExtension, SummaryIndexMap, SummaryListItem,
-    get_filename_with_extension,
 };
 use std::ops::Add;
 
@@ -34,6 +33,7 @@ pub struct MarkdownContent {
     book_toml: String,
     summary: SummaryIndexMap,
     doc_files: Vec<GeneratedFile>,
+    files_extension: &'static str,
 }
 
 impl MarkdownContent {
@@ -48,6 +48,7 @@ impl MarkdownContent {
             book_toml: generate_book_toml_content(&package_information.metadata),
             summary,
             doc_files,
+            files_extension: format.get_string(),
         })
     }
 }
@@ -92,6 +93,7 @@ impl WorkspaceMarkdownBuilder {
             book_toml,
             summary: self.summary,
             doc_files: self.doc_files,
+            files_extension: self.output_format.get_string(),
         })
     }
 }
@@ -133,7 +135,7 @@ impl MarkdownContent {
             .map_err(|e| IOWriteError::new(e, "book.toml"))?;
 
         fs::write(
-            source_directory_path.join(get_filename_with_extension(SUMMARY_FILENAME)),
+            source_directory_path.join(format!("{SUMMARY_FILENAME}{}", self.files_extension)),
             self.get_summary_markdown(),
         )
         .map_err(|e| IOWriteError::new(e, "summary"))?;

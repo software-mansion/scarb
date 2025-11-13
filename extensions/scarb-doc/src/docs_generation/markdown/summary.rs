@@ -24,12 +24,25 @@ pub fn generate_summary_file_content(
     let mut summary_index_map = SummaryIndexMap::new();
     let context = MarkdownGenerationContext::from_crate(crate_, output_format);
 
-    generate_module_summary_content(&crate_.root_module, 0, &mut summary_index_map);
-    generate_foreign_crates_summary_content(&crate_.foreign_crates, &mut summary_index_map);
-    generate_global_groups_summary_content(&crate_.groups, &mut summary_index_map);
+    generate_module_summary_content(
+        &crate_.root_module,
+        0,
+        &mut summary_index_map,
+        context.files_extension,
+    );
+    generate_foreign_crates_summary_content(
+        &crate_.foreign_crates,
+        &mut summary_index_map,
+        context.files_extension,
+    );
+    generate_global_groups_summary_content(
+        &crate_.groups,
+        &mut summary_index_map,
+        context.files_extension,
+    );
 
     let mut summary_files = vec![(
-        crate_.root_module.filename(),
+        crate_.root_module.filename(context.files_extension),
         crate_.root_module.generate_markdown(
             &context,
             BASE_HEADER_LEVEL,
