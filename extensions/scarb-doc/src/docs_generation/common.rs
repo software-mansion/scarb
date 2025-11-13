@@ -1,6 +1,5 @@
 use crate::docs_generation::markdown::IndexMap;
 use scarb_extensions_cli::doc::OutputFormat;
-use std::sync::OnceLock;
 
 pub type Filename = String;
 pub type GeneratedFile = (Filename, String);
@@ -24,7 +23,7 @@ impl SummaryListItem {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy)]
 pub enum OutputFilesExtension {
     Md,
     Mdx,
@@ -49,19 +48,4 @@ impl From<OutputFormat> for OutputFilesExtension {
             OutputFormat::Json => OutputFilesExtension::Json,
         }
     }
-}
-
-// Global, run-scoped output extension accessor.
-static OUTPUT_EXTENSION: OnceLock<&'static str> = OnceLock::new();
-
-pub fn set_output_extension(ext: OutputFormat) {
-    let _ = OUTPUT_EXTENSION.set(OutputFilesExtension::from(ext).get_string());
-}
-
-fn extension() -> &'static str {
-    OUTPUT_EXTENSION.get().copied().unwrap()
-}
-
-pub fn get_filename_with_extension(filename: &str) -> String {
-    format!("{filename}{}", extension())
 }

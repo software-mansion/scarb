@@ -5,7 +5,7 @@ use crate::docs_generation::markdown::traits::{
     generate_markdown_table_summary_for_top_level_subitems,
 };
 use crate::docs_generation::markdown::{
-    BASE_HEADER_LEVEL, BASE_MODULE_CHAPTER_PREFIX, SummaryIndexMap, get_filename_with_extension,
+    BASE_HEADER_LEVEL, BASE_MODULE_CHAPTER_PREFIX, SummaryIndexMap,
 };
 use crate::docs_generation::{DocItem, TopLevelItems};
 use crate::types::module_type::Module;
@@ -17,11 +17,11 @@ use anyhow::Result;
 use itertools::chain;
 
 macro_rules! module_summary {
-    ($items:expr, $context:expr, $module_name:expr, $prefix:expr, [ $( $item_type:ty => $field:ident ),* ]) => {
+    ($items:expr, $context:expr, $module_name:expr, $prefix:expr, $files_extension:expr, [ $( $item_type:ty => $field:ident ),* ]) => {
         vec![
             $(
                 (
-                    format!("{}-{}", $module_name, get_filename_with_extension(<$item_type>::ITEMS_SUMMARY_FILENAME)),
+                    format!("{}-{}{}", $module_name, <$item_type>::ITEMS_SUMMARY_FILENAME, $files_extension),
                     generate_markdown_table_summary_for_top_level_subitems(
                         &$items.$field,
                         $context,
@@ -101,7 +101,7 @@ pub fn generate_foreign_crates_summary_files(
 
     for module in foreign_modules {
         summary_files.extend(vec![(
-            module.filename(),
+            module.filename(context.files_extension),
             module.generate_markdown(context, BASE_HEADER_LEVEL, None, summary_index_map)?,
         )]);
         let module_item_summaries =
@@ -121,6 +121,7 @@ pub fn generate_summary_files_for_module_items(
     context,
     module_name,
     BASE_MODULE_CHAPTER_PREFIX,
+    context.files_extension,
     [
         Module => modules,
         Constant => constants,
@@ -195,7 +196,7 @@ fn generate_top_level_docs_contents(
         .iter()
         .map(|item| {
             item.generate_markdown(context, BASE_HEADER_LEVEL, None, summary_index_map)
-                .map(|markdown| (item.filename(), markdown))
+                .map(|markdown| (item.filename(context.files_extension), markdown))
         })
         .collect()
 }

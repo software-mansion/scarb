@@ -1,7 +1,7 @@
 use super::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::{
     BASE_MODULE_CHAPTER_PREFIX, GROUP_CHAPTER_PREFIX, SHORT_DOCUMENTATION_AVOID_PREFIXES,
-    SHORT_DOCUMENTATION_LEN, SummaryIndexMap, get_filename_with_extension,
+    SHORT_DOCUMENTATION_LEN, SummaryIndexMap,
 };
 use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem};
 use crate::types::groups::Group;
@@ -24,24 +24,28 @@ const GROUPS_CHAPTER: &str = "\n\n---\n \n# Groups: \n";
 pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
     const ITEMS_SUMMARY_FILENAME: &'static str;
 
-    fn filename(&self) -> String {
-        get_filename_with_extension(&self.markdown_formatted_path())
+    fn filename(&self, files_extension: &str) -> String {
+        format!("{}{files_extension}", self.markdown_formatted_path())
     }
 
-    fn md_ref_formatted(&self, relative_path: Option<String>) -> String {
-        let (path, filename) = self.md_ref(relative_path);
+    fn md_ref_formatted(&self, relative_path: Option<String>, files_extension: &str) -> String {
+        let (path, filename) = self.md_ref(relative_path, files_extension);
         format!("[{path}](./{filename})")
     }
 
-    fn md_ref(&self, relative_path: Option<String>) -> (String, String) {
+    fn md_ref(&self, relative_path: Option<String>, files_extension: &str) -> (String, String) {
         match relative_path {
-            Some(path) => (path, self.filename()),
-            None => (self.name().to_string(), self.filename()),
+            Some(path) => (path, self.filename(files_extension)),
+            None => (self.name().to_string(), self.filename(files_extension)),
         }
     }
 
-    fn get_markdown_nested_list_item(&self, relative_path: Option<String>) -> (String, String) {
-        let (path, filename) = self.md_ref(relative_path);
+    fn get_markdown_nested_list_item(
+        &self,
+        relative_path: Option<String>,
+        files_extension: &str,
+    ) -> (String, String) {
+        let (path, filename) = self.md_ref(relative_path, files_extension);
         (format!("./{filename}"), path)
     }
 }
@@ -87,7 +91,7 @@ macro_rules! impl_markdown_doc_item {
                     writeln!(&mut markdown, "{doc}\n")?;
                 }
 
-                let full_path = self.get_full_path(item_suffix);
+                let full_path = self.get_full_path(item_suffix, context.files_extension);
                 if let Some(fully_qualified_path) = context.get_fully_qualified_path(full_path) {
                     writeln!(&mut markdown, "{}\n", fully_qualified_path)?;
                 }
@@ -106,8 +110,8 @@ macro_rules! impl_markdown_doc_item {
                 Ok(markdown)
             }
 
-            fn get_full_path(&self, item_suffix: Option<usize>) -> String {
-                get_full_subitem_path(self, item_suffix)
+            fn get_full_path(&self, item_suffix: Option<usize>, files_extension: &str) -> String {
+                get_full_subitem_path(self, item_suffix, files_extension)
             }
         }
     };
@@ -200,8 +204,8 @@ pub trait MarkdownDocItem: DocItem {
         }
     }
 
-    fn get_full_path(&self, _item_suffix: Option<usize>) -> String {
-        get_linked_path(self.full_path())
+    fn get_full_path(&self, _item_suffix: Option<usize>, files_extension: &str) -> String {
+        get_linked_path(self.full_path(), files_extension)
     }
 }
 
@@ -618,10 +622,11 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
 
     if !subitems.is_empty() {
         let linked = format!(
-            "[{}](./{}-{})",
+            "[{}](./{}-{}{})",
             T::HEADER,
             module_name,
-            get_filename_with_extension(T::ITEMS_SUMMARY_FILENAME),
+            T::ITEMS_SUMMARY_FILENAME,
+            context.files_extension,
         );
 
         writeln!(&mut markdown, "\n{prefix} {linked}\n\n| | |\n|:---|:---|",)?;
@@ -632,7 +637,7 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
             writeln!(
                 &mut markdown,
                 "| {} | {} |",
-                item.md_ref_formatted(relative_path),
+                item.md_ref_formatted(relative_path, context.files_extension),
                 item_doc,
             )?;
         }
@@ -649,7 +654,11 @@ pub fn generate_markdown_table_summary_for_top_level_groups_items(
 
     if !groups.is_empty() {
         for group in groups {
-            markdown += &format!("\n## [{}]({})\n", group.name, group.filename(),);
+            markdown += &format!(
+                "\n## [{}]({})\n",
+                group.name,
+                group.filename(context.files_extension),
+            );
 
             let fake_module_name = group.get_name_normalized();
             markdown += &generate_markdown_table_summary_for_top_level_subitems(
@@ -740,7 +749,7 @@ pub fn generate_markdown_table_summary_for_reexported_subitems<T: TopLevelMarkdo
             writeln!(
                 &mut markdown,
                 "| {} | {} |",
-                item.md_ref_formatted(relative_path),
+                item.md_ref_formatted(relative_path, context.files_extension),
                 item_doc,
             )?;
         }
@@ -792,8 +801,8 @@ fn generate_markdown_from_item_data(
         writeln!(&mut markdown, "{doc}\n")?;
     }
 
-    if let Some(fully_qualified_path) =
-        context.get_fully_qualified_path(doc_item.get_full_path(item_suffix))
+    if let Some(fully_qualified_path) = context
+        .get_fully_qualified_path(doc_item.get_full_path(item_suffix, context.files_extension))
     {
         writeln!(&mut markdown, "{}\n", fully_qualified_path)?;
     }
@@ -812,7 +821,7 @@ fn generate_markdown_from_item_data(
     Ok(markdown)
 }
 
-fn get_linked_path(full_path: &str) -> String {
+fn get_linked_path(full_path: &str, files_extension: &str) -> String {
     let path_items = full_path.split("::").collect::<Vec<_>>();
     let mut result: Vec<String> = Vec::new();
     let mut current_path = String::new();
@@ -821,10 +830,7 @@ fn get_linked_path(full_path: &str) -> String {
             current_path.push('-');
         }
         current_path.push_str(element);
-        let formatted = format!(
-            "[{element}](./{})",
-            get_filename_with_extension(&current_path)
-        );
+        let formatted = format!("[{element}](./{}{files_extension})", &current_path,);
         result.push(formatted);
     }
     result.join("::")
@@ -836,11 +842,12 @@ fn get_linked_path(full_path: &str) -> String {
 fn get_full_subitem_path<T: MarkdownDocItem + SubPathDocItem>(
     item: &T,
     item_suffix: Option<usize>,
+    files_extension: &str,
 ) -> String {
     if let Some((parent_path, item_path)) = item.full_path().rsplit_once("::") {
         let last_path = format!(
-            "{}#{}{}",
-            get_filename_with_extension(&parent_path.replace("::", "-")),
+            "{}{files_extension}#{}{}",
+            parent_path.replace("::", "-"),
             item_path.to_lowercase(),
             if let Some(item_suffix) = item_suffix {
                 format!("-{item_suffix}")
@@ -850,12 +857,12 @@ fn get_full_subitem_path<T: MarkdownDocItem + SubPathDocItem>(
         );
         format!(
             "{}::[{}](./{})",
-            get_linked_path(parent_path),
+            get_linked_path(parent_path, files_extension),
             &item_path,
             last_path
         )
     } else {
-        get_linked_path(item.full_path())
+        get_linked_path(item.full_path(), files_extension)
     }
 }
 
