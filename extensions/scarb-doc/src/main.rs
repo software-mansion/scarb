@@ -39,8 +39,9 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
     let workspace_root = metadata.workspace.root.clone();
-    if matches!(args.output_format, OutputFormat::Markdown) & args.packages_filter.get_workspace() {
-        let mut builder = WorkspaceMarkdownBuilder::default();
+
+    if args.packages_filter.get_workspace() & !matches!(args.output_format, OutputFormat::Json) {
+        let mut builder = WorkspaceMarkdownBuilder::new(args.output_format.into());
         for pm in &metadata_for_packages {
             let ctx = generate_package_context(&metadata, pm, args.document_private_items)?;
             let package_info = generate_package_information(&ctx, ui.clone())?;
