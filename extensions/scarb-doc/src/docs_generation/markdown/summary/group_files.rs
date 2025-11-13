@@ -71,7 +71,7 @@ pub fn generate_global_groups_summary_files(
             );
 
             doc_files.push((
-                group.filename(),
+                group.filename(context.files_extension),
                 generate_markdown_for_group(group, context)?,
             ));
 

@@ -101,7 +101,7 @@ pub fn generate_foreign_crates_summary_files(
 
     for module in foreign_modules {
         summary_files.extend(vec![(
-            module.filename(),
+            module.filename(context.files_extension),
             module.generate_markdown(context, BASE_HEADER_LEVEL, None, summary_index_map)?,
         )]);
         let module_item_summaries =
@@ -195,7 +195,7 @@ fn generate_top_level_docs_contents(
         .iter()
         .map(|item| {
             item.generate_markdown(context, BASE_HEADER_LEVEL, None, summary_index_map)
-                .map(|markdown| (item.filename(), markdown))
+                .map(|markdown| (item.filename(context.files_extension), markdown))
         })
         .collect()
 }
