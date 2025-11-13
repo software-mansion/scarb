@@ -824,7 +824,7 @@ impl TomlManifest {
             };
             let is_root_package = manifest_path == workspace_manifest_path;
             if !is_root_package && self.cairo.is_some() {
-                warn_msg("profile");
+                warn_msg("cairo");
             }
             if !is_root_package && self.profile.is_some() {
                 warn_msg("profile");
