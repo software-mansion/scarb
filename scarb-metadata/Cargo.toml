@@ -24,6 +24,7 @@ thiserror = { workspace = true, optional = true }
 assert_fs.workspace = true
 cairo-lang-filesystem.workspace = true
 snapbox.workspace = true
+scarb-test-support = { path = "../utils/scarb-test-support"}
 
 [features]
 default = ["command"]
