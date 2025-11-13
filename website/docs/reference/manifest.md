@@ -92,9 +92,9 @@ If the currently running version of the Scarb compiler does not match this requi
 telling the user what version is required.
 This field takes a [semver version requirement](./specifying-dependencies#version-requirements).
 
-```toml
+```toml-vue
 [package]
-cairo-version = "^{{ rel.preview.version }}"
+cairo-version = "^{{ rel.stable.cairoVersion }}"
 ```
 
 Setting the `cairo-version` key in `[package]` will affect all targets in the package.
