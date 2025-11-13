@@ -2,20 +2,19 @@ use crate::docs_generation::markdown::context::path_to_file_link;
 use crate::docs_generation::markdown::traits::{
     TopLevelMarkdownDocItem, mark_duplicated_item_with_relative_path,
 };
-use crate::docs_generation::markdown::{
-    SummaryIndexMap, SummaryListItem, get_filename_with_extension,
-};
+use crate::docs_generation::markdown::{SummaryIndexMap, SummaryListItem};
 use crate::docs_generation::{DocItem, TopLevelItems};
 use crate::types::groups::Group;
 use crate::types::module_type::Module;
 
 macro_rules! insert_multiple_summaries {
-    ($summary_index_map:expr, $items:expr, $nesting_level:expr, $path:expr, [ $( $field:ident ),* ]) => {
+    ($summary_index_map:expr, $items:expr, $nesting_level:expr, $path:expr, $files_extension:expr, [ $( $field:ident ),* ]) => {
         $(
             $summary_index_map.extend(generate_markdown_list_summary_for_module_items(
                 &$items.$field,
                 $nesting_level,
                 $path,
+                $files_extension
             ));
         )*
     };
@@ -25,9 +24,10 @@ pub fn generate_module_summary_content(
     module: &Module,
     mut nesting_level: usize,
     summary_index_map: &mut SummaryIndexMap,
+    files_extension: &str,
 ) {
     summary_index_map.insert(
-        path_to_file_link(module.full_path()),
+        path_to_file_link(module.full_path(), files_extension),
         SummaryListItem::new(module.item_data.name.clone(), nesting_level),
     );
 
@@ -67,16 +67,21 @@ pub fn generate_module_summary_content(
     if !top_level_items.modules.is_empty() {
         summary_index_map.insert(
             format!(
-                "./{}-{}",
+                "./{}-{}{files_extension}",
                 module.markdown_formatted_path(),
-                get_filename_with_extension(Module::ITEMS_SUMMARY_FILENAME),
+                Module::ITEMS_SUMMARY_FILENAME,
             ),
             SummaryListItem::new(Module::HEADER.to_string(), nesting_level),
         );
         nesting_level += 1;
 
         for submodule in module.submodules.iter() {
-            generate_module_summary_content(submodule, nesting_level, summary_index_map);
+            generate_module_summary_content(
+                submodule,
+                nesting_level,
+                summary_index_map,
+                files_extension,
+            );
         }
         nesting_level -= 1;
     }
@@ -86,6 +91,7 @@ pub fn generate_module_summary_content(
         top_level_items,
         nesting_level,
         &module.markdown_formatted_path(),
+        files_extension,
         [
             constants,
             free_functions,
@@ -105,15 +111,17 @@ pub fn generate_module_summary_content(
 pub fn generate_foreign_crates_summary_content(
     foreign_modules: &Vec<Module>,
     summary_index_map: &mut SummaryIndexMap,
+    files_extension: &str,
 ) {
     for module in foreign_modules {
-        generate_module_summary_content(module, 0, summary_index_map);
+        generate_module_summary_content(module, 0, summary_index_map, files_extension);
     }
 }
 
 pub fn generate_global_groups_summary_content(
     groups: &[Group],
     summary_index_map: &mut SummaryIndexMap,
+    files_extension: &str,
 ) {
     if !groups.is_empty() {
         summary_index_map.insert(
@@ -153,7 +161,7 @@ pub fn generate_global_groups_summary_content(
             top_level_items.extern_functions.extend(extern_functions);
 
             summary_index_map.insert(
-                group.filename(),
+                group.filename(files_extension),
                 SummaryListItem::new(group.name.to_string(), 1),
             );
             let markdown_formatted_path = group.get_name_normalized();
@@ -161,15 +169,20 @@ pub fn generate_global_groups_summary_content(
             if !top_level_items.modules.is_empty() {
                 summary_index_map.insert(
                     format!(
-                        "./{}-{}",
+                        "./{}-{}{files_extension}",
                         markdown_formatted_path,
-                        get_filename_with_extension(Module::ITEMS_SUMMARY_FILENAME),
+                        Module::ITEMS_SUMMARY_FILENAME,
                     ),
                     SummaryListItem::new(Module::HEADER.to_string(), nesting_level),
                 );
                 nesting_level += 1;
                 for submodule in group.submodules.iter() {
-                    generate_module_summary_content(submodule, nesting_level, summary_index_map);
+                    generate_module_summary_content(
+                        submodule,
+                        nesting_level,
+                        summary_index_map,
+                        files_extension,
+                    );
                 }
                 nesting_level -= 1;
             };
@@ -178,6 +191,7 @@ pub fn generate_global_groups_summary_content(
                 top_level_items,
                 nesting_level,
                 &markdown_formatted_path,
+                files_extension,
                 [
                     constants,
                     free_functions,
@@ -199,21 +213,23 @@ fn generate_markdown_list_summary_for_module_items<T: TopLevelMarkdownDocItem>(
     subitems: &[&T],
     mut nesting_level: usize,
     module_name: &String,
+    files_extension: &str,
 ) -> Vec<(String, SummaryListItem)> {
     let mut summary_items: Vec<(String, SummaryListItem)> = vec![];
     if !subitems.is_empty() {
         summary_items.push((
             format!(
-                "./{}-{}",
+                "./{}-{}{files_extension}",
                 module_name,
-                get_filename_with_extension(T::ITEMS_SUMMARY_FILENAME),
+                T::ITEMS_SUMMARY_FILENAME,
             ),
             SummaryListItem::new(T::HEADER.to_string(), nesting_level),
         ));
         nesting_level += 1;
         let items_with_relative_path = mark_duplicated_item_with_relative_path(subitems);
         for (item, relative_path) in items_with_relative_path {
-            let (file_item, name_item) = item.get_markdown_nested_list_item(relative_path);
+            let (file_item, name_item) =
+                item.get_markdown_nested_list_item(relative_path, files_extension);
             summary_items.push((file_item, SummaryListItem::new(name_item, nesting_level)));
         }
     }

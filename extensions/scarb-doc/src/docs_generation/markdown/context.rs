@@ -1,6 +1,4 @@
-use crate::docs_generation::common::{
-    OutputFilesExtension, SummaryIndexMap, get_filename_with_extension,
-};
+use crate::docs_generation::common::{OutputFilesExtension, SummaryIndexMap};
 use crate::docs_generation::markdown::SUMMARY_FILENAME;
 use crate::docs_generation::markdown::traits::WithPath;
 use crate::location_links::DocLocationLink;
@@ -16,6 +14,7 @@ pub type IncludedItems<'a, 'db> = HashMap<DocumentableItemId<'db>, &'a dyn WithP
 pub struct MarkdownGenerationContext<'a, 'db> {
     included_items: IncludedItems<'a, 'db>,
     formatting: Box<dyn Formatting>,
+    pub(crate) files_extension: &'static str,
 }
 
 pub trait Formatting {
@@ -75,7 +74,12 @@ impl Formatting for MarkdownFormatting {
     ) -> String {
         format!(
             "<pre><code class=\"language-cairo\">{}</code></pre>\n",
-            format_signature(signature, location_links, summary_index_map)
+            format_signature(
+                signature,
+                location_links,
+                summary_index_map,
+                OutputFilesExtension::Md.get_string()
+            )
         )
     }
 
@@ -85,9 +89,10 @@ impl Formatting for MarkdownFormatting {
 
     fn group(&self, group_name: &str) -> String {
         let group_path = format!(
-            "[{}](./{})",
+            "[{}](./{}{})",
             group_name,
-            get_filename_with_extension(&group_name.replace(" ", "_")),
+            &group_name.replace(" ", "_"),
+            OutputFilesExtension::Md.get_string()
         );
         format!("Part of the group: {group_path}\n")
     }
@@ -118,6 +123,7 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
                 })
                 .collect(),
             formatting,
+            files_extension: format.get_string(),
         }
     }
 
@@ -146,14 +152,17 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
                         match resolved_item.parent_full_path() {
                             Some(parent_path) => Some(format!(
                                 "{}#{}",
-                                path_to_file_link(&parent_path),
+                                path_to_file_link(&parent_path, self.files_extension),
                                 resolved_item.name().to_lowercase()
                             )),
                             // Only root_module / crate doesn't have the parent.
-                            _ => Some(get_filename_with_extension(SUMMARY_FILENAME)),
+                            _ => Some(format!("{SUMMARY_FILENAME}{}", self.files_extension)),
                         }
                     }
-                    _ => Some(path_to_file_link(&resolved_item.full_path())),
+                    _ => Some(path_to_file_link(
+                        &resolved_item.full_path(),
+                        self.files_extension,
+                    )),
                 },
                 None => None,
             },
@@ -189,11 +198,16 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
     }
 }
 
-pub fn path_to_file_link(path: &str) -> String {
-    get_filename_with_extension(&format!("./{}", path.replace("::", "-")))
+pub fn path_to_file_link(path: &str, files_extension: &str) -> String {
+    format!("./{}{files_extension}", path.replace("::", "-"))
 }
 
-fn format_signature(input: &str, links: &[DocLocationLink], index_map: &SummaryIndexMap) -> String {
+fn format_signature(
+    input: &str,
+    links: &[DocLocationLink],
+    index_map: &SummaryIndexMap,
+    files_extension: &str,
+) -> String {
     let mut escaped = String::with_capacity(input.len());
     let mut index_pointer = 0;
 
@@ -209,10 +223,7 @@ fn format_signature(input: &str, links: &[DocLocationLink], index_map: &SummaryI
                 .iter()
                 .find(|&link| i >= link.start && i < link.end)
             {
-                if index_map.contains_key(&format!(
-                    "./{}",
-                    get_filename_with_extension(&link.full_path)
-                )) {
+                if index_map.contains_key(&format!("./{}{files_extension}", &link.full_path)) {
                     let slice = escape_html(&input[link.start..link.end]);
                     escaped.push_str(&format!(
                         "<a href=\"{}.html\">{}</a>",
