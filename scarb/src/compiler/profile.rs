@@ -43,10 +43,10 @@ impl Profile {
     }
 
     pub fn is_dev(&self) -> bool {
-        self.0.as_str() == "dev"
+        self == &Self::DEV
     }
     pub fn is_release(&self) -> bool {
-        self.0.as_str() == "release"
+        self == &Self::RELEASE
     }
     pub fn is_custom(&self) -> bool {
         !self.is_dev() && !self.is_release()
@@ -82,10 +82,6 @@ impl TryFrom<ProfileSpec> for Profile {
             .transpose()?
             .unwrap_or_default())
     }
-}
-
-pub trait DefaultForProfile {
-    fn default_for_profile(profile: &Profile) -> Self;
 }
 
 #[cfg(test)]
