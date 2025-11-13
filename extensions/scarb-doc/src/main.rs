@@ -80,17 +80,13 @@ pub enum OutputEmit {
         ui: Ui,
         build: bool,
         workspace_root: Utf8PathBuf,
+        files_extension: OutputFilesExtension,
     },
     Json {
         output_dir: Utf8PathBuf,
         ui: Ui,
         workspace_root: Utf8PathBuf,
         packages: Vec<Value>,
-    },
-    Mdx {
-        output_dir: Utf8PathBuf,
-        ui: Ui,
-        workspace_root: Utf8PathBuf,
     },
 }
 
@@ -106,14 +102,17 @@ impl OutputEmit {
             ui,
             build,
             workspace_root,
+            files_extension: OutputFilesExtension::Md,
         }
     }
 
     pub fn for_mdx(output_dir: Utf8PathBuf, workspace_root: Utf8PathBuf, ui: Ui) -> Self {
-        OutputEmit::Mdx {
+        OutputEmit::Markdown {
             output_dir,
             ui,
+            build: false,
             workspace_root,
+            files_extension: OutputFilesExtension::Mdx,
         }
     }
 
@@ -133,8 +132,9 @@ impl OutputEmit {
                 build,
                 workspace_root,
                 ui,
+                files_extension,
             } => {
-                let content = MarkdownContent::from_crate(&package, OutputFilesExtension::Md)?;
+                let content = MarkdownContent::from_crate(&package, *files_extension)?;
                 output_markdown(
                     content,
                     Some(package.metadata.name),
@@ -149,28 +149,13 @@ impl OutputEmit {
                     serde_json::to_value(&package).map_err(PackagesSerializationError::from)?,
                 );
             }
-            OutputEmit::Mdx {
-                output_dir,
-                workspace_root,
-                ui,
-            } => {
-                let content = MarkdownContent::from_crate(&package, OutputFilesExtension::Mdx)?;
-                output_markdown(
-                    content,
-                    Some(package.metadata.name),
-                    output_dir,
-                    false,
-                    workspace_root,
-                    ui.clone(),
-                )?;
-            }
         };
         Ok(())
     }
 
     pub fn flush(self) -> Result<()> {
         match self {
-            OutputEmit::Markdown { .. } | OutputEmit::Mdx { .. } => {
+            OutputEmit::Markdown { .. } => {
                 // No need to do anything.
             }
             OutputEmit::Json {
