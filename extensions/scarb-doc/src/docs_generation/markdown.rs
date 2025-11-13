@@ -61,17 +61,6 @@ pub struct WorkspaceMarkdownBuilder {
     output_format: OutputFilesExtension,
 }
 
-impl Default for WorkspaceMarkdownBuilder {
-    fn default() -> Self {
-        Self {
-            book_toml: None,
-            summary: SummaryIndexMap::new(),
-            doc_files: Vec::new(),
-            output_format: OutputFilesExtension::Md,
-        }
-    }
-}
-
 impl WorkspaceMarkdownBuilder {
     pub fn new(output_format: OutputFilesExtension) -> Self {
         Self {
