@@ -5,6 +5,7 @@ use crate::docs_generation::markdown::traits::{
 };
 use crate::docs_generation::markdown::{
     BASE_HEADER_LEVEL, BASE_MODULE_CHAPTER_PREFIX, Filename, SummaryIndexMap,
+    get_filename_with_extension,
 };
 use crate::docs_generation::{DocItem, TopLevelItems};
 use crate::types::module_type::Module;
@@ -20,7 +21,7 @@ macro_rules! module_summary {
         vec![
             $(
                 (
-                    format!("{}-{}", $module_name, <$item_type>::ITEMS_SUMMARY_FILENAME),
+                    format!("{}-{}", $module_name, get_filename_with_extension(<$item_type>::ITEMS_SUMMARY_FILENAME)),
                     generate_markdown_table_summary_for_top_level_subitems(
                         &$items.$field,
                         $context,
