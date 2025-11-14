@@ -288,8 +288,8 @@ fn warn_on_compiler_config_in_ws_member() {
         .assert()
         .success()
         .stdout_eq(Data::from(indoc!{r#"
-            warn: in context of a workspace, only the `profile` set in the workspace manifest is applied,
-            but the `first` package also defines `profile` in the manifest
+            warn: in context of a workspace, only the `cairo` set in the workspace manifest is applied,
+            but the `first` package also defines `cairo` in the manifest
 
         "#}).raw());
 }
