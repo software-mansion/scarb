@@ -1,5 +1,5 @@
 use super::{FeatureName, Manifest};
-use crate::compiler::{DefaultForProfile, Profile};
+use crate::compiler::Profile;
 use crate::core::manifest::maybe_workspace::{MaybeWorkspace, WorkspaceInherit};
 use crate::core::manifest::scripts::ScriptDefinition;
 use crate::core::manifest::target_defaults::{
@@ -480,7 +480,7 @@ pub struct TomlCairo {
     /// - For types: `felt252` or `Box<Box<felt252>>`.
     /// - For user functions: `test::foo`.
     ///
-    /// Defaults to `false`.
+    /// Defaults to `false` except for "dev" profile.
     pub sierra_replace_ids: Option<bool>,
     /// Do not exit with error on compiler warnings.
     pub allow_warnings: Option<bool>,
@@ -508,7 +508,7 @@ pub struct TomlCairo {
     pub incremental: Option<bool>,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlProfile {
     pub inherits: Option<SmolStr>,
@@ -516,12 +516,20 @@ pub struct TomlProfile {
     pub tool: Option<TomlToolsDefinition>,
 }
 
-impl DefaultForProfile for TomlProfile {
-    fn default_for_profile(profile: &Profile) -> Self {
-        let mut result = TomlProfile::default();
-        let default_cairo: TomlCairo = ManifestCompilerConfig::default_for_profile(profile).into();
-        result.cairo = Some(default_cairo);
-        result
+impl TomlProfile {
+    /// Invariant: `profile` is one of the builtin profiles.
+    fn default_for_builtin_profile(profile: &Profile) -> Self {
+        assert!(!profile.is_custom());
+
+        let default_cairo = TomlCairo {
+            sierra_replace_ids: Some(profile.is_dev()),
+            ..Default::default()
+        };
+        TomlProfile {
+            inherits: None,
+            tool: None,
+            cairo: Some(default_cairo),
+        }
     }
 }
 
@@ -833,7 +841,7 @@ impl TomlManifest {
         };
         let profile_definition = profile_source.collect_profile_definition(profile.clone())?;
 
-        let compiler_config = self.collect_compiler_config(&profile, profile_definition.clone())?;
+        let compiler_config = self.collect_compiler_config(profile_definition.clone())?;
         let workspace_tool = workspace.tool.clone();
         let tool = self.collect_tool(profile_definition, workspace_tool)?;
 
@@ -1230,8 +1238,8 @@ impl TomlManifest {
             .unwrap_or(Ok(vec![]))
     }
 
+    /// Invariant: `self` is a workspace manifest or a manifest in a single package project.
     fn collect_profile_definition(&self, profile: Profile) -> Result<TomlProfile> {
-        let toml_cairo = self.cairo.clone().unwrap_or_default();
         let all_toml_profiles = self.profile.as_ref();
 
         let profile_definition =
@@ -1257,13 +1265,19 @@ impl TomlManifest {
             );
         }
 
-        let parent_default = TomlProfile::default_for_profile(&parent_profile);
+        let parent_default = TomlProfile::default_for_builtin_profile(&parent_profile);
         let parent_definition = all_toml_profiles
             .and_then(|profiles| profiles.get(parent_profile.as_str()).cloned())
             .unwrap_or(parent_default.clone());
 
         let mut parent_definition = merge_profile(&parent_default, &parent_definition)?;
-        let parent_cairo = toml_merge(&parent_definition.cairo, &toml_cairo)?;
+
+        // Merge the [cairo] section of this manifest into the parent profile.
+        // We have to do it before merging the used profile into the parent profile.
+        // Reason: the [cairo] section of the used profile takes precedence over the "raw"
+        // [cairo] section in the workspace/single package project manifest.
+        let this_toml_cairo = self.cairo.clone().unwrap_or_default();
+        let parent_cairo = toml_merge(&parent_definition.cairo, &this_toml_cairo)?;
         parent_definition.cairo = parent_cairo;
 
         let profile = if let Some(profile_definition) = profile_definition {
@@ -1277,10 +1291,9 @@ impl TomlManifest {
 
     fn collect_compiler_config(
         &self,
-        profile: &Profile,
         profile_definition: TomlProfile,
     ) -> Result<ManifestCompilerConfig> {
-        let mut compiler_config = ManifestCompilerConfig::default_for_profile(profile);
+        let mut compiler_config = ManifestCompilerConfig::default();
         if let Some(cairo) = profile_definition.cairo {
             if let Some(sierra_replace_ids) = cairo.sierra_replace_ids {
                 compiler_config.sierra_replace_ids = sierra_replace_ids;

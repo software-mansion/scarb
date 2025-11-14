@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 
-use crate::compiler::{DefaultForProfile, Profile};
-use crate::core::TomlCairo;
-
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
 pub struct ManifestCompilerConfig {
     /// Replace all names in generated Sierra code with dummy counterparts, representing the
@@ -106,10 +103,10 @@ mod serdex {
     }
 }
 
-impl DefaultForProfile for ManifestCompilerConfig {
-    fn default_for_profile(profile: &Profile) -> Self {
+impl Default for ManifestCompilerConfig {
+    fn default() -> Self {
         Self {
-            sierra_replace_ids: profile.is_dev(),
+            sierra_replace_ids: false,
             allow_warnings: true,
             enable_gas: true,
             unstable_add_statements_functions_debug_info: false,
@@ -118,26 +115,6 @@ impl DefaultForProfile for ManifestCompilerConfig {
             unsafe_panic: false,
             inlining_strategy: InliningStrategy::default(),
             incremental: true,
-        }
-    }
-}
-
-impl From<ManifestCompilerConfig> for TomlCairo {
-    fn from(config: ManifestCompilerConfig) -> Self {
-        Self {
-            sierra_replace_ids: Some(config.sierra_replace_ids),
-            allow_warnings: Some(config.allow_warnings),
-            enable_gas: Some(config.enable_gas),
-            unstable_add_statements_functions_debug_info: Some(
-                config.unstable_add_statements_functions_debug_info,
-            ),
-            unstable_add_statements_code_locations_debug_info: Some(
-                config.unstable_add_statements_code_locations_debug_info,
-            ),
-            panic_backtrace: Some(config.panic_backtrace),
-            unsafe_panic: Some(config.unsafe_panic),
-            inlining_strategy: Some(config.inlining_strategy),
-            incremental: Some(config.incremental),
         }
     }
 }

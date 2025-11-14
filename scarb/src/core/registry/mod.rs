@@ -117,6 +117,7 @@ pub(crate) mod mock {
 
             let manifest = Box::new(
                 ManifestBuilder::default()
+                    .compiler_config(Default::default())
                     .summary(summary)
                     .targets(vec![])
                     .build()

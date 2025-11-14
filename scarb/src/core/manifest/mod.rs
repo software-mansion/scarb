@@ -20,9 +20,6 @@ pub use target_kind::*;
 pub use toml_manifest::*;
 pub use version_req::*;
 
-use crate::compiler::DefaultForProfile;
-use crate::compiler::Profile;
-
 use super::PackageName;
 
 mod compiler_config;
@@ -48,14 +45,13 @@ pub const DEFAULT_FEATURE_NAME: &str = "default";
 pub struct Manifest {
     pub summary: Summary,
     pub targets: Vec<Target>,
+    pub compiler_config: ManifestCompilerConfig,
     #[builder(default)]
     pub edition: Edition,
     #[builder(default = "true")]
     pub publish: bool,
     #[builder(default)]
     pub metadata: ManifestMetadata,
-    #[builder(default = "ManifestCompilerConfig::default_for_profile(&Profile::DEV)")]
-    pub compiler_config: ManifestCompilerConfig,
     #[builder(default)]
     pub scripts: BTreeMap<SmolStr, ScriptDefinition>,
     #[builder(default)]
