@@ -135,6 +135,18 @@ impl ExpectDir {
         };
 
         for (actual_dir_entry, expected_dir_entry) in zip(actual_files, expected_files) {
+            let strip_path = |path: &Path, root: &Path| {
+                let path = fsx::canonicalize(path).unwrap();
+                path.strip_prefix(root).unwrap().to_path_buf()
+            };
+            let actual_rel =
+                strip_path(actual_dir_entry.path(), self.actual_root.as_ref().unwrap());
+            let expected_rel = strip_path(
+                expected_dir_entry.path(),
+                self.expected_root.as_ref().unwrap(),
+            );
+            assert_eq!(actual_rel, expected_rel, "mismatched entry paths:");
+
             if expected_dir_entry.file_type().is_file() {
                 assert!(actual_dir_entry.file_type().is_file());
 

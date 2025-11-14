@@ -1,14 +1,6 @@
-# foreign_inner_mod_with_group
+# foreign_nested_module_function
 
-This should be in nav bar in Groups but documented in Reeksports of target_crate
+Fully qualified path: [foreign_package](./foreign_package.md)::[foreign_module](./foreign_package-foreign_module.md)::[foreign_nested_module](./foreign_package-foreign_module-foreign_nested_module.md)::[foreign_nested_module_function](./foreign_package-foreign_module-foreign_nested_module-foreign_nested_module_function.md)
 
-Fully qualified path: [foreign_package](./foreign_package.md)::[foreign_module](./foreign_package-foreign_module.md)::[foreign_inner_mod_with_group](./foreign_package-foreign_module-foreign_inner_mod_with_group.md)
+<pre><code class="language-cairo">pub fn foreign_nested_module_function()</code></pre>
 
-Part of the group: [visible](./visible.md)
-
-
-## [Free functions](./foreign_package-foreign_module-foreign_inner_mod_with_group-free_functions.md)
-
-| | |
-|:---|:---|
-| [function_of_reeksported_group_mod](./foreign_package-foreign_module-foreign_inner_mod_with_group-function_of_reeksported_group_mod.md) | — |

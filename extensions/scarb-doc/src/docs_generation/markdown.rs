@@ -195,7 +195,7 @@ impl MarkdownContent {
         .map_err(|e| IOWriteError::new(e, "summary"))?;
 
         for (filename, file_content) in self.doc_files {
-            let path = source_directory_path.join(get_filename_with_extension(filename.as_str()));
+            let path = source_directory_path.join(&filename);
             fs::write(path, file_content).map_err(|e| IOWriteError::new(e, filename.as_ref()))?;
         }
 
