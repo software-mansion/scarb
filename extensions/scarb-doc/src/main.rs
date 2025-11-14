@@ -3,9 +3,10 @@ use camino::Utf8PathBuf;
 use clap::Parser;
 use mimalloc::MiMalloc;
 use scarb_doc::diagnostics::print_diagnostics;
-use scarb_doc::docs_generation::markdown::{
-    MarkdownContent, WorkspaceMarkdownBuilder, get_filename_with_extension, set_output_extension,
+use scarb_doc::docs_generation::common::{
+    OutputFilesExtension, get_filename_with_extension, set_output_extension,
 };
+use scarb_doc::docs_generation::markdown::{MarkdownContent, WorkspaceMarkdownBuilder};
 use scarb_doc::errors::{MetadataCommandError, PackagesSerializationError};
 use scarb_doc::metadata::get_target_dir;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
@@ -58,10 +59,10 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     } else {
         let mut output = match args.output_format {
             OutputFormat::Json => OutputEmit::for_json(output_dir, workspace_root, ui.clone()),
-            // This is a work in progress, mdx format will be added.
-            OutputFormat::Markdown | OutputFormat::Mdx => {
+            OutputFormat::Markdown => {
                 OutputEmit::for_markdown(output_dir, workspace_root, args.build, ui.clone())
             }
+            OutputFormat::Mdx => OutputEmit::for_mdx(output_dir, workspace_root, ui.clone()),
         };
         for pm in &metadata_for_packages {
             let ctx = generate_package_context(&metadata, pm, args.document_private_items)?;
@@ -87,6 +88,11 @@ pub enum OutputEmit {
         workspace_root: Utf8PathBuf,
         packages: Vec<Value>,
     },
+    Mdx {
+        output_dir: Utf8PathBuf,
+        ui: Ui,
+        workspace_root: Utf8PathBuf,
+    },
 }
 
 impl OutputEmit {
@@ -100,6 +106,14 @@ impl OutputEmit {
             output_dir,
             ui,
             build,
+            workspace_root,
+        }
+    }
+
+    pub fn for_mdx(output_dir: Utf8PathBuf, workspace_root: Utf8PathBuf, ui: Ui) -> Self {
+        OutputEmit::Mdx {
+            output_dir,
+            ui,
             workspace_root,
         }
     }
@@ -121,7 +135,7 @@ impl OutputEmit {
                 workspace_root,
                 ui,
             } => {
-                let content = MarkdownContent::from_crate(&package)?;
+                let content = MarkdownContent::from_crate(&package, OutputFilesExtension::Md)?;
                 output_markdown(
                     content,
                     Some(package.metadata.name),
@@ -136,13 +150,28 @@ impl OutputEmit {
                     serde_json::to_value(&package).map_err(PackagesSerializationError::from)?,
                 );
             }
+            OutputEmit::Mdx {
+                output_dir,
+                workspace_root,
+                ui,
+            } => {
+                let content = MarkdownContent::from_crate(&package, OutputFilesExtension::Mdx)?;
+                output_markdown(
+                    content,
+                    Some(package.metadata.name),
+                    output_dir,
+                    false,
+                    workspace_root,
+                    ui.clone(),
+                )?;
+            }
         };
         Ok(())
     }
 
     pub fn flush(self) -> Result<()> {
         match self {
-            OutputEmit::Markdown { .. } => {
+            OutputEmit::Markdown { .. } | OutputEmit::Mdx { .. } => {
                 // No need to do anything.
             }
             OutputEmit::Json {

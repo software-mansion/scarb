@@ -1,4 +1,4 @@
-use crate::docs_generation::markdown::get_filename_with_extension;
+use crate::docs_generation::common::get_filename_with_extension;
 use crate::types::module_type::{Module, ModulePubUses};
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, MacroDeclaration,
