@@ -19,6 +19,7 @@ use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::items::imp::ImplSemantic;
+use cairo_lang_semantic::items::macro_call::module_macro_modules;
 use cairo_lang_semantic::items::module::ModuleSemantic;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::Visibility;
@@ -79,16 +80,11 @@ impl<'db> ModulePubUses<'db> {
             .uses(db)
             .iter()
             .filter_map(|(use_id, _)| {
-                let visibility = db
-                    .module_item_info_by_name(module_id, use_id.long(db).name(db))
-                    .unwrap()
-                    .unwrap()
-                    .visibility;
-                if visibility == Visibility::Public {
-                    Some(db.use_resolved_item(*use_id).unwrap())
-                } else {
-                    None
-                }
+                db.module_item_info_by_name(module_id, use_id.long(db).name(db))
+                    .ok()
+                    .flatten()
+                    .filter(|info| matches!(info.visibility, Visibility::Public))
+                    .and_then(|_| db.use_resolved_item(*use_id).ok())
             })
             .collect();
 
@@ -175,6 +171,19 @@ impl<'db> ModulePubUses<'db> {
             && self.use_extern_functions.is_empty()
             && self.use_submodules.is_empty()
             && self.use_macro_declarations.is_empty()
+    }
+
+    fn add(&mut self, other: Self) {
+        self.use_constants.extend(other.use_constants);
+        self.use_free_functions.extend(other.use_free_functions);
+        self.use_structs.extend(other.use_structs);
+        self.use_enums.extend(other.use_enums);
+        self.use_module_type_aliases
+            .extend(other.use_module_type_aliases);
+        self.use_impl_aliases.extend(other.use_impl_aliases);
+        self.use_traits.extend(other.use_traits);
+        self.use_impl_defs.extend(other.use_impl_defs);
+        self.use_extern_types.extend(other.use_extern_types);
     }
 }
 
@@ -264,7 +273,7 @@ impl<'db> Module<'db> {
                 LookupItemId::ModuleItem(ModuleItemId::Submodule(submodule_id)).into(),
             ),
             ModuleId::MacroCall { .. } => {
-                todo!("TODO(#2262): Correctly handle declarative macros.")
+                panic!("error: Module::new should not be called for MacroCall")
             }
         };
 
@@ -275,127 +284,112 @@ impl<'db> Module<'db> {
                 && !is_doc_hidden_attr(db, &syntax_node))
         };
 
-        let module_pubuses = ModulePubUses::new(db, module_id, include_private_items)?;
-
         let module_data = module_id.module_data(db)?;
-        let module_constants = module_data.constants(db);
-        let mut constants =
-            filter_map_item_id_to_item(module_constants.keys(), should_include_item, |id| {
-                Ok(Constant::new(db, *id))
-            })?;
 
-        let module_free_functions = module_data.free_functions(db);
-        let mut free_functions =
-            filter_map_item_id_to_item(module_free_functions.keys(), should_include_item, |id| {
-                Ok(FreeFunction::new(db, *id))
-            })?;
-
-        let module_structs = module_data.structs(db);
-        let mut structs =
-            filter_map_item_id_to_item(module_structs.keys(), should_include_item, |id| {
-                Struct::new(db, *id, include_private_items)
-            })?;
-
-        let module_enums = module_data.enums(db);
+        let mut constants = filter_map_item_id_to_item(
+            module_data.constants(db).keys(),
+            should_include_item,
+            |id| Ok(Constant::new(db, *id)),
+        )?;
+        let mut free_functions = filter_map_item_id_to_item(
+            module_data.free_functions(db).keys(),
+            should_include_item,
+            |id| Ok(FreeFunction::new(db, *id)),
+        )?;
+        let mut structs = filter_map_item_id_to_item(
+            module_data.structs(db).keys(),
+            should_include_item,
+            |id| Struct::new(db, *id, include_private_items),
+        )?;
         let mut enums =
-            filter_map_item_id_to_item(module_enums.keys(), should_include_item, |id| {
+            filter_map_item_id_to_item(module_data.enums(db).keys(), should_include_item, |id| {
                 Enum::new(db, *id)
             })?;
 
-        let module_type_aliases = module_data.type_aliases(db);
-        let mut type_aliases =
-            filter_map_item_id_to_item(module_type_aliases.keys(), should_include_item, |id| {
-                Ok(TypeAlias::new(db, *id))
-            })?;
+        let mut type_aliases = filter_map_item_id_to_item(
+            module_data.type_aliases(db).keys(),
+            should_include_item,
+            |id| Ok(TypeAlias::new(db, *id)),
+        )?;
 
-        let module_impl_aliases = module_data.impl_aliases(db);
-        let mut impl_aliases =
-            filter_map_item_id_to_item(module_impl_aliases.keys(), should_include_item, |id| {
-                Ok(ImplAlias::new(db, *id))
-            })?;
+        let mut impl_aliases = filter_map_item_id_to_item(
+            module_data.impl_aliases(db).keys(),
+            should_include_item,
+            |id| Ok(ImplAlias::new(db, *id)),
+        )?;
 
-        let module_traits = module_data.traits(db);
         let mut traits =
-            filter_map_item_id_to_item(module_traits.keys(), should_include_item, |id| {
+            filter_map_item_id_to_item(module_data.traits(db).keys(), should_include_item, |id| {
                 Trait::new(db, *id)
             })?;
 
-        let module_impls = module_data.impls(db);
-        let hide_impls_for_hidden_traits = |impl_def_id: &&ImplDefId| {
-            // Hide impls for hidden traits and hidden trait generic args.
-            // Example: `HiddenTrait<*>` or `NotHiddenTrait<HiddenStruct>` (e.g. Drop<HiddenStruct>).
-            // We still keep impls, if any trait generic argument is not hidden.
-            let Ok(trait_id) = db.impl_def_trait(**impl_def_id) else {
-                return true;
-            };
-            let Ok(item_trait) = db.module_trait_by_id(trait_id) else {
-                return true;
-            };
-            let all_generic_args_are_hidden = db
-                .impl_def_concrete_trait(**impl_def_id)
-                .ok()
-                .map(|concrete_trait_id| {
-                    let args = concrete_trait_id.generic_args(db);
-                    if args.is_empty() {
-                        return false;
-                    }
-                    args.iter()
-                        .filter_map(|arg_id| {
-                            let GenericArgumentId::Type(type_id) = arg_id else {
-                                return None;
-                            };
-                            let TypeLongId::Concrete(concrete_type_id) = type_id.long(db) else {
-                                return None;
-                            };
-                            match &concrete_type_id {
-                                ConcreteTypeId::Struct(struct_id) => {
-                                    struct_id.has_attr_with_arg(db, "doc", "hidden").ok()
-                                }
-                                ConcreteTypeId::Enum(enum_id) => {
-                                    enum_id.has_attr_with_arg(db, "doc", "hidden").ok()
-                                }
-                                ConcreteTypeId::Extern(extern_type_id) => {
-                                    extern_type_id.has_attr_with_arg(db, "doc", "hidden").ok()
-                                }
-                            }
-                        })
-                        .all(|x| x)
-                })
-                .unwrap_or(false);
-
-            let trait_is_hidden = is_doc_hidden_attr(db, &item_trait.as_syntax_node());
-
-            !(all_generic_args_are_hidden || trait_is_hidden)
-        };
+        let hide_impls_for_hidden_traits =
+            |impl_def_id: &&ImplDefId<'db>| is_impl_hidden(db, impl_def_id);
         let mut impls = filter_map_item_id_to_item(
-            module_impls.keys().filter(hide_impls_for_hidden_traits),
+            module_data
+                .impls(db)
+                .keys()
+                .filter(hide_impls_for_hidden_traits),
             should_include_item,
             |id| Impl::new(db, *id),
         )?;
-
-        let module_extern_types = module_data.extern_types(db);
-        let mut extern_types =
-            filter_map_item_id_to_item(module_extern_types.keys(), should_include_item, |id| {
-                Ok(ExternType::new(db, *id))
-            })?;
-
-        let module_extern_functions = module_data.extern_functions(db);
+        let mut extern_types = filter_map_item_id_to_item(
+            module_data.extern_types(db).keys(),
+            should_include_item,
+            |id| Ok(ExternType::new(db, *id)),
+        )?;
         let mut extern_functions = filter_map_item_id_to_item(
-            module_extern_functions.keys(),
+            module_data.extern_functions(db).keys(),
             should_include_item,
             |id| Ok(ExternFunction::new(db, *id)),
         )?;
-        let module_submodules = module_data.submodules(db);
-        let mut submodules: Vec<Module> =
-            filter_map_item_id_to_item(module_submodules.keys(), should_include_item, |id| {
-                Module::new(db, ModuleId::Submodule(*id), include_private_items)
-            })?;
+        let mut submodules: Vec<Module> = filter_map_item_id_to_item(
+            module_data.submodules(db).keys(),
+            should_include_item,
+            |id| Module::new(db, ModuleId::Submodule(*id), include_private_items),
+        )?;
+        let mut macro_declarations: Vec<MacroDeclaration> = filter_map_item_id_to_item(
+            module_data.macro_declarations(db).keys(),
+            should_include_item,
+            |id| Ok(MacroDeclaration::new(db, *id)),
+        )?;
 
-        let macro_declarations = module_data.macro_declarations(db);
-        let macro_declarations: Vec<MacroDeclaration> =
-            filter_map_item_id_to_item(macro_declarations.keys(), should_include_item, |id| {
-                Ok(MacroDeclaration::new(db, *id))
-            })?;
+        let mut module_pubuses = ModulePubUses::new(db, module_id, include_private_items)?;
+
+        let macro_mods = module_macro_modules(db, false, module_id);
+        macro_mods.iter().for_each(|m_id| {
+            if let Ok((
+                macro_submodules,
+                macro_constants,
+                macro_free_functions,
+                macro_structs,
+                macro_enums,
+                macro_type_aliases,
+                macro_impl_aliases,
+                macro_traits,
+                macro_impls,
+                macro_extern_types,
+                macro_extern_functions,
+                macro_macro_declarations,
+                macro_pub_uses,
+            )) = collect_module_items_recursive(db, *m_id, include_private_items)
+            {
+                submodules.extend(macro_submodules.clone());
+                constants.extend(macro_constants.clone());
+                free_functions.extend(macro_free_functions.clone());
+                structs.extend(macro_structs.clone());
+                enums.extend(macro_enums.clone());
+                type_aliases.extend(macro_type_aliases.clone());
+                impl_aliases.extend(macro_impl_aliases.clone());
+                traits.extend(macro_traits.clone());
+                impls.extend(macro_impls.clone());
+                impl_aliases.extend(macro_impl_aliases.clone());
+                extern_types.extend(macro_extern_types.clone());
+                extern_functions.extend(macro_extern_functions.clone());
+                macro_declarations.extend(macro_macro_declarations.clone());
+                module_pubuses.add(macro_pub_uses);
+            }
+        });
 
         let mut group_map: HashMap<String, Group> = HashMap::new();
         constants = aggregate_constants_groups(&constants, &mut group_map);
@@ -686,4 +680,223 @@ where
             Err(a) => Some(Err(a)),
         })
         .collect::<Maybe<Maybe<Vec<K>>>>()?
+}
+
+type ModuleItems<'db> = (
+    Vec<Module<'db>>,
+    Vec<Constant<'db>>,
+    Vec<FreeFunction<'db>>,
+    Vec<Struct<'db>>,
+    Vec<Enum<'db>>,
+    Vec<TypeAlias<'db>>,
+    Vec<ImplAlias<'db>>,
+    Vec<Trait<'db>>,
+    Vec<Impl<'db>>,
+    Vec<ExternType<'db>>,
+    Vec<ExternFunction<'db>>,
+    Vec<MacroDeclaration<'db>>,
+    ModulePubUses<'db>,
+);
+
+/// Used for collecting items declared within an exposed macro module.
+pub fn collect_module_items_recursive<'db>(
+    db: &'db ScarbDocDatabase,
+    module_id: ModuleId<'db>,
+    include_private_items: bool,
+) -> Maybe<ModuleItems<'db>> {
+    let mut constants = Vec::new();
+    let mut free_functions = Vec::new();
+    let mut structs = Vec::new();
+    let mut enums = Vec::new();
+    let mut type_aliases = Vec::new();
+    let mut impl_aliases = Vec::new();
+    let mut traits = Vec::new();
+    let mut impls = Vec::new();
+    let mut extern_types = Vec::new();
+    let mut extern_functions = Vec::new();
+    let mut macro_declarations = Vec::new();
+    let mut submodules = Vec::new();
+    let mut module_pubuses = ModulePubUses::default();
+
+    let hide_impls_for_hidden_traits =
+        |impl_def_id: &&ImplDefId<'db>| is_impl_hidden(db, impl_def_id);
+
+    let should_include_item = |id: &dyn TopLevelLanguageElementId<'db>| {
+        let syntax_node = id.stable_location(db).syntax_node(db);
+        Ok((include_private_items || is_public(db, id)?) && !is_doc_hidden_attr(db, &syntax_node))
+    };
+
+    let module_data = module_id.module_data(db)?;
+
+    constants.extend(filter_map_item_id_to_item(
+        module_data.constants(db).keys(),
+        should_include_item,
+        |id| Ok(Constant::new(db, *id)),
+    )?);
+
+    free_functions.extend(filter_map_item_id_to_item(
+        module_data.free_functions(db).keys(),
+        should_include_item,
+        |id| Ok(FreeFunction::new(db, *id)),
+    )?);
+
+    structs.extend(filter_map_item_id_to_item(
+        module_data.structs(db).keys(),
+        should_include_item,
+        |id| Struct::new(db, *id, include_private_items),
+    )?);
+
+    enums.extend(filter_map_item_id_to_item(
+        module_data.enums(db).keys(),
+        should_include_item,
+        |id| Enum::new(db, *id),
+    )?);
+
+    type_aliases.extend(filter_map_item_id_to_item(
+        module_data.type_aliases(db).keys(),
+        should_include_item,
+        |id| Ok(TypeAlias::new(db, *id)),
+    )?);
+
+    impl_aliases.extend(filter_map_item_id_to_item(
+        module_data.impl_aliases(db).keys(),
+        should_include_item,
+        |id| Ok(ImplAlias::new(db, *id)),
+    )?);
+
+    traits.extend(filter_map_item_id_to_item(
+        module_data.traits(db).keys(),
+        should_include_item,
+        |id| Trait::new(db, *id),
+    )?);
+
+    impls.extend(filter_map_item_id_to_item(
+        module_data
+            .impls(db)
+            .keys()
+            .filter(hide_impls_for_hidden_traits),
+        should_include_item,
+        |id| Impl::new(db, *id),
+    )?);
+
+    extern_types.extend(filter_map_item_id_to_item(
+        module_data.extern_types(db).keys(),
+        should_include_item,
+        |id| Ok(ExternType::new(db, *id)),
+    )?);
+
+    extern_functions.extend(filter_map_item_id_to_item(
+        module_data.extern_functions(db).keys(),
+        should_include_item,
+        |id| Ok(ExternFunction::new(db, *id)),
+    )?);
+
+    submodules.extend(filter_map_item_id_to_item(
+        module_data.submodules(db).keys(),
+        should_include_item,
+        |id| Module::new(db, ModuleId::Submodule(*id), include_private_items),
+    )?);
+
+    macro_declarations.extend(filter_map_item_id_to_item(
+        module_data.macro_declarations(db).keys(),
+        should_include_item,
+        |id| Ok(MacroDeclaration::new(db, *id)),
+    )?);
+
+    let _module_pubuses = ModulePubUses::new(db, module_id, include_private_items)?;
+    module_pubuses.add(_module_pubuses);
+
+    let macro_mods = module_macro_modules(db, false, module_id);
+
+    for m in macro_mods.iter() {
+        let (
+            mut sub_submodules,
+            mut sub_constants,
+            mut sub_free_functions,
+            mut sub_structs,
+            mut sub_enums,
+            mut sub_type_aliases,
+            mut sub_impl_aliases,
+            mut sub_traits,
+            mut sub_impls,
+            mut sub_extern_types,
+            mut sub_extern_functions,
+            mut sub_macro_declarations,
+            sub_pub_uses,
+        ) = collect_module_items_recursive(db, *m, include_private_items)?;
+
+        submodules.append(&mut sub_submodules);
+        constants.append(&mut sub_constants);
+        free_functions.append(&mut sub_free_functions);
+        structs.append(&mut sub_structs);
+        enums.append(&mut sub_enums);
+        type_aliases.append(&mut sub_type_aliases);
+        impl_aliases.append(&mut sub_impl_aliases);
+        traits.append(&mut sub_traits);
+        impls.append(&mut sub_impls);
+        extern_types.append(&mut sub_extern_types);
+        extern_functions.append(&mut sub_extern_functions);
+        macro_declarations.append(&mut sub_macro_declarations);
+        module_pubuses.add(sub_pub_uses);
+    }
+    Ok((
+        submodules,
+        constants,
+        free_functions,
+        structs,
+        enums,
+        type_aliases,
+        impl_aliases,
+        traits,
+        impls,
+        extern_types,
+        extern_functions,
+        macro_declarations,
+        module_pubuses,
+    ))
+}
+
+pub fn is_impl_hidden<'db>(db: &'db ScarbDocDatabase, impl_def_id: &ImplDefId<'db>) -> bool {
+    let Ok(trait_id) = db.impl_def_trait(*impl_def_id) else {
+        return true;
+    };
+    let Ok(item_trait) = db.module_trait_by_id(trait_id) else {
+        return true;
+    };
+
+    let all_generic_args_are_hidden = db
+        .impl_def_concrete_trait(*impl_def_id)
+        .ok()
+        .map(|concrete_trait_id| {
+            let args = concrete_trait_id.generic_args(db);
+            if args.is_empty() {
+                return false;
+            }
+            args.iter()
+                .filter_map(|arg_id| {
+                    let GenericArgumentId::Type(type_id) = arg_id else {
+                        return None;
+                    };
+                    let TypeLongId::Concrete(concrete_type_id) = type_id.long(db) else {
+                        return None;
+                    };
+                    match &concrete_type_id {
+                        ConcreteTypeId::Struct(struct_id) => {
+                            struct_id.has_attr_with_arg(db, "doc", "hidden").ok()
+                        }
+                        ConcreteTypeId::Enum(enum_id) => {
+                            enum_id.has_attr_with_arg(db, "doc", "hidden").ok()
+                        }
+                        ConcreteTypeId::Extern(extern_type_id) => {
+                            extern_type_id.has_attr_with_arg(db, "doc", "hidden").ok()
+                        }
+                    }
+                })
+                .all(|x| x)
+        })
+        .unwrap_or(false);
+
+    let trait_is_hidden = is_doc_hidden_attr(db, &item_trait.as_syntax_node());
+
+    !(all_generic_args_are_hidden || trait_is_hidden)
 }
