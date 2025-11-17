@@ -29,6 +29,11 @@ RUST_MIN_STACK=134217728 scarb build
 Please note that this is a workaround and not a permanent solution.
 If you encounter this issue, please report it to the compiler team at [Cairo issues].
 
+## Rust toolchain used for procedural macro compilation
+
+If a procedural macro that you depend on cannot be compiled with the current Rust toolchain version you use,
+please follow [procedural macros docs here](reference/procedural-macro.html#controlling-rust-version) to override it.
+
 ## Procedural macros undefined symbol
 
 When compiling a project that uses procedural macros, if you encounter an error message like this:
