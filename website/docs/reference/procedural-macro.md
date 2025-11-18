@@ -858,6 +858,22 @@ rng-seeded ones, like the default hasher used in Rust).
 
 ## Advanced macro topics and use cases
 
+### Controlling Rust version
+
+Scarb will compile your procedural macro with Cargo available on your (macro users) system.
+The macro will be compiled from the directory where the macro is defined.
+This means that if you use some macro as a dependency, it will be compiled from a cache directory where it's been
+downloaded by Scarb.
+If you manage your Rust version through Rustup, it will use the same directory to determine which Rust version to use.
+This implies that if you define some specific Rust toolchain version override, for the package that depends on some macro,
+the macro can be compiled with a different toolchain version, as the Cairo package is not part of the Rust compilation.
+
+To control the Rust toolchain version, you can globally override the toolchain version by setting the default version
+with rustup or temporarily override it with `RUSTUP_TOOLCHAIN` environment variable.
+See [rustup documentation](https://rust-lang.github.io/rustup/overrides.html) for more details.
+
+You can also override the Cargo binary that will be called by Scarb, by setting `CARGO` environment variable.
+
 ### Prebuilt procedural macros
 
 By default, all procedural macros are compiled on the user system before being used by Scarb.
