@@ -39,7 +39,7 @@
                   "item_data": {
                     "name": "VisibleStruct",
                     "doc": "Inner documentation is correctly retrieved",
-                    "signature": "pub struct VisibleStruct {\n    pub works: felt252,\n    properly: felt252,\n}",
+                    "signature": "pub struct VisibleStruct {\n    pub works: felt252,\n    /* private fields */\n}",
                     "full_path": "hello_world::regina::VisibleStruct",
                     "group": null
                   }
@@ -97,7 +97,7 @@
               "item_data": {
                 "name": "OuterStruct",
                 "doc": "the outer struct",
-                "signature": "pub struct OuterStruct {\n    pub work: felt252,\n    properly: felt252,\n}",
+                "signature": "pub struct OuterStruct {\n    pub work: felt252,\n    /* private fields */\n}",
                 "full_path": "hello_world::OuterStruct",
                 "group": null
               }
