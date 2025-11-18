@@ -214,13 +214,15 @@ impl<'db> Struct<'db> {
         include_private_items: bool,
     ) -> Maybe<Self> {
         let members = db.struct_members(id)?;
-
-        let item_data = ItemData::new(
+        let mut item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Struct(id)).into(),
             doc_full_path(&id.parent_module(db), db),
         );
+
+        let mut sig_builder = StructSignatureBuilder::from_item_data(&item_data);
+
         let members = members
             .iter()
             .filter_map(|(_, semantic_member)| {
@@ -229,15 +231,22 @@ impl<'db> Struct<'db> {
                 if (include_private_items || visible) && !is_doc_hidden_attr(db, syntax_node) {
                     Some(Ok(Member::new(db, semantic_member.id)))
                 } else {
+                    let (member_signature, _) = db.get_item_signature_with_links(
+                        DocumentableItemId::Member(semantic_member.id),
+                    );
+                    if let Some(member_sig) = member_signature {
+                        sig_builder.remove_member_signature(&member_sig);
+                    }
                     None
                 }
             })
             .collect::<Maybe<Vec<_>>>()?;
 
-        let node = id.stable_ptr(db);
+        (item_data.signature, item_data.doc_location_links) = sig_builder.build();
+
         Ok(Self {
             id,
-            node,
+            node: id.stable_ptr(db),
             members,
             item_data,
         })
@@ -248,6 +257,101 @@ impl<'db> Struct<'db> {
             .iter()
             .map(|item| (item.item_data.id, &item.item_data))
             .collect()
+    }
+}
+
+/// Build a helper to manage signature lines and doc location links while filtering members.
+struct StructSignatureBuilder {
+    lines: Option<Vec<String>>,
+    links: Vec<DocLocationLink>,
+    has_private_members: bool,
+}
+
+impl StructSignatureBuilder {
+    const PRIVATE_MEMBERS: &'static str = "/* private fields */";
+    const INDENT: &'static str = "    ";
+
+    fn from_item_data(item: &ItemData) -> Self {
+        let lines = item
+            .signature
+            .as_ref()
+            .map(|sig| sig.split_inclusive('\n').map(|s| s.to_string()).collect());
+        Self {
+            lines,
+            links: item.doc_location_links.clone(),
+            has_private_members: false,
+        }
+    }
+
+    fn remove_member_signature(&mut self, member_sig: &str) {
+        if let Some(lines) = self.lines.as_mut() {
+            Self::adjust_lines_and_links_for_removed_member(lines, &mut self.links, member_sig);
+            self.has_private_members = true;
+        }
+    }
+
+    /// Helper that removes a member signature from the struct signature lines and updates doc location links accordingly.
+    fn adjust_lines_and_links_for_removed_member(
+        lines: &mut Vec<String>,
+        links: &mut Vec<DocLocationLink>,
+        member_sig: &str,
+    ) {
+        let Some((indices_to_remove, _)) = lines
+            .iter()
+            .enumerate()
+            .find(|(_, line)| line.contains(member_sig))
+        else {
+            return;
+        };
+
+        let start_offset: usize = lines[..indices_to_remove].iter().map(|l| l.len()).sum();
+        let removed_len: usize = lines[indices_to_remove].len();
+        let end_offset = start_offset + removed_len;
+
+        // Adjust doc location links.
+        let mut new_links = Vec::with_capacity(links.len());
+        for mut link in links.clone() {
+            let (start, end) = (link.start, link.end);
+            if end <= start_offset {
+                // is before
+                new_links.push(link);
+            } else if start >= end_offset {
+                // is after
+                link.start -= removed_len;
+                link.end -= removed_len;
+                new_links.push(link);
+            } else {
+                // overlaps
+            }
+        }
+        *links = new_links;
+        lines.remove(indices_to_remove);
+    }
+
+    fn build(mut self) -> (Option<String>, Vec<DocLocationLink>) {
+        if self.has_private_members
+            && let Some(mut lines) = self.lines.take()
+        {
+            lines.insert(lines.len() - 1, Self::PRIVATE_MEMBERS.to_string());
+
+            if lines.len() >= 3 {
+                let target_line_index = lines.len() - 3;
+
+                if let Some(target_line) = lines.get_mut(target_line_index)
+                    && (target_line.starts_with("pub struct") || target_line.starts_with("struct"))
+                    && target_line.ends_with('\n')
+                {
+                    target_line.pop();
+                } else {
+                    lines.insert(lines.len() - 2, Self::INDENT.to_string());
+                    lines.insert(lines.len() - 1, "\n".to_string());
+                }
+            }
+            return (Some(lines.concat()), self.links);
+        }
+
+        let sig = self.lines.map(|v| v.concat());
+        (sig, self.links)
     }
 }
 
