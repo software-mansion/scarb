@@ -83,10 +83,10 @@ impl CompileOpts {
         target_names: Vec<String>,
         target_kinds: Vec<String>,
     ) -> Result<Self> {
-        let (include_targets, exclude_targets): (Vec<TargetKind>, Vec<TargetKind>) = if test {
-            (vec![TargetKind::TEST.clone()], Vec::new())
+        let include_targets: Vec<TargetKind> = if test {
+            vec![TargetKind::TEST.clone()]
         } else {
-            (Vec::new(), vec![TargetKind::TEST.clone()])
+            Vec::new()
         };
         let include_targets = if !target_kinds.is_empty() {
             target_kinds
@@ -96,6 +96,12 @@ impl CompileOpts {
         } else {
             include_targets
         };
+        let exclude_targets: Vec<TargetKind> =
+            if !test && !include_targets.contains(&TargetKind::TEST) {
+                vec![TargetKind::TEST.clone()]
+            } else {
+                Vec::new()
+            };
         Ok(Self {
             include_target_kinds: include_targets,
             exclude_target_kinds: exclude_targets,
