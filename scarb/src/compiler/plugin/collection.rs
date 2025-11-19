@@ -10,12 +10,14 @@ use smol_str::SmolStr;
 use std::vec::IntoIter;
 
 use super::proc_macro::{DeclaredProcMacroInstances, ProcMacroHostPlugin, ProcMacroInstance};
+use crate::compiler::incremental::PluginFingerprint;
 use crate::compiler::plugin::CairoPlugin;
 use crate::core::PackageId;
 use crate::{
     compiler::{CairoCompilationUnit, CompilationUnitComponentId, CompilationUnitDependency},
     core::Workspace,
 };
+use tokio::runtime::Runtime;
 
 pub struct PluginsForComponents {
     pub plugins: HashMap<CompilationUnitComponentId, PluginSuite>,
@@ -27,12 +29,17 @@ impl PluginsForComponents {
     pub fn collect(workspace: &Workspace<'_>, unit: &CairoCompilationUnit) -> Result<Self> {
         let mut plugins = collect_builtin_plugins(workspace, unit)?;
 
-        let proc_macros = collect_proc_macros(workspace, unit)?
+        let proc_macros = collect_proc_macros(workspace, unit, None)?
             .into_iter()
             .map(|(component_id, instances)| {
                 Ok((
                     component_id,
-                    ComponentProcMacroHost::try_from_instances(instances)?,
+                    ComponentProcMacroHost::try_from_instances(
+                        instances
+                            .into_iter()
+                            .map(|(instance, _hash)| instance)
+                            .collect(),
+                    )?,
                 ))
             })
             .collect::<Result<HashMap<_, _>>>()?;
@@ -65,6 +72,7 @@ pub struct WorkspaceProcMacros {
     /// each mapped to a [`ProcMacroHostPlugin`] which contains
     /// **all proc macro dependencies of the package** collected from **all compilation units it appears in**.
     pub macros_for_components: HashMap<CompilationUnitComponent, Arc<Vec<ProcMacroHostPlugin>>>,
+    pub instance_to_hash: HashMap<Arc<ProcMacroInstance>, u64>,
 }
 
 impl WorkspaceProcMacros {
@@ -74,9 +82,12 @@ impl WorkspaceProcMacros {
         compilation_units: &[&CairoCompilationUnit],
     ) -> Result<Self> {
         let mut macros_for_components = HashMap::<_, Vec<_>>::new();
+        let rt = Runtime::new()?;
 
         for &unit in compilation_units {
-            for (component_id, mut macro_instances) in collect_proc_macros(workspace, unit)? {
+            for (component_id, mut macro_instances) in
+                collect_proc_macros(workspace, unit, Some(&rt))?
+            {
                 let component: CompilationUnitComponent = unit
                     .components
                     .iter()
@@ -91,11 +102,18 @@ impl WorkspaceProcMacros {
             }
         }
 
+        let instance_to_hash: HashMap<_, _> = macros_for_components
+            .values()
+            .flatten()
+            .map(|(key, value)| (key.clone(), value.unwrap()))
+            .collect();
+
         let macros_for_components = macros_for_components
             .into_iter()
             .map(|(component, macro_instances)| {
                 let deduplicated_instances: Vec<Arc<ProcMacroInstance>> = macro_instances
                     .into_iter()
+                    .map(|(instance, _hash)| instance)
                     .unique_by(|instance| instance.package_id())
                     .collect();
                 let proc_macros =
@@ -107,6 +125,7 @@ impl WorkspaceProcMacros {
 
         Ok(Self {
             macros_for_components,
+            instance_to_hash,
         })
     }
 
@@ -189,12 +208,15 @@ impl PluginSuiteAssembler {
     }
 }
 
+type InstanceAndHash = (Arc<ProcMacroInstance>, Option<u64>);
+
 /// Collects [`ProcMacroInstances`]s for each component of the [`CairoCompilationUnit`],
 /// according to the dependencies on procedural macros.
 fn collect_proc_macros(
     workspace: &Workspace<'_>,
     unit: &CairoCompilationUnit,
-) -> Result<HashMap<CompilationUnitComponentId, Vec<Arc<ProcMacroInstance>>>> {
+    rt: Option<&Runtime>,
+) -> Result<HashMap<CompilationUnitComponentId, Vec<InstanceAndHash>>> {
     let mut proc_macros_for_components = HashMap::new();
 
     for component in unit.components.iter() {
@@ -215,7 +237,15 @@ fn collect_proc_macros(
                 continue;
             }
 
-            component_proc_macro_instances.push(plugin.instantiate(workspace.config())?);
+            let hash = match rt {
+                Some(rt) => Some(
+                    rt.block_on(PluginFingerprint::try_from_plugin(plugin, workspace))?
+                        .digest_u64(),
+                ),
+                None => None,
+            };
+
+            component_proc_macro_instances.push((plugin.instantiate(workspace.config())?, hash));
         }
 
         proc_macros_for_components.insert(component.id.clone(), component_proc_macro_instances);

@@ -8,6 +8,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::fmt::Debug;
+use std::hash::Hash;
 use tracing::trace;
 
 #[derive(
@@ -28,6 +29,18 @@ pub struct ProcMacroInstance {
     package_id: PackageId,
     plugin: VersionedPlugin,
     expansions: Vec<Expansion>,
+}
+
+impl PartialEq for ProcMacroInstance {
+    fn eq(&self, other: &Self) -> bool {
+        self.package_id == other.package_id
+    }
+}
+impl Eq for ProcMacroInstance {}
+impl Hash for ProcMacroInstance {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.package_id.hash(state);
+    }
 }
 
 impl Debug for ProcMacroInstance {

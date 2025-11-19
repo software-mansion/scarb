@@ -7,3 +7,5 @@ pub use compilation::{
     IncrementalContext, load_incremental_artifacts, save_incremental_artifacts,
     warmup_incremental_cache,
 };
+
+pub use fingerprint::PluginFingerprint;
