@@ -33,7 +33,7 @@ pub struct MarkdownContent {
     book_toml: String,
     summary: SummaryIndexMap,
     doc_files: Vec<GeneratedFile>,
-    files_extension: &'static str,
+    pub files_extension: &'static str,
 }
 
 impl MarkdownContent {
