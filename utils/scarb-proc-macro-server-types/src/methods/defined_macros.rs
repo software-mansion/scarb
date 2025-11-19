@@ -27,15 +27,24 @@ pub struct CompilationUnitComponentMacros {
     /// uniquely in the [`DefinedMacrosResponse`].
     pub component: CompilationUnitComponent,
     /// List of attribute macro names available.
-    pub attributes: Vec<String>,
+    pub attributes: Vec<MacroWithHash>,
     /// List of inline macro names available.
-    pub inline_macros: Vec<String>,
+    pub inline_macros: Vec<MacroWithHash>,
     /// List of derive macro identifiers available.
-    pub derives: Vec<String>,
+    pub derives: Vec<MacroWithHash>,
     /// List of executable attributes available.
     pub executables: Vec<String>,
     /// Additional debug information.
     pub debug_info: DebugInfo,
+}
+
+/// Represents single macro (attr/inline/derive) with hash of its plugin package.
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct MacroWithHash {
+    /// Macro name.
+    pub name: String,
+    /// Hash of plugin containing this macro.
+    pub hash: u64,
 }
 
 /// Stores extra information about the macros managed by the server.

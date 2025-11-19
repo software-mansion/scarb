@@ -63,15 +63,27 @@ fn defined_macros() {
         proc_macro_client.defined_macros_for_package("test_package", manifest_path);
 
     assert_eq!(
-        &defined_macros.attributes,
+        &defined_macros
+            .attributes
+            .into_iter()
+            .map(|m| m.name)
+            .collect::<Vec<_>>(),
         &["some_v1".to_string(), "some_v2".to_string()]
     );
     assert_eq!(
-        &defined_macros.derives,
+        &defined_macros
+            .derives
+            .into_iter()
+            .map(|m| m.name)
+            .collect::<Vec<_>>(),
         &["some_derive_v1".to_string(), "some_derive_v2".to_string()]
     );
     assert_eq!(
-        &defined_macros.inline_macros,
+        &defined_macros
+            .inline_macros
+            .into_iter()
+            .map(|m| m.name)
+            .collect::<Vec<_>>(),
         &["inline_some_v1".to_string(), "inline_some_v2".to_string()]
     );
     assert_eq!(

@@ -151,7 +151,7 @@ impl UnitComponentsFingerprint {
                 ),
                 ToFingerprint::Plugin(plugin) => (
                     plugin.component_dependency_id.clone(),
-                    PluginFingerprint::try_from_plugin(plugin, unit, ws)
+                    PluginFingerprint::try_from_plugin(plugin, ws)
                         .await
                         .map(ComponentFingerprint::Plugin),
                 ),
@@ -233,7 +233,6 @@ impl ComponentFingerprint {
 impl PluginFingerprint {
     pub async fn try_from_plugin(
         component: &CompilationUnitCairoPlugin,
-        _unit: &CairoCompilationUnit,
         ws: &Workspace<'_>,
     ) -> Result<Self> {
         let component_discriminator = component
@@ -299,6 +298,14 @@ impl PluginFingerprint {
     }
 
     pub fn digest(&self) -> String {
+        self.prepare_hasher().finish_as_short_hash()
+    }
+
+    pub fn digest_u64(&self) -> u64 {
+        self.prepare_hasher().finish()
+    }
+
+    fn prepare_hasher(&self) -> StableHasher {
         let mut hasher = StableHasher::new();
         self.component_discriminator.hash(&mut hasher);
         self.is_builtin.hash(&mut hasher);
@@ -322,7 +329,7 @@ impl PluginFingerprint {
                 .unwrap_or_default()
                 .hash(&mut hasher);
         }
-        hasher.finish_as_short_hash()
+        hasher
     }
 }
 
