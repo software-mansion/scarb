@@ -412,4 +412,40 @@ mod tests {
             ]
         );
     }
+
+    // https://github.com/software-mansion/scarb/issues/2537
+    #[test]
+    fn interpolated_var_separation() {
+        use proc_macro2::{Punct, Spacing, TokenTree};
+
+        let mut input: proc_macro2::TokenStream = rust_quote! { let };
+        input.append(TokenTree::Punct(Punct::new('#', Spacing::Joint)));
+        input.extend(rust_quote! { name });
+        input.extend(rust_quote! {});
+        input.append(TokenTree::Punct(Punct::new('#', Spacing::Joint)));
+        input.extend(rust_quote! { name_type });
+        input.extend(rust_quote! { = });
+        input.append(TokenTree::Punct(Punct::new('#', Spacing::Joint)));
+        input.extend(rust_quote! { value });
+        input.extend(rust_quote! { ; });
+
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("let".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Var(Ident::new("name", Span::call_site())),
+                QuoteToken::Whitespace,
+                QuoteToken::Var(Ident::new("name_type", Span::call_site())),
+                QuoteToken::Whitespace,
+                QuoteToken::Content("=".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Var(Ident::new("value", Span::call_site())),
+                QuoteToken::Whitespace,
+                QuoteToken::Content(";".to_string())
+            ]
+        );
+    }
 }
