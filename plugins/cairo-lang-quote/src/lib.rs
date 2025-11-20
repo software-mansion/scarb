@@ -263,9 +263,12 @@ pub fn quote_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                     }
                 };
                 output_token_stream.extend(rust_quote! {
+                  // Add whitespace before and after arg substitution to separate from surrounding tokens.
+                  quote_macro_result.push_token(::cairo_lang_macro::TokenTree::Ident(::cairo_lang_macro::Token::new(" ".to_string(), ::cairo_lang_macro::TextSpan::call_site())));
                   quote_macro_result.extend(
                     ::cairo_lang_macro::TokenStream::from_primitive_token_stream(::cairo_lang_primitive_token::ToPrimitiveTokenStream::to_primitive_token_stream(&#expr)).into_iter()
                   );
+                  quote_macro_result.push_token(::cairo_lang_macro::TokenTree::Ident(::cairo_lang_macro::Token::new(" ".to_string(), ::cairo_lang_macro::TextSpan::call_site())));
                 });
             }
         }

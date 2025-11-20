@@ -1425,3 +1425,74 @@ fn quote_format_macro_preserves_spans_of_parsed_args() {
             [..]Finished `dev` profile target(s) in [..]
       "##});
 }
+
+
+#[test]
+fn quote_format_macro_correctly_separates_interpolated_vars() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{inline_macro, TextSpan, Token, TokenTree, ProcMacroResult, TokenStream, quote_format};
+
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                let name = TokenTree::Ident(Token::new("x", TextSpan::call_site()));
+                let name_type =
+                    TokenTree::Ident(Token::new(":Option<felt252>", TextSpan::call_site()));
+                let val = TokenTree::Ident(Token::new("Some(42)", TextSpan::call_site()));
+                let tokens = quote_format! {
+                    r#"pub fn foo() -> Option<felt252> {{
+                        let {}{}={};
+                        {}
+                    }}"#,
+                    name,
+                    name_type,
+                    val,
+                    name
+                };
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            some!();
+
+            #[executable]
+            fn main() {
+                let x = foo();
+                println!("{:?}", x);
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..] Compiling some v1.0.0 [..]
+        [..] Compiling hello v1.0.0 [..]
+        [..] Finished `dev` profile [..]
+        [..]Executing hello
+        Option::Some(42)
+        Saving output to: target/execute/hello/execution1
+        "#});
+}
+
