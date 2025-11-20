@@ -36,16 +36,29 @@ impl QuoteToken {
     }
 }
 
+#[derive(Eq, PartialEq)]
+enum PreviousKind {
+    None,
+    Ident,
+    Var,
+    Punct,
+    Literal,
+    Group,
+}
+
 fn process_token_stream(
     mut token_stream: Peekable<impl Iterator<Item = TokenTree>>,
     output: &mut Vec<QuoteToken>,
 ) {
     // Rust proc macro parser to TokenStream gets rid of all whitespaces.
     // Here we just make sure no two identifiers are without a space between them.
-    let mut was_previous_ident: bool = false;
+    let mut previous_kind = PreviousKind::None;
     while let Some(token_tree) = token_stream.next() {
         match token_tree {
             TokenTree::Group(group) => {
+                if matches!(previous_kind, PreviousKind::Var) {
+                    output.push(QuoteToken::Whitespace);
+                }
                 let token_iter = group.stream().into_iter().peekable();
                 let delimiter = group.delimiter();
                 output.push(QuoteToken::from_delimiter(
@@ -57,40 +70,52 @@ fn process_token_stream(
                     delimiter,
                     DelimiterVariant::Close,
                 ));
-                was_previous_ident = false;
+                previous_kind = PreviousKind::Group;
             }
             TokenTree::Punct(punct) => {
                 if punct.as_char() == '#' {
                     // Only peek, so items processed with punct can be handled in next iteration.
                     if let Some(TokenTree::Ident(ident)) = token_stream.peek() {
-                        if was_previous_ident {
+                        if !matches!(previous_kind, PreviousKind::None) {
                             output.push(QuoteToken::Whitespace);
                         }
                         let var_ident = Ident::new(&ident.to_string(), Span::call_site());
                         output.push(QuoteToken::Var(var_ident));
-                        was_previous_ident = true;
+                        previous_kind = PreviousKind::Var;
                         // Move iterator, as we only did peek before.
                         let _ = token_stream.next();
                     } else {
                         // E.g. to support Cairo attributes (i.e. punct followed by non-ident `#[`).
                         output.push(QuoteToken::Content(punct.to_string()));
-                        was_previous_ident = false;
+                        previous_kind = PreviousKind::Punct;
                     }
                 } else {
+                    if matches!(previous_kind, PreviousKind::Var) {
+                        output.push(QuoteToken::Whitespace);
+                    }
                     output.push(QuoteToken::Content(punct.to_string()));
-                    was_previous_ident = false;
+                    previous_kind = PreviousKind::Punct;
                 }
             }
             TokenTree::Ident(ident) => {
-                if was_previous_ident {
+                if matches!(
+                    previous_kind,
+                    PreviousKind::Ident | PreviousKind::Var | PreviousKind::Literal
+                ) {
                     output.push(QuoteToken::Whitespace);
                 }
                 output.push(QuoteToken::Content(ident.to_string()));
-                was_previous_ident = true;
+                previous_kind = PreviousKind::Ident;
             }
             TokenTree::Literal(literal) => {
+                if matches!(
+                    previous_kind,
+                    PreviousKind::Ident | PreviousKind::Var | PreviousKind::Literal
+                ) {
+                    output.push(QuoteToken::Whitespace);
+                }
                 output.push(QuoteToken::Content(literal.to_string()));
-                was_previous_ident = false;
+                previous_kind = PreviousKind::Literal;
             }
         }
     }
@@ -335,6 +360,7 @@ mod tests {
                 QuoteToken::Content("mod".to_string()),
                 QuoteToken::Whitespace,
                 QuoteToken::Var(Ident::new("name", Span::call_site())),
+                QuoteToken::Whitespace,
                 QuoteToken::Content("{".to_string()),
                 QuoteToken::Content("}".to_string()),
             ]
@@ -377,7 +403,9 @@ mod tests {
                 QuoteToken::Whitespace,
                 QuoteToken::Content("NameTrait".to_string()),
                 QuoteToken::Content("<".to_string()),
+                QuoteToken::Whitespace,
                 QuoteToken::Var(Ident::new("name_token", Span::call_site())),
+                QuoteToken::Whitespace,
                 QuoteToken::Content(">".to_string()),
                 QuoteToken::Content("{".to_string()),
                 QuoteToken::Content("}".to_string()),
