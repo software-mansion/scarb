@@ -173,6 +173,79 @@ fn quote_macro_with_token_stream() {
 }
 
 #[test]
+fn quote_macro_correctly_separates_interpolated_vars() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{inline_macro, TextSpan, Token, TokenTree, ProcMacroResult, TokenStream, quote};
+
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                let name = TokenTree::Ident(Token::new("x", TextSpan::call_site()));
+                let name_type = TokenTree::Ident(Token::new(":Option<felt252>", TextSpan::call_site()));
+                let val = TokenTree::Ident(Token::new("Some(42)", TextSpan::call_site()));
+                let tokens = quote! {
+                    pub fn foo() -> Option<felt252> {
+                        let #name #name_type = #val;
+                        #name
+                    }
+                };
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            some!();
+
+            #[executable]
+            fn main() {
+                let x = foo();
+                println!("{:?}", x);
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..] Compiling some v1.0.0 [..]
+        [..] Compiling hello v1.0.0 [..]
+        [..] Finished `dev` profile [..]
+        [..]Executing hello
+        Option::Some(42)
+        Saving output to: target/execute/hello/execution1
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("expand")
+        .args(["--target-name", "hello"])
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+}
+
+#[test]
 fn quote_macro_with_syntax_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
