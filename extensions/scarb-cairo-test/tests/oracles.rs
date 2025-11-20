@@ -43,7 +43,7 @@ fn oracle() {
             help: to install snforge, please visit: https://foundry-rs.github.io/starknet-foundry/getting-started/installation.html
             help: to learn how to migrate, see: https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects
             [..] Compiling test(oracle_test_unittest) oracle_test v0.1.0 ([..])
-            [..] Finished `dev` profile target(s) in [..] seconds
+            [..] Finished `dev` profile target(s) in [..]
             [..] Testing oracle_test
             running 1 test
             test oracle_test::it_works ... ok (gas usage est.: [..])
