@@ -1,8 +1,8 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use serde::de::DeserializeOwned;
-use snapbox::cmd::Command as SnapboxCommand;
-use std::ffi::OsString;
+use snapbox::cmd::{Command as SnapboxCommand, OutputAssert};
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
@@ -43,21 +43,26 @@ impl Scarb {
         }
     }
 
-    pub fn quick_snapbox() -> SnapboxCommand {
+    pub fn quick_snapbox() -> ScarbCommand {
         Self::new().snapbox()
     }
 
-    pub fn snapbox(self) -> SnapboxCommand {
-        SnapboxCommand::from_std(self.std())
+    pub fn snapbox(self) -> ScarbCommand {
+        let inner = SnapboxCommand::from_std(self.std());
+        let managed_paths = vec![self.cache, self.config];
+        ScarbCommand {
+            inner,
+            managed_paths,
+        }
     }
 
-    pub fn std(self) -> StdCommand {
-        let mut cmd = StdCommand::new(self.scarb_bin);
-        cmd.env("SCARB_LOG", self.log);
+    pub fn std(&self) -> StdCommand {
+        let mut cmd = StdCommand::new(self.scarb_bin.clone());
+        cmd.env("SCARB_LOG", self.log.clone());
         cmd.env("SCARB_CACHE", self.cache.path());
         cmd.env("SCARB_CONFIG", self.config.path());
         cmd.env("SCARB_INIT_TEST_RUNNER", "none");
-        if let Some(target) = self.target {
+        if let Some(target) = self.target.as_ref() {
             cmd.env("SCARB_TARGET_DIR", target.path());
         }
         cmd
@@ -113,6 +118,71 @@ impl Default for Scarb {
     }
 }
 
+pub struct ScarbCommand {
+    inner: SnapboxCommand,
+    managed_paths: Vec<EnvPath>,
+}
+
+impl ScarbCommand {
+    pub fn arg(mut self, arg: impl AsRef<OsStr>) -> Self {
+        self.inner = self.inner.arg(arg);
+        self
+    }
+
+    pub fn args(mut self, args: impl IntoIterator<Item = impl AsRef<OsStr>>) -> Self {
+        self.inner = self.inner.args(args);
+        self
+    }
+
+    pub fn env_remove(mut self, key: impl AsRef<OsStr>) -> Self {
+        self.inner = self.inner.env_remove(key);
+        self
+    }
+
+    pub fn env(mut self, key: impl AsRef<OsStr>, value: impl AsRef<OsStr>) -> Self {
+        self.inner = self.inner.env(key, value);
+        self
+    }
+
+    pub fn envs(
+        mut self,
+        vars: impl IntoIterator<Item = (impl AsRef<OsStr>, impl AsRef<OsStr>)>,
+    ) -> Self {
+        self.inner = self.inner.envs(vars);
+        self
+    }
+
+    pub fn current_dir(self, dir: impl AsRef<Path>) -> Self {
+        Self {
+            managed_paths: self.managed_paths,
+            inner: self.inner.current_dir(dir),
+        }
+    }
+
+    pub fn assert(self) -> OutputAssert {
+        let Self {
+            // will be dropped at the end of the block, after `assert` is called
+            managed_paths: _managed_paths,
+            inner,
+        } = self;
+        inner.assert()
+    }
+
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.inner = self.inner.timeout(timeout);
+        self
+    }
+
+    pub fn output(self) -> Result<std::process::Output, std::io::Error> {
+        let Self {
+            // will be dropped at the end of the block, after `output` is called
+            managed_paths: _managed_paths,
+            inner,
+        } = self;
+        inner.output()
+    }
+}
+
 #[allow(dead_code)]
 enum EnvPath {
     Managed(TempDir),
@@ -157,5 +227,16 @@ impl CommandExt for SnapboxCommand {
         }
         // help: make sure that the command outputs NDJSON (`--json` flag).
         panic!("Failed to deserialize stdout to JSON");
+    }
+}
+
+impl CommandExt for ScarbCommand {
+    fn stdout_json<T: DeserializeOwned>(self) -> T {
+        let Self {
+            // will be dropped at the end of the block, after `stdout_json` is called
+            managed_paths: _managed_paths,
+            inner,
+        } = self;
+        inner.stdout_json()
     }
 }
