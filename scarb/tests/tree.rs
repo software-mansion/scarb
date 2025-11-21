@@ -512,3 +512,60 @@ fn no_dedupe_cycle() {
                 └── root v0.1.0 ([..]) (*)
         "#});
 }
+
+#[test]
+fn workspace_exclude() {
+    let t = TempDir::new().unwrap().child("test_workspace");
+    let pkg1 = t.child("first");
+    ProjectBuilder::start().name("first").build(&pkg1);
+
+    let pkg2 = t.child("second");
+    ProjectBuilder::start().name("second").build(&pkg2);
+
+    let root = ProjectBuilder::start().name("root");
+
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .package(root)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("tree")
+        .arg("--workspace")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            first v1.0.0 ([..])
+
+            root v1.0.0 ([..])
+
+            second v1.0.0 ([..])
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("tree")
+        .arg("--workspace")
+        .arg("--exclude")
+        .arg("second")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            first v1.0.0 ([..])
+
+            root v1.0.0 ([..])
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("tree")
+        .arg("--workspace")
+        .arg("--exclude=second, first")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            root v1.0.0 ([..])
+        "#});
+}
