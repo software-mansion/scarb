@@ -18,7 +18,7 @@
               "item_data": {
                 "name": "main",
                 "doc": "main",
-                "signature": "fn main()",
+                "signature": "pub fn main()",
                 "full_path": "hello_world::main",
                 "group": null
               }

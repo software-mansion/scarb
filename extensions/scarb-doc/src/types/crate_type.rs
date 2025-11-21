@@ -70,6 +70,8 @@ impl<'db> Crate<'db> {
         Ok(root)
     }
 
+    /// Ensures all item ancestors passed as `module_ids` will be created as virtual modules if they weren't created yet.
+    /// Note that no [`ModuleId`] should be of a type [`ModuleId::MacroCall`] as they are omitted everywhere else in scarb doc code, otherwise the [`Module::new_virtual`] will fail.
     fn ensure_module_structure(
         &mut self,
         db: &'db ScarbDocDatabase,
