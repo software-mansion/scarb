@@ -27,7 +27,7 @@ fn test_doc_hidden() {
 
 
           /// main
-          fn main() {
+          pub fn main() {
               println!("hellow")
           }
         "#})
@@ -88,5 +88,37 @@ fn hides_impls_of_private_traits() {
     JsonTargetChecker::default()
         .actual(&t.path().join("target/doc/output.json"))
         .expected("./data/json_doc_hidden_impls.json")
+        .assert_files_match();
+}
+
+#[test]
+fn test_doc_hidden_pub_use() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+          /// main
+          pub fn main() {
+              println!("hellow")
+          }
+
+        pub use guacamole::aguacate;
+        mod guacamole {
+            #[doc(hidden)]
+            pub fn aguacate() -> felt252 { 10 }
+        }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args(["--output-format", "json"])
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    JsonTargetChecker::default()
+        .actual(&t.path().join("target/doc/output.json"))
+        .expected("./data/json_doc_hidden.json")
         .assert_files_match();
 }

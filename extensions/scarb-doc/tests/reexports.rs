@@ -70,6 +70,21 @@ fn test_reexports() {
           fn main() {
               println!("main");
           }
+
+`         pub macro make_life_harder {
+          ($name:ident) => {
+            expose! {
+              mod $name {
+                pub mod break_stuff {
+                  //! when this fails there is likely a bug
+                  //! related to retrieving pub use ancestors
+                  }
+                }
+              }
+            };
+          }
+          make_life_harder!(please);`
+          pub use please::break_stuff;
         "#})
         .src(
             "src/sub_module.cairo",
