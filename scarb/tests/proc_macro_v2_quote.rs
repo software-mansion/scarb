@@ -246,6 +246,157 @@ fn quote_macro_with_syntax_node() {
 }
 
 #[test]
+fn quote_format_macro_supports_comments_in_format_string() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, quote_format};
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+          let tokens = quote_format! {
+            r#"/// Doc comment.
+            ///
+            // Regular comment.
+            pub fn foo() -> felt252 {{
+              // Function body comment.
+              21
+            }}"#
+          };
+          ProcMacroResult::new(tokens)
+        }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            some!();
+
+            #[executable]
+            fn main() -> felt252 {
+                foo()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("expand")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+
+    assert_eq!(
+        project.child("target/dev").files(),
+        vec!["hello.expanded.cairo"]
+    );
+    let expanded = project
+        .child("target/dev/hello.expanded.cairo")
+        .read_to_string();
+    Assert::new().eq(
+        expanded,
+        indoc! {r#"
+            mod hello {
+                #[executable]
+                fn main() -> felt252 {
+                    foo()
+                }
+                /// Doc comment.
+                ///
+                // Regular comment.
+                pub fn foo() -> felt252 {
+                    // Function body comment.
+                    21
+                }
+            }
+        "#},
+    );
+}
+
+#[test]
+fn quote_format_macro_supports_comments_in_token_stream() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, quote_format};
+        use cairo_lang_macro::{TokenTree, Token, TextSpan};
+        use cairo_lang_parser::utils::SimpleParserDatabase;
+        use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+          let db_val = SimpleParserDatabase::default();
+          let db = &db_val;
+          let (body, _diagnostics) = db.parse_token_stream(&token_stream);
+          let name = TokenTree::Ident(Token::new("new_module", TextSpan::call_site()));
+          let body = SyntaxNodeWithDb::new(&body, db);
+          let tokens = quote_format! {
+            r#"mod {} {{
+                {}
+            }}"#,
+            name,
+            body
+          };
+          ProcMacroResult::new(tokens)
+        }
+      "##})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            /// Doc comment.
+            fn main() -> u32 {
+              // completly wrong type
+              true
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("expand")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+
+    assert_eq!(
+        project.child("target/dev").files(),
+        vec!["hello.expanded.cairo"]
+    );
+    let expanded = project
+        .child("target/dev/hello.expanded.cairo")
+        .read_to_string();
+    Assert::new().eq(
+        expanded,
+        indoc! {r#"
+            mod hello {
+                mod new_module {
+                    /// Doc comment.
+                    fn main() -> u32 {
+                        // completly wrong type
+                        true
+                    }
+                }
+            }
+        "#},
+    );
+}
+
+#[test]
 fn quote_macro_with_cairo_specific_syntax() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");

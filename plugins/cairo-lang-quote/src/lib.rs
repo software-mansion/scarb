@@ -160,7 +160,7 @@ impl Parse for QuoteFormatArgs {
 /// stripped out by the format parser before this function is called.
 fn tokenize_basic(string: &str) -> Vec<QuoteToken> {
     string
-        .split(char::is_whitespace)
+        .split(|ch: char| ch.is_whitespace() && ch != '\n')
         .map(|s| QuoteToken::Content(s.to_string()))
         .flat_map(|content| [QuoteToken::Whitespace, content])
         .skip(1)
