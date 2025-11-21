@@ -46,7 +46,7 @@ fn check_true() {
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -81,7 +81,7 @@ fn check_false() {
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         // NOTE: we cannot use `check` here, because without full compilation
         // we cannot predict what libfuncs would be generated
         // Also, `check` subcommand would not check if the libfuncs warning doesn't appear
@@ -116,7 +116,7 @@ fn deny_true() {
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         // NOTE: we cannot use `check` here, because without full compilation
         // we cannot predict what libfuncs would be generated
         .arg("build")
@@ -148,7 +148,7 @@ fn pass_named_list() {
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         // NOTE: we cannot use `check` here, because without full compilation
         // we cannot predict what libfuncs would be generated
         .arg("build")
@@ -176,7 +176,7 @@ fn unknown_list_name() {
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         // NOTE: we cannot use `check` here, because without full compilation
         // we cannot predict what libfuncs would be generated
         .arg("build")
@@ -213,7 +213,7 @@ fn list_path() {
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         // NOTE: we cannot use `check` here, because without full compilation
         // we cannot predict what libfuncs would be generated
         .arg("build")
@@ -244,7 +244,7 @@ fn list_path_does_not_exist() {
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         // NOTE: we cannot use `check` here, because without full compilation
         // we cannot predict what libfuncs would be generated
         .arg("build")

@@ -24,7 +24,7 @@ fn will_use_yanked_if_already_present_in_lockfile() {
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -39,7 +39,7 @@ fn will_use_yanked_if_already_present_in_lockfile() {
 
     yank(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -73,7 +73,7 @@ fn will_not_use_yanked_version() {
         .lib_cairo(r#"fn hello() -> felt252 { 0 }"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -91,7 +91,7 @@ fn will_not_use_yanked_version() {
             .build(t);
     });
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()

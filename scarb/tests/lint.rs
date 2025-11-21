@@ -42,7 +42,7 @@ fn lint_main_package() {
     // We add this one to test that the linting is not run on the test package.
     t.child("tests/test1.cairo").write_str(test_code).unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .current_dir(&t)
         .assert()
@@ -96,7 +96,7 @@ fn lint_warnings_disallowed_manifest() {
     // We add this one to test that the linting is not run on the test package.
     t.child("tests/test1.cairo").write_str(test_code).unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .current_dir(&t)
         .assert()
@@ -147,7 +147,7 @@ fn lint_warnings_disallowed_cli() {
     // We add this one to test that the linting is not run on the test package.
     t.child("tests/test1.cairo").write_str(test_code).unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("--deny-warnings")
         .current_dir(&t)
@@ -203,7 +203,7 @@ fn lint_warnings_disallowed_cli_and_manifest() {
     // We add this one to test that the linting is not run on the test package.
     t.child("tests/test1.cairo").write_str(test_code).unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("--deny-warnings")
         .current_dir(&t)
@@ -259,7 +259,7 @@ fn lint_workspace() {
         "#}))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("--workspace")
         .current_dir(&t)
@@ -317,7 +317,7 @@ fn lint_integration_tests() {
         "#})
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("-t")
         .current_dir(&t)
@@ -372,7 +372,7 @@ fn lint_unit_test() {
         .dep_cairo_test()
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("-t")
         .current_dir(&t)
@@ -401,7 +401,7 @@ fn lint_no_panics() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .current_dir(&t)
         .assert()
@@ -425,7 +425,7 @@ fn lint_panics() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .current_dir(&t)
         .assert()
@@ -470,7 +470,7 @@ fn lint_selected_features() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("--features")
         .arg("y")
@@ -479,7 +479,7 @@ fn lint_selected_features() {
         .success()
         .stdout_eq("     Linting hello v1.0.0 ([..]/Scarb.toml)\n");
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("--features")
         .arg("x")
@@ -508,7 +508,7 @@ fn test_missing_feature() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("--features")
         .arg("x")
@@ -560,7 +560,7 @@ fn lint_selected_targets() {
       "#}))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("--workspace")
         .arg("--target-names=first,second")
@@ -609,7 +609,7 @@ fn lint_specific_file() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("src/other.cairo")
         .current_dir(&t)
@@ -685,7 +685,7 @@ fn lint_specific_directory() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("src/my_module")
         .current_dir(&t)
@@ -737,7 +737,7 @@ fn lint_non_existing_file() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("wrong.cairo")
         .current_dir(&t)
@@ -769,7 +769,7 @@ fn test_fixer_formatting() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("--fix")
         .current_dir(&t)
@@ -850,7 +850,7 @@ fn test_linter_with_attribute_macros() {
       "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -935,7 +935,7 @@ fn test_linter_with_attribute_macros_complex() {
     "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -977,7 +977,7 @@ fn test_with_derive_macro() {
   "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1033,7 +1033,7 @@ fn lint_workspace_with_deny_warnings() {
         "#}))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("lint")
         .arg("--workspace")
         .arg("--deny-warnings")

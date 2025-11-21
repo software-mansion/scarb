@@ -37,7 +37,7 @@ fn build_temp_dir(data: &str) -> TempDir {
 #[test]
 fn simple_check_invalid() {
     let t = build_temp_dir(SIMPLE_ORIGINAL);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fmt")
         .arg("--check")
         .arg("--no-color")
@@ -63,7 +63,7 @@ fn simple_check_invalid() {
 #[test]
 fn simple_emit_invalid() {
     let t = build_temp_dir(SIMPLE_ORIGINAL);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fmt")
         .arg("--emit")
         .arg("stdout")
@@ -88,7 +88,7 @@ fn simple_emit_invalid() {
 #[test]
 fn simple_emit_valid() {
     let t = build_temp_dir(SIMPLE_FORMATTED);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fmt")
         .arg("--emit")
         .arg("stdout")
@@ -100,7 +100,7 @@ fn simple_emit_valid() {
 #[test]
 fn simple_check_valid() {
     let t = build_temp_dir(SIMPLE_FORMATTED);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fmt")
         .arg("--check")
         .current_dir(&t)
@@ -111,7 +111,7 @@ fn simple_check_valid() {
 #[test]
 fn simple_format() {
     let t = build_temp_dir(SIMPLE_ORIGINAL);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fmt")
         .current_dir(&t)
         .assert()
@@ -126,7 +126,7 @@ fn simple_format() {
 fn simple_format_with_parsing_error() {
     let code = r"fn main()    ->    {      42      }";
     let t = build_temp_dir(code);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["fmt", "--no-color"])
         .current_dir(&t)
         .assert()
@@ -143,7 +143,7 @@ fn simple_format_with_parsing_error() {
 #[test]
 fn simple_format_with_filter() {
     let t = build_temp_dir(SIMPLE_ORIGINAL);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["fmt", "--package", "world"])
         .current_dir(&t)
         .assert()
@@ -154,7 +154,7 @@ fn simple_format_with_filter() {
     let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["fmt", "--package", "hell*"])
         .current_dir(&t)
         .assert()
@@ -220,7 +220,7 @@ fn format_with_import_sorting() {
         })
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["fmt", "--check", "--no-color"])
         .current_dir(&t)
         .assert()
@@ -298,7 +298,7 @@ fn workspace_with_root() {
         .package(root)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fmt")
         .current_dir(&t)
         .assert()
@@ -311,7 +311,7 @@ fn workspace_with_root() {
     let content = t.child("second/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["fmt", "--workspace"])
         .current_dir(&t)
         .assert()
@@ -350,7 +350,7 @@ fn workspace_emit_with_root() {
         .package(root)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fmt")
         .arg("--emit")
         .arg("stdout")
@@ -375,7 +375,7 @@ fn workspace_emit_with_root() {
     let content = t.child("second/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["fmt", "--workspace", "--emit", "stdout"])
         .current_dir(&t)
         .assert()
@@ -418,7 +418,7 @@ fn format_specific_file() {
         .unwrap();
 
     // Format only the lib.cairo file
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fmt")
         .arg("src/lib.cairo")
         .current_dir(&t)
@@ -461,7 +461,7 @@ fn format_all_files_in_path() {
         .unwrap();
 
     // Run the formatter on the src directory
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fmt")
         .arg("src/fmt")
         .current_dir(&t)

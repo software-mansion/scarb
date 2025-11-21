@@ -47,11 +47,11 @@ impl Scarb {
         }
     }
 
-    pub fn quick_snapbox() -> ScarbCommand {
-        Self::new().snapbox()
+    pub fn quick_command() -> ScarbCommand {
+        Self::new().command()
     }
 
-    pub fn snapbox(self) -> ScarbCommand {
+    pub fn command(self) -> ScarbCommand {
         let inner = SnapboxCommand::from_std(self.std_unchecked());
         let state: Vec<Box<dyn Drop>> = vec![Box::new(self.cache), Box::new(self.config)];
         ScarbCommand { inner, state }

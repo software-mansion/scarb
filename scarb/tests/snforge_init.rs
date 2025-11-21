@@ -17,7 +17,7 @@ fn new_simple(package_name: Option<&str>) {
         vec![]
     };
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .args(name_args)
         .arg("hello")
@@ -59,7 +59,7 @@ fn new_simple(package_name: Option<&str>) {
         "snforge test"
     );
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .current_dir(&t)
         .assert()

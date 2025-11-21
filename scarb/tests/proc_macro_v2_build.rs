@@ -11,7 +11,7 @@ use snapbox::Assert;
 fn compile_cairo_plugin() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default().build(&t);
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("build")
         // Disable colors in Cargo output.
         .env("CARGO_TERM_COLOR", "never")
@@ -41,7 +41,7 @@ fn compile_cairo_plugin() {
 fn check_cairo_plugin() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default().build(&t);
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("check")
         // Disable colors in Cargo output.
         .env("CARGO_TERM_COLOR", "never")
@@ -86,7 +86,7 @@ fn can_check_cairo_project_with_plugins() {
                 .dep("some", &t),
         )
         .build(&project);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -106,7 +106,7 @@ fn resolve_fetched_plugins() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default().build(&t);
     assert!(!t.child("Cargo.lock").exists());
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("fetch")
         // Disable colors in Cargo output.
         .env("CARGO_TERM_COLOR", "never")
@@ -125,7 +125,7 @@ fn resolve_fetched_plugins() {
 fn can_use_json_output() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default().build(&t);
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("--json")
         .arg("check")
         // Disable colors in Cargo output.
@@ -167,7 +167,7 @@ fn compile_cairo_plugin_with_lib_target() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -192,7 +192,7 @@ fn compile_cairo_plugin_with_other_target() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -289,7 +289,7 @@ fn can_define_multiple_macros() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -336,7 +336,7 @@ fn cannot_duplicate_macros() {
             fn main() -> felt252 { 12 + 56 + 90 }
         "#})
         .build(&project);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -407,7 +407,7 @@ fn cannot_duplicate_macros_across_packages() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -439,7 +439,7 @@ fn cannot_use_undefined_macro() {
             fn main() -> felt252 { 12 + 56 + 90 }
         "#})
         .build(&project);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -490,7 +490,7 @@ fn can_disallow_loading_macros() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--no-proc-macros")
         .arg("build")
         // Disable output from Cargo.
@@ -527,7 +527,7 @@ fn only_compiles_needed_macros() {
         .add_member("some")
         .add_member("hello")
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .args(vec!["-p", "hello"])
         // Disable output from Cargo.
@@ -564,7 +564,7 @@ fn always_compile_macros_requested_with_package_filter() {
         .add_member("some")
         .add_member("hello")
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--workspace")
         // Disable output from Cargo.

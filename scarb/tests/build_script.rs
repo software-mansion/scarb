@@ -16,7 +16,7 @@ fn build_script_runs_before_compilation() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -48,7 +48,7 @@ fn ignore_dependency_build_script() {
         .dep("dep", &dep)
         .build(&main);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&main)
         .assert()

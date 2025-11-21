@@ -22,7 +22,7 @@ fn json_output() {
         .lib_cairo(MACROS_CODE)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "json"])
         .current_dir(&t)
@@ -45,7 +45,7 @@ fn markdown_output() {
         .manifest_package_extra(r#"experimental-features = ["user_defined_inline_macros"]"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .current_dir(&t)
         .assert()

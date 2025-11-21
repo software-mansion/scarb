@@ -47,7 +47,7 @@ fn can_implement_inline_macro() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -93,7 +93,7 @@ fn empty_inline_macro_result() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -146,7 +146,7 @@ fn code_mappings_preserve_inline_macro_error_locations() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
@@ -198,7 +198,7 @@ fn inline_macro_error_on_call_site_location() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
@@ -255,7 +255,7 @@ fn inline_macro_args_can_be_parsed() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -299,7 +299,7 @@ fn inline_macro_can_emit_diagnostic_with_custom_location() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -351,7 +351,7 @@ fn inline_macro_diags_mapped_correctly_to_call_site() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -421,7 +421,7 @@ fn module_level_inline_macro() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         .env("CARGO_TERM_QUIET", "true")
@@ -493,7 +493,7 @@ fn module_level_inline_macro_with_args() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         .env("CARGO_TERM_QUIET", "true")
@@ -557,7 +557,7 @@ fn module_level_inline_macro_module_tree_root() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         .env("CARGO_TERM_QUIET", "true")
@@ -617,7 +617,7 @@ fn module_level_inline_macro_empty() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         .env("CARGO_TERM_QUIET", "true")
@@ -663,7 +663,7 @@ fn module_level_inline_macro_can_emit_diagnostics() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
@@ -726,7 +726,7 @@ fn module_level_inline_macro_code_mappings_preserve_error_locations() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
@@ -808,7 +808,7 @@ fn module_level_inline_macro_multiple() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         .env("CARGO_TERM_QUIET", "true")

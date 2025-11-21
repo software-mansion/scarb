@@ -15,7 +15,7 @@ use scarb_test_support::fsx::AssertFsUtf8Ext;
 fn new_simple() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("hello")
         .current_dir(&pt)
@@ -32,7 +32,7 @@ fn new_simple() {
     let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
     assert_eq!(toml_manifest.package.unwrap().name.as_str(), "hello");
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -46,7 +46,7 @@ fn new_simple() {
 fn new_simple_without_vcs() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("hello")
         .arg("--no-vcs")
@@ -68,7 +68,7 @@ fn init_simple() {
     let t = pt.child("hello");
     t.create_dir_all().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("init")
         .current_dir(&t)
         .assert()
@@ -83,7 +83,7 @@ fn init_simple() {
     let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
     assert_eq!(toml_manifest.package.unwrap().name.as_str(), "hello");
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -99,7 +99,7 @@ fn init_simple_without_vcs() {
     let t = pt.child("hello");
     t.create_dir_all().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("init")
         .arg("--no-vcs")
         .current_dir(&t)
@@ -115,7 +115,7 @@ fn init_simple_without_vcs() {
 
 #[test]
 fn new_no_path_arg() {
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .assert()
         .failure()
@@ -136,7 +136,7 @@ fn new_existing() {
     let t = pt.child("hello");
     t.create_dir_all().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("hello")
         .current_dir(&pt)
@@ -155,7 +155,7 @@ fn new_existing() {
 fn new_interactive_not_in_terminal() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("hello")
         .env_remove("SCARB_INIT_TEST_RUNNER")
@@ -177,7 +177,7 @@ fn init_interactive_not_in_terminal() {
     let t = pt.child("hello");
     t.create_dir_all().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("init")
         .env_remove("SCARB_INIT_TEST_RUNNER")
         .current_dir(&t)
@@ -196,7 +196,7 @@ fn init_interactive_not_in_terminal() {
 fn issue_148() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("--json")
         .arg("new")
         .arg("hello")
@@ -223,7 +223,7 @@ fn issue_148() {
 #[test]
 fn invalid_package_name() {
     let pt = assert_fs::TempDir::new().unwrap();
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("a-b")
         .current_dir(&pt)
@@ -232,7 +232,7 @@ fn invalid_package_name() {
         .stdout_eq(Data::from(indoc! {r#"
             error: invalid character `-` in package name: `a-b`, characters must be ASCII lowercase letters, ASCII numbers or underscore
         "#}).raw());
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("a_B")
         .current_dir(&pt)
@@ -252,7 +252,7 @@ fn invalid_package_name() {
 fn keyword_name() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("as")
         .current_dir(&pt)
@@ -261,7 +261,7 @@ fn keyword_name() {
         .stdout_eq(Data::from(indoc! {r#"
             error: the name `as` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html
         "#}).raw());
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("loop")
         .current_dir(&pt)
@@ -276,7 +276,7 @@ fn keyword_name() {
 fn internal_name() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("core")
         .current_dir(&pt)
@@ -289,7 +289,7 @@ fn internal_name() {
 fn windows_test() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("con")
         .current_dir(&pt)
@@ -302,7 +302,7 @@ fn windows_test() {
 fn windows_test() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("con")
         .current_dir(&pt)
@@ -317,7 +317,7 @@ fn windows_test() {
 fn new_explicit_project_name() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("hello")
         .arg("--name")
@@ -340,7 +340,7 @@ fn init_existing_manifest() {
 
     t.child("Scarb.toml").write_str("Scarb is great!").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("init")
         .current_dir(&t)
         .assert()
@@ -362,7 +362,7 @@ fn init_existing_source() {
     let src = t.child("src/lib.cairo");
     src.write_str("Scarb is great!").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("init")
         .current_dir(&t)
         .assert()
@@ -378,7 +378,7 @@ fn init_does_not_overwrite_gitignore() {
     t.create_dir_all().unwrap();
     t.child(".gitignore").write_str("examples\n").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("init")
         .current_dir(&t)
         .assert()
@@ -396,7 +396,7 @@ fn init_incorrect_name() {
     let t = pt.child("a_B");
     t.create_dir_all().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("init")
         .current_dir(&t)
         .assert()
@@ -417,7 +417,7 @@ fn init_keyword_name() {
     let t = pt.child("loop");
     t.create_dir_all().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("init")
         .current_dir(&t)
         .assert()
@@ -433,7 +433,7 @@ fn init_core_name() {
     let t = pt.child("starknet");
     t.create_dir_all().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("init")
         .current_dir(&t)
         .assert()
@@ -444,7 +444,7 @@ fn init_core_name() {
 fn new_with_test_runner_none() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("hello")
         .arg("--test-runner")
@@ -463,7 +463,7 @@ fn new_with_test_runner_none() {
 fn new_with_starknet_foundry_without_snforge_binary() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("hello")
         .arg("--test-runner")

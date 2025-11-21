@@ -31,7 +31,7 @@ fn cairo_plugin_re_export_simple() {
         .dep("beautiful", t.child("beautiful"))
         .build(&t.child("hello"));
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -165,7 +165,7 @@ fn can_only_re_export_own_dep() {
         .dep("hello", t.child("hello"))
         .build(&t.child("foo"));
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .current_dir(t.child("foo"))
         .assert()
@@ -204,7 +204,7 @@ fn can_use_re_exports_through_registry() {
         .name("hello")
         .dep("beautiful", Dep.version("1").registry(&registry))
         .build(&t);
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
