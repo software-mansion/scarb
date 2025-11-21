@@ -74,7 +74,7 @@ fn can_use_both_v1_and_v2_proc_macros() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -150,7 +150,7 @@ fn v1_and_v2_macros_cannot_duplicate_expansions() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")

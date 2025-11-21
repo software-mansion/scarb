@@ -19,7 +19,7 @@ fn delegates_to_cairo_test() {
 
     Scarb::new()
         .isolate_from_extensions()
-        .snapbox()
+        .command()
         .args(["test", "beautiful", "world"])
         .env("PATH", path_with_temp_dir(&t))
         .current_dir(&t)
@@ -44,7 +44,7 @@ fn prefers_test_script() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["test", "beautiful", "world"])
         .current_dir(&t)
         .assert()
@@ -69,7 +69,7 @@ fn errors_when_missing_script_and_cairo_test() {
 
     Scarb::new()
         .isolate_from_extensions()
-        .snapbox()
+        .command()
         .args(["test", "beautiful", "world"])
         .env("PATH", path_with_temp_dir(&t))
         .current_dir(&t)
@@ -97,7 +97,7 @@ fn assert_macros_available() {
             }
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["build", "--test"])
         .current_dir(&t)
         .assert()

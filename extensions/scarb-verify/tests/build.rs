@@ -31,20 +31,20 @@ fn build_executable_project() -> TempDir {
 fn verify_from_execution_output() {
     let t = build_executable_project();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .current_dir(&t)
         .assert()
         .success();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("prove")
         .arg("--execution-id=1")
         .current_dir(&t)
         .assert()
         .success();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("verify")
         .arg("--execution-id=1")
         .current_dir(&t)
@@ -62,13 +62,13 @@ fn verify_from_execution_output() {
 fn verify_from_path() {
     let t = build_executable_project();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .current_dir(&t)
         .assert()
         .success();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("prove")
         .arg("--execution-id=1")
         .current_dir(&t)
@@ -76,7 +76,7 @@ fn verify_from_path() {
         .success();
 
     let proof_path = t.join("target/execute/hello/execution1/proof/proof.json");
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("verify")
         .arg("--proof-file")
         .arg(proof_path)
@@ -92,7 +92,7 @@ fn verify_from_path() {
 fn verify_fails_when_execution_output_not_found() {
     let t = build_executable_project();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("verify")
         .arg("--execution-id=1")
         .current_dir(&t)
@@ -111,7 +111,7 @@ fn verify_fails_when_execution_output_not_found() {
 fn verify_fails_when_proof_file_not_found() {
     let t = build_executable_project();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("verify")
         .arg("--proof-file=nonexistent.json")
         .current_dir(&t)

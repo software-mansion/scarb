@@ -24,7 +24,7 @@ impl LocalRegistry {
     pub fn publish(&mut self, f: impl FnOnce(&TempDir)) -> &mut Self {
         let t = TempDir::new().unwrap();
         f(&t);
-        Scarb::quick_snapbox()
+        Scarb::quick_command()
             .arg("publish")
             .arg("--no-verify")
             .arg("--index")
@@ -38,7 +38,7 @@ impl LocalRegistry {
     pub fn publish_verified(&mut self, f: impl FnOnce(&TempDir)) -> &mut Self {
         let t = TempDir::new().unwrap();
         f(&t);
-        Scarb::quick_snapbox()
+        Scarb::quick_command()
             .arg("publish")
             .arg("--index")
             .arg(&self.url)

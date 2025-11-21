@@ -44,7 +44,7 @@ fn test_workspace_no_features() {
         .lib_cairo(COMMON_CODE_WITHOUT_FEATURE)
         .build(&child_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--workspace"])
         .current_dir(&root_dir)
@@ -76,7 +76,7 @@ fn test_workspace_without_features_in_manifest() {
         .lib_cairo(COMMON_CODE_WITHOUT_FEATURE)
         .build(&child_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("RUST_BACKTRACE", "0")
         .arg("doc")
         .args([
@@ -134,7 +134,7 @@ fn test_workspace_with_working_feature_in_root_and_sub_package() {
         .lib_cairo(COMMON_CODE_WITH_FEATURE)
         .build(&child_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args([
             "--workspace",
@@ -178,7 +178,7 @@ fn test_workspace_with_working_feature_in_root_only() {
         .lib_cairo(COMMON_CODE_WITH_FEATURE)
         .build(&child_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("RUST_BACKTRACE", "0")
         .arg("doc")
         .args([
@@ -218,7 +218,7 @@ fn test_workspace_with_working_feature_in_sub_package_only() {
         .lib_cairo(COMMON_CODE_WITH_FEATURE)
         .build(&child_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("RUST_BACKTRACE", "0")
         .arg("doc")
         .args([
@@ -252,7 +252,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code()
         .lib_cairo(COMMON_CODE_WITH_FEATURE)
         .build(&child_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("RUST_BACKTRACE", "0")
         .arg("doc")
         .args([
@@ -296,7 +296,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_root_package_code(
         .lib_cairo(COMMON_CODE_WITH_FEATURE)
         .build(&child_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("RUST_BACKTRACE", "0")
         .arg("doc")
         .args([

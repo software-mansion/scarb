@@ -70,7 +70,7 @@ fn store_checksum_for_registry_dependencies() {
         .lib_cairo(r#"fn f() -> felt252 { bar::f() }"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()

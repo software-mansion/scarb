@@ -17,7 +17,7 @@ fn check_simple() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("check")
         .current_dir(&t)
         .assert()
@@ -45,7 +45,7 @@ fn check_fail_with_syntax_error() {
         .lib_cairo("not_a_keyword")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .current_dir(&t)
         .assert()

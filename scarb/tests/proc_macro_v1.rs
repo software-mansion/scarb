@@ -14,7 +14,7 @@ use snapbox::Assert;
 fn compile_cairo_plugin() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default_v1().build(&t);
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("build")
         // Disable colors in Cargo output.
         .env("CARGO_TERM_COLOR", "never")
@@ -44,7 +44,7 @@ fn compile_cairo_plugin() {
 fn check_cairo_plugin() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default_v1().build(&t);
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("check")
         // Disable colors in Cargo output.
         .env("CARGO_TERM_COLOR", "never")
@@ -91,7 +91,7 @@ fn can_check_cairo_project_with_plugins() {
                 .dep("some", &t),
         )
         .build(&project);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -111,7 +111,7 @@ fn resolve_fetched_plugins() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default_v1().build(&t);
     assert!(!t.child("Cargo.lock").exists());
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("fetch")
         // Disable colors in Cargo output.
         .env("CARGO_TERM_COLOR", "never")
@@ -130,7 +130,7 @@ fn resolve_fetched_plugins() {
 fn can_use_json_output() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default_v1().build(&t);
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("--json")
         .arg("check")
         // Disable colors in Cargo output.
@@ -172,7 +172,7 @@ fn compile_cairo_plugin_with_lib_target() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -197,7 +197,7 @@ fn compile_cairo_plugin_with_other_target() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -237,7 +237,7 @@ fn can_emit_plugin_warning() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -283,7 +283,7 @@ fn can_emit_plugin_error() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -332,7 +332,7 @@ fn diags_from_generated_code_mapped_correctly() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -395,7 +395,7 @@ fn can_remove_original_node() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -451,7 +451,7 @@ fn can_replace_original_node() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -525,7 +525,7 @@ fn can_return_aux_data_from_plugin() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -568,7 +568,7 @@ fn can_read_token_stream_metadata() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -672,7 +672,7 @@ fn can_define_multiple_macros() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -722,7 +722,7 @@ fn cannot_duplicate_macros() {
             fn main() -> felt252 { 12 + 56 + 90 }
         "#})
         .build(&project);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -793,7 +793,7 @@ fn cannot_duplicate_macros_across_packages() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -835,7 +835,7 @@ fn cannot_use_undefined_macro() {
             fn main() -> felt252 { 12 + 56 + 90 }
         "#})
         .build(&project);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -894,7 +894,7 @@ fn can_resolve_full_path_markers() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -945,7 +945,7 @@ fn can_implement_inline_macro() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -991,7 +991,7 @@ fn empty_inline_macro_result() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1075,7 +1075,7 @@ fn can_implement_derive_macro() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -1166,7 +1166,7 @@ fn can_use_both_derive_and_attr() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -1216,7 +1216,7 @@ fn can_read_attribute_args() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1258,7 +1258,7 @@ fn can_create_executable_attribute() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1321,7 +1321,7 @@ fn executable_name_cannot_clash_attr() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1404,7 +1404,7 @@ fn can_be_expanded() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1497,7 +1497,7 @@ fn can_expand_trait_inner_func_attrr() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -1583,7 +1583,7 @@ fn can_expand_impl_inner_func_attr() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1635,7 +1635,7 @@ fn can_be_used_through_re_export() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")

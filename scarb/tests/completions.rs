@@ -50,7 +50,7 @@ static EXTERNAL_COMMANDS: &[&str] = &[
 
 #[test]
 fn generates_completions_bash() {
-    let cmd = Scarb::quick_snapbox()
+    let cmd = Scarb::quick_command()
         .arg("completions")
         .arg("bash")
         .assert()
@@ -86,7 +86,7 @@ fn generates_completions_bash() {
 
 #[test]
 fn generates_completions_zsh() {
-    let cmd = Scarb::quick_snapbox()
+    let cmd = Scarb::quick_command()
         .arg("completions")
         .arg("zsh")
         .assert()
@@ -122,7 +122,7 @@ fn generates_completions_zsh() {
 
 #[test]
 fn generates_completions_powershell() {
-    let cmd = Scarb::quick_snapbox()
+    let cmd = Scarb::quick_command()
         .arg("completions")
         .arg("powershell")
         .assert()
@@ -160,7 +160,7 @@ fn generates_completions_powershell() {
 
 #[test]
 fn generates_completions_fish() {
-    let cmd = Scarb::quick_snapbox()
+    let cmd = Scarb::quick_command()
         .arg("completions")
         .arg("fish")
         .assert()
@@ -202,7 +202,7 @@ fn generates_completions_fish() {
 
 #[test]
 fn generates_completions_elvish() {
-    let cmd = Scarb::quick_snapbox()
+    let cmd = Scarb::quick_command()
         .arg("completions")
         .arg("elvish")
         .assert()
@@ -242,7 +242,7 @@ fn generates_completions_elvish() {
 
 #[test]
 fn generates_completions_without_arg() {
-    let cmd = Scarb::quick_snapbox()
+    let cmd = Scarb::quick_command()
         .arg("completions")
         .env("SHELL", "bash")
         .assert()
@@ -280,7 +280,7 @@ fn generates_completions_without_arg() {
 #[cfg(not(windows))]
 #[test]
 fn fails_without_arg_and_empty_env() {
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("completions")
         .env("SHELL", "")
         .assert()

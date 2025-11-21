@@ -32,7 +32,7 @@ fn usage() {
         .build(&t);
 
     // FIXME(mkaput): Why are verbose statuses not appearing here?
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .timeout(Duration::from_secs(10))
@@ -121,7 +121,7 @@ fn publish_verified() {
         .build(&t);
 
     // FIXME(mkaput): Why are verbose statuses not appearing here?
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .timeout(Duration::from_secs(10))
@@ -210,7 +210,7 @@ fn not_found() {
         .dep("baz", Dep.version("1").registry(&registry))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .timeout(Duration::from_secs(10))
@@ -264,7 +264,7 @@ fn missing_config_json() {
         .dep("baz", Dep.version("1").registry(&registry))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .timeout(Duration::from_secs(10))
@@ -316,7 +316,7 @@ fn caching() {
     // FIXME(mkaput): Why are verbose statuses not appearing here?
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .timeout(Duration::from_secs(10))
@@ -329,7 +329,7 @@ fn caching() {
     // FIXME(mkaput): Why are verbose statuses not appearing here?
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .timeout(Duration::from_secs(10))
@@ -339,7 +339,7 @@ fn caching() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .timeout(Duration::from_secs(10))

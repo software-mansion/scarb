@@ -79,7 +79,7 @@ impl Check {
             op(&t);
         }
 
-        let snapbox = Scarb::quick_snapbox()
+        let snapbox = Scarb::quick_command()
             .env("RUST_BACKTRACE", "0")
             .arg("execute")
             .current_dir(&t);
