@@ -6,7 +6,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[regina](./hello_world-re
 
 <pre><code class="language-cairo">pub struct VisibleStruct {
     pub works: felt252,
-    properly: felt252,
+    /* private fields */
 }</code></pre>
 
 ## Members

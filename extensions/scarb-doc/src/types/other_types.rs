@@ -208,19 +208,29 @@ pub struct Struct<'db> {
 }
 
 impl<'db> Struct<'db> {
+    const PRIVATE_MEMBERS: &'static str = "/* private fields */";
+    const INDENT: &'static str = "    ";
+
     pub fn new(
         db: &'db ScarbDocDatabase,
         id: StructId<'db>,
         include_private_items: bool,
     ) -> Maybe<Self> {
         let members = db.struct_members(id)?;
-
-        let item_data = ItemData::new(
+        let mut item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Struct(id)).into(),
             doc_full_path(&id.parent_module(db), db),
         );
+
+        // Split the struct signature into lines to remove private members later on
+        let mut struct_sig_lines: Option<Vec<String>> = item_data
+            .signature
+            .as_ref()
+            .map(|sig| sig.split_inclusive('\n').map(|s| s.to_string()).collect());
+
+        let mut has_private_members = false;
         let members = members
             .iter()
             .filter_map(|(_, semantic_member)| {
@@ -229,10 +239,47 @@ impl<'db> Struct<'db> {
                 if (include_private_items || visible) && !is_doc_hidden_attr(db, syntax_node) {
                     Some(Ok(Member::new(db, semantic_member.id)))
                 } else {
+                    let (member_signature, _) = db.get_item_signature_with_links(
+                        DocumentableItemId::Member(semantic_member.id),
+                    );
+                    if let (Some(lines), Some(member_sig)) =
+                        (struct_sig_lines.as_mut(), member_signature)
+                    {
+                        adjust_signature_rows_and_links_for_removed_member(
+                            lines,
+                            &mut item_data.doc_location_links,
+                            &member_sig,
+                        );
+                    }
+                    has_private_members = true;
                     None
                 }
             })
             .collect::<Maybe<Vec<_>>>()?;
+
+        // After processing all members, rebuild the struct signature
+        if has_private_members && let Some(mut lines) = struct_sig_lines {
+            lines.insert(lines.len() - 1, Self::PRIVATE_MEMBERS.to_string());
+
+            // If there are more than three lines, check if they look something like ["pub struct StructName {\n", "/* private fields */", "}"],
+            // the newline between brackets needs to be removed.
+            // There might be an attribute like `#[doc(group: test)]` in previous lines, so we can make an assumption only about the three last lines.
+            if lines.len() >= 3 {
+                let target_line_index = lines.len() - 3;
+
+                if let Some(target_line) = lines.get_mut(target_line_index)
+                    && (target_line.starts_with("pub struct") || target_line.starts_with("struct"))
+                    && target_line.ends_with('\n')
+                {
+                    target_line.pop();
+                } else {
+                    // there are both: private and public members
+                    lines.insert(lines.len() - 2, Self::INDENT.to_string());
+                    lines.insert(lines.len() - 1, "\n".to_string());
+                }
+            }
+            item_data.signature = Some(lines.concat());
+        }
 
         let node = id.stable_ptr(db);
         Ok(Self {
@@ -795,4 +842,42 @@ impl<'db> MacroDeclaration<'db> {
             ),
         }
     }
+}
+
+/// Helper that removes a member signature from the struct signature and updates doc location links accordingly.
+fn adjust_signature_rows_and_links_for_removed_member(
+    lines: &mut Vec<String>,
+    links: &mut Vec<DocLocationLink>,
+    member_sig: &str,
+) {
+    let Some((indices_to_remove, _)) = lines
+        .iter()
+        .enumerate()
+        .find(|(_, line)| line.contains(member_sig))
+    else {
+        return;
+    };
+
+    let start_offset: usize = lines[..indices_to_remove].iter().map(|l| l.len()).sum();
+    let removed_len: usize = lines[indices_to_remove].len();
+    let end_offset = start_offset + removed_len;
+
+    // Adjust doc location links.
+    let mut new_links = Vec::with_capacity(links.len());
+    for mut link in links.clone() {
+        let (start, end) = (link.start, link.end);
+        if end <= start_offset {
+            // is before
+            new_links.push(link);
+        } else if start >= end_offset {
+            // is after
+            link.start -= removed_len;
+            link.end -= removed_len;
+            new_links.push(link);
+        } else {
+            // overlaps
+        }
+    }
+    *links = new_links;
+    lines.remove(indices_to_remove);
 }
