@@ -192,6 +192,7 @@ pub fn output_markdown(
     } else {
         output_dir.clone()
     };
+    let is_md = content.files_extension == OutputFilesExtension::Md.get_string();
     content.save(&output_dir)?;
 
     let output_path = output_dir
@@ -218,10 +219,10 @@ pub fn output_markdown(
             "\nRun the following to see the results: \n`mdbook serve {output_path}`\
                          \n\nOr open the following in your browser: \n`{workspace_root}/{output_path}/book/index.html`",
         ));
-    } else {
+    } else if is_md {
         ui.print(format!(
             "\nRun the following to see the results: \n`mdbook serve {output_path}`\n(you will need to have mdbook installed)\
-                        \n\nOr build html docs by running `scarb doc --build`",
+                    \n\nOr build html docs by running `scarb doc --build`",
         ));
     }
 
