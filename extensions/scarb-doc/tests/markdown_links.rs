@@ -20,7 +20,7 @@ fn test_markdown_linked_items() {
 
     WorkspaceBuilder::start().package(root).build(&root_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .arg("--document-private-items")
         .current_dir(&root_dir)

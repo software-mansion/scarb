@@ -22,7 +22,7 @@ fn can_only_be_defined_in_root() {
         "#})
         .build(&t.child("first"));
     WorkspaceBuilder::start().add_member("first").build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -56,7 +56,7 @@ fn workspace_root_definition_does_not_conflict_with_root_package() {
             foo = {}
         "#, patch.build()})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -92,13 +92,13 @@ fn patch_scarbs_with_path() {
         "#, patch.build()})
         .build(&t);
     // Assert no warnings are emitted.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("fetch")
         .assert()
         .success()
         .stdout_eq(Data::from("").raw());
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -152,7 +152,7 @@ fn patch_scarbs_with_git() {
         "#, git_dep.build().to_string()})
         .build(&t);
     // Assert no warnings are emitted.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("fetch")
         .assert()
@@ -160,7 +160,7 @@ fn patch_scarbs_with_git() {
         .stdout_eq(indoc! {r#"
             [..]Updating git repository [..]dep1
         "#});
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -213,13 +213,13 @@ fn patch_scarbs_with_path_by_full_url() {
         "#, patch.build()})
         .build(&t);
     // Assert no warnings are emitted.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("fetch")
         .assert()
         .success()
         .stdout_eq(Data::from("").raw());
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -280,13 +280,13 @@ fn patch_not_existing_registry_with_path() {
         "#, patch.build()})
         .build(&t);
     // Assert no warnings are emitted.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("fetch")
         .assert()
         .success()
         .stdout_eq(Data::from("").raw());
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -345,13 +345,13 @@ fn patch_git_with_path() {
         "#, git_dep.url(), patch.build()})
         .build(&t);
     // Assert no warnings are emitted.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("fetch")
         .assert()
         .success()
         .stdout_eq(Data::from("").raw());
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -426,13 +426,13 @@ fn patch_git_with_registry() {
         })
         .build(&t);
     // Assert no warnings are emitted.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("fetch")
         .assert()
         .success()
         .stdout_eq(Data::from("").raw());
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -474,7 +474,7 @@ fn invalid_url() {
             foo = {}
         "#, patch.build()})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -515,7 +515,7 @@ fn warn_unused_patch() {
             boo = {}
         "#, git_dep.url(), patch.build()})
         .build(&t);
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -537,7 +537,7 @@ fn warn_unused_patch() {
     for (expected, real) in zip(&expected, packages) {
         Assert::new().eq(real, expected);
     }
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -576,7 +576,7 @@ fn packaging_no_version_dependency_ignores_patches() {
         "#, git_dep.url(), path_dep.with("version", "1.0.0").build()})
         .build(&hello);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .arg("--no-verify")
@@ -617,13 +617,13 @@ fn patch_registry_with_registry() {
         "#, registry.url.clone(), Dep.version("2").registry(&registry).build()})
         .build(&t);
     // Assert no warnings are emitted.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_eq(Data::from("").raw());
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -665,7 +665,7 @@ fn cannot_define_default_registry_both_short_and_long_name() {
             foo = {}
         "#, patch.build(), patch.build()})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()

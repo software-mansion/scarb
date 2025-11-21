@@ -72,7 +72,7 @@ fn changed_artifact(target: &str, prop: &str, file_suffix: &str) {
         .build(&t);
 
     let run_scarb = || {
-        let mut cmd = Scarb::new().cache(cache_dir.path()).snapbox().arg("build");
+        let mut cmd = Scarb::new().cache(cache_dir.path()).command().arg("build");
         if target == "test" {
             cmd = cmd.arg("--test");
         }
@@ -107,7 +107,7 @@ fn removed_artifact() {
     let run_scarb = || {
         Scarb::new()
             .cache(cache_dir.path())
-            .snapbox()
+            .command()
             .arg("build")
             .current_dir(&t)
             .assert()

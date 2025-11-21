@@ -24,7 +24,7 @@ fn publish() {
         .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("publish")
         .arg("--index")
         .arg(&registry.url)
@@ -98,7 +98,7 @@ fn auth_token_missing() {
         .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("publish")
         .arg("--index")
         .arg(&registry.url)
@@ -136,7 +136,7 @@ fn error_from_registry() {
         .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("publish")
         .arg("--index")
         .arg(&registry.url)

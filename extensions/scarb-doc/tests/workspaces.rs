@@ -40,7 +40,7 @@ fn test_reeksports_in_multiple_workspaces() {
         .add_member("target_package")
         .build(&root_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["-p", "target_package"])
         .current_dir(&root_dir)

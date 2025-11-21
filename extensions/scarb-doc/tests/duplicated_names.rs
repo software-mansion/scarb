@@ -53,7 +53,7 @@ fn test_duplicated_items_names() {
         )
         .build(&root_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--document-private-items"])
         .current_dir(&root_dir)

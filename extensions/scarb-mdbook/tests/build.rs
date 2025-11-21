@@ -15,7 +15,7 @@ fn build_hello_world() {
     let example = Utf8PathBuf::from(HELLO_WORLD_PATH);
     let input_path = example.join("input");
     let expected_output_path = example.join("output");
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("mdbook")
         .arg(format!("--input={input_path}"))
         .arg(format!("--output={output_path}",))

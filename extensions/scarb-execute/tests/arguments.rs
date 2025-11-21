@@ -26,7 +26,7 @@ fn can_take_big_number_as_arg() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         .arg("--arguments")
@@ -70,7 +70,7 @@ fn can_read_arguments_from_file() {
         .write_str(r#"["0x1","0x27F73E6C94FA8249EC9F2F4EEC607ACC97FA632C9E8FB6C49437E62390D9860"]"#)
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         .args(["--arguments-file", "args.txt"])

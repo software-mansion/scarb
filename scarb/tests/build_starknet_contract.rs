@@ -37,7 +37,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .lib_cairo(format!("{FORTY_TWO_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(world);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(world)
         .assert()
@@ -60,7 +60,7 @@ fn compile_starknet_contract() {
         .lib_cairo(BALANCE_CONTRACT)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -104,7 +104,7 @@ fn compile_starknet_contract_to_casm() {
         .lib_cairo(BALANCE_CONTRACT)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -156,7 +156,7 @@ fn compile_many_contracts() {
         .src("src/forty_two.cairo", FORTY_TWO_CONTRACT)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -220,7 +220,7 @@ fn compile_same_name_contracts() {
         .src("src/world.cairo", FORTY_TWO_CONTRACT)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -266,7 +266,7 @@ fn casm_add_pythonic_hints() {
         .lib_cairo(BALANCE_CONTRACT)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -331,7 +331,7 @@ fn compile_starknet_contract_only_with_cfg() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -366,7 +366,7 @@ fn compile_starknet_contract_without_starknet_dep() {
         .lib_cairo(BALANCE_CONTRACT)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .current_dir(&t)
         .assert()
@@ -491,7 +491,7 @@ fn warn_inlining_strategy_in_release() {
         .lib_cairo(BALANCE_CONTRACT)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -501,7 +501,7 @@ fn warn_inlining_strategy_in_release() {
         [..]  Finished `dev` profile target(s) in [..]
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--release")
         .arg("build")
         .current_dir(&t)
@@ -534,7 +534,7 @@ fn error_skip_optimizations_in_release() {
         .lib_cairo(BALANCE_CONTRACT)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -544,7 +544,7 @@ fn error_skip_optimizations_in_release() {
         [..]  Finished `dev` profile target(s) in [..]
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--release")
         .arg("build")
         .current_dir(&t)

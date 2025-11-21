@@ -30,7 +30,7 @@ fn compile_simple_git_dep() {
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -67,7 +67,7 @@ fn fetch_git_dep_branch() {
         .lib_cairo("fn world() -> felt252 { dep1::branched() }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -97,7 +97,7 @@ fn fetch_git_dep_tag() {
         .lib_cairo("fn world() -> felt252 { dep1::tagged() }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -133,7 +133,7 @@ fn fetch_git_dep_pull_request() {
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -166,7 +166,7 @@ fn fetch_with_nested_paths() {
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -183,7 +183,7 @@ fn fetch_with_short_ssh_git() {
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -216,7 +216,7 @@ fn fetch_with_invalid_keyword() {
         .lib_cairo("fn world() -> felt252 { dep::hello() }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -257,7 +257,7 @@ fn stale_cached_version() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -278,7 +278,7 @@ fn stale_cached_version() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -300,7 +300,7 @@ fn stale_cached_version() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -337,7 +337,7 @@ fn stale_cached_version_update() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -350,7 +350,7 @@ fn stale_cached_version_update() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -359,7 +359,7 @@ fn stale_cached_version_update() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("update")
         .current_dir(&t)
         .assert()
@@ -370,7 +370,7 @@ fn stale_cached_version_update() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -399,7 +399,7 @@ fn change_source() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -418,7 +418,7 @@ fn change_source() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -445,7 +445,7 @@ fn force_push() {
         .lib_cairo("fn world() -> felt252 { dep::hello() }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -458,7 +458,7 @@ fn force_push() {
     dep.git(["add", "."]);
     dep.git(["commit", "--amend", "-m", "amended"]);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -488,7 +488,7 @@ fn force_push_with_cache() {
 
     Scarb::new()
         .cache(c.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -503,7 +503,7 @@ fn force_push_with_cache() {
 
     Scarb::new()
         .cache(c.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -539,7 +539,7 @@ fn transitive_path_dep() {
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -587,7 +587,7 @@ fn transitive_path_dep_with_lock() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -598,7 +598,7 @@ fn transitive_path_dep_with_lock() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -626,7 +626,7 @@ fn deps_only_cloned_to_checkouts_once() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("-v")
         .arg("fetch")
         .current_dir(&t)
@@ -641,7 +641,7 @@ fn deps_only_cloned_to_checkouts_once() {
     fs::remove_file(t.child("Scarb.lock")).unwrap();
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("-v")
         .arg("fetch")
         .current_dir(&t)

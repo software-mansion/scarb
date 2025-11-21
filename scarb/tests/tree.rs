@@ -29,7 +29,7 @@ fn simple() {
         .dep("dep1", &dep1)
         .build(&root);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .current_dir(&root)
         .assert()
@@ -63,7 +63,7 @@ fn json_output() {
         .dep("dep1", &dep1)
         .build(&root);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--json")
         .arg("tree")
         .current_dir(&root)
@@ -77,7 +77,7 @@ fn json_output() {
 #[test]
 fn requires_workspace() {
     let t = TempDir::new().unwrap();
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("RUST_BACKTRACE", "0")
         .arg("tree")
         .current_dir(&t)
@@ -131,7 +131,7 @@ fn no_dedupe() {
         .dep("dep2", &dep2)
         .build(&root);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .arg("--no-dedupe")
         .current_dir(&root)
@@ -171,7 +171,7 @@ fn depth() {
         b.build(&dep);
     }
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .arg("--depth=2")
         .current_dir(t.child("dep0"))
@@ -184,7 +184,7 @@ fn depth() {
                     └── ...
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .arg("--depth=1")
         .current_dir(t.child("dep0"))
@@ -196,7 +196,7 @@ fn depth() {
                 └── ...
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .arg("--depth=0")
         .current_dir(t.child("dep0"))
@@ -244,7 +244,7 @@ fn prune() {
         .build(&root);
 
     // Test with --prune=dep1 (should exclude dep1 and its dependencies).
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .arg("--prune=dep1")
         .current_dir(&root)
@@ -257,7 +257,7 @@ fn prune() {
         "#});
 
     // Test with --prune=dep3 (should exclude dep3 from both dep1 and dep2).
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .arg("--prune=dep3")
         .current_dir(&root)
@@ -270,7 +270,7 @@ fn prune() {
         "#});
 
     // Test with multiple prune arguments.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .arg("--prune=dep1")
         .arg("--prune=dep3")
@@ -306,7 +306,7 @@ fn core() {
         .dep("dep1", &dep1)
         .build(&root);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .arg("--core")
         .current_dir(&root)
@@ -359,7 +359,7 @@ fn beautiful_tree_formatting() {
         .dep("extra", extra)
         .build(&dep0);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .current_dir(dep0)
         .assert()
@@ -393,7 +393,7 @@ fn dev_dependencies() {
         .dev_dep_builtin("assert_macros")
         .build(&root);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .current_dir(&root)
         .assert()
@@ -436,7 +436,7 @@ fn workspace_members() {
         .add_member("member2")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .current_dir(&t)
         .assert()
@@ -470,7 +470,7 @@ fn cycle() {
         .dep("dep1", &dep1)
         .build(&root);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .current_dir(&root)
         .assert()
@@ -500,7 +500,7 @@ fn no_dedupe_cycle() {
         .dep("dep1", &dep1)
         .build(&root);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("tree")
         .arg("--no-dedupe")
         .current_dir(&root)

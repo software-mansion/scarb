@@ -36,7 +36,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .lib_cairo(format!("{FORTY_TWO_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(world);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(world)
         .assert()
@@ -221,7 +221,7 @@ fn build_external_full_path() {
         .lib_cairo(format!("{FORTY_TWO_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(&world);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&world)
         .assert()
@@ -391,7 +391,7 @@ fn compile_multiple_with_glob_subpath() {
         "#})
         .build(&x);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&x)
         .assert()
@@ -431,7 +431,7 @@ fn compile_with_bad_glob_path() {
         .lib_cairo(format!("{FORTY_TWO_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(&world);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(t.child("world"))
         .assert()
@@ -489,7 +489,7 @@ fn will_warn_about_unmatched_paths() {
         .lib_cairo(format!("{FORTY_TWO_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(&world);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&world)
         .assert()
@@ -559,7 +559,7 @@ fn can_build_external_reexported_contracts() {
         .dep_starknet()
         .build(&world);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&world)
         .assert()
@@ -615,7 +615,7 @@ fn can_dedup_contract_reexports() {
         .dep_starknet()
         .build(&world);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&world)
         .assert()

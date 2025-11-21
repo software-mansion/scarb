@@ -28,7 +28,7 @@ fn checksum_changed_upstream() {
         .lib_cairo(r#"fn f() -> felt252 { bar::f() }"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -45,7 +45,7 @@ fn checksum_changed_upstream() {
             .build(t);
     });
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -85,7 +85,7 @@ fn checksum_locked_for_unexpected_source() {
 
     // Let's generate a valid Scarb.lock and then corrupt it, by adding a `checksum` where it is
     // not supposed to be. Git dependencies are not expected to ever have checksums.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -108,7 +108,7 @@ fn checksum_locked_for_unexpected_source() {
         .write_str(&lockfile.to_string())
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -145,7 +145,7 @@ fn unlisted_checksum_for_source_supporting_it() {
 
     // Let's generate a valid Scarb.lock and then corrupt it, by removing `checksum` fields
     // everywhere applicable.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -165,7 +165,7 @@ fn unlisted_checksum_for_source_supporting_it() {
         .write_str(&lockfile.to_string())
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()

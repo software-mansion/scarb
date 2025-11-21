@@ -28,7 +28,7 @@ fn doc_groups_json() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--document-private-items", "--output-format", "json"])
         .current_dir(&t)
@@ -55,7 +55,7 @@ fn doc_groups_markdown() {
 
     WorkspaceBuilder::start().package(root).build(&root_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--document-private-items"])
         .current_dir(&root_dir)

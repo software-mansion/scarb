@@ -129,7 +129,7 @@ fn build_with_all_features_required(t: &TempDir) {
 fn features_success() {
     let t = TempDir::new().unwrap();
     build_example_program(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--features")
         .arg("x")
@@ -141,7 +141,7 @@ fn features_success() {
         .assert(predicates::str::contains(r#""debug_name":"hello::f""#));
 
     build_example_program(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--features")
         .arg("y")
@@ -157,7 +157,7 @@ fn features_success() {
 fn features_fail_both_features_enabled() {
     let t = TempDir::new().unwrap();
     build_example_program(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--features")
         .arg("x,y")
@@ -179,7 +179,7 @@ fn features_fail_both_features_enabled() {
 fn features_fail_no_feature_enabled() {
     let t = TempDir::new().unwrap();
     build_example_program(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -199,7 +199,7 @@ fn features_fail_no_feature_enabled() {
 fn features_unknown_feature() {
     let t = TempDir::new().unwrap();
     build_example_program(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--features")
         .arg("z")
@@ -216,7 +216,7 @@ fn features_unknown_feature() {
 fn features_fail_missing_manifest() {
     let t = TempDir::new().unwrap();
     build_missing_manifest_example_program(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--features")
         .arg("x")
@@ -233,7 +233,7 @@ fn features_fail_missing_manifest() {
 fn features_fail_incorrect_manifest() {
     let t = TempDir::new().unwrap();
     build_incorrect_manifest_feature_example_program(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--features")
         .arg("x")
@@ -256,7 +256,7 @@ fn features_fail_incorrect_manifest() {
 fn features_with_default_features() {
     let t = TempDir::new().unwrap();
     build_with_default_features(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -270,7 +270,7 @@ fn features_with_default_features() {
 fn features_no_default_features() {
     let t = TempDir::new().unwrap();
     build_with_default_features(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--no-default-features")
         .current_dir(&t)
@@ -291,7 +291,7 @@ fn features_no_default_features() {
 fn features_all_features() {
     let t = TempDir::new().unwrap();
     build_with_all_features_required(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--all-features")
         .current_dir(&t)
@@ -306,7 +306,7 @@ fn features_all_features() {
 fn features_all_features_failing() {
     let t = TempDir::new().unwrap();
     build_with_all_features_required(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -326,7 +326,7 @@ fn features_all_features_failing() {
 fn features_no_default_and_all_failing() {
     let t = TempDir::new().unwrap();
     build_with_default_features(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--no-default-features")
         .arg("--all-features")
@@ -346,7 +346,7 @@ fn features_no_default_and_all_failing() {
 fn features_metadata_feature_in_compilation_units() {
     let t = TempDir::new().unwrap();
     build_example_program(&t);
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--features")
@@ -407,7 +407,7 @@ fn features_in_workspace_success() {
         .add_member("second")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--package")
         .arg("first")
@@ -453,7 +453,7 @@ fn features_in_workspace_validated() {
         .add_member("second")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--package")
         .arg("second")
@@ -533,7 +533,7 @@ fn parse_dependency_features_simple() {
         )
         .build(&t);
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -608,7 +608,7 @@ fn parse_dependency_features_invalid() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("metadata")
         .arg("--format-version=1")
         .current_dir(&t)
@@ -656,7 +656,7 @@ fn can_declare_same_dependency_with_different_kinds_and_features() {
         )
         .build(&t);
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -744,7 +744,7 @@ fn cannot_use_not_existing_features_in_deps() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .current_dir(&t)
         .assert()
@@ -867,7 +867,7 @@ fn dependency_features_simple() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--features=x,y")
         .current_dir(&t)
@@ -916,7 +916,7 @@ fn dependency_features_in_workspace() {
         .add_member("second")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--features=x,y")
         .arg("--package=first")
@@ -928,7 +928,7 @@ fn dependency_features_in_workspace() {
             [..]Finished checking `dev` profile target(s) in[..]
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--package=second")
         .current_dir(&t)
@@ -988,7 +988,7 @@ fn dependency_features_disabled_by_default() {
         .dep("path_dep", path_dep.version("0.1.0").default_features(true))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--features=x,y")
         .current_dir(&t)
@@ -1054,7 +1054,7 @@ fn dependency_features_can_be_default() {
         .dep("path_dep", path_dep.version("0.1.0"))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--features=x,y")
         .current_dir(&t)
@@ -1118,7 +1118,7 @@ fn dependency_features_can_disable_default_features() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--features=x,y")
         .current_dir(&t)
@@ -1225,7 +1225,7 @@ fn dependency_features_unification() {
         )
         .build(&ws);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--package=hello")
         .current_dir(&ws)
@@ -1288,7 +1288,7 @@ fn features_unification_does_not_leak_between_units_for_ws_member() {
         .add_member("second")
         .build(&ws);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--package=second")
         .current_dir(&ws)
@@ -1299,7 +1299,7 @@ fn features_unification_does_not_leak_between_units_for_ws_member() {
             [..]Finished checking `dev` profile target(s) in[..]
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--package=first")
         .current_dir(&ws)
@@ -1372,7 +1372,7 @@ fn features_unification_does_not_leak_between_units() {
         .add_member("second")
         .build(&ws);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--package=first")
         .current_dir(&ws)
@@ -1388,7 +1388,7 @@ fn features_unification_does_not_leak_between_units() {
             error: could not check `first` due to [..] previous error
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--package=second")
         .current_dir(&ws)
@@ -1480,7 +1480,7 @@ fn dependency_features_unification_for_test_target() {
         )
         .build(&hello);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(&hello)
@@ -1542,7 +1542,7 @@ fn dev_dep_features_do_not_propagate() {
         )
         .build(&hello);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(&hello)
@@ -1613,7 +1613,7 @@ fn can_declare_default_by_name() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--features=default")
         .arg("--no-default-features")
@@ -1679,7 +1679,7 @@ fn default_cannot_be_used_as_cfg_without_explicit_declaration() {
         )
         .build(&hello);
 
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("check")
         .arg("--features=x")
         .current_dir(&hello)
@@ -1759,7 +1759,7 @@ fn can_deserialize_features_enabling_dependency_features() {
         .dep("first", &first)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--features=z")
         .current_dir(&t)
@@ -1807,7 +1807,7 @@ fn default_features_can_enable_dependency_features() {
         .dep("first", &first)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -1883,7 +1883,7 @@ fn features_unification_for_features_dependant_on_dependency_features() {
         )
         .build(&fourth);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .current_dir(&fourth)
         .assert()

@@ -22,7 +22,7 @@ fn gas_enabled_by_default() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -56,7 +56,7 @@ fn gas_disabled_with_config() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -79,7 +79,7 @@ fn gas_disabled_in_metadata() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")

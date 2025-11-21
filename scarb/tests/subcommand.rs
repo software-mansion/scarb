@@ -24,7 +24,7 @@ fn subcommand() {
     let p = TempDir::new().unwrap();
     ProjectBuilder::start().build(&p);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&p)
         .args(["hello", "beautiful", "world"])
         .env("PATH", path_with_temp_dir(&t))
@@ -42,7 +42,7 @@ fn list_commands_e2e() {
     let t = TempDir::new().unwrap();
     write_simple_hello_script("hello", &t);
 
-    let cmd = Scarb::quick_snapbox()
+    let cmd = Scarb::quick_command()
         .args(["commands"])
         .env("PATH", path_with_temp_dir(&t))
         .assert()
@@ -88,7 +88,7 @@ fn env_variables_are_passed() {
     let p = TempDir::new().unwrap();
     ProjectBuilder::start().build(&p);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&p)
         .arg("env")
         .env("PATH", path_with_temp_dir(&t))
@@ -126,7 +126,7 @@ fn env_scarb_log_is_passed_verbatim() {
     let p = TempDir::new().unwrap();
     ProjectBuilder::start().build(&p);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&p)
         .args(["-vvvv", "env"])
         .env("PATH", path_with_temp_dir(&t))
@@ -160,7 +160,7 @@ fn can_control_scarb_log_with_cli() {
     let p = TempDir::new().unwrap();
     ProjectBuilder::start().build(&p);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env_remove("SCARB_LOG")
         .current_dir(&p)
         .args(["-vvv", "env"])
@@ -224,7 +224,7 @@ fn can_find_scarb_directory_scripts_without_path() {
     let p = TempDir::new().unwrap();
     ProjectBuilder::start().build(&p);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&p)
         .env("SCARB", scarb_path)
         .args(["hello", "beautiful", "world"])
@@ -245,7 +245,7 @@ fn can_list_scarb_directory_scripts() {
         .join(format!("scarb-hello{}", env::consts::EXE_SUFFIX))
         .to_string_lossy()
         .to_string();
-    let cmd = Scarb::quick_snapbox()
+    let cmd = Scarb::quick_command()
         .env("SCARB", scarb_path)
         .args(["commands"])
         .assert()
@@ -259,7 +259,7 @@ fn can_list_scarb_directory_scripts() {
 fn scarb_reads_verbosity_from_env() {
     let p = TempDir::new().unwrap();
     ProjectBuilder::start().build(&p);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&p)
         .arg("check")
         .env("SCARB_UI_VERBOSITY", "quiet")
@@ -272,7 +272,7 @@ fn scarb_reads_verbosity_from_env() {
 fn cli_verbosity_overrides_env() {
     let p = TempDir::new().unwrap();
     ProjectBuilder::start().build(&p);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&p)
         .arg("check")
         .arg("--verbose")

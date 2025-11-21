@@ -12,7 +12,7 @@ fn simple() {
         .version("0.1.0")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -31,7 +31,7 @@ fn check_git_fetch_stdout() {
         .dep("dep1", &git_dep)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()

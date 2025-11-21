@@ -12,7 +12,7 @@ fn build_defaults_to_dev() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -30,7 +30,7 @@ fn can_build_release() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["--release", "build"])
         .current_dir(&t)
         .assert()
@@ -75,7 +75,7 @@ fn defaults_to_dev() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -92,7 +92,7 @@ fn can_choose_release() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -109,7 +109,7 @@ fn can_choose_dev() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "--dev", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -126,7 +126,7 @@ fn cannot_choose_both_dev_and_release() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["--dev", "--release","metadata", "--format-version", "1"])
         .current_dir(&t)
         .assert()
@@ -145,7 +145,7 @@ fn can_choose_release_by_name() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args([
             "--json",
             "--profile",
@@ -169,7 +169,7 @@ fn can_choose_dev_by_name() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args([
             "--json",
             "--profile",
@@ -193,7 +193,7 @@ fn can_choose_dev_by_short_name() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "-P", "dev", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -215,7 +215,7 @@ fn can_choose_custom_profile() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args([
             "--json",
             "--profile",
@@ -246,7 +246,7 @@ fn cannot_choose_not_existing_profile() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["--profile", "custom", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .assert()
@@ -259,7 +259,7 @@ fn shortcuts_precede_profile_arg() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args([
             "--json",
             "--release",
@@ -280,7 +280,7 @@ fn shortcuts_precede_profile_env() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .env("SCARB_PROFILE", "release")
         .args(["--json", "--dev", "metadata", "--format-version", "1"])
         .current_dir(&t)
@@ -305,7 +305,7 @@ fn can_use_shortcuts_in_scripts() {
         )
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .env("SCARB_PROFILE", "custom")
         .args(["run", "script-release"])
         .current_dir(&t)
@@ -313,7 +313,7 @@ fn can_use_shortcuts_in_scripts() {
 
     assert_eq!(metadata.current_profile, "release".to_string());
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .env("SCARB_PROFILE", "custom")
         .args(["run", "script"])
         .current_dir(&t)
@@ -327,7 +327,7 @@ fn compiler_config_defaults_in_dev() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -358,7 +358,7 @@ fn sierra_replace_ids_default_false_in_release() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args([
             "--json",
             "--profile",
@@ -400,7 +400,7 @@ fn compiler_config_set_for_all_profiles() {
         )
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -425,7 +425,7 @@ fn compiler_config_set_for_all_profiles() {
         );
     }
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -450,7 +450,7 @@ fn compiler_config_set_for_all_profiles() {
         );
     }
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args([
             "--json",
             "--profile",
@@ -494,7 +494,7 @@ fn inlining_strategy_can_be_set_by_alias() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -524,7 +524,7 @@ fn can_set_replace_ids_in_profile() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -557,7 +557,7 @@ fn profile_precedes_compiler_config() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -575,7 +575,7 @@ fn profile_precedes_compiler_config() {
         );
     }
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -604,7 +604,7 @@ fn custom_profiles_inherit_from_dev_by_default() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args([
             "--json",
             "--profile",
@@ -641,7 +641,7 @@ fn custom_profiles_can_inherit_by_name() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args([
             "--json",
             "--profile",
@@ -680,7 +680,7 @@ fn custom_profiles_can_inherit_dev_and_release_only() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["--profile", "custom", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .assert()
@@ -710,7 +710,7 @@ fn profile_overrides_tool() {
         "#})
         .dep_cairo_test()
         .build(&t);
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -737,7 +737,7 @@ fn profile_overrides_tool() {
         "some-value"
     );
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args([
             "--json",
             "--profile=newprof",
@@ -789,7 +789,7 @@ fn tools_can_be_merged_recursively() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args([
             "--json",
             "--profile=release",
@@ -838,7 +838,7 @@ fn invalid_resolved_cairo_section() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()

@@ -15,7 +15,7 @@ fn test_diagnostics_success() {
     "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .current_dir(&t)
         .assert()
@@ -36,7 +36,7 @@ fn test_diagnostics_with_error_code() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .current_dir(&t)
         .assert()
@@ -61,7 +61,7 @@ fn test_diagnostics_allowed_warnings() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .current_dir(&t)
         .assert()
@@ -86,7 +86,7 @@ fn test_diagnostics_not_allowed_warnings() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .current_dir(&t)
         .assert()
@@ -109,7 +109,7 @@ fn test_diagnostics_error() {
         .dep_starknet()
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .current_dir(&t)
         .assert()
@@ -169,7 +169,7 @@ fn test_diagnostics_warnings() {
         .dep_starknet()
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--document-private-items", "--output-format", "json"])
         .current_dir(&t)

@@ -30,7 +30,7 @@ fn usage() {
         .build(&t);
 
     // FIXME(mkaput): Why are verbose statuses not appearing here?
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -57,7 +57,7 @@ fn update() {
         .lib_cairo(r#"fn f() -> felt252 { bar::f() }"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -78,7 +78,7 @@ fn update() {
             .build(t);
     });
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("update")
         .current_dir(&t)
         .assert()
@@ -111,7 +111,7 @@ fn not_found() {
         .dep("baz", Dep.version("1").registry(&registry))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -139,7 +139,7 @@ fn empty_registry() {
         .dep("baz", Dep.version("1").registry(&registry))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -167,7 +167,7 @@ fn url_pointing_to_file() {
         .dep("baz", Dep.version("1").registry(&registry))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -199,7 +199,7 @@ fn publish() {
             .lib_cairo("fn main() -> felt252 { 0 }")
             .build(&t);
 
-        Scarb::quick_snapbox()
+        Scarb::quick_command()
             .arg("publish")
             .arg("--index")
             .arg(Url::from_directory_path(&index).unwrap().to_string())
@@ -287,7 +287,7 @@ fn publish_disabled() {
         .lib_cairo("fn main() -> felt252 { 0 }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("publish")
         .arg("--no-verify")
         .arg("--index")
@@ -313,7 +313,7 @@ fn publish_overwrites_existing() {
         .lib_cairo("fn main() -> felt252 { 0 }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("publish")
         .arg("--no-verify")
         .arg("--index")
@@ -343,7 +343,7 @@ fn publish_overwrites_existing() {
         .lib_cairo("fn main() -> felt252 { 1024 }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("publish")
         .arg("--index")
         .arg(Url::from_directory_path(&index).unwrap().to_string())

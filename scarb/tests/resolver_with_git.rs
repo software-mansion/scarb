@@ -33,7 +33,7 @@ fn valid_triangle() {
         .dep("proxy", &proxy)
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .output()
@@ -92,7 +92,7 @@ fn two_revs_of_same_dep() {
         .dep("proxy", &proxy)
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .output()
@@ -159,7 +159,7 @@ fn two_revs_of_same_dep_diamond() {
         .dep("dep2", &dep2)
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .output()

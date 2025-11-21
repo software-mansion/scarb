@@ -12,7 +12,7 @@ fn simple_clean() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -21,7 +21,7 @@ fn simple_clean() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("cache")
         .arg("clean")
         .current_dir(&t)
@@ -38,7 +38,7 @@ fn path_print() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("cache")
         .arg("path")
         .current_dir(&t)

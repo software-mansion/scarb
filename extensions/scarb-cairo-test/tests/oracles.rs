@@ -31,7 +31,7 @@ fn oracle() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("cairo-test")
         .env("RUST_BACKTRACE", "0")
         .current_dir(&t)
