@@ -1,5 +1,6 @@
 #![allow(dyn_drop)]
 
+use crate::cargo::cargo_bin;
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use serde::de::DeserializeOwned;
@@ -11,12 +12,10 @@ use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 use std::sync::LazyLock;
 
-use crate::cargo::cargo_bin;
-
 pub struct Scarb {
     cache: EnvPath,
     config: EnvPath,
-    target: Option<EnvPath>,
+    target: Option<PathBuf>,
     log: OsString,
     scarb_bin: PathBuf,
 }
@@ -39,7 +38,7 @@ impl Scarb {
             config: EnvPath::borrow(config.dirs().config_dir.path_unchecked().as_std_path()),
             target: config
                 .target_dir_override()
-                .map(|p| EnvPath::borrow(p.as_std_path())),
+                .map(|p| p.as_std_path().to_path_buf()),
             log: config.log_filter_directive().to_os_string(),
             scarb_bin: cargo_bin("scarb"),
         }
@@ -51,10 +50,7 @@ impl Scarb {
 
     pub fn snapbox(self) -> ScarbCommand {
         let inner = SnapboxCommand::from_std(self.std());
-        let mut state: Vec<Box<dyn Drop>> = vec![Box::new(self.cache), Box::new(self.config)];
-        if let Some(target) = self.target {
-            state.push(Box::new(target));
-        }
+        let state: Vec<Box<dyn Drop>> = vec![Box::new(self.cache), Box::new(self.config)];
         ScarbCommand { inner, state }
     }
 
@@ -65,7 +61,7 @@ impl Scarb {
         cmd.env("SCARB_CONFIG", self.config.path());
         cmd.env("SCARB_INIT_TEST_RUNNER", "none");
         if let Some(target) = self.target.as_ref() {
-            cmd.env("SCARB_TARGET_DIR", target.path());
+            cmd.env("SCARB_TARGET_DIR", target);
         }
         cmd
     }
@@ -109,7 +105,7 @@ impl Scarb {
     }
 
     pub fn target_dir(mut self, path: &Path) -> Self {
-        self.target = Some(EnvPath::borrow(path));
+        self.target = Some(path.into());
         self
     }
 }
