@@ -12,6 +12,9 @@ use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 use std::sync::LazyLock;
 
+#[cfg(feature = "scarb-config")]
+use camino::Utf8Path;
+
 pub struct Scarb {
     cache: EnvPath,
     config: EnvPath,
@@ -49,12 +52,24 @@ impl Scarb {
     }
 
     pub fn snapbox(self) -> ScarbCommand {
-        let inner = SnapboxCommand::from_std(self.std());
+        let inner = SnapboxCommand::from_std(self.std_unchecked());
         let state: Vec<Box<dyn Drop>> = vec![Box::new(self.cache), Box::new(self.config)];
         ScarbCommand { inner, state }
     }
 
     pub fn std(&self) -> StdCommand {
+        assert!(
+            matches!(self.config, EnvPath::Unmanaged(_)),
+            "You must set config directory manually with `config` method to use `std()` command."
+        );
+        assert!(
+            matches!(self.cache, EnvPath::Unmanaged(_)),
+            "You must set cache directory manually with `cache` method to use `std()` command."
+        );
+        self.std_unchecked()
+    }
+
+    fn std_unchecked(&self) -> StdCommand {
         let mut cmd = StdCommand::new(self.scarb_bin.clone());
         cmd.env("SCARB_LOG", self.log.clone());
         cmd.env("SCARB_CACHE", self.cache.path());
@@ -83,15 +98,14 @@ impl Scarb {
     }
 
     #[cfg(feature = "scarb-config")]
-    pub fn test_config(manifest: impl crate::fsx::AssertFsUtf8Ext) -> scarb::core::Config {
-        use crate::fsx::PathUtf8Ext;
-
-        let cache_dir = TempDir::new().unwrap();
-        let config_dir = TempDir::new().unwrap();
-
+    pub fn test_config(
+        manifest: impl crate::fsx::AssertFsUtf8Ext,
+        cache_dir: &Utf8Path,
+        config_dir: &Utf8Path,
+    ) -> scarb::core::Config {
         scarb::core::Config::builder(manifest.utf8_path())
-            .global_cache_dir_override(Some(cache_dir.try_as_utf8().unwrap()))
-            .global_config_dir_override(Some(config_dir.try_as_utf8().unwrap()))
+            .global_cache_dir_override(Some(cache_dir))
+            .global_config_dir_override(Some(config_dir))
             .path_env_override(Some(std::iter::empty::<PathBuf>()))
             .ui_verbosity(scarb_ui::Verbosity::Verbose)
             .log_filter_directive(Some("scarb=trace"))
@@ -101,6 +115,11 @@ impl Scarb {
 
     pub fn cache(mut self, path: &Path) -> Self {
         self.cache = EnvPath::borrow(path);
+        self
+    }
+
+    pub fn config(mut self, path: &Path) -> Self {
+        self.config = EnvPath::borrow(path);
         self
     }
 
