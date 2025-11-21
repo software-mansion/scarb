@@ -1,4 +1,5 @@
 use crate::command::Scarb;
+use assert_fs::TempDir;
 use scarb_proc_macro_server_types::jsonrpc::RequestId;
 use scarb_proc_macro_server_types::jsonrpc::ResponseError;
 use scarb_proc_macro_server_types::jsonrpc::RpcRequest;
@@ -105,11 +106,18 @@ pub struct ProcMacroClient {
     server_process: Child,
     id_counter: RequestId,
     responses: HashMap<RequestId, RpcResponse>,
+    _cache_dir: TempDir,
+    _config_dir: TempDir,
 }
 
 impl ProcMacroClient {
     pub fn new<P: AsRef<Path>>(path: P) -> Self {
+        let cache_dir = TempDir::new().unwrap();
+        let config_dir = TempDir::new().unwrap();
+
         let mut server_process = Scarb::new()
+            .cache(cache_dir.path())
+            .config(config_dir.path())
             .std()
             .arg("--quiet")
             .arg("proc-macro-server")
@@ -129,10 +137,17 @@ impl ProcMacroClient {
             server_process,
             id_counter: Default::default(),
             responses: Default::default(),
+            _cache_dir: cache_dir,
+            _config_dir: config_dir,
         }
     }
     pub fn new_without_cargo<P: AsRef<Path>>(path: P) -> Self {
+        let cache_dir = TempDir::new().unwrap();
+        let config_dir = TempDir::new().unwrap();
+
         let mut server_process = Scarb::new()
+            .cache(cache_dir.path())
+            .config(config_dir.path())
             .std()
             .arg("--quiet")
             .arg("proc-macro-server")
@@ -154,6 +169,8 @@ impl ProcMacroClient {
             server_process,
             id_counter: Default::default(),
             responses: Default::default(),
+            _cache_dir: cache_dir,
+            _config_dir: config_dir,
         }
     }
 

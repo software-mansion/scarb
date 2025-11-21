@@ -3,7 +3,9 @@ use std::process::Stdio;
 use std::sync::{Arc, Barrier};
 use std::thread;
 
+use assert_fs::TempDir;
 use assert_fs::fixture::PathChild;
+use camino::Utf8Path;
 use indoc::indoc;
 use io_tee::TeeReader;
 use ntest::timeout;
@@ -14,14 +16,20 @@ use snapbox::Assert;
 #[test]
 #[timeout(360_000)]
 fn locking_build_artifacts() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let cache_dir = TempDir::new().unwrap();
+    let config_dir = TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
         .build(&t);
 
     let manifest = t.child("Scarb.toml");
-    let config = Scarb::test_config(manifest);
+    let config = Scarb::test_config(
+        manifest,
+        Utf8Path::from_path(cache_dir.path()).unwrap(),
+        Utf8Path::from_path(config_dir.path()).unwrap(),
+    );
 
     thread::scope(|s| {
         let ws = scarb::ops::read_workspace(config.manifest_path(), &config).unwrap();
@@ -77,14 +85,20 @@ fn locking_build_artifacts() {
 #[tokio::test(flavor = "multi_thread")]
 #[timeout(60_000)]
 async fn locking_package_cache() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let cache_dir = TempDir::new().unwrap();
+    let config_dir = TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
         .build(&t);
 
     let manifest = t.child("Scarb.toml");
-    let config = Scarb::test_config(manifest);
+    let config = Scarb::test_config(
+        manifest,
+        Utf8Path::from_path(cache_dir.path()).unwrap(),
+        Utf8Path::from_path(config_dir.path()).unwrap(),
+    );
 
     let lock = config.package_cache_lock().acquire_async().await;
     let barrier = Arc::new(Barrier::new(2));

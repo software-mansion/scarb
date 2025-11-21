@@ -17,17 +17,24 @@ const TIMEOUT: Duration = Duration::from_secs(5);
 #[tokio::test]
 #[ignore = "TODO(maciektr): Ignored until fixed by LS team."]
 async fn run() {
+    let cache_dir = TempDir::new().unwrap();
+    let config_dir = TempDir::new().unwrap();
     let t = TempDir::new().unwrap();
 
     let mut proc = KillOnDrop(
-        Command::from(Scarb::new().std())
-            .arg("cairo-language-server")
-            .current_dir(&t)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .expect("failed to start ls"),
+        Command::from(
+            Scarb::new()
+                .cache(cache_dir.path())
+                .config(config_dir.path())
+                .std(),
+        )
+        .arg("cairo-language-server")
+        .current_dir(&t)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .expect("failed to start ls"),
     );
     let mut stdin = proc.stdin.take().unwrap();
     let mut stdout = BufReader::new(proc.stdout.take().unwrap());

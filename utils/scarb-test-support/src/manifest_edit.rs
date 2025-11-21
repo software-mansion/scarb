@@ -6,12 +6,11 @@ use assert_fs::TempDir;
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
 use snapbox::Data;
-use snapbox::cmd::Command;
 
-use crate::command::Scarb;
+use crate::command::{Scarb, ScarbCommand};
 
 pub struct ManifestEditHarness {
-    cmd: Command,
+    cmd: ScarbCommand,
     path: Option<ChildPath>,
     input_manifest: Option<String>,
     output_manifest: Option<String>,

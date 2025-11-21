@@ -1,5 +1,4 @@
 use snapbox::Data;
-use snapbox::cmd::Command as SnapboxCommand;
 use std::io::Read;
 use std::net::TcpListener;
 use std::process::{Child, Command};
@@ -161,11 +160,8 @@ fn can_control_scarb_log_with_cli() {
     let p = TempDir::new().unwrap();
     ProjectBuilder::start().build(&p);
 
-    let mut cmd = Scarb::new().std();
-    // Set to "trace" for all tests created with `std()`.
-    cmd.env_remove("SCARB_LOG");
-
-    SnapboxCommand::from_std(cmd)
+    Scarb::quick_snapbox()
+        .env_remove("SCARB_LOG")
         .current_dir(&p)
         .args(["-vvv", "env"])
         .env("PATH", path_with_temp_dir(&t))

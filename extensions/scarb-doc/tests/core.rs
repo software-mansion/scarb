@@ -8,10 +8,13 @@ use std::path::PathBuf;
 
 #[test]
 fn can_doc_corelib() {
+    let cache_dir = TempDir::new().unwrap();
     let t = TempDir::new().unwrap();
     // Find path to corelib.
     ProjectBuilder::start().name("hello").build(&t);
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
