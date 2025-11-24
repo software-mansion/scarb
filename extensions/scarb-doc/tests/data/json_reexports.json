@@ -255,6 +255,77 @@
                 "use_macro_declarations": []
               },
               "macro_declarations": []
+            },
+            {
+              "item_data": {
+                "name": "please",
+                "doc": null,
+                "signature": null,
+                "full_path": "hello_world::please",
+                "group": null
+              },
+              "submodules": [
+                {
+                  "item_data": {
+                    "name": "break_stuff",
+                    "doc": "when this fails there is likely a bug\nrelated to retrieving pub use ancestors",
+                    "signature": null,
+                    "full_path": "hello_world::please::break_stuff",
+                    "group": null
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [],
+                  "structs": [],
+                  "enums": [],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": [],
+                  "pub_uses": {
+                    "use_constants": [],
+                    "use_free_functions": [],
+                    "use_structs": [],
+                    "use_enums": [],
+                    "use_module_type_aliases": [],
+                    "use_impl_aliases": [],
+                    "use_traits": [],
+                    "use_impl_defs": [],
+                    "use_extern_types": [],
+                    "use_extern_functions": [],
+                    "use_submodules": [],
+                    "use_macro_declarations": []
+                  },
+                  "macro_declarations": []
+                }
+              ],
+              "constants": [],
+              "free_functions": [],
+              "structs": [],
+              "enums": [],
+              "type_aliases": [],
+              "impl_aliases": [],
+              "traits": [],
+              "impls": [],
+              "extern_types": [],
+              "extern_functions": [],
+              "pub_uses": {
+                "use_constants": [],
+                "use_free_functions": [],
+                "use_structs": [],
+                "use_enums": [],
+                "use_module_type_aliases": [],
+                "use_impl_aliases": [],
+                "use_traits": [],
+                "use_impl_defs": [],
+                "use_extern_types": [],
+                "use_extern_functions": [],
+                "use_submodules": [],
+                "use_macro_declarations": []
+              },
+              "macro_declarations": []
             }
           ],
           "constants": [],
@@ -522,11 +593,56 @@
                   "use_macro_declarations": []
                 },
                 "macro_declarations": []
+              },
+              {
+                "item_data": {
+                  "name": "break_stuff",
+                  "doc": "when this fails there is likely a bug\nrelated to retrieving pub use ancestors",
+                  "signature": null,
+                  "full_path": "hello_world::please::break_stuff",
+                  "group": null
+                },
+                "submodules": [],
+                "constants": [],
+                "free_functions": [],
+                "structs": [],
+                "enums": [],
+                "type_aliases": [],
+                "impl_aliases": [],
+                "traits": [],
+                "impls": [],
+                "extern_types": [],
+                "extern_functions": [],
+                "pub_uses": {
+                  "use_constants": [],
+                  "use_free_functions": [],
+                  "use_structs": [],
+                  "use_enums": [],
+                  "use_module_type_aliases": [],
+                  "use_impl_aliases": [],
+                  "use_traits": [],
+                  "use_impl_defs": [],
+                  "use_extern_types": [],
+                  "use_extern_functions": [],
+                  "use_submodules": [],
+                  "use_macro_declarations": []
+                },
+                "macro_declarations": []
               }
             ],
             "use_macro_declarations": []
           },
-          "macro_declarations": []
+          "macro_declarations": [
+            {
+              "item_data": {
+                "name": "make_life_harder",
+                "doc": null,
+                "signature": "macro make_life_harder {\n    ($name:ident) => { ... };\n}",
+                "full_path": "hello_world::make_life_harder",
+                "group": null
+              }
+            }
+          ]
         },
         "groups": []
       },
