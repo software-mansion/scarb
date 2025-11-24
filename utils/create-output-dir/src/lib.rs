@@ -6,13 +6,13 @@
 //!
 //! [cargo-util-fn]: https://docs.rs/cargo-util/latest/cargo_util/paths/fn.create_dir_all_excluded_from_backups_atomic.html
 
+use anyhow::{Context, Result};
 use std::ffi::OsStr;
 use std::path::Path;
 use std::{env, fs};
-use anyhow::{Result, Context};
 
 pub const EXECUTE_PROGRAM_OUTPUT_FILENAME: &str = "program_output.txt";
-pub const EXECUTE_STDOUT_OUTPUT_FILENAME: &str = "stdout_output.txt";
+pub const EXECUTE_PRINT_OUTPUT_FILENAME: &str = "stdout_output.txt";
 
 /// Creates an excluded from cache directory atomically with its parents as needed.
 ///
