@@ -1,20 +1,24 @@
+#![allow(dyn_drop)]
+
+use crate::cargo::cargo_bin;
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use serde::de::DeserializeOwned;
-use snapbox::cmd::Command as SnapboxCommand;
-use std::ffi::OsString;
+use snapbox::cmd::{Command as SnapboxCommand, OutputAssert};
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 use std::sync::LazyLock;
 
-use crate::cargo::cargo_bin;
+#[cfg(feature = "scarb-config")]
+use camino::Utf8Path;
 
 pub struct Scarb {
     cache: EnvPath,
     config: EnvPath,
-    target: Option<EnvPath>,
+    target: Option<PathBuf>,
     log: OsString,
     scarb_bin: PathBuf,
 }
@@ -37,28 +41,42 @@ impl Scarb {
             config: EnvPath::borrow(config.dirs().config_dir.path_unchecked().as_std_path()),
             target: config
                 .target_dir_override()
-                .map(|p| EnvPath::borrow(p.as_std_path())),
+                .map(|p| p.as_std_path().to_path_buf()),
             log: config.log_filter_directive().to_os_string(),
             scarb_bin: cargo_bin("scarb"),
         }
     }
 
-    pub fn quick_snapbox() -> SnapboxCommand {
+    pub fn quick_snapbox() -> ScarbCommand {
         Self::new().snapbox()
     }
 
-    pub fn snapbox(self) -> SnapboxCommand {
-        SnapboxCommand::from_std(self.std())
+    pub fn snapbox(self) -> ScarbCommand {
+        let inner = SnapboxCommand::from_std(self.std_unchecked());
+        let state: Vec<Box<dyn Drop>> = vec![Box::new(self.cache), Box::new(self.config)];
+        ScarbCommand { inner, state }
     }
 
-    pub fn std(self) -> StdCommand {
-        let mut cmd = StdCommand::new(self.scarb_bin);
-        cmd.env("SCARB_LOG", self.log);
+    pub fn std(&self) -> StdCommand {
+        assert!(
+            matches!(self.config, EnvPath::Unmanaged(_)),
+            "You must set config directory manually with `config` method to use `std()` command."
+        );
+        assert!(
+            matches!(self.cache, EnvPath::Unmanaged(_)),
+            "You must set cache directory manually with `cache` method to use `std()` command."
+        );
+        self.std_unchecked()
+    }
+
+    fn std_unchecked(&self) -> StdCommand {
+        let mut cmd = StdCommand::new(self.scarb_bin.clone());
+        cmd.env("SCARB_LOG", self.log.clone());
         cmd.env("SCARB_CACHE", self.cache.path());
         cmd.env("SCARB_CONFIG", self.config.path());
         cmd.env("SCARB_INIT_TEST_RUNNER", "none");
-        if let Some(target) = self.target {
-            cmd.env("SCARB_TARGET_DIR", target.path());
+        if let Some(target) = self.target.as_ref() {
+            cmd.env("SCARB_TARGET_DIR", target);
         }
         cmd
     }
@@ -80,15 +98,14 @@ impl Scarb {
     }
 
     #[cfg(feature = "scarb-config")]
-    pub fn test_config(manifest: impl crate::fsx::AssertFsUtf8Ext) -> scarb::core::Config {
-        use crate::fsx::PathUtf8Ext;
-
-        let cache_dir = TempDir::new().unwrap();
-        let config_dir = TempDir::new().unwrap();
-
+    pub fn test_config(
+        manifest: impl crate::fsx::AssertFsUtf8Ext,
+        cache_dir: &Utf8Path,
+        config_dir: &Utf8Path,
+    ) -> scarb::core::Config {
         scarb::core::Config::builder(manifest.utf8_path())
-            .global_cache_dir_override(Some(cache_dir.try_as_utf8().unwrap()))
-            .global_config_dir_override(Some(config_dir.try_as_utf8().unwrap()))
+            .global_cache_dir_override(Some(cache_dir))
+            .global_config_dir_override(Some(config_dir))
             .path_env_override(Some(std::iter::empty::<PathBuf>()))
             .ui_verbosity(scarb_ui::Verbosity::Verbose)
             .log_filter_directive(Some("scarb=trace"))
@@ -101,8 +118,13 @@ impl Scarb {
         self
     }
 
+    pub fn config(mut self, path: &Path) -> Self {
+        self.config = EnvPath::borrow(path);
+        self
+    }
+
     pub fn target_dir(mut self, path: &Path) -> Self {
-        self.target = Some(EnvPath::borrow(path));
+        self.target = Some(path.into());
         self
     }
 }
@@ -110,6 +132,71 @@ impl Scarb {
 impl Default for Scarb {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+pub struct ScarbCommand {
+    inner: SnapboxCommand,
+    state: Vec<Box<dyn Drop>>,
+}
+
+impl ScarbCommand {
+    pub fn arg(mut self, arg: impl AsRef<OsStr>) -> Self {
+        self.inner = self.inner.arg(arg);
+        self
+    }
+
+    pub fn args(mut self, args: impl IntoIterator<Item = impl AsRef<OsStr>>) -> Self {
+        self.inner = self.inner.args(args);
+        self
+    }
+
+    pub fn env_remove(mut self, key: impl AsRef<OsStr>) -> Self {
+        self.inner = self.inner.env_remove(key);
+        self
+    }
+
+    pub fn env(mut self, key: impl AsRef<OsStr>, value: impl AsRef<OsStr>) -> Self {
+        self.inner = self.inner.env(key, value);
+        self
+    }
+
+    pub fn envs(
+        mut self,
+        vars: impl IntoIterator<Item = (impl AsRef<OsStr>, impl AsRef<OsStr>)>,
+    ) -> Self {
+        self.inner = self.inner.envs(vars);
+        self
+    }
+
+    pub fn current_dir(self, dir: impl AsRef<Path>) -> Self {
+        Self {
+            state: self.state,
+            inner: self.inner.current_dir(dir),
+        }
+    }
+
+    pub fn assert(self) -> OutputAssert {
+        let Self {
+            // will be dropped at the end of the block, after `assert` is called
+            state: _managed_paths,
+            inner,
+        } = self;
+        inner.assert()
+    }
+
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.inner = self.inner.timeout(timeout);
+        self
+    }
+
+    pub fn output(self) -> Result<std::process::Output, std::io::Error> {
+        let Self {
+            // will be dropped at the end of the block, after `output` is called
+            state: _managed_paths,
+            inner,
+        } = self;
+        inner.output()
     }
 }
 
@@ -136,6 +223,10 @@ impl EnvPath {
     }
 }
 
+impl Drop for EnvPath {
+    fn drop(&mut self) {}
+}
+
 pub trait CommandExt {
     fn stdout_json<T: DeserializeOwned>(self) -> T;
 }
@@ -157,5 +248,16 @@ impl CommandExt for SnapboxCommand {
         }
         // help: make sure that the command outputs NDJSON (`--json` flag).
         panic!("Failed to deserialize stdout to JSON");
+    }
+}
+
+impl CommandExt for ScarbCommand {
+    fn stdout_json<T: DeserializeOwned>(self) -> T {
+        let Self {
+            // will be dropped at the end of the block, after `stdout_json` is called
+            state: _managed_paths,
+            inner,
+        } = self;
+        inner.stdout_json()
     }
 }
