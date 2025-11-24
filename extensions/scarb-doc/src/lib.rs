@@ -26,6 +26,7 @@ use scarb_ui::Ui;
 use serde::Serialize;
 
 pub mod attributes;
+pub mod code_blocks;
 pub mod db;
 pub mod diagnostics;
 pub mod docs_generation;
