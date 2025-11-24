@@ -7,7 +7,7 @@ use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::{formatdoc, indoc};
 use mimalloc::MiMalloc;
-use scarb_extensions_cli::execute::ToArgs;
+use scarb_extensions_cli::execute::unchecked::ToArgs;
 use scarb_extensions_cli::prove::Args;
 use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
 use scarb_ui::args::{PackagesFilter, ToEnvVars};

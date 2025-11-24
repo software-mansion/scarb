@@ -4,7 +4,7 @@ pub mod cairo_language_server;
 pub mod cairo_test;
 #[cfg(feature = "doc")]
 pub mod doc;
-#[cfg(feature = "execute")]
+#[cfg(feature = "execute_unchecked")]
 pub mod execute;
 #[cfg(feature = "mdbook")]
 pub mod mdbook;

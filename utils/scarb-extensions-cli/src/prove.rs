@@ -2,7 +2,7 @@
 
 //! Extension CLI arguments datastructures.
 
-use crate::execute::ExecutionArgs;
+use crate::execute::unchecked::ExecutionArgs;
 use clap::Parser;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 
