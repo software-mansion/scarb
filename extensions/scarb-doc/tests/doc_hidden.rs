@@ -33,7 +33,7 @@ fn test_doc_hidden() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--document-private-items", "--output-format", "json"])
         .current_dir(&t)
@@ -78,7 +78,7 @@ fn hides_impls_of_private_traits() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--document-private-items", "--output-format", "json"])
         .current_dir(&t)
@@ -110,7 +110,7 @@ fn test_doc_hidden_pub_use() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "json"])
         .current_dir(&t)

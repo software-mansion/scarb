@@ -32,7 +32,7 @@ fn require_audits_allows_non_audited_dev_dep() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -79,7 +79,7 @@ fn require_audits_allows_non_audited_dev_dep_with_patch() {
         "#, registry.url.clone(), Dep.version("2").registry(&registry).build()})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -118,7 +118,7 @@ fn require_audits_allows_audited_version_only() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -130,7 +130,7 @@ fn require_audits_allows_audited_version_only() {
 
     audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -144,7 +144,7 @@ fn require_audits_allows_audited_version_only() {
 
     unaudit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -178,7 +178,7 @@ fn require_audits_disallows_git_dep() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -218,7 +218,7 @@ fn require_audits_disallows_path_dep() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -271,7 +271,7 @@ fn require_audits_disallows_non_audited_version_transitive() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -282,7 +282,7 @@ fn require_audits_disallows_non_audited_version_transitive() {
         "#});
 
     audit(registry.t.child("index/3/b/bar.json").path(), "1.0.0").unwrap();
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -326,7 +326,7 @@ fn require_audits_workspace() {
         .require_audits(true)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--workspace")
         // Disable output from Cargo.
@@ -341,7 +341,7 @@ fn require_audits_workspace() {
 
     audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--workspace")
         // Disable output from Cargo.
@@ -382,7 +382,7 @@ fn require_audits_workspace_normal_and_dev_dep() {
         .build(&t);
 
     // Having a dev dep in a workspace should not lift the audit requirement for a normal dep.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -416,7 +416,7 @@ fn will_update_to_audited_version_only() {
 
     audit(registry.t.child("index/3/f/foo.json").path(), "1.0.0").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -438,7 +438,7 @@ fn will_update_to_audited_version_only() {
     });
 
     // Locked version should not change since the new version is not audited.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("update")
         .current_dir(&t)
         .assert()
@@ -453,7 +453,7 @@ fn will_update_to_audited_version_only() {
     audit(registry.t.child("index/3/f/foo.json").path(), "1.1.0").unwrap();
 
     // Update should now pick the audited version.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("update")
         .current_dir(&t)
         .assert()
@@ -508,7 +508,7 @@ fn bypass_audit_requirement() {
         .build(&first);
 
     // Bypassing audit requirement is not transitive
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&first)
         .assert()
@@ -535,7 +535,7 @@ fn bypass_audit_requirement() {
         )
         .build(&second);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&second)
         .assert()

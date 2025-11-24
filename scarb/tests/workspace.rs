@@ -21,7 +21,7 @@ fn warn_on_member_without_manifest() {
         .add_member("second")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -42,7 +42,7 @@ fn error_on_virtual_manifest_with_dependencies() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -64,18 +64,18 @@ fn unify_target_dir() {
     WorkspaceBuilder::start().add_member("first").build(&t);
 
     // Make sure target dir is created.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["build"])
         .current_dir(&pkg1)
         .assert()
         .success();
 
-    let root_metadata = Scarb::quick_snapbox()
+    let root_metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
-    let pkg_metadata = Scarb::quick_snapbox()
+    let pkg_metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&pkg1)
         .stdout_json::<Metadata>();
@@ -118,7 +118,7 @@ fn target_name_duplicate() {
         .add_member("second")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -152,7 +152,7 @@ fn inherited_deps_cannot_override_source_version() {
         .dep("some", Dep.version("1.0.0").registry(&registry))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -192,7 +192,7 @@ fn inherited_deps_cannot_override_default_features_flag() {
         .dep("some", Dep.version("1.0.0").registry(&registry))
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -242,7 +242,7 @@ fn inherited_deps_can_override_features_list() {
         )
         .build(&t);
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -282,7 +282,7 @@ fn warn_on_compiler_config_in_ws_member() {
         .add_member("first")
         .add_member("second")
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()

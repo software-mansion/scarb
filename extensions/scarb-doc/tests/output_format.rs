@@ -24,7 +24,7 @@ fn json_output() {
         .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "json"])
         .current_dir(&t)
@@ -46,7 +46,7 @@ fn markdown_output() {
         .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "markdown"])
         .current_dir(&t)
@@ -68,7 +68,7 @@ fn mdx_output() {
         .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "mdx"])
         .current_dir(&t)
@@ -102,7 +102,7 @@ fn test_workspace_json() {
         .lib_cairo(COMMON_CODE_WITHOUT_FEATURE)
         .build(&child_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--workspace", "--output-format", "json"])
         .current_dir(&root_dir)

@@ -21,7 +21,7 @@ pub struct ManifestEditHarness {
 impl ManifestEditHarness {
     pub fn new() -> Self {
         Self {
-            cmd: Scarb::quick_snapbox(),
+            cmd: Scarb::quick_command(),
             path: None,
             input_manifest: None,
             output_manifest: None,

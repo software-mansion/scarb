@@ -25,7 +25,7 @@ fn cairo_plugin_re_export_simple() {
         .dep("world", t.child("world"))
         .build(&t.child("hello"));
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -69,7 +69,7 @@ fn cairo_plugin_re_export_simple() {
         "beautiful component should have 3 dependencies"
     );
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -160,7 +160,7 @@ fn components_in_the_same_unit_can_depend_on_conflicting_plugins() {
         .dep("first_dep", t.child("first_dep"))
         .dep("second_dep", t.child("second_dep"))
         .build(&t.child("hello"));
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.

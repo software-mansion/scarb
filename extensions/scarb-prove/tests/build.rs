@@ -32,13 +32,13 @@ fn build_executable_project() -> TempDir {
 fn prove_from_execution_output() {
     let t = build_executable_project();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .current_dir(&t)
         .assert()
         .success();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("prove")
         .arg("--execution-id=1")
         .current_dir(&t)
@@ -60,13 +60,13 @@ fn prove_from_execution_output() {
 fn prove_with_track_relations() {
     let t = build_executable_project();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .current_dir(&t)
         .assert()
         .success();
 
-    let cmd = Scarb::quick_snapbox()
+    let cmd = Scarb::quick_command()
         .arg("prove")
         .arg("--execution-id=1")
         .arg("--track-relations")
@@ -89,13 +89,13 @@ fn prove_with_track_relations() {
 fn prove_with_display_components() {
     let t = build_executable_project();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .current_dir(&t)
         .assert()
         .success();
 
-    let cmd = Scarb::quick_snapbox()
+    let cmd = Scarb::quick_command()
         .arg("prove")
         .arg("--execution-id=1")
         .arg("--display-components")
@@ -119,7 +119,7 @@ fn prove_with_display_components() {
 fn prove_fails_when_execution_output_not_found() {
     let t = build_executable_project();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("prove")
         .arg("--execution-id=1")
         .current_dir(&t)
@@ -141,7 +141,7 @@ fn prove_fails_when_cairo_pie_output() {
     let t = build_executable_project();
 
     // First create a cairo pie output
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--target=bootloader")
         .arg("--output=cairo-pie")
@@ -153,7 +153,7 @@ fn prove_fails_when_cairo_pie_output() {
         .assert(predicates::path::exists());
 
     // Then try to prove it
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("prove")
         .arg("--execution-id=1")
         .current_dir(&t)
@@ -174,7 +174,7 @@ fn prove_fails_when_cairo_pie_output() {
 fn prove_with_execute() {
     let t = build_executable_project();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("prove")
         .arg("--execute")
         .arg("--target=standalone")
@@ -200,7 +200,7 @@ fn prove_with_execute() {
 fn prove_fails_on_windows() {
     let t = build_executable_project();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("prove")
         .arg("--execute")
         .current_dir(&t)

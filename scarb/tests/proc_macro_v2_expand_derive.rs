@@ -80,7 +80,7 @@ fn can_implement_derive_macro() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -192,7 +192,7 @@ fn can_use_both_derive_and_attr() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -284,7 +284,7 @@ fn can_be_expanded() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -393,7 +393,7 @@ fn code_mappings_preserve_derive_error_locations() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
@@ -448,7 +448,7 @@ fn diags_can_be_mapped_to_call_site_correctly() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -591,7 +591,7 @@ fn can_use_two_derive_macros() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.

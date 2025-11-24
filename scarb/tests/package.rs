@@ -177,7 +177,7 @@ fn simple() {
     let t = TempDir::new().unwrap();
     simple_project().build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -236,7 +236,7 @@ fn list_simple() {
         .src("cairo_project.toml", "this should be skipped")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--list")
         .current_dir(&t)
@@ -269,7 +269,7 @@ fn list_workspace() {
         .add_member("first")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--list")
         .current_dir(&t)
@@ -303,7 +303,7 @@ fn reserved_files_collision() {
         .src("Scarb.orig.toml", "oops")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -367,7 +367,7 @@ fn generated_manifest() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-verify")
         .current_dir(&t)
@@ -446,7 +446,7 @@ fn dev_dependencies() {
         .dev_dep("dev_dep", path_dep.version("1.0.0"))
         .build(&hello);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .arg("--no-verify")
@@ -534,7 +534,7 @@ fn workspace() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--workspace")
         .arg("--no-verify")
@@ -599,7 +599,7 @@ fn cairo_plugin() {
     // Note this will be packaged with `cairo-lang-macro` from crates, not the local one.
     CairoPluginProjectBuilder::default().build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         // Disable output from Cargo.
@@ -715,7 +715,7 @@ fn builtin_cairo_plugin() {
         })
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -776,7 +776,7 @@ fn clean_repo() {
 
     // Fetch is run to make sure that Scarb.lock is created before the repo init.
     // Otherwise random changes preventing packaging the project might occur.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("fetch")
         .assert()
@@ -785,7 +785,7 @@ fn clean_repo() {
     t.child("src/bar.cairo").write_str("fn bar() {}").unwrap();
     gitx::commit(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("package")
         .assert()
@@ -815,7 +815,7 @@ fn dirty_repo() {
 
     t.child("src/bar.cairo").write_str("fn bar() {}").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -838,7 +838,7 @@ fn dirty_repo_allow_dirty() {
 
     t.child("src/bar.cairo").write_str("fn bar() {}").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--allow-dirty")
         .current_dir(&t)
@@ -868,7 +868,7 @@ fn repo_without_commits() {
 
     t.child("src/bar.cairo").write_str("fn bar() {}").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--allow-dirty")
         .current_dir(&t)
@@ -895,7 +895,7 @@ fn list_clean_repo() {
     gitx::init(&t);
     gitx::commit(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--list")
         .current_dir(&t)
@@ -923,7 +923,7 @@ fn list_dirty_repo() {
     gitx::commit(&t);
     t.child("src/bar.cairo").write_str("fn bar() {}").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--list")
         .current_dir(&t)
@@ -961,7 +961,7 @@ fn nested_package_vcs_path() {
 
     // Fetch is run to make sure that Scarb.lock is created before the repo init.
     // Otherwise random changes preventing packaging the project might occur.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("fetch")
         .assert()
@@ -969,7 +969,7 @@ fn nested_package_vcs_path() {
 
     gitx::commit(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("package")
         .arg("-p")
@@ -1009,7 +1009,7 @@ fn path_dependency_no_version() {
         .dep("path_dep", &path_dep)
         .build(&hello);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&hello)
@@ -1040,7 +1040,7 @@ fn git_dependency_no_version() {
         .dep("git_dep", &git_dep)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -1067,7 +1067,7 @@ fn list_ignore_nested() {
         .version("1.0.0")
         .build(&t.child("child"));
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--list")
         .current_dir(&t)
@@ -1102,7 +1102,7 @@ fn include_readme_and_license() {
         .write_str("This is LICENSE file")
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("package")
         .arg("--allow-dirty")
@@ -1145,7 +1145,7 @@ fn include_readme_and_license_from_outside() {
         .write_str("fn foo() {}")
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(t.child("foo"))
         .arg("package")
         .arg("--allow-dirty")
@@ -1199,7 +1199,7 @@ fn include_readme_and_license_from_workspace() {
         .add_member("foo")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("package")
         .arg("-p")
@@ -1231,7 +1231,7 @@ fn weird_characters_in_filenames() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().src("src/:foo", "").build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -1255,7 +1255,7 @@ fn windows_restricted_filenames() {
         .src("src/aux.cairo", "")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -1279,7 +1279,7 @@ fn package_symlink() {
 
     symlink_dir(t.child("src"), t.child("dup"));
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .current_dir(&t)
         .assert()
@@ -1308,7 +1308,7 @@ fn broken_symlink() {
 
     symlink_dir("nowhere", t.child("src/foo.cairo"));
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -1334,7 +1334,7 @@ fn broken_but_excluded_symlink() {
     symlink_dir("nowhere", t.child("target"));
 
     // FIXME(mkaput): Technically, we can just ignore such symlinks.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -1359,7 +1359,7 @@ fn filesystem_loop() {
 
     symlink_dir(t.child("src/symlink/foo/bar/baz"), t.child("src/symlink"));
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -1384,7 +1384,7 @@ fn exclude_dot_files_and_directories_by_default() {
         .src(".dotdir/file", "")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--list")
         .current_dir(&t)
@@ -1409,7 +1409,7 @@ fn clean_tar_headers() {
         .version("1.0.0")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .current_dir(&t)
         .assert()
@@ -1467,7 +1467,7 @@ fn ignore_file(ignore_path: &str, setup_git: bool, expect_ignore_to_work: bool) 
 
     let expected = unix_paths_to_os_lossy(&expected.join("\n"));
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--list")
         .current_dir(g.p)
@@ -1499,7 +1499,7 @@ fn ignore_whitelist_pattern() {
         "#})
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--list")
         .current_dir(&t)
@@ -1528,7 +1528,7 @@ fn no_target() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -1552,7 +1552,7 @@ fn error_on_verification() {
         .src("src/lib.cairo", ".")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -1583,7 +1583,7 @@ fn package_without_verification() {
         .src("src/lib.cairo", "fn foo().")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-verify")
         .arg("--no-metadata")
@@ -1601,7 +1601,7 @@ fn package_cairo_plugin_without_verification() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default().build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-verify")
         .arg("--no-metadata")
@@ -1627,7 +1627,7 @@ fn package_without_publish_metadata() {
         .version("1.0.0")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .current_dir(&t)
         .assert()
@@ -1656,7 +1656,7 @@ fn package_with_publish_disabled() {
         .manifest_package_extra("publish = false")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .arg("--no-verify")
@@ -1697,7 +1697,7 @@ fn can_include_additional_files() {
     t.child(".gitignore").write_str("target").unwrap();
     t.child(".scarbignore").write_str("other").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -1784,7 +1784,7 @@ fn assets_are_packaged() {
         .manifest_package_extra(r#"assets = ["data.txt", "some/file.txt"]"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&t)
@@ -1816,7 +1816,7 @@ fn files_outside_package_cannot_be_included() {
     t.child("some/file.txt")
         .write_str("some file content")
         .unwrap();
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&pkg)
@@ -1837,7 +1837,7 @@ fn files_that_dont_exist_during_packaging_cannot_be_included() {
             include = ["some/file.txt"]
         "#})
         .build(&pkg);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .current_dir(&pkg)
@@ -1863,7 +1863,7 @@ fn package_script_is_run() {
             package = "echo 'Hello!'"
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("package")
         .arg("--no-metadata")
@@ -1919,7 +1919,7 @@ fn package_proc_macro_with_package_script() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("package")
         .arg("--no-metadata")
@@ -1962,7 +1962,7 @@ fn package_ignores_patches() {
         "#, path_dep.build()})
         .build(&hello);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("package")
         .arg("--no-metadata")
         .arg("--no-verify")
@@ -2015,7 +2015,7 @@ fn package_with_generated_asset() {
             package = "echo 'and packaged' >> asset.txt"
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .current_dir(&t)
         .arg("package")
         .arg("--no-metadata")

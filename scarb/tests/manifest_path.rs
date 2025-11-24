@@ -17,7 +17,7 @@ fn with_manifest() {
         )
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("manifest-path")
         .current_dir(&t)
         .assert()
@@ -41,7 +41,7 @@ fn with_manifest() {
 fn without_manifest() {
     let t = assert_fs::TempDir::new().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("manifest-path")
         .current_dir(&t)
         .assert()
@@ -75,7 +75,7 @@ fn subdir() {
     let subdir = t.child("foobar");
     subdir.create_dir_all().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("manifest-path")
         .current_dir(&subdir)
         .assert()
@@ -107,7 +107,7 @@ fn path_override() {
         )
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--manifest-path")
         .arg(manifest.path())
         .arg("manifest-path")
@@ -132,7 +132,7 @@ fn path_override_no_manifest() {
 
     let manifest = subdir.child("Scarb.toml");
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--manifest-path")
         .arg(manifest.path())
         .arg("manifest-path")
@@ -160,7 +160,7 @@ fn path_override_via_env() {
         )
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("SCARB_MANIFEST_PATH", manifest.path())
         .arg("manifest-path")
         .current_dir(&t)
@@ -189,7 +189,7 @@ fn json_output() {
         )
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--json")
         .arg("manifest-path")
         .current_dir(&t)

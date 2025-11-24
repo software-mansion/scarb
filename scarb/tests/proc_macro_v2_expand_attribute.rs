@@ -35,7 +35,7 @@ fn can_emit_plugin_warning() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -84,7 +84,7 @@ fn diags_from_generated_code_mapped_correctly() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -148,7 +148,7 @@ fn can_remove_original_node() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -205,7 +205,7 @@ fn can_replace_original_node() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -255,7 +255,7 @@ fn can_read_attribute_args() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -327,7 +327,7 @@ fn can_expand_trait_inner_func_attr() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -414,7 +414,7 @@ fn can_expand_impl_inner_func_attr() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -480,7 +480,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -562,7 +562,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations_with_parser()
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -627,7 +627,7 @@ fn can_be_used_through_re_export() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -681,7 +681,7 @@ fn can_emit_plugin_error() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -731,7 +731,7 @@ fn code_mappings_preserve_attribute_error_locations() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -803,7 +803,7 @@ fn can_emit_diagnostic_with_custom_location() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -876,7 +876,7 @@ fn can_emit_diagnostic_with_custom_location_on_node_with_trivia() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -947,7 +947,7 @@ fn can_emit_diagnostic_with_inversed_span() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -992,7 +992,7 @@ fn can_emit_diagnostic_with_out_of_bounds_span() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
@@ -1098,7 +1098,7 @@ fn can_emit_diagnostic_with_custom_location_with_parser() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1156,7 +1156,7 @@ fn attribute_diags_mapped_correctly_to_call_site() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1225,7 +1225,7 @@ fn call_site_mapped_correctly_after_expansion_by_two_macros() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1294,7 +1294,7 @@ fn span_offsets_calculated_correctly_for_function_with_non_macro_attrs() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1380,7 +1380,7 @@ fn zero_width_diags_mapped_correctly_at_token_starts() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1451,7 +1451,7 @@ fn attr_macro_args_can_be_parsed() {
             }
         "#})
         .build(&project);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)

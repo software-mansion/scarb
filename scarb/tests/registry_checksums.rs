@@ -36,7 +36,7 @@ fn checksum_mismatch() {
         .build(&t);
 
     // FIXME(mkaput): Why are verbose statuses not appearing here?
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()

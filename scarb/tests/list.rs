@@ -32,7 +32,7 @@ fn list_package_versions() {
     yank(registry.t.child("index/3/f/foo.json").path(), "1.2.4-beta").unwrap();
     audit(registry.t.child("index/3/f/foo.json").path(), "1.5.0").unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("list")
         .arg("foo")
         .arg("--index")
@@ -48,7 +48,7 @@ fn list_package_versions() {
             1.2.3            x        -
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--json")
         .arg("list")
         .arg("foo")
@@ -72,7 +72,7 @@ fn list_builtin_package_versions() {
         publish_package("starknet", version, &mut registry);
     }
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("list")
         .arg("starknet")
         .arg("--index")
@@ -90,7 +90,7 @@ fn list_builtin_package_versions() {
             0.1.0      x        -
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--json")
         .arg("list")
         .arg("starknet")
@@ -119,7 +119,7 @@ fn list_package_versions_many() {
         publish_package("foo", version, &mut registry);
     }
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("list")
         .arg("foo")
         .arg("--index")
@@ -142,7 +142,7 @@ fn list_package_versions_many() {
             use `--all` or `--limit 11` to show all 11 versions
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("list")
         .arg("foo")
         .arg("--all")
@@ -165,7 +165,7 @@ fn list_package_versions_many() {
             0.1.0      x        -
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("list")
         .arg("foo")
         .arg("--limit")
@@ -183,7 +183,7 @@ fn list_package_versions_many() {
             use `--all` or `--limit 11` to show all 11 versions
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("list")
         .arg("foo")
         .arg("--limit")

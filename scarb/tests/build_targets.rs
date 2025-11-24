@@ -35,7 +35,7 @@ fn compile_with_duplicate_targets_1() {
         )
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -68,7 +68,7 @@ fn compile_with_duplicate_targets_2() {
         )
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -104,7 +104,7 @@ fn compile_with_custom_lib_target() {
         .write_str(r#"fn f() -> felt252 { 42 }"#)
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -148,7 +148,7 @@ fn compile_with_named_default_lib_target() {
         .write_str(r#"fn f() -> felt252 { 42 }"#)
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -193,7 +193,7 @@ fn compile_with_lib_target_in_target_array() {
         .write_str(r#"fn f() -> felt252 { 42 }"#)
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -227,7 +227,7 @@ fn compile_dep_not_a_lib() {
         .lib_cairo("fn hellp() -> felt252 { dep::forty_two() }")
         .build(&hello);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .current_dir(&hello)
         .assert()
@@ -264,7 +264,7 @@ fn target_with_source_path() {
         )
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -287,7 +287,7 @@ fn target_source_path_disallowed() {
         )
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -305,7 +305,7 @@ fn test_target_skipped_without_flag() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -341,7 +341,7 @@ fn compile_test_target() {
          "#})
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(&t)
@@ -409,7 +409,7 @@ fn integration_tests_do_not_enable_cfg_in_main_package() {
          "#})
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(&t)
@@ -463,7 +463,7 @@ fn integration_tests_cannot_use_itself_by_target_name() {
         "#})
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(&t)
@@ -526,7 +526,7 @@ fn features_enabled_in_integration_tests() {
         "#})
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(&t)
@@ -548,7 +548,7 @@ fn features_enabled_in_integration_tests() {
             error: could not compile `hello_integrationtest` due to [..] previous errors
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .arg("--features")
@@ -589,7 +589,7 @@ fn detect_single_file_test_targets() {
     t.child("tests/test1.cairo").write_str("").unwrap();
     t.child("tests/test2.cairo").write_str("").unwrap();
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -640,7 +640,7 @@ fn autodetect_test_target_non_cairo_files() {
     ProjectBuilder::start().name("hello").build(&t);
     t.child("tests/test1.cairo").write_str("").unwrap();
     t.child("tests/Scarb.toml").write_str("").unwrap();
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -689,7 +689,7 @@ fn detect_lib_test_target() {
     t.child("tests/test2.cairo").write_str("").unwrap();
     t.child("tests/lib.cairo").write_str("").unwrap();
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
@@ -757,7 +757,7 @@ fn can_choose_target_by_name() {
          "#})
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--target-names=hello")
         .current_dir(&t)
@@ -803,7 +803,7 @@ fn can_choose_target_by_kind() {
          "#})
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--target-kinds=lib")
         .current_dir(&t)
@@ -830,7 +830,7 @@ fn cannot_use_both_test_and_target_kind() {
         "#})
         .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .arg("--target-kinds=lib")
@@ -859,7 +859,7 @@ fn cannot_use_both_target_names_and_target_kind() {
         "#})
         .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--target-names=hello")
         .arg("--target-kinds=lib")
@@ -889,7 +889,7 @@ fn can_use_test_and_target_names() {
         .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .arg("--test")
         .arg("--target-names=hello")
@@ -966,7 +966,7 @@ fn test_target_builds_contracts() {
         )
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(&t)
@@ -1045,7 +1045,7 @@ fn test_target_builds_external() {
         .dep_cairo_test()
         .build(&t.child("hello"));
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(t.child("hello"))
@@ -1102,7 +1102,7 @@ fn transitive_dev_deps_not_available() {
         .dev_dep("first", first)
         .build(&hello);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .current_dir(hello)
         .assert()
@@ -1140,7 +1140,7 @@ fn test_executable_compiler_creates_output_files() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -1172,7 +1172,7 @@ fn compile_executable_target_can_use_short_declaration() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -1199,7 +1199,7 @@ fn executable_target_requires_disabled_gas() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -1238,7 +1238,7 @@ fn compile_executable_with_missing_plugin() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -1296,7 +1296,7 @@ fn executable_for_multiple_functions() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -1335,7 +1335,7 @@ fn ambiguous_executable_function() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -1396,7 +1396,7 @@ fn test_target_builds_contracts_with_error() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(&t)
@@ -1469,7 +1469,7 @@ fn test_target_builds_contracts_with_warning() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(&t)
@@ -1531,7 +1531,7 @@ fn executable_target_validation() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -1584,7 +1584,7 @@ fn disallowed_test_target_names() {
          "#})
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(&t)
@@ -1641,7 +1641,7 @@ fn test_target_defaults() {
         .dep_starknet()
         .build(&world);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&world)
         .stdout_json::<Metadata>();
@@ -1734,7 +1734,7 @@ fn test_workspace_target_defaults_param(target_defaults: &str) {
         })
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -1790,7 +1790,7 @@ fn test_target_defaults_fails_for_unsupported_target_kind() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         .current_dir(&t)
         .assert()
@@ -1842,7 +1842,7 @@ fn test_target_defaults_overrides_auto_detected_targets() {
     world.child("tests").create_dir_all().unwrap();
     world.child("tests/test1.cairo");
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&world)
         .stdout_json::<Metadata>();
@@ -1917,7 +1917,7 @@ fn can_compile_executable_to_sierra() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()

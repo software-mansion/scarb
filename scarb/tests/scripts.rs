@@ -22,7 +22,7 @@ fn run_simple_script() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["run", "some_script"])
         .current_dir(&t)
         .assert()
@@ -40,7 +40,7 @@ fn run_missing_script() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["run", "some_other_script"])
         .current_dir(&t)
         .assert()
@@ -73,7 +73,7 @@ fn run_missing_script_in_workspace() {
         .add_member("first")
         .add_member("second")
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["run", "-p", "first", "some_other_script"])
         .current_dir(&t)
         .assert()
@@ -99,7 +99,7 @@ fn script_inherits_env_vars() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("HELLO", "Hello, world!")
         .args(["run", "some_script"])
         .current_dir(&t)
@@ -118,7 +118,7 @@ fn scarb_env_var_cannot_be_overwritten() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("SCARB_PROFILE", "Hello, world!")
         .args(["--release", "run", "some_script"])
         .current_dir(&t)
@@ -138,7 +138,7 @@ fn list_scripts() {
         "#})
         .build(&t);
 
-    let output: BTreeMap<String, String> = Scarb::quick_snapbox()
+    let output: BTreeMap<String, String> = Scarb::quick_command()
         .args(["--json", "run"])
         .current_dir(&t)
         .stdout_json();
@@ -147,7 +147,7 @@ fn list_scripts() {
     assert_eq!(output["some_other_script"], "echo 'world!'");
     assert_eq!(output.len(), 2);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("run")
         .current_dir(&t)
         .assert()
@@ -187,7 +187,7 @@ fn list_scripts_in_workspace_with_package_filter() {
         .add_member("second")
         .build(&t);
 
-    let output: BTreeMap<String, String> = Scarb::quick_snapbox()
+    let output: BTreeMap<String, String> = Scarb::quick_command()
         .args(["--json", "run", "-p", "first"])
         .current_dir(&t)
         .stdout_json();
@@ -196,7 +196,7 @@ fn list_scripts_in_workspace_with_package_filter() {
     assert_eq!(output["some_other_script"], "echo 'world!'");
     assert_eq!(output.len(), 2);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["run", "-p", "first"])
         .current_dir(&t)
         .assert()
@@ -236,7 +236,7 @@ fn list_scripts_in_workspace() {
         .add_member("second")
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .args(["--json", "run"])
         .current_dir(&t)
         .output();
@@ -276,7 +276,7 @@ fn list_scripts_in_workspace() {
         Err(_) => panic!("Cannot deserialize second scripts list"),
     }
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["run"])
         .current_dir(&t)
         .assert()
@@ -303,7 +303,7 @@ fn list_empty_scripts() {
         "#})
         .build(&t);
 
-    let output: BTreeMap<String, String> = Scarb::quick_snapbox()
+    let output: BTreeMap<String, String> = Scarb::quick_command()
         .args(["--json", "run"])
         .current_dir(&t)
         .stdout_json();
@@ -327,7 +327,7 @@ fn additional_args_passed() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["run", "some_script", "--", "beautiful", "world"])
         .current_dir(&t)
         .env("PATH", path_with_temp_dir(&t))
@@ -346,7 +346,7 @@ fn pass_exit_code() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["run", "some_script"])
         .current_dir(&t)
         .assert()
@@ -371,7 +371,7 @@ fn scripts_shell_uses_current_scarb() {
         "#})
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .args(["run", "some_script"])
         .current_dir(&t)
         .env("PATH", t.path().to_path_buf().display().to_string())
@@ -408,14 +408,14 @@ fn uses_package_filter() {
         .add_member("second")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["run", "-p", "first", "some_script"])
         .current_dir(&t)
         .assert()
         .success()
         .stdout_eq(Data::from("Hello first package!\n").raw());
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["--json", "run", "-p", "bar", "some_script"])
         .current_dir(&t)
         .assert()
@@ -462,7 +462,7 @@ fn package_filter_from_env() {
         .add_member("third")
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .env("SCARB_PACKAGES_FILTER", "first,third")
         .args(["run", "some_script"])
         .current_dir(&t)
@@ -498,7 +498,7 @@ fn additional_args_not_parsed_as_package_filter() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["run", "some_script", "--", "-p", "world"])
         .current_dir(&t)
         .env("PATH", path_with_temp_dir(&t))
@@ -528,7 +528,7 @@ fn run_missing_script_in_workspace_root() {
         .add_member("first")
         .add_member("second")
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["run", "--workspace-root", "some_other_script"])
         .current_dir(&t)
         .assert()
@@ -567,7 +567,7 @@ fn list_scripts_in_workspace_root() {
         .add_member("second")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .args(["run", "--workspace-root"])
         .current_dir(&t)
         .assert()
@@ -582,7 +582,7 @@ fn list_scripts_in_workspace_root() {
             .raw(),
         );
 
-    let output: BTreeMap<String, String> = Scarb::quick_snapbox()
+    let output: BTreeMap<String, String> = Scarb::quick_command()
         .args(["--json", "run", "--workspace-root"])
         .current_dir(&t)
         .stdout_json();
@@ -613,7 +613,7 @@ fn run_workspace_root_script() {
         .add_member("first")
         .add_member("second")
         .build(&t);
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .args(["run", "-p", "first", "pwd"])
         .current_dir(&t)
         .output()
@@ -624,7 +624,7 @@ fn run_workspace_root_script() {
         String::from_utf8_lossy(&output.stderr)
     );
     let pkg_pwd = String::from_utf8_lossy(&output.stdout).to_string();
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .args(["run", "--workspace-root", "pwd"])
         .current_dir(&t)
         .output()
