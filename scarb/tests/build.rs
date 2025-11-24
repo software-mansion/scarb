@@ -1066,10 +1066,13 @@ fn error_codes_shown_in_json_output() {
 
 #[test]
 fn can_compile_no_core_package() {
+    let cache_dir = TempDir::new().unwrap();
     let t = TempDir::new().unwrap();
     // Find path to corelib.
     ProjectBuilder::start().name("hello").build(&t);
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::new()
+        .cache(&cache_dir)
+        .snapbox()
         .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
