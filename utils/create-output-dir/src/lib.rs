@@ -9,9 +9,7 @@
 use std::ffi::OsStr;
 use std::path::Path;
 use std::{env, fs};
-
-/// Maximum number of iterations to try when creating an incremental output directory using [`incremental_create_execution_output_dir`].
-const MAX_ITERATION_COUNT: usize = 10000;
+use anyhow::{Result, Context};
 
 pub const EXECUTE_PROGRAM_OUTPUT_FILENAME: &str = "program_output.txt";
 pub const EXECUTE_STDOUT_OUTPUT_FILENAME: &str = "stdout_output.txt";
