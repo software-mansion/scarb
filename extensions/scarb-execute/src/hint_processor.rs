@@ -43,8 +43,7 @@ impl<'a> HintProcessorLogic for ExecuteHintProcessor<'a> {
                 .cairo_hint_processor
                 .execute_hint(vm, exec_scopes, hint_data);
         }
-
-        // Handle oracle cheatcodes
+        // Handle Oracle cheatcodes
         if let Some(Hint::Starknet(StarknetHint::Cheatcode {
             selector,
             input_start,
