@@ -145,7 +145,7 @@ impl ToArgs for RunArgs {
             print_resource_usage,
             save_profiler_trace_data,
             save_program_output,
-            save_print_output: save_print_output,
+            save_print_output,
         } = self;
         let mut args = arguments.to_args();
         if let Some(output) = output {

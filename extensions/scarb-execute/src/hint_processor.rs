@@ -21,7 +21,7 @@ pub struct ExecuteHintProcessor<'a> {
     pub oracle_hint_service: OracleHintService,
     /// Captured felts from `println!` / `print!` statements
     /// Only used if `capture_enabled` is true
-    pub captured_print_felts: Vec<Felt252>,
+    pub captured_print_felts: Vec<Vec<Felt252>>,
     pub capture_enabled: bool,
 }
 
@@ -38,7 +38,7 @@ impl<'a> HintProcessorLogic for ExecuteHintProcessor<'a> {
                 hint_data.downcast_ref::<Hint>()
         {
             let felts = read_felts(vm, start, end)?;
-            self.captured_print_felts.extend(felts);
+            self.captured_print_felts.push(felts);
             return self
                 .cairo_hint_processor
                 .execute_hint(vm, exec_scopes, hint_data);
