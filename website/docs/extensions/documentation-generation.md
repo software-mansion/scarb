@@ -1,6 +1,17 @@
 # Generating documentation
 
-`scarb doc` is a tool that generates documentation based on the code comments. Generation supports different output formats. The result is being placed inside the `/target/doc`.
+`scarb doc` is a tool that generates documentation based on the code comments. Generation supports different output formats. The result is being placed inside the `/target/doc` directory.
+
+### Generating workspace documentation
+
+You can run `scarb doc --workspace` to generate documentation for all packages in the workspace.
+
+Use `--exclude` to omit the workspace packages in the documentation. Must be used with the `--workspace` flag.
+Example:
+
+```sh
+scarb doc --workspace --exclude='package_name1, package_name2'
+```
 
 ## Supported output formats
 
@@ -11,21 +22,21 @@
 
 As for now, we support those types of comments:
 
-- `///` documentation for following item.
+- `///` documentation for the following item.
 - `//!` documentation for enclosing item (also works with file modules).
 
 the `///` and `//!` comment prefixes are supported.
 
 ## Item linkage
 
-You can also link to another item's page by just referring the item within the documentation comment.
-Currenctly we support only those types of links:
+You can also link to another item's page by just referring to the item within the documentation comment.
+Currently, we support only those types of links:
 
 - `[ItemName]` and ``[`ItemName`]`` (where `ItemName` is a valid path to an item).
 
 ## mdBook
 
-Generated markdown can be used to build a [mdBook](https://rust-lang.github.io/mdBook) documentation.
+Generated Markdown can be used to build a [mdBook](https://rust-lang.github.io/mdBook) documentation.
 You can do this directly from Scarb by running `scarb doc` with `--build` argument.
 
 Alternatively, you can do this manually with the following steps:
@@ -97,7 +108,7 @@ pub fn main() {
 
 After running `scarb doc`, inside the target directory, you will see the generated documentation in `mdBook` format which consists of:
 
-- The `src` directory, which contains the contents of your book in files with markdown format.
+- The `src` directory, which contains the contents of your book in files with Markdown format.
 - The `book.toml` which contains settings for describing how to build your book.
 
 Running `scarb doc --output-format json` will result in a single JSON file inside the target directory with collected documentation inside.

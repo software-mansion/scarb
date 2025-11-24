@@ -2,6 +2,7 @@
 
 use assert_fs::TempDir;
 use assert_fs::fixture::PathChild;
+use indoc::indoc;
 use scarb_test_support::{command::Scarb, project_builder::ProjectBuilder};
 
 mod markdown_target;
@@ -113,5 +114,52 @@ fn test_workspace_json() {
     JsonTargetChecker::default()
         .actual(&root_dir.path().join("target/doc/output.json"))
         .expected("./data/json_workspace_with_sub_package.json")
+        .assert_files_match();
+}
+
+#[test]
+fn workspace_exclude() {
+    let t = TempDir::new().unwrap().child("test_workspace");
+    let pkg1 = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .lib_cairo(indoc! {r#"
+          pub fn main() {
+            println!("Hello world!");
+          }
+            "#})
+        .build(&pkg1);
+
+    let pkg2 = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .lib_cairo(indoc! {r#"
+          pub mod second_module { }
+            "#})
+        .build(&pkg2);
+
+    let root = ProjectBuilder::start().name("root");
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .package(root)
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args([
+            "--workspace",
+            "--output-format",
+            "json",
+            "--exclude",
+            "second",
+        ])
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    JsonTargetChecker::default()
+        .actual(&t.path().join("target/doc/output.json"))
+        .expected("./data/json_workspace_exclude.json")
         .assert_files_match();
 }

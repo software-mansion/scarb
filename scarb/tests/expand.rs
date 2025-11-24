@@ -5,6 +5,7 @@ use itertools::Itertools;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use snapbox::{Assert, Data};
 
 #[test]
@@ -485,4 +486,25 @@ fn can_expand_erroneous_code() {
         }
         "#},
     );
+}
+
+#[test]
+fn cannot_use_workspace_exclude() {
+    let t = TempDir::new().unwrap();
+    let pkg1 = t.child("sub_package");
+
+    ProjectBuilder::start().name("sub_package").build(&pkg1);
+    WorkspaceBuilder::start()
+        .add_member("sub_package")
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("expand")
+        .arg("--workspace")
+        .arg("--exclude=not_existing_package")
+        .current_dir(&t)
+        .assert()
+        .stdout_eq(indoc! {r#"
+          error: `--exclude` is not supported in a context that requires a single package selection
+        "#});
 }
