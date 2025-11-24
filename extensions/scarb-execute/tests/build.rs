@@ -632,7 +632,7 @@ fn can_save_stdout_output_to_file() {
 
     Scarb::quick_snapbox()
         .arg("execute")
-        .arg("--save-stdout-output")
+        .arg("--save-print-output")
         .current_dir(&t)
         .assert()
         .success()

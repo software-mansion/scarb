@@ -17,7 +17,9 @@ use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::MaybeRelocatable;
 use cairo_vm::{Felt252, cairo_run};
 use camino::{Utf8Path, Utf8PathBuf};
-use create_output_dir::{create_output_dir, EXECUTE_PROGRAM_OUTPUT_FILENAME, EXECUTE_STDOUT_OUTPUT_FILENAME};
+use create_output_dir::{
+    EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME, create_output_dir,
+};
 use indoc::formatdoc;
 use scarb_extensions_cli::execute::{
     Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
@@ -162,7 +164,7 @@ pub fn execute(
         cairo_hint_processor,
         oracle_hint_service: OracleHintService::new(Some(executable_path.as_std_path())),
         captured_print_felts: Vec::new(),
-        capture_enabled: args.run.save_stdout_output,
+        capture_enabled: args.run.save_print_output,
     };
 
     let proof_mode = args.run.target.is_standalone();
@@ -206,7 +208,9 @@ pub fn execute(
         .transpose()?;
 
     ui.print(ExecutionSummary {
-        output: args.run.print_program_output
+        output: args
+            .run
+            .print_program_output
             .then_some(execution_output.clone())
             .flatten(),
         resources: args
@@ -335,9 +339,9 @@ pub fn execute(
         fs::write(program_output_path, output.as_str())?;
     }
 
-    if args.run.save_stdout_output && !captured_print_output.is_empty() {
-        let stdout_output_path = execution_output_dir.join(EXECUTE_STDOUT_OUTPUT_FILENAME);
-        fs::write(stdout_output_path, &captured_print_output)?;
+    if args.run.save_print_output && !captured_print_output.is_empty() {
+        let print_output_path = execution_output_dir.join(EXECUTE_PRINT_OUTPUT_FILENAME);
+        fs::write(print_output_path, &captured_print_output)?;
     }
 
     Ok(())
