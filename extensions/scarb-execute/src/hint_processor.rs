@@ -1,6 +1,6 @@
-use cairo_lang_casm::hints::{Hint, StarknetHint};
+use cairo_lang_casm::hints::{CoreHint, CoreHintBase, Hint, StarknetHint};
 use cairo_lang_runner::casm_run::{
-    MemBuffer, cell_ref_to_relocatable, extract_relocatable, vm_get_range,
+    MemBuffer, cell_ref_to_relocatable, extract_relocatable, read_felts, vm_get_range,
 };
 use cairo_lang_runner::{CairoHintProcessor, insert_value_to_cellref};
 use cairo_vm::Felt252;
@@ -19,6 +19,10 @@ use std::sync::Arc;
 pub struct ExecuteHintProcessor<'a> {
     pub cairo_hint_processor: CairoHintProcessor<'a>,
     pub oracle_hint_service: OracleHintService,
+    /// Captured felts from `println!` / `print!` statements
+    /// Only used if `capture_enabled` is true
+    pub captured_print_felts: Vec<Felt252>,
+    pub capture_enabled: bool,
 }
 
 impl<'a> HintProcessorLogic for ExecuteHintProcessor<'a> {
@@ -28,6 +32,19 @@ impl<'a> HintProcessorLogic for ExecuteHintProcessor<'a> {
         exec_scopes: &mut ExecutionScopes,
         hint_data: &Box<dyn Any>,
     ) -> Result<(), HintError> {
+        // Handle print hints
+        if self.capture_enabled
+            && let Some(Hint::Core(CoreHintBase::Core(CoreHint::DebugPrint { start, end }))) =
+                hint_data.downcast_ref::<Hint>()
+        {
+            let felts = read_felts(vm, start, end)?;
+            self.captured_print_felts.extend(felts);
+            return self
+                .cairo_hint_processor
+                .execute_hint(vm, exec_scopes, hint_data);
+        }
+
+        // Handle oracle cheatcodes
         if let Some(Hint::Starknet(StarknetHint::Cheatcode {
             selector,
             input_start,
