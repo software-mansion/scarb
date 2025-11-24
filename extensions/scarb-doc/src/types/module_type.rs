@@ -101,44 +101,80 @@ impl<'db> ModulePubUses<'db> {
         let mut use_submodules = Vec::new();
         let mut use_macro_declarations = Vec::new();
 
+        macro_rules! push_if_visible {
+            ($db:expr, $id:expr, $vec:ident, $expr:expr) => {{
+                let sn = $id.stable_location($db).syntax_node($db);
+                if !is_doc_hidden_attr($db, &sn) {
+                    $vec.push($expr);
+                }
+            }};
+        }
+        macro_rules! push_try_if_visible {
+            ($db:expr, $id:expr, $vec:ident, $expr:expr) => {{
+                let sn = $id.stable_location($db).syntax_node($db);
+                if !is_doc_hidden_attr($db, &sn) {
+                    $vec.push($expr?);
+                }
+            }};
+        }
+
         for item in module_use_items {
             match item {
                 ResolvedGenericItem::GenericConstant(id) => {
-                    use_constants.push(Constant::new(db, id))
+                    push_if_visible!(db, id, use_constants, Constant::new(db, id))
                 }
                 ResolvedGenericItem::GenericFunction(GenericFunctionId::Free(id)) => {
-                    use_free_functions.push(FreeFunction::new(db, id))
+                    push_if_visible!(db, id, use_free_functions, FreeFunction::new(db, id))
                 }
                 ResolvedGenericItem::GenericType(GenericTypeId::Struct(id)) => {
-                    use_structs.push(Struct::new(db, id, include_private_items)?)
+                    push_try_if_visible!(
+                        db,
+                        id,
+                        use_structs,
+                        Struct::new(db, id, include_private_items)
+                    )
                 }
                 ResolvedGenericItem::GenericType(GenericTypeId::Enum(id)) => {
-                    use_enums.push(Enum::new(db, id)?)
+                    push_try_if_visible!(db, id, use_enums, Enum::new(db, id))
                 }
                 ResolvedGenericItem::GenericTypeAlias(id) => {
-                    use_module_type_aliases.push(TypeAlias::new(db, id))
+                    push_if_visible!(db, id, use_module_type_aliases, TypeAlias::new(db, id))
                 }
                 ResolvedGenericItem::GenericImplAlias(id) => {
-                    use_impl_aliases.push(ImplAlias::new(db, id))
+                    push_if_visible!(db, id, use_impl_aliases, ImplAlias::new(db, id))
                 }
-                ResolvedGenericItem::Trait(id) => use_traits.push(Trait::new(db, id)?),
-                ResolvedGenericItem::Impl(id) => use_impl_defs.push(Impl::new(db, id)?),
+                ResolvedGenericItem::Trait(id) => {
+                    push_try_if_visible!(db, id, use_traits, Trait::new(db, id))
+                }
+                ResolvedGenericItem::Impl(id) => {
+                    push_try_if_visible!(db, id, use_impl_defs, Impl::new(db, id))
+                }
                 ResolvedGenericItem::GenericType(GenericTypeId::Extern(id)) => {
-                    use_extern_types.push(ExternType::new(db, id))
+                    push_if_visible!(db, id, use_extern_types, ExternType::new(db, id))
                 }
                 ResolvedGenericItem::GenericFunction(GenericFunctionId::Extern(id)) => {
-                    use_extern_functions.push(ExternFunction::new(db, id))
+                    push_if_visible!(db, id, use_extern_functions, ExternFunction::new(db, id))
                 }
-                ResolvedGenericItem::Module(ModuleId::Submodule(id)) => use_submodules.push(
-                    Module::new(db, ModuleId::Submodule(id), include_private_items)?,
+                ResolvedGenericItem::Module(ModuleId::Submodule(id)) => push_try_if_visible!(
+                    db,
+                    id,
+                    use_submodules,
+                    Module::new(db, ModuleId::Submodule(id), include_private_items)
+                ),
+                ResolvedGenericItem::Macro(id) => push_if_visible!(
+                    db,
+                    id,
+                    use_macro_declarations,
+                    MacroDeclaration::new(db, id)
                 ),
                 ResolvedGenericItem::Module(ModuleId::CrateRoot(id)) => use_submodules.push(
                     Module::new(db, ModuleId::CrateRoot(id), include_private_items)?,
                 ),
-                ResolvedGenericItem::Macro(id) => {
-                    use_macro_declarations.push(MacroDeclaration::new(db, id))
-                }
-                _ => (),
+                ResolvedGenericItem::Variant(..)
+                | ResolvedGenericItem::Variable(..)
+                | ResolvedGenericItem::TraitItem(..)
+                | ResolvedGenericItem::Module(ModuleId::MacroCall { .. })
+                | ResolvedGenericItem::GenericFunction(GenericFunctionId::Impl(..)) => {}
             }
         }
 
@@ -455,7 +491,7 @@ impl<'db> Module<'db> {
                 LookupItemId::ModuleItem(ModuleItemId::Submodule(submodule_id)).into(),
             ),
             ModuleId::MacroCall { .. } => {
-                todo!("TODO(#2262): Correctly handle declarative macros.")
+                unreachable!("Module::new_virtual should not be called for ModuleId::MacroCall")
             }
         };
         Self {
@@ -601,9 +637,10 @@ pub(crate) fn get_ancestors_vector<'db>(
         ModuleId::CrateRoot(_) => {
             ancestors.insert(0, module_id);
         }
-        ModuleId::MacroCall { .. } => {
-            // TODO(#2262): Correctly handle declarative macros.
-            ancestors.insert(0, module_id);
+        ModuleId::MacroCall { id, .. } => {
+            // omit from ancestors, like [`super::other_types::doc_full_path`]
+            let parent = id.parent_module(db);
+            get_ancestors_vector(ancestors, parent, db);
         }
     }
     ancestors.clone()
