@@ -2228,6 +2228,7 @@ name = "create-output-dir"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "camino",
  "core-foundation 0.10.1",
  "tempfile",
  "winapi",
@@ -5998,6 +5999,19 @@ dependencies = [
 
 [[package]]
 name = "pulldown-cmark"
+version = "0.12.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f86ba2052aebccc42cbbb3ed234b8b13ce76f75c3551a303cb2bcffcff12bb14"
+dependencies = [
+ "bitflags 2.10.0",
+ "getopts",
+ "memchr",
+ "pulldown-cmark-escape 0.11.0",
+ "unicase",
+]
+
+[[package]]
+name = "pulldown-cmark"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e8bbe1a966bd2f362681a44f6edce3c2310ac21e4d5067a6e7ec396297a6ea0"
@@ -6927,10 +6941,12 @@ dependencies = [
  "cairo-lang-utils",
  "camino",
  "clap",
+ "create-output-dir",
  "expect-test",
  "indoc",
  "itertools 0.14.0",
  "mimalloc",
+ "pulldown-cmark 0.12.2",
  "salsa",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
@@ -6939,6 +6955,7 @@ dependencies = [
  "serde",
  "serde_json",
  "snapbox",
+ "tempfile",
  "thiserror 2.0.17",
 ]
 
@@ -7011,7 +7028,6 @@ dependencies = [
  "cairo-lang-filesystem",
  "camino",
  "derive_builder",
- "scarb-test-support",
  "semver 1.0.27",
  "serde",
  "serde_json",

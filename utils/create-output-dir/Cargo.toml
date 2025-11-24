@@ -12,6 +12,7 @@ categories = ["filesystem", "os"]
 
 [dependencies]
 anyhow.workspace = true
+camino.workspace = true
 tempfile.workspace = true
 
 [target."cfg(target_os = \"macos\")".dependencies.core-foundation]
