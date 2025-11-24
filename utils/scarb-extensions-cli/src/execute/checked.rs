@@ -132,7 +132,7 @@ pub struct RunArgs {
 
     /// Whether to save stdout output to a file.
     #[arg(long, default_value_t = false)]
-    pub save_stdout_output: bool,
+    pub save_print_output: bool,
 }
 
 impl ToArgs for RunArgs {
@@ -145,7 +145,7 @@ impl ToArgs for RunArgs {
             print_resource_usage,
             save_profiler_trace_data,
             save_program_output,
-            save_stdout_output,
+            save_print_output: save_print_output,
         } = self;
         let mut args = arguments.to_args();
         if let Some(output) = output {
@@ -166,8 +166,8 @@ impl ToArgs for RunArgs {
         if *save_program_output {
             args.push("--save-program-output".to_string());
         }
-        if *save_stdout_output {
-            args.push("--save-stdout-output".to_string());
+        if *save_print_output {
+            args.push("--save-print-output".to_string());
         }
         args
     }
