@@ -19,6 +19,7 @@ use cairo_vm::{Felt252, cairo_run};
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::{
     EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME, create_output_dir,
+    incremental_create_execution_output_dir,
 };
 use indoc::formatdoc;
 use scarb_extensions_cli::execute::{
@@ -38,7 +39,6 @@ mod profiler;
 
 pub(crate) mod output;
 
-const MAX_ITERATION_COUNT: usize = 10000;
 const EXECUTION_ID_ENV: &str = "SCARB_EXECUTION_ID";
 
 pub fn main_inner(args: Args, ui: Ui) -> Result<()> {
@@ -474,24 +474,7 @@ fn get_or_create_output_dir(output_dir: &Utf8Path) -> Result<Utf8PathBuf> {
         );
         return Ok(execution_output_dir);
     }
-    incremental_create_output_dir(output_dir)
-}
-
-fn incremental_create_output_dir(path: &Utf8Path) -> Result<Utf8PathBuf> {
-    for i in 1..=MAX_ITERATION_COUNT {
-        let filepath = path.join(format!("execution{i}"));
-        let result = fs::create_dir(&filepath);
-        return match result {
-            Err(e) => {
-                if e.kind() == io::ErrorKind::AlreadyExists {
-                    continue;
-                }
-                Err(e.into())
-            }
-            Ok(_) => Ok(filepath),
-        };
-    }
-    bail!("failed to create output directory")
+    incremental_create_execution_output_dir(output_dir).map(|(path, _execution_id)| path)
 }
 
 /// Writer implementation for a file.
