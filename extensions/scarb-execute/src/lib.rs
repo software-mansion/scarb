@@ -206,11 +206,9 @@ pub fn execute(
         .transpose()?;
 
     ui.print(ExecutionSummary {
-        output: if args.run.print_program_output {
-            execution_output.clone()
-        } else {
-            None
-        },
+        output: args.run.print_program_output
+            .then_some(execution_output.clone())
+            .flatten(),
         resources: args
             .run
             .print_resource_usage
