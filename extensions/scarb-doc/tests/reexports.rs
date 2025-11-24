@@ -141,7 +141,7 @@ fn test_reexports() {
         .package(root)
         .build(&root_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "json"])
         .current_dir(&root_dir)
@@ -177,7 +177,7 @@ fn test_reexports_merged_modules() {
           "#})
         .build(&root_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "json"])
         .current_dir(&root_dir)

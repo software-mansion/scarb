@@ -37,7 +37,7 @@ fn build_executable_project() -> TempDir {
 #[test]
 fn can_execute_default_main_function_from_executable() {
     let t = build_executable_project();
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .current_dir(&t)
         .assert()
@@ -62,8 +62,8 @@ fn can_execute_default_main_function_from_executable() {
 #[test]
 fn can_execute_prebuilt_executable() {
     let t = build_executable_project();
-    Scarb::quick_snapbox().arg("build").current_dir(&t).assert();
-    Scarb::quick_snapbox()
+    Scarb::quick_command().arg("build").current_dir(&t).assert();
+    Scarb::quick_command()
         .arg("execute")
         .arg("--no-build")
         .current_dir(&t)
@@ -87,7 +87,7 @@ fn can_execute_prebuilt_executable() {
 #[test]
 fn can_execute_bootloader_target() {
     let t = build_executable_project();
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--target=bootloader")
         .current_dir(&t)
@@ -107,7 +107,7 @@ fn can_execute_bootloader_target() {
 #[test]
 fn cannot_produce_trace_file_for_bootloader_target() {
     let t = build_executable_project();
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--target=bootloader")
         .arg("--output=standard")
@@ -122,7 +122,7 @@ fn cannot_produce_trace_file_for_bootloader_target() {
 #[test]
 fn cannot_produce_cairo_pie_for_standalone_target() {
     let t = build_executable_project();
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--target=standalone")
         .arg("--output=cairo-pie")
@@ -154,7 +154,7 @@ fn fails_when_attr_missing() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .current_dir(&t)
         .assert()
@@ -166,7 +166,7 @@ fn fails_when_attr_missing() {
             error: `scarb` command exited with error
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--no-build")
         .current_dir(&t)
@@ -196,7 +196,7 @@ fn can_print_panic_reason() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         .arg("--print-resource-usage")
@@ -236,7 +236,7 @@ fn no_target_defined() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--no-build")
         .current_dir(&t)
@@ -281,7 +281,7 @@ fn undefined_target_specified() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--executable-name=secondary")
         .arg("--no-build")
@@ -292,7 +292,7 @@ fn undefined_target_specified() {
             error: no executable target with name `secondary` found for package `hello_world`
         "#});
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--executable-function=secondary")
         .arg("--no-build")
@@ -339,7 +339,7 @@ fn can_choose_build_target() {
     let t = TempDir::new().unwrap();
     two_targets().build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--executable-name=secondary")
         .arg("--print-program-output")
@@ -357,7 +357,7 @@ fn can_choose_build_target() {
         "#});
 
     // Re-using the same build artifact
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--no-build")
         .arg("--executable-function=hello_world::main")
@@ -378,7 +378,7 @@ fn executable_must_be_chosen() {
     let t = TempDir::new().unwrap();
     two_targets().build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--no-build")
         .current_dir(&t)
@@ -394,7 +394,7 @@ fn executable_must_be_chosen() {
 #[test]
 fn can_set_ui_verbosity() {
     let t = build_executable_project();
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--quiet")
         .current_dir(&t)
@@ -406,7 +406,7 @@ fn can_set_ui_verbosity() {
 #[test]
 fn maintains_parent_verbosity() {
     let t = build_executable_project();
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--quiet")
         .arg("execute")
         .current_dir(&t)
@@ -435,7 +435,7 @@ fn can_use_features() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--features=x")
         .current_dir(&t)
@@ -465,7 +465,7 @@ fn can_create_profiler_trace_file() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--save-profiler-trace-data")
         .current_dir(&t)
@@ -499,7 +499,7 @@ fn no_required_sierra_for_profiler_trace_file() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--save-profiler-trace-data")
         .current_dir(&t)
@@ -530,12 +530,12 @@ fn no_build_artifact_for_profiler_trace_file() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox().arg("build").current_dir(&t).assert();
+    Scarb::quick_command().arg("build").current_dir(&t).assert();
     let artifact_path = t.path().join("target/dev/hello.executable.sierra.json");
     if artifact_path.exists() {
         std::fs::remove_file(&artifact_path).unwrap();
     }
-    let assert = Scarb::quick_snapbox()
+    let assert = Scarb::quick_command()
         .arg("execute")
         .arg("--no-build")
         .arg("--save-profiler-trace-data")
@@ -569,7 +569,7 @@ fn invalid_tracked_resource_for_profiler_trace_file() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--save-profiler-trace-data")
         .current_dir(&t)

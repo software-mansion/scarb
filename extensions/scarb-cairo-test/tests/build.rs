@@ -41,7 +41,7 @@ fn can_test_without_gas() {
             enable-gas = false
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("cairo-test")
         .current_dir(&t)
         .assert()
@@ -94,7 +94,7 @@ fn can_print_test_resources() {
         "#})
         .dep_cairo_test()
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("cairo-test")
         .arg("--print-resource-usage")
         .current_dir(&t)
@@ -148,7 +148,7 @@ fn get_features_test_build(t: &TempDir) {
 fn features_test_build_success() {
     let t = TempDir::new().unwrap();
     get_features_test_build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("test")
         .arg("--features=x")
         .current_dir(&t)
@@ -173,7 +173,7 @@ fn features_test_build_success() {
 fn features_test_build_failed() {
     let t = TempDir::new().unwrap();
     get_features_test_build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("cairo-test")
         .current_dir(&t)
         .assert()
@@ -228,7 +228,7 @@ fn integration_tests() {
         .src("tests/a.cairo", test_case)
         .src("tests/b.cairo", test_case)
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("cairo-test")
         .current_dir(&t)
         .assert()
@@ -272,7 +272,7 @@ fn warn_if_cairo_test_plugin_missing() {
             }}
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("cairo-test")
         .current_dir(&t)
         .assert()
@@ -311,7 +311,7 @@ fn do_not_warn_on_non_tested_package() {
         .add_member("first")
         .add_member("second")
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("cairo-test")
         .arg("--package")
         .arg("second")
@@ -366,7 +366,7 @@ fn can_choose_test_kind_to_run() {
         .src("tests/a.cairo", test_case)
         .src("tests/b.cairo", test_case)
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("cairo-test")
         .arg("--test-kind")
         .arg("unit")
@@ -385,7 +385,7 @@ fn can_choose_test_kind_to_run() {
             test hello::tests::it_works ... ok (gas usage est.: 30510)
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
         "#});
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("cairo-test")
         .arg("--test-kind")
         .arg("integration")

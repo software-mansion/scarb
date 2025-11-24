@@ -18,7 +18,7 @@ fn document_private_items_flag() {
         .lib_cairo(VISIBILITY_EXAMPLE_CODE)
         .build(&root_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--document-private-items", "--output-format", "json"])
         .current_dir(&root_dir)
@@ -40,7 +40,7 @@ fn include_private_items_with_old_edition() {
         .lib_cairo(VISIBILITY_EXAMPLE_CODE)
         .build(&root_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "json"])
         .current_dir(&root_dir)
@@ -62,7 +62,7 @@ fn ignore_private_items_with_new_edition() {
         .lib_cairo(VISIBILITY_EXAMPLE_CODE)
         .build(&root_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "json"])
         .current_dir(&root_dir)

@@ -26,7 +26,7 @@ fn issue_600_path() {
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()
@@ -54,7 +54,7 @@ fn issue_600_git() {
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("fetch")
         .current_dir(&t)
         .assert()

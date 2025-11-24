@@ -22,7 +22,7 @@ fn incremental_artifacts_emitted() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -78,7 +78,7 @@ fn incremental_artifacts_emitted() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -148,7 +148,7 @@ fn deps_are_fingerprinted() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("build")
         .current_dir(&first)
         .assert()
@@ -181,7 +181,7 @@ fn deps_are_fingerprinted() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("build")
         .current_dir(&first)
         .assert()
@@ -231,7 +231,7 @@ fn can_fingerprint_dependency_cycles() {
     Scarb::new()
         .cache(cache_dir.path())
         .target_dir(target_dir.path())
-        .snapbox()
+        .command()
         .arg("build")
         .current_dir(&first)
         .assert()
@@ -264,7 +264,7 @@ fn can_fingerprint_dependency_cycles() {
     Scarb::new()
         .cache(cache_dir.path())
         .target_dir(target_dir.path())
-        .snapbox()
+        .command()
         .arg("build")
         .current_dir(&third)
         .assert()
@@ -310,7 +310,7 @@ fn proc_macros_are_fingerprinted() {
 
     Scarb::new()
         .cache(&cache_dir)
-        .snapbox()
+        .command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -336,7 +336,7 @@ fn proc_macros_are_fingerprinted() {
     // Rebuild without changing the macro.
     Scarb::new()
         .cache(&cache_dir)
-        .snapbox()
+        .command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -371,7 +371,7 @@ fn proc_macros_are_fingerprinted() {
 
     Scarb::new()
         .cache(&cache_dir)
-        .snapbox()
+        .command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -422,7 +422,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
 
     Scarb::new()
         .cache(&cache_dir)
-        .snapbox()
+        .command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -449,7 +449,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
     // Rebuild without changing the macro.
     Scarb::new()
         .cache(&cache_dir)
-        .snapbox()
+        .command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -468,7 +468,7 @@ fn snforge_scarb_plugin_nondeterminism_hack() {
     // Rebuild with change env var.
     Scarb::new()
         .cache(&cache_dir)
-        .snapbox()
+        .command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -538,7 +538,7 @@ fn fingerprint_callback_can_force_recompilation() {
 
     Scarb::new()
         .cache(&cache_dir)
-        .snapbox()
+        .command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -565,7 +565,7 @@ fn fingerprint_callback_can_force_recompilation() {
     // Rebuild without changing the macro.
     Scarb::new()
         .cache(&cache_dir)
-        .snapbox()
+        .command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -584,7 +584,7 @@ fn fingerprint_callback_can_force_recompilation() {
     // Rebuild with change env var.
     Scarb::new()
         .cache(&cache_dir)
-        .snapbox()
+        .command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -619,7 +619,7 @@ fn warnings_are_emitted_on_rerun() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -636,7 +636,7 @@ fn warnings_are_emitted_on_rerun() {
 
     Scarb::new()
         .cache(cache_dir.path())
-        .snapbox()
+        .command()
         .arg("build")
         .current_dir(&t)
         .assert()

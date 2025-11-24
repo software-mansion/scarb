@@ -10,14 +10,14 @@ fn simple() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
         .success();
     t.child("target").assert(predicates::path::is_dir());
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("clean")
         .current_dir(&t)
         .assert()
@@ -32,7 +32,7 @@ fn requires_workspace() {
         .write_str("Lorem ipsum.")
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("clean")
         .current_dir(&t)
         .assert()

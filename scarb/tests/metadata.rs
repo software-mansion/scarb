@@ -75,7 +75,7 @@ fn simple() {
         .version("0.1.0")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -92,7 +92,7 @@ fn includes_compilation_units() {
         .version("0.1.0")
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    let output = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -116,7 +116,7 @@ fn fails_without_format_version() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("metadata")
         .current_dir(&t)
         .assert()
@@ -161,7 +161,7 @@ fn create_local_dependencies_setup(t: &TempDir) {
 fn local_dependencies() {
     let t = TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -217,7 +217,7 @@ fn dev_dependencies() {
         .dep_cairo_test()
         .dev_dep("q", Dep.path("./q"))
         .build(&t);
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -294,7 +294,7 @@ fn dev_deps_are_not_propagated() {
         .dev_dep("dep3", &dep3)
         .build(&pkg);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -382,7 +382,7 @@ fn dev_deps_are_not_propagated_for_ws_members() {
         .add_member("pkg")
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -444,7 +444,7 @@ fn dev_dep_plugins_are_not_propagated_for_ws_members() {
         .add_member("pkg")
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -522,7 +522,7 @@ fn dev_dep_plugins_are_not_propagated_for_ws_members() {
 fn no_dep() {
     let t = TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -598,7 +598,7 @@ fn manifest_targets_and_metadata() {
     t.child("README.md").touch().unwrap();
     t.child("license.md").touch().unwrap();
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -667,7 +667,7 @@ fn tool_metadata_is_packaged_contained() {
             "#,
         )
         .unwrap();
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -704,7 +704,7 @@ fn json_output_is_not_pretty() {
         .version("0.1.0")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -737,7 +737,7 @@ fn workspace_simple() {
         .add_member("second")
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version=1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -788,7 +788,7 @@ fn workspace_with_root() {
         .package(root)
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version=1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -845,7 +845,7 @@ fn workspace_as_dep() {
         .add_member("second")
         .build(&first_t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version=1"])
         .current_dir(&first_t)
         .stdout_json::<Metadata>();
@@ -891,7 +891,7 @@ fn workspace_as_dep() {
         .add_member("fourth")
         .build(&second_t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version=1"])
         .current_dir(&second_t)
         .stdout_json::<Metadata>();
@@ -968,7 +968,7 @@ fn workspace_package_key_inheritance() {
         .add_member("second")
         .build(&some_workspace);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version=1"])
         .current_dir(&some_workspace)
         .stdout_json::<Metadata>();
@@ -1010,7 +1010,7 @@ fn infer_readme_simple() {
         .version("0.1.0")
         .build(&t);
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1029,7 +1029,7 @@ fn infer_readme_simple() {
 
     t.child("README").touch().unwrap();
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1052,7 +1052,7 @@ fn infer_readme_simple() {
 
     t.child("README.txt").touch().unwrap();
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1075,7 +1075,7 @@ fn infer_readme_simple() {
 
     t.child("README.md").touch().unwrap();
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1114,7 +1114,7 @@ fn infer_readme_simple() {
         .touch()
         .unwrap();
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1155,7 +1155,7 @@ fn infer_readme_simple_bool() {
         )
         .unwrap();
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1183,7 +1183,7 @@ fn infer_readme_simple_bool() {
         )
         .unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1197,7 +1197,7 @@ fn infer_readme_simple_bool() {
 
     t.child("README.md").touch().unwrap();
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1238,7 +1238,7 @@ fn infer_readme_workspace() {
         .iter(),
     );
     for (pack_name, readme_name) in ws {
-        Scarb::quick_snapbox()
+        Scarb::quick_command()
             .arg("new")
             .arg(pack_name)
             .current_dir(&t);
@@ -1249,7 +1249,7 @@ fn infer_readme_workspace() {
     t.child("MEREAD.md").touch().unwrap();
     t.child("tmp1").create_dir_all().unwrap();
     t.child("tmp1").child("tmp2").create_dir_all().unwrap();
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("new")
         .arg("t7")
         .current_dir(t.child("tmp1").child("tmp2"));
@@ -1386,7 +1386,7 @@ fn infer_readme_workspace() {
         )
         .unwrap();
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1456,7 +1456,7 @@ fn includes_edition() {
         .edition("2023_10")
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1484,7 +1484,7 @@ fn includes_experimental_features() {
         )
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1542,7 +1542,7 @@ fn prebuilt_plugins_disallowed_by_default() {
         .dep("q", Dep.path("q"))
         .build(&t);
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1604,7 +1604,7 @@ fn can_allow_prebuilt_plugins_for_subtree() {
         .dep("y", Dep.path("y"))
         .build(&t);
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1638,7 +1638,7 @@ fn executable_target_can_allow_syscalls() {
             }
         "#})
         .build(&t);
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1692,7 +1692,7 @@ fn executable_target_can_compile_to_sierra() {
             }
         "#})
         .build(&t);
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1743,7 +1743,7 @@ fn cairo_plugins_added_as_component_dependencies() {
         .dep("beautiful", t.child("beautiful"))
         .build(&t.child("hello"));
 
-    let meta = Scarb::quick_snapbox()
+    let meta = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1857,7 +1857,7 @@ fn compiler_config_collected_properly() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -1918,7 +1918,7 @@ fn compiler_config_collected_properly_in_workspace() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .args(["--json", "metadata", "--format-version=1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
@@ -1960,7 +1960,7 @@ fn profile_can_override_cairo_section() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -2005,7 +2005,7 @@ fn cairo_section_overrides_profile_defaults() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -2047,7 +2047,7 @@ fn can_specify_inlining_strategy_by_weight() {
         "#})
         .build(&t);
 
-    let metadata = Scarb::quick_snapbox()
+    let metadata = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
@@ -2089,7 +2089,7 @@ fn cannot_specify_not_predefined_inlining_strategy() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")

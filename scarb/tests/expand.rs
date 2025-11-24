@@ -19,7 +19,7 @@ fn expand_package_simple() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         .current_dir(&t)
         .assert()
@@ -52,7 +52,7 @@ fn can_expand_to_stdout() {
 
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         .arg("--emit=stdout")
         .current_dir(&t)
@@ -85,7 +85,7 @@ fn can_expand_to_stdout_json() {
 
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("--json")
         .arg("expand")
         .arg("--emit=stdout")
@@ -134,7 +134,7 @@ fn expand_integration_test() {
         .src("tests/a.cairo", test_case)
         .src("tests/b.cairo", test_case)
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         .arg("--target-name=hello_a")
         .current_dir(&t)
@@ -189,7 +189,7 @@ fn can_select_target_by_kind() {
             }
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         .arg("--target-kind=test")
         .current_dir(&t)
@@ -259,7 +259,7 @@ fn can_expand_multiple_targets() {
         .src("tests/a.cairo", test_case)
         .src("tests/b.cairo", test_case)
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         .arg("--target-kind=test")
         .current_dir(&t)
@@ -361,7 +361,7 @@ fn selected_target_must_exist() {
             }
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         .arg("--target-kind=non-existent")
         .current_dir(&t)
@@ -392,7 +392,7 @@ fn attempts_formatting() {
             }
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         .current_dir(&t)
         .assert()
@@ -425,7 +425,7 @@ fn can_skip_formatting() {
             42}
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         .arg("--ugly")
         .current_dir(&t)
@@ -460,7 +460,7 @@ fn can_expand_erroneous_code() {
 
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         .current_dir(&t)
         .assert()

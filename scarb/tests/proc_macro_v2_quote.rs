@@ -41,7 +41,7 @@ fn quote_macro() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -97,7 +97,7 @@ fn quote_macro_with_token_tree() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -153,7 +153,7 @@ fn quote_macro_with_token_stream() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -216,7 +216,7 @@ fn quote_macro_with_syntax_node() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -326,7 +326,7 @@ fn quote_macro_with_cairo_specific_syntax() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -443,7 +443,7 @@ fn quote_macro_parse_incoming_token_stream() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -474,7 +474,7 @@ fn quote_macro_parse_incoming_token_stream() {
         "#},
     );
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -538,7 +538,7 @@ fn quote_macro_with_token_interpolation() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("expand")
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
@@ -621,7 +621,7 @@ fn quote_macro_preserves_spans_of_parsed_args() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -700,7 +700,7 @@ fn quote_format_macro() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -763,7 +763,7 @@ fn quote_format_macro_with_code_block() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -817,7 +817,7 @@ fn quote_format_macro_no_args() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -875,7 +875,7 @@ fn quote_format_macro_multiple_args() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -928,7 +928,7 @@ fn quote_format_macro_fails_on_invalid_syntax() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -990,7 +990,7 @@ fn quote_format_macro_with_indexed_args() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
         // Disable output from Cargo.
@@ -1038,7 +1038,7 @@ fn quote_format_macro_fails_on_named_args() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1092,7 +1092,7 @@ fn quote_format_macro_fails_on_invalid_index() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("check")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
@@ -1164,7 +1164,7 @@ fn quote_format_macro_preserves_spans_of_parsed_args() {
         "#})
         .build(&project);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")

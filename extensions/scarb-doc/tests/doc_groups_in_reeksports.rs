@@ -18,7 +18,7 @@ fn doc_groups_reeksports_json() {
         .lib_cairo(DOC_GROUPS_REEKSPORTS_CODE)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "json"])
         .current_dir(&t)
@@ -41,7 +41,7 @@ fn doc_groups_reeksports_markdown() {
 
     WorkspaceBuilder::start().package(root).build(&root_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .current_dir(&root_dir)
         .assert()
@@ -69,7 +69,7 @@ fn doc_groups_reeksports_markdown_doesnt_duplicate_groups() {
 
     WorkspaceBuilder::start().package(root).build(&root_dir);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--document-private-items", "--build"])
         .current_dir(&root_dir)

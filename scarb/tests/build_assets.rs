@@ -20,7 +20,7 @@ fn assets_are_copied() {
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -58,7 +58,7 @@ fn asset_from_dependency_is_copied() {
         .build(&t);
 
     // Build only `app` to ensure the asset is pulled via dependency graph.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("-p")
         .arg("app")
@@ -85,7 +85,7 @@ fn asset_directory_is_error() {
 
     t.child("assets").create_dir_all().unwrap();
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("RUST_BACKTRACE", "0")
         .arg("build")
         .current_dir(&t)
@@ -110,7 +110,7 @@ fn duplicate_asset_names_within_package_error() {
         .src("b/file.txt", "B")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("RUST_BACKTRACE", "0")
         .arg("build")
         .current_dir(&t)
@@ -133,7 +133,7 @@ fn missing_asset() {
         .manifest_package_extra(r#"assets = ["data.txt"]"#)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("RUST_BACKTRACE", "0")
         .arg("build")
         .current_dir(&t)
@@ -185,7 +185,7 @@ fn duplicate_asset_names_between_dependencies_error() {
         .add_member("app")
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .env("RUST_BACKTRACE", "0")
         .arg("build")
         .arg("-p")
@@ -217,7 +217,7 @@ fn build_with_test_flag_and_multiple_test_targets() {
 
     // Now build with the `--test` flag. This will compile multiple compilation units, each with
     // the same asset, but this SHOULDN'T result in `multiple packages declare an asset` error.
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .arg("--test")
         .current_dir(&t)

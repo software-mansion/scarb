@@ -84,7 +84,7 @@ fn compile_with_prebuilt_plugins() {
         .add_member("a")
         .add_member("b")
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable Cargo and Rust compiler.
         .env("CARGO", "/bin/false")
@@ -128,7 +128,7 @@ fn compile_with_prebuilt_plugins_only_one_allows() {
         .add_member("a")
         .add_member("b")
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
         // Disable output from Cargo.
@@ -185,7 +185,7 @@ fn compile_with_invalid_prebuilt_plugins() {
             allow-prebuilt-plugins = ["invalid_prebuilt_example"]
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")

@@ -13,7 +13,7 @@ fn can_build_mdbook_with_build_arg() {
         .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .arg("--build")
         .current_dir(&t)
