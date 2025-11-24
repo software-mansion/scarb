@@ -624,7 +624,8 @@ fn can_save_stdout_output_to_file() {
         .lib_cairo(indoc! {r#"
             #[executable]
             fn main() -> felt252 {
-                println!("Hello, world!");
+                println!("Hello");
+                println!("world!");
                 42
             }
         "#})
@@ -640,11 +641,13 @@ fn can_save_stdout_output_to_file() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Hello, world!
+        Hello
+        world!
         Saving output to: target/execute/hello/execution1
         "#});
 
     let stdout_output_path = t.child("target/execute/hello/execution1/stdout_output.txt");
     stdout_output_path.assert(predicates::path::exists().and(is_file_empty().not()));
-    stdout_output_path.assert(predicates::str::contains("Hello, world!"));
+    let output = std::fs::read_to_string(stdout_output_path.path()).unwrap();
+    assert_eq!(output, "Hello\nworld!\n");
 }
