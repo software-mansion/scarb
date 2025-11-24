@@ -584,3 +584,67 @@ fn invalid_tracked_resource_for_profiler_trace_file() {
         help: valid options are: `cairo-steps` or `sierra-gas`
         "#});
 }
+
+#[test]
+fn can_save_program_output_to_file() {
+    let t = TempDir::new().unwrap();
+    executable_project_builder()
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                println!("Hello, world!");
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--save-program-output")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        Hello, world!
+        Saving output to: target/execute/hello/execution1
+        "#});
+
+    let program_output_path = t.child("target/execute/hello/execution1/program_output.txt");
+    program_output_path.assert(predicates::path::exists().and(is_file_empty().not()));
+    program_output_path.assert(predicates::str::contains("42"));
+}
+
+#[test]
+fn can_save_stdout_output_to_file() {
+    let t = TempDir::new().unwrap();
+    executable_project_builder()
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                println!("Hello, world!");
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--save-stdout-output")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        Hello, world!
+        Saving output to: target/execute/hello/execution1
+        "#});
+
+    let stdout_output_path = t.child("target/execute/hello/execution1/stdout_output.txt");
+    stdout_output_path.assert(predicates::path::exists().and(is_file_empty().not()));
+    stdout_output_path.assert(predicates::str::contains("Hello, world!"));
+}
