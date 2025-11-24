@@ -198,7 +198,12 @@ pub fn execute(
         .flatten();
 
     let captured_print_output = if !hint_processor.captured_print_felts.is_empty() {
-        format_for_debug(hint_processor.captured_print_felts.into_iter())
+        hint_processor
+            .captured_print_felts
+            .into_iter()
+            .map(|felts| format_for_debug(felts.into_iter()).to_string())
+            .collect::<Vec<_>>()
+            .join("")
     } else {
         String::new()
     };
