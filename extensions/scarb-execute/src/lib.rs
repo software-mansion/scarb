@@ -7,7 +7,7 @@ use crate::profiler::{build_profiler_call_trace, get_profiler_tracked_resource};
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use bincode::enc::write::Writer;
 use cairo_lang_executable::executable::{EntryPointKind, Executable};
-use cairo_lang_runner::casm_run::format_for_panic;
+use cairo_lang_runner::casm_run::{format_for_debug, format_for_panic};
 use cairo_lang_runner::{Arg, CairoHintProcessor, build_hints_dict};
 use cairo_lang_utils::bigint::BigUintAsHex;
 use cairo_vm::cairo_run::CairoRunConfig;
@@ -161,6 +161,8 @@ pub fn execute(
     let mut hint_processor = ExecuteHintProcessor {
         cairo_hint_processor,
         oracle_hint_service: OracleHintService::new(Some(executable_path.as_std_path())),
+        captured_print_felts: Vec::new(),
+        capture_enabled: args.run.save_stdout_output,
     };
 
     let proof_mode = args.run.target.is_standalone();
@@ -193,12 +195,22 @@ pub fn execute(
         .then(|| ExecutionResources::try_new(&runner, hint_processor.cairo_hint_processor).ok())
         .flatten();
 
+    let captured_print_output = if !hint_processor.captured_print_felts.is_empty() {
+        format_for_debug(hint_processor.captured_print_felts.into_iter())
+    } else {
+        String::new()
+    };
+
+    let execution_output = (args.run.print_program_output || args.run.save_program_output)
+        .then(|| ExecutionOutput::try_new(&mut runner))
+        .transpose()?;
+
     ui.print(ExecutionSummary {
-        output: args
-            .run
-            .print_program_output
-            .then(|| ExecutionOutput::try_new(&mut runner))
-            .transpose()?,
+        output: if args.run.print_program_output {
+            execution_output.clone()
+        } else {
+            None
+        },
         resources: args
             .run
             .print_resource_usage
@@ -316,6 +328,18 @@ pub fn execute(
         let serialized_trace = serde_json::to_string(&call_trace)
             .expect("Failed to serialize call trace for profiler");
         fs::write(profiler_trace_path, serialized_trace)?;
+    }
+
+    if args.run.save_program_output
+        && let Some(output) = &execution_output
+    {
+        let program_output_path = execution_output_dir.join(EXECUTE_PROGRAM_OUTPUT_FILENAME);
+        fs::write(program_output_path, output.as_str())?;
+    }
+
+    if args.run.save_stdout_output && !captured_print_output.is_empty() {
+        let stdout_output_path = execution_output_dir.join(EXECUTE_STDOUT_OUTPUT_FILENAME);
+        fs::write(stdout_output_path, &captured_print_output)?;
     }
 
     Ok(())

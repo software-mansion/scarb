@@ -11,6 +11,8 @@ use std::path::Path;
 use std::{env, fs};
 
 use anyhow::{Context, Result};
+pub const EXECUTE_PROGRAM_OUTPUT_FILENAME: &str = "program_output.txt";
+pub const EXECUTE_STDOUT_OUTPUT_FILENAME: &str = "stdout_output.txt";
 
 /// Creates an excluded from cache directory atomically with its parents as needed.
 ///

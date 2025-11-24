@@ -40,15 +40,18 @@ impl Message for ExecutionSummary {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 pub struct ExecutionOutput(String);
 
 impl ExecutionOutput {
     pub fn try_new(runner: &mut CairoRunner) -> Result<Self> {
-        let mut output_buffer = "Program output:\n".to_string();
+        let mut output_buffer = String::new();
         runner.vm.write_output(&mut output_buffer)?;
         let output = output_buffer.trim_end().to_string();
         Ok(Self(output))
+    }
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
@@ -57,7 +60,7 @@ impl Message for ExecutionOutput {
     where
         Self: Sized,
     {
-        println!("{}", self.0);
+        println!("Program output:\n{}", self.0);
     }
 
     fn structured<S: Serializer>(self, ser: S) -> std::result::Result<S::Ok, S::Error>
