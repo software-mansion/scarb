@@ -140,8 +140,8 @@ impl OutputEmit {
                 let execution_results = if snippet_execution_enabled {
                     let snippets = collect_runnable_code_blocks(&package.crate_);
                     if !snippets.is_empty() {
-                        let executor = SnippetRunner::new(&package.package_metadata, ui.clone());
-                        let execution_results = executor.execute(&snippets)?;
+                        let runner = SnippetRunner::new(&package.package_metadata, ui.clone());
+                        let execution_results = runner.execute(&snippets)?;
                         Some(execution_results)
                     } else {
                         Some(vec![])
