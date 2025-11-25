@@ -12,6 +12,7 @@ use indoc::formatdoc;
 use scarb_build_metadata::CAIRO_VERSION;
 use scarb_metadata::{PackageMetadata, ScarbCommand};
 use scarb_ui::Ui;
+use scarb_ui::components::Status;
 use std::fs;
 use tempfile::tempdir;
 
@@ -86,7 +87,7 @@ impl<'a> SnippetRunner<'a> {
         self.write_manifest(&project_dir, index)?;
         self.write_lib_cairo(&project_dir, snippet)?;
 
-        let (print_output, program_output) = self.run_execute(&project_dir, index)?;
+        let (print_output, program_output) = self.run_execute(&project_dir, index, snippet)?;
 
         Ok(CodeBlockExecutionResult {
             code_block_id: snippet.code_block_id.clone(),
@@ -156,12 +157,25 @@ impl<'a> SnippetRunner<'a> {
         Ok(())
     }
 
-    fn run_execute(&self, project_dir: &Utf8Path, index: usize) -> Result<(String, String)> {
+    fn run_execute(
+        &self,
+        project_dir: &Utf8Path,
+        index: usize,
+        snippet: &RunnableCodeBlock,
+    ) -> Result<(String, String)> {
         let target_dir = project_dir.join("target");
         let output_dir = target_dir.join("execute").join(self.snippet_name(index));
         create_output_dir(output_dir.as_std_path())?;
         let (output_dir, execution_id) = incremental_create_execution_output_dir(&output_dir)?;
 
+        self.ui.print(Status::new(
+            "Executing",
+            format!(
+                "snippet #{} from `{}`",
+                index, snippet.code_block_id.item_full_path
+            )
+            .as_str(),
+        ));
         ScarbCommand::new()
             .arg("execute")
             // .args(["--executable-function", "snippet_main"])
