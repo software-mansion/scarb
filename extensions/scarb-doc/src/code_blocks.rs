@@ -1,36 +1,43 @@
 use cairo_lang_doc::parser::DocumentationCommentToken;
 use std::str::from_utf8;
 
-/// Represents code block extracted from doc comments.
-#[derive(Debug, Clone, PartialEq)]
-pub struct DocCodeBlock {
-    pub code: String,
-    pub language: String,
-    pub attributes: Vec<String>,
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct DocCodeBlockId {
     pub item_full_path: String,
     pub close_token_idx: usize,
 }
 
-impl DocCodeBlock {
-    pub fn new(
-        code: String,
-        info_string: &String,
-        item_full_path: String,
-        close_token_idx: usize,
-    ) -> Self {
-        let (language, attributes) = Self::parse_info_string(info_string);
+impl DocCodeBlockId {
+    pub fn new(item_full_path: String, close_token_idx: usize) -> Self {
         Self {
-            code,
-            language,
-            attributes,
             item_full_path,
             close_token_idx,
         }
     }
+}
+
+/// Represents code block extracted from doc comments.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DocCodeBlock {
+    pub id: DocCodeBlockId,
+    pub code: String,
+    pub language: String,
+    pub attributes: Vec<String>,
+}
+
+impl DocCodeBlock {
+    pub fn new(id: DocCodeBlockId, code: String, info_string: &String) -> Self {
+        let (language, attributes) = Self::parse_info_string(info_string);
+        Self {
+            id,
+            code,
+            language,
+            attributes,
+        }
+    }
 
     pub fn is_runnable(&self) -> bool {
-        self.language == "cairo" &&
-        self.attributes.iter().any(|attr| attr == "runnable")
+        self.language == "cairo" && self.attributes.iter().any(|attr| attr == "runnable")
     }
 
     /// Parses info string into language and attributes. The results are lowercased.
@@ -84,15 +91,17 @@ pub fn collect_code_blocks(
             Some(ref opening) => {
                 if is_matching_closing_fence(content, opening.char, opening.len) {
                     let end_idx = idx;
-                    let body = get_block_body(tokens, opening.token_idx + 1, end_idx);
+                    let body = get_block_body(tokens, opening.token_idx + 1, end_idx)
+                        .trim()
+                        .to_string();
 
                     // Skip empty code blocks.
-                    if !body.trim().is_empty() {
+                    let id = DocCodeBlockId::new(full_path.to_string(), idx);
+                    if !body.is_empty() {
                         code_blocks.push(DocCodeBlock::new(
-                            body,
+                            id,
+                            body.to_string(),
                             &opening.info_string,
-                            full_path.to_string(),
-                            end_idx,
                         ));
                     }
                     current_fence = None;

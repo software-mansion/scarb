@@ -7,6 +7,7 @@ use scarb_doc::docs_generation::common::OutputFilesExtension;
 use scarb_doc::docs_generation::markdown::{MarkdownContent, WorkspaceMarkdownBuilder};
 use scarb_doc::errors::{MetadataCommandError, PackagesSerializationError};
 use scarb_doc::metadata::get_target_dir;
+use scarb_doc::runner::{SnippetRunner, collect_runnable_code_blocks};
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 use scarb_doc::{PackageInformation, generate_package_context, generate_package_information};
 use scarb_extensions_cli::doc::{Args, OutputFormat};
@@ -134,7 +135,23 @@ impl OutputEmit {
                 ui,
                 files_extension,
             } => {
-                let content = MarkdownContent::from_crate(&package, *files_extension)?;
+                // TODO: refactor this
+                let snippet_execution_enabled = *build;
+                let execution_results = if snippet_execution_enabled {
+                    let snippets = collect_runnable_code_blocks(&package.crate_);
+                    if !snippets.is_empty() {
+                        let executor = SnippetRunner::new(&package.package_metadata, ui.clone());
+                        let execution_results = executor.execute(&snippets)?;
+                        Some(execution_results)
+                    } else {
+                        Some(vec![])
+                    }
+                } else {
+                    None
+                };
+
+                let content =
+                    MarkdownContent::from_crate(&package, *files_extension, execution_results)?;
                 output_markdown(
                     content,
                     Some(package.metadata.name),

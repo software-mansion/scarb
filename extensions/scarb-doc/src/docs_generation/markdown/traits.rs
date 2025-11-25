@@ -1,9 +1,10 @@
 use super::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::{
     BASE_MODULE_CHAPTER_PREFIX, GROUP_CHAPTER_PREFIX, SHORT_DOCUMENTATION_AVOID_PREFIXES,
-    SHORT_DOCUMENTATION_LEN, SummaryIndexMap,
+    SHORT_DOCUMENTATION_LEN,
 };
-use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem};
+use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem, common};
+use crate::runner::CodeBlockExecutionResult;
 use crate::types::groups::Group;
 use crate::types::item_data::{ItemData, SubItemData};
 use crate::types::module_type::{Module, ModulePubUses};
@@ -14,6 +15,7 @@ use crate::types::other_types::{
 };
 use anyhow::Result;
 use cairo_lang_doc::parser::{CommentLinkToken, DocumentationCommentToken};
+use common::SummaryIndexMap;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt::Write;
@@ -81,6 +83,7 @@ macro_rules! impl_markdown_doc_item {
                 header_level: usize,
                 item_suffix: Option<usize>,
                 summary_index_map: &SummaryIndexMap,
+                execution_results: Option<Vec<CodeBlockExecutionResult>>,
             ) -> Result<String> {
                 let mut markdown = String::new();
 
@@ -88,7 +91,7 @@ macro_rules! impl_markdown_doc_item {
                     context.get_header_primitive(header_level, self.name(), self.full_path());
                 writeln!(&mut markdown, "{}\n", header)?;
 
-                if let Some(doc) = self.get_documentation(context) {
+                if let Some(doc) = self.get_documentation(context, execution_results) {
                     writeln!(&mut markdown, "{doc}\n")?;
                 }
 
@@ -134,6 +137,7 @@ pub trait MarkdownDocItem: DocItem {
         header_level: usize,
         item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
+        execution_results: Option<Vec<CodeBlockExecutionResult>>,
     ) -> Result<String>;
 
     fn get_short_documentation(&self, context: &MarkdownGenerationContext) -> String {
@@ -179,14 +183,34 @@ pub trait MarkdownDocItem: DocItem {
         "—".to_string()
     }
 
-    fn get_documentation(&self, context: &MarkdownGenerationContext) -> Option<String> {
+    fn get_documentation(
+        &self,
+        context: &MarkdownGenerationContext,
+        execution_results: Option<Vec<CodeBlockExecutionResult>>,
+    ) -> Option<String> {
         self.doc().as_ref().map(|doc_tokens| {
+            // TODO: filter out execution results that do not belong to this item
             doc_tokens
                 .iter()
-                .map(|doc_token| match doc_token {
-                    DocumentationCommentToken::Content(content) => content.clone(),
+                .enumerate()
+                .flat_map(|(idx, doc_token)| match doc_token {
+                    DocumentationCommentToken::Content(content) => {
+                        // Check if this token is the closing fence of a code block that has execution results
+                        if let Some(cb) = self
+                            .code_blocks()
+                            .iter()
+                            .find(|cb| cb.id.close_token_idx == idx)
+                            && let Some(results) = &execution_results
+                            && let Some(res) = results
+                                .iter()
+                                .find(|exec_res| exec_res.code_block_id == cb.id)
+                        {
+                            return vec![content.clone(), res.format_as_markdown()];
+                        }
+                        vec![content.clone()]
+                    }
                     DocumentationCommentToken::Link(link) => {
-                        self.format_link_to_path(link, context)
+                        vec![self.format_link_to_path(link, context)]
                     }
                 })
                 .join("")
@@ -220,8 +244,16 @@ where
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
+        execution_results: Option<Vec<CodeBlockExecutionResult>>,
     ) -> Result<String> {
-        generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)
+        generate_markdown_from_item_data(
+            self,
+            context,
+            header_level,
+            None,
+            summary_index_map,
+            execution_results,
+        )
     }
 }
 
@@ -232,9 +264,16 @@ impl<'db> MarkdownDocItem for Enum<'db> {
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
+        execution_results: Option<Vec<CodeBlockExecutionResult>>,
     ) -> Result<String> {
-        let mut markdown =
-            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
+        let mut markdown = generate_markdown_from_item_data(
+            self,
+            context,
+            header_level,
+            None,
+            summary_index_map,
+            execution_results.clone(),
+        )?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
         markdown += &generate_markdown_for_subitems(
             &self.variants,
@@ -242,6 +281,7 @@ impl<'db> MarkdownDocItem for Enum<'db> {
             header_level,
             &mut suffix_calculator,
             summary_index_map,
+            execution_results.clone(),
         )?;
 
         Ok(markdown)
@@ -255,9 +295,16 @@ impl<'db> MarkdownDocItem for Impl<'db> {
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
+        execution_results: Option<Vec<CodeBlockExecutionResult>>,
     ) -> Result<String> {
-        let mut markdown =
-            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
+        let mut markdown = generate_markdown_from_item_data(
+            self,
+            context,
+            header_level,
+            None,
+            summary_index_map,
+            execution_results.clone(),
+        )?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
         markdown += &generate_markdown_for_subitems(
@@ -266,6 +313,7 @@ impl<'db> MarkdownDocItem for Impl<'db> {
             header_level,
             &mut suffix_calculator,
             summary_index_map,
+            execution_results.clone(),
         )?;
 
         markdown += &generate_markdown_for_subitems(
@@ -274,6 +322,7 @@ impl<'db> MarkdownDocItem for Impl<'db> {
             header_level,
             &mut suffix_calculator,
             summary_index_map,
+            execution_results.clone(),
         )?;
 
         markdown += &generate_markdown_for_subitems(
@@ -282,6 +331,7 @@ impl<'db> MarkdownDocItem for Impl<'db> {
             header_level,
             &mut suffix_calculator,
             summary_index_map,
+            execution_results.clone(),
         )?;
 
         Ok(markdown)
@@ -379,9 +429,16 @@ impl<'db> MarkdownDocItem for Module<'db> {
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
+        execution_results: Option<Vec<CodeBlockExecutionResult>>,
     ) -> Result<String> {
-        let mut markdown =
-            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
+        let mut markdown = generate_markdown_from_item_data(
+            self,
+            context,
+            header_level,
+            None,
+            summary_index_map,
+            execution_results,
+        )?;
 
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.submodules.iter().collect_vec(),
@@ -475,9 +532,16 @@ impl<'db> MarkdownDocItem for Struct<'db> {
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
+        execution_results: Option<Vec<CodeBlockExecutionResult>>,
     ) -> Result<String> {
-        let mut markdown =
-            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
+        let mut markdown = generate_markdown_from_item_data(
+            self,
+            context,
+            header_level,
+            None,
+            summary_index_map,
+            execution_results.clone(),
+        )?;
 
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
         markdown += &generate_markdown_for_subitems(
@@ -486,6 +550,7 @@ impl<'db> MarkdownDocItem for Struct<'db> {
             header_level,
             &mut suffix_calculator,
             summary_index_map,
+            execution_results.clone(),
         )?;
 
         Ok(markdown)
@@ -499,9 +564,16 @@ impl<'db> MarkdownDocItem for Trait<'db> {
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
+        execution_results: Option<Vec<CodeBlockExecutionResult>>,
     ) -> Result<String> {
-        let mut markdown =
-            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
+        let mut markdown = generate_markdown_from_item_data(
+            self,
+            context,
+            header_level,
+            None,
+            summary_index_map,
+            execution_results.clone(),
+        )?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
         markdown += &generate_markdown_for_subitems(
@@ -510,6 +582,7 @@ impl<'db> MarkdownDocItem for Trait<'db> {
             header_level,
             &mut suffix_calculator,
             summary_index_map,
+            execution_results.clone(),
         )?;
         markdown += &generate_markdown_for_subitems(
             &self.trait_functions,
@@ -517,6 +590,7 @@ impl<'db> MarkdownDocItem for Trait<'db> {
             header_level,
             &mut suffix_calculator,
             summary_index_map,
+            execution_results.clone(),
         )?;
         markdown += &generate_markdown_for_subitems(
             &self.trait_types,
@@ -524,6 +598,7 @@ impl<'db> MarkdownDocItem for Trait<'db> {
             header_level,
             &mut suffix_calculator,
             summary_index_map,
+            execution_results.clone(),
         )?;
         Ok(markdown)
     }
@@ -765,6 +840,7 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
     header_level: usize,
     suffix_calculator: &mut ItemSuffixCalculator,
     summary_index_map: &SummaryIndexMap,
+    execution_results: Option<Vec<CodeBlockExecutionResult>>,
 ) -> Result<String> {
     let mut markdown = String::new();
 
@@ -778,7 +854,13 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
             writeln!(
                 &mut markdown,
                 "{}",
-                item.generate_markdown(context, header_level + 2, postfix, summary_index_map)?
+                item.generate_markdown(
+                    context,
+                    header_level + 2,
+                    postfix,
+                    summary_index_map,
+                    execution_results.clone()
+                )?
             )?;
         }
     }
@@ -792,13 +874,14 @@ fn generate_markdown_from_item_data(
     header_level: usize,
     item_suffix: Option<usize>,
     summary_index_map: &SummaryIndexMap,
+    execution_results: Option<Vec<CodeBlockExecutionResult>>,
 ) -> Result<String> {
     let mut markdown = String::new();
 
     let header = context.get_header(header_level, doc_item.name(), doc_item.full_path());
     writeln!(&mut markdown, "{}\n", header)?;
 
-    if let Some(doc) = doc_item.get_documentation(context) {
+    if let Some(doc) = doc_item.get_documentation(context, execution_results) {
         writeln!(&mut markdown, "{doc}\n")?;
     }
 
