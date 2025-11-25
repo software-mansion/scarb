@@ -28,7 +28,8 @@ pub const GROUP_CHAPTER_PREFIX: &str = "- ###";
 /// Prefixes that indicate the start of complex Markdown structures,
 /// such as tables. These should be avoided in brief documentation to maintain simple text
 /// formatting and prevent disruption of the layout.
-const SHORT_DOCUMENTATION_AVOID_PREFIXES: &[&str] = &["#", "\n\n", "```", "- ", "1.  ", "{{#"];
+const SHORT_DOCUMENTATION_AVOID_PREFIXES: &[&str] =
+    &["#", "\n\n", "```", "~~~", "- ", "1.  ", "{{#"];
 
 pub struct MarkdownContent {
     book_toml: String,
