@@ -598,7 +598,7 @@ fn can_save_program_output_to_file() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--save-program-output")
         .current_dir(&t)
@@ -631,7 +631,7 @@ fn can_save_stdout_output_to_file() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("execute")
         .arg("--save-print-output")
         .current_dir(&t)
