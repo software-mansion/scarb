@@ -1,11 +1,14 @@
 use crate::docs_generation::TopLevelItems;
+use crate::docs_generation::markdown::GROUP_CHAPTER_PREFIX;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::summary::files::{
     generate_doc_files_for_module_items, generate_modules_summary_files,
     generate_summary_files_for_module_items,
 };
 use crate::docs_generation::markdown::traits::generate_markdown_table_summary_for_top_level_subitems;
-use crate::docs_generation::markdown::{GROUP_CHAPTER_PREFIX, SummaryIndexMap};
+
+use crate::docs_generation::common::SummaryIndexMap;
+use crate::runner::CodeBlockExecutionResult;
 use crate::types::groups::Group;
 use itertools::Itertools;
 
@@ -26,6 +29,7 @@ pub fn generate_global_groups_summary_files(
     groups: &[Group],
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
+    execution_results: Option<Vec<CodeBlockExecutionResult>>,
 ) -> anyhow::Result<Vec<(String, String)>> {
     let mut doc_files: Vec<(String, String)> = Vec::new();
 
@@ -66,8 +70,13 @@ pub fn generate_global_groups_summary_files(
             )?);
 
             doc_files.extend(
-                generate_doc_files_for_module_items(&top_level_items, context, summary_index_map)?
-                    .to_owned(),
+                generate_doc_files_for_module_items(
+                    &top_level_items,
+                    context,
+                    summary_index_map,
+                    execution_results.clone(),
+                )?
+                .to_owned(),
             );
 
             doc_files.push((
@@ -77,8 +86,12 @@ pub fn generate_global_groups_summary_files(
 
             if !top_level_items.modules.is_empty() {
                 for submodule in group.submodules.iter() {
-                    let sub_summaries =
-                        &generate_modules_summary_files(submodule, context, summary_index_map)?;
+                    let sub_summaries = &generate_modules_summary_files(
+                        submodule,
+                        context,
+                        summary_index_map,
+                        execution_results.clone(),
+                    )?;
                     doc_files.extend::<Vec<(String, String)>>(sub_summaries.to_owned());
                 }
             };
