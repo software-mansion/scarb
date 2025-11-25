@@ -340,7 +340,7 @@ pub fn execute(
         fs::write(program_output_path, output.as_str())?;
     }
 
-    if args.run.save_print_output && !captured_print_output.is_empty() {
+    if args.run.save_print_output {
         let print_output_path = execution_output_dir.join(EXECUTE_PRINT_OUTPUT_FILENAME);
         fs::write(print_output_path, &captured_print_output)?;
     }
