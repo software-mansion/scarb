@@ -163,8 +163,8 @@ pub fn execute(
     let mut hint_processor = ExecuteHintProcessor {
         cairo_hint_processor,
         oracle_hint_service: OracleHintService::new(Some(executable_path.as_std_path())),
-        captured_print_felts: Vec::new(),
         capture_enabled: args.run.save_print_output,
+        captured_print_felts: Default::default(),
     };
 
     let proof_mode = args.run.target.is_standalone();
@@ -197,16 +197,12 @@ pub fn execute(
         .then(|| ExecutionResources::try_new(&runner, hint_processor.cairo_hint_processor).ok())
         .flatten();
 
-    let captured_print_output = if !hint_processor.captured_print_felts.is_empty() {
-        hint_processor
-            .captured_print_felts
-            .into_iter()
-            .map(|felts| format_for_debug(felts.into_iter()).to_string())
-            .collect::<Vec<_>>()
-            .join("")
-    } else {
-        String::new()
-    };
+    let captured_print_output = hint_processor
+        .captured_print_felts
+        .into_iter()
+        .map(|felts| format_for_debug(felts.into_iter()).to_string())
+        .collect::<Vec<_>>()
+        .join("");
 
     let execution_output = (args.run.print_program_output || args.run.save_program_output)
         .then(|| ExecutionOutput::try_new(&mut runner))
