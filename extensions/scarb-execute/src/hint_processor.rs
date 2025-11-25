@@ -19,8 +19,8 @@ use std::sync::Arc;
 pub struct ExecuteHintProcessor<'a> {
     pub cairo_hint_processor: CairoHintProcessor<'a>,
     pub oracle_hint_service: OracleHintService,
-    /// Captured felts from `println!` / `print!` statements
-    /// Only used if `capture_enabled` is true
+    /// Captured felts from `printl!` and `println!` statements.
+    /// Only populated if `capture_enabled` is `true`.
     pub captured_print_felts: Vec<Vec<Felt252>>,
     pub capture_enabled: bool,
 }
