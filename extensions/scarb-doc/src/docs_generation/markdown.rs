@@ -14,6 +14,7 @@ mod traits;
 use crate::docs_generation::common::{
     GeneratedFile, OutputFilesExtension, SummaryIndexMap, SummaryListItem,
 };
+use crate::runner::CodeBlockExecutionResult;
 use std::ops::Add;
 
 const BASE_HEADER_LEVEL: usize = 1;
@@ -27,7 +28,8 @@ pub const GROUP_CHAPTER_PREFIX: &str = "- ###";
 /// Prefixes that indicate the start of complex Markdown structures,
 /// such as tables. These should be avoided in brief documentation to maintain simple text
 /// formatting and prevent disruption of the layout.
-const SHORT_DOCUMENTATION_AVOID_PREFIXES: &[&str] = &["#", "\n\n", "```", "- ", "1.  ", "{{#"];
+const SHORT_DOCUMENTATION_AVOID_PREFIXES: &[&str] =
+    &["#", "\n\n", "```", "~~~", "- ", "1.  ", "{{#"];
 
 pub struct MarkdownContent {
     book_toml: String,
@@ -40,10 +42,10 @@ impl MarkdownContent {
     pub fn from_crate(
         package_information: &PackageInformation,
         format: OutputFilesExtension,
+        execution_results: Option<Vec<CodeBlockExecutionResult>>,
     ) -> Result<Self> {
         let (summary, doc_files) =
-            generate_summary_file_content(&package_information.crate_, format)?;
-
+            generate_summary_file_content(&package_information.crate_, format, execution_results)?;
         Ok(Self {
             book_toml: generate_book_toml_content(&package_information.metadata),
             summary,
@@ -77,7 +79,7 @@ impl WorkspaceMarkdownBuilder {
             self.book_toml = Some(generate_book_toml_content(&package_information.metadata));
         }
         let (summary, files) =
-            generate_summary_file_content(&package_information.crate_, self.output_format)?;
+            generate_summary_file_content(&package_information.crate_, self.output_format, None)?;
         let current = std::mem::replace(&mut self.summary, SummaryIndexMap::new());
         self.summary = current.add(summary);
         self.doc_files.extend(files);

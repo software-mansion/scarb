@@ -4038,12 +4038,11 @@ dependencies = [
 
 [[package]]
 name = "http"
-version = "1.3.1"
+version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4a85d31aea989eead29a3aaf9e1115a180df8282431156e533de47660892565"
+checksum = "e3ba2a386d7f85a81f119ad7498ebe444d2e22c2af0b86b069416ace48b3311a"
 dependencies = [
  "bytes",
- "fnv",
  "itoa",
 ]
 
@@ -6877,11 +6876,13 @@ dependencies = [
  "cairo-lang-utils",
  "camino",
  "clap",
+ "create-output-dir",
  "expect-test",
  "indoc",
  "itertools 0.14.0",
  "mimalloc",
  "salsa",
+ "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
  "scarb-test-support",
@@ -6889,6 +6890,7 @@ dependencies = [
  "serde",
  "serde_json",
  "snapbox",
+ "tempfile",
  "thiserror 2.0.17",
 ]
 
