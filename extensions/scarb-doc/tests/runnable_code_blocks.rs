@@ -17,7 +17,7 @@ fn supports_runnable_examples() {
         .lib_cairo(CODE_WITH_SNIPPETS)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "markdown"])
         .arg("--build")
