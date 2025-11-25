@@ -243,7 +243,7 @@ impl Template {
             fsx::create_dir_all(path.parent().expect("file path must have a parent"))?;
 
             match content_path {
-                SourcePath::SkipDuplicated(path) if path.exists() => continue,
+                SourcePath::SkipDuplicated(_path) if path.exists() => continue,
                 _ => {}
             }
 
