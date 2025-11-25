@@ -6,13 +6,11 @@
 //!
 //! [cargo-util-fn]: https://docs.rs/cargo-util/latest/cargo_util/paths/fn.create_dir_all_excluded_from_backups_atomic.html
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
+use camino::{Utf8Path, Utf8PathBuf};
 use std::ffi::OsStr;
 use std::path::Path;
 use std::{env, fs, io};
-use camino::{Utf8Path, Utf8PathBuf};
-
-const MAX_ITERATION_COUNT: usize = 10000;
 
 /// Maximum number of iterations to try when creating an incremental output directory using [`incremental_create_execution_output_dir`].
 const MAX_ITERATION_COUNT: usize = 10000;
