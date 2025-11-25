@@ -21,11 +21,14 @@ cairo-lang-semantic.workspace = true
 cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
 cairo-lang-utils.workspace = true
+create-output-dir = { path = "../../utils/create-output-dir" }
 expect-test.workspace = true
 indoc.workspace = true
 itertools.workspace = true
 mimalloc.workspace = true
+tempfile.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
+scarb-build-metadata = { path = "../../utils/scarb-build-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["doc"] }
 serde.workspace = true

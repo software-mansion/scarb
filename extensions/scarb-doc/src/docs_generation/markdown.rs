@@ -14,6 +14,7 @@ pub mod traits;
 use crate::docs_generation::common::{
     GeneratedFile, OutputFilesExtension, SummaryIndexMap, SummaryListItem,
 };
+use crate::runner::CodeBlockExecutionResult;
 use std::ops::Add;
 
 const BASE_HEADER_LEVEL: usize = 1;
@@ -40,10 +41,10 @@ impl MarkdownContent {
     pub fn from_crate(
         package_information: &PackageInformation,
         format: OutputFilesExtension,
+        execution_results: Option<Vec<CodeBlockExecutionResult>>,
     ) -> Result<Self> {
         let (summary, doc_files) =
-            generate_summary_file_content(&package_information.crate_, format)?;
-
+            generate_summary_file_content(&package_information.crate_, format, execution_results)?;
         Ok(Self {
             book_toml: generate_book_toml_content(&package_information.metadata),
             summary,
@@ -77,7 +78,7 @@ impl WorkspaceMarkdownBuilder {
             self.book_toml = Some(generate_book_toml_content(&package_information.metadata));
         }
         let (summary, files) =
-            generate_summary_file_content(&package_information.crate_, self.output_format)?;
+            generate_summary_file_content(&package_information.crate_, self.output_format, None)?;
         let current = std::mem::replace(&mut self.summary, SummaryIndexMap::new());
         self.summary = current.add(summary);
         self.doc_files.extend(files);
