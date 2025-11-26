@@ -17,10 +17,15 @@ pub const EXECUTE_PRINT_OUTPUT_FILENAME: &str = "stdout_output.txt";
 pub fn incremental_create_execution_output_dir(path: &Utf8Path) -> Result<(Utf8PathBuf, usize)> {
     for i in 1..=MAX_ITERATION_COUNT {
         let filepath = path.join(format!("execution{i}"));
-        match fs::create_dir(&filepath) {
-            Err(e) if e.kind() == io::ErrorKind::AlreadyExists => continue,
-            Err(e) => return Err(e.into()),
-            Ok(_) => return Ok((filepath, i)),
+        let result = fs::create_dir(&filepath);
+        return match result {
+            Err(e) => {
+                if e.kind() == io::ErrorKind::AlreadyExists {
+                    continue;
+                }
+                Err(e.into())
+            }
+            Ok(_) => Ok((filepath, i)),
         }
     }
     bail!("failed to create output directory")
