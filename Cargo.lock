@@ -2228,7 +2228,6 @@ name = "create-output-dir"
 version = "1.0.0"
 dependencies = [
  "anyhow",
- "camino",
  "core-foundation 0.10.1",
  "tempfile",
  "winapi",
@@ -6964,6 +6963,7 @@ dependencies = [
  "indoc",
  "mimalloc",
  "predicates",
+ "scarb-execute-utils",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
  "scarb-oracle-hint-service",
@@ -6974,6 +6974,14 @@ dependencies = [
  "snapbox",
  "thousands",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "scarb-execute-utils"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "camino",
 ]
 
 [[package]]
@@ -7081,6 +7089,7 @@ dependencies = [
  "indoc",
  "mimalloc",
  "predicates",
+ "scarb-execute-utils",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
  "scarb-test-support",

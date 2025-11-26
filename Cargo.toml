@@ -20,6 +20,7 @@ members = [
     "utils/scarb-stable-hash",
     "utils/scarb-test-support",
     "utils/scarb-ui",
+    "utils/scarb-execute-utils",
     "utils/test-for-each-example",
     "utils/scarb-extensions-cli",
     "utils/scarb-oracle-hint-service",

@@ -17,11 +17,12 @@ use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::MaybeRelocatable;
 use cairo_vm::{Felt252, cairo_run};
 use camino::{Utf8Path, Utf8PathBuf};
-use create_output_dir::{
-    EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME, create_output_dir,
+use create_output_dir::create_output_dir;
+use indoc::formatdoc;
+use scarb_execute_utils::{
+    EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME,
     incremental_create_execution_output_dir,
 };
-use indoc::formatdoc;
 use scarb_extensions_cli::execute::{
     Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
 };
