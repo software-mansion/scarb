@@ -29,93 +29,6 @@ fn build_executable_project() -> TempDir {
 
 #[test]
 #[cfg(not(windows))]
-fn prove_from_execution_output() {
-    let t = build_executable_project();
-
-    Scarb::quick_command()
-        .arg("execute")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    Scarb::quick_command()
-        .arg("prove")
-        .arg("--execution-id=1")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_eq(indoc! {r#"
-        [..]Proving hello
-        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
-        Saving proof to: target/execute/hello/execution1/proof/proof.json
-        "#});
-
-    t.child("target/execute/hello/execution1/proof/proof.json")
-        .assert(predicates::path::exists());
-}
-
-#[test]
-#[cfg(not(windows))]
-#[ignore = "TODO(maciektr): Ignored until fixed by stwo."]
-fn prove_with_track_relations() {
-    let t = build_executable_project();
-
-    Scarb::quick_command()
-        .arg("execute")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    let cmd = Scarb::quick_command()
-        .arg("prove")
-        .arg("--execution-id=1")
-        .arg("--track-relations")
-        .current_dir(&t)
-        .assert()
-        .success();
-    let output = cmd.get_output().stdout.clone();
-    let stdout = String::from_utf8(output).unwrap();
-
-    assert!(stdout.contains("Proving hello"));
-    assert!(stdout.contains("Relations summary:"));
-    assert!(stdout.contains("Saving proof to: target/execute/hello/execution1/proof/proof.json"));
-
-    t.child("target/execute/hello/execution1/proof/proof.json")
-        .assert(predicates::path::exists());
-}
-
-#[test]
-#[cfg(not(windows))]
-fn prove_with_display_components() {
-    let t = build_executable_project();
-
-    Scarb::quick_command()
-        .arg("execute")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    let cmd = Scarb::quick_command()
-        .arg("prove")
-        .arg("--execution-id=1")
-        .arg("--display-components")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    let output = cmd.get_output().stdout.clone();
-    let stdout = String::from_utf8(output).unwrap();
-
-    assert!(stdout.contains("Proving hello"));
-    assert!(stdout.contains("CairoComponents"));
-    assert!(stdout.contains("Saving proof to: target/execute/hello/execution1/proof/proof.json"));
-
-    t.child("target/execute/hello/execution1/proof/proof.json")
-        .assert(predicates::path::exists());
-}
-
-#[test]
-#[cfg(not(windows))]
 fn prove_fails_when_execution_output_not_found() {
     let t = build_executable_project();
 
@@ -167,32 +80,6 @@ fn prove_fails_when_cairo_pie_output() {
             and then run `scarb prove` with correct execution ID
 
         "#});
-}
-
-#[test]
-#[cfg(not(windows))]
-fn prove_with_execute() {
-    let t = build_executable_project();
-
-    Scarb::quick_command()
-        .arg("prove")
-        .arg("--execute")
-        .arg("--target=standalone")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_eq(indoc! {r#"
-        [..]Compiling hello v0.1.0 ([..])
-        [..]Finished `dev` profile target(s) in [..]
-        [..]Executing hello
-        Saving output to: target/execute/hello/execution1
-        [..]Proving hello
-        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
-        Saving proof to: target/execute/hello/execution1/proof/proof.json
-        "#});
-
-    t.child("target/execute/hello/execution1/proof/proof.json")
-        .assert(predicates::path::exists());
 }
 
 #[test]

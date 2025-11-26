@@ -1,0 +1,15 @@
+[package]
+name = "scarb-fs-utils"
+version = "1.0.0"
+publish = false
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+camino.workspace = true
+dunce.workspace = true

@@ -14,7 +14,7 @@ concurrency:
 
 env:
   # TODO(#1915): Use stable toolchain once stwo is stable.
-  RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-02-13"
+  RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-07-14"
 
 jobs:
   setup-matrix:
@@ -109,7 +109,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: run tests
-        run: cargo test --doc
+        run: cargo test --doc --workspace --exclude scarb-prove --exclude scarb-verify --exclude scarb-execute
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - name: run nightly tests
+        run: cargo test --doc -p scarb-prove -p scarb-verify -p scarb-execute
 
   scarb-metadata-compatibility:
     name: scarb-metadata compatibility check

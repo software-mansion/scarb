@@ -1,6 +1,5 @@
 pub mod async_cache;
 pub mod cloneable_error;
-pub mod fsx;
 pub mod lazy_directory_creator;
 pub mod offloader;
 pub mod restricted_names;

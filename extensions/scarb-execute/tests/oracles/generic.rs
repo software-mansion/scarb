@@ -22,7 +22,6 @@ fn unknown_scheme() {
             [..]Executing oracle_test
             Result::Err("unsupported connection scheme: "unknown:///test"
             note: supported schemes are: [..]")
-            Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
 }
@@ -48,7 +47,6 @@ fn no_scheme() {
             [..]Executing oracle_test
             Result::Err("unsupported connection scheme: "no scheme"
             note: supported schemes are: [..]")
-            Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
 }

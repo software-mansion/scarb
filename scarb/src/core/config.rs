@@ -21,7 +21,7 @@ use crate::core::AppDirs;
 #[cfg(doc)]
 use crate::core::Workspace;
 use crate::flock::AdvisoryLock;
-use crate::internal::fsx;
+use scarb_fs_utils as fsx;
 
 use super::ManifestDependency;
 
