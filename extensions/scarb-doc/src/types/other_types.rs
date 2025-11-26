@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::attributes::find_groups_from_attributes;
-use crate::code_blocks::{DocCodeBlock, collect_code_blocks};
+use crate::code_blocks::{CodeBlock, collect_code_blocks};
 use crate::db::ScarbDocDatabase;
 use crate::docs_generation::markdown::context::IncludedItems;
 use crate::docs_generation::markdown::traits::WithPath;
@@ -22,6 +22,25 @@ use cairo_lang_syntax::node::ast;
 use serde::Serialize;
 use std::collections::HashMap;
 
+#[derive(Debug, Serialize, Clone)]
+pub struct ItemData<'db> {
+    #[serde(skip_serializing)]
+    pub id: DocumentableItemId<'db>,
+    #[serde(skip_serializing)]
+    pub parent_full_path: Option<String>,
+    pub name: String,
+    #[serde(serialize_with = "documentation_serializer")]
+    pub doc: Option<Vec<DocumentationCommentToken<'db>>>,
+    pub signature: Option<String>,
+    pub full_path: String,
+    #[serde(skip_serializing)]
+    pub code_blocks: Vec<CodeBlock>,
+    #[serde(skip_serializing)]
+    pub doc_location_links: Vec<DocLocationLink>,
+    pub group: Option<String>,
+}
+
+/// Mimics the [`TopLevelLanguageElementId::full_path`] but skips the macro modules.
 /// Mimics the [`cairo_lang_defs::ids::TopLevelLanguageElementId::full_path`] but skips the macro modules.
 /// If not omitted, the path would look like, for example,
 /// `hello::define_fn_outter!(func_macro_fn_outter);::expose! {\n\t\t\tpub fn func_macro_fn_outter() -> felt252 { \n\t\t\t\tprintln!(\"hello world\");\n\t\t\t\t10 }\n\t\t}::func_macro_fn_outter`

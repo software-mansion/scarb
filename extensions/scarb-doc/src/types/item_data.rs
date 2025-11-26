@@ -10,7 +10,7 @@ use cairo_lang_filesystem::ids::CrateId;
 use serde::Serialize;
 use serde::Serializer;
 use std::fmt::Debug;
-use crate::code_blocks::{collect_code_blocks, DocCodeBlock};
+use crate::code_blocks::{collect_code_blocks, CodeBlock};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ItemData<'db> {
@@ -24,7 +24,7 @@ pub struct ItemData<'db> {
     pub signature: Option<String>,
     pub full_path: String,
     #[serde(skip_serializing)]
-    pub code_blocks: Vec<DocCodeBlock>,
+    pub code_blocks: Vec<CodeBlock>,
     #[serde(skip_serializing)]
     pub doc_location_links: Vec<DocLocationLink>,
     pub group: Option<String>,

@@ -6926,11 +6926,13 @@ dependencies = [
  "cairo-lang-utils",
  "camino",
  "clap",
+ "create-output-dir",
  "expect-test",
  "indoc",
  "itertools 0.14.0",
  "mimalloc",
  "salsa",
+ "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
  "scarb-test-support",
@@ -6938,6 +6940,7 @@ dependencies = [
  "serde",
  "serde_json",
  "snapbox",
+ "tempfile",
  "thiserror 2.0.17",
 ]
 
