@@ -5,12 +5,9 @@ use camino::{Utf8Path, Utf8PathBuf};
 use std::fs;
 use std::io;
 
-/// The maximum number of attempts when looking for a free execution directory name.
 const MAX_ITERATION_COUNT: usize = 10000;
 
-/// File capturing the program output (stderr) produced by `scarb execute`.
 pub const EXECUTE_PROGRAM_OUTPUT_FILENAME: &str = "program_output.txt";
-/// File capturing the standard output produced by `scarb execute`.
 pub const EXECUTE_PRINT_OUTPUT_FILENAME: &str = "stdout_output.txt";
 
 /// Creates an incremental execution output dir inside the given path.
