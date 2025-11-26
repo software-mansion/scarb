@@ -1,15 +1,16 @@
-use crate::code_blocks::DocCodeBlockId;
+use crate::code_blocks::{CodeBlock, CodeBlockId};
 use crate::types::crate_type::Crate;
 use crate::types::module_type::Module;
 use crate::types::other_types::ItemData;
 use anyhow::{Context, Result, anyhow};
 use camino::{Utf8Path, Utf8PathBuf};
-use create_output_dir::{
-    EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME, create_output_dir,
-    incremental_create_execution_output_dir,
-};
+use create_output_dir::create_output_dir;
 use indoc::formatdoc;
 use scarb_build_metadata::CAIRO_VERSION;
+use scarb_execute_utils::{
+    EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME,
+    incremental_create_execution_output_dir,
+};
 use scarb_metadata::{PackageMetadata, ScarbCommand};
 use scarb_ui::Ui;
 use scarb_ui::components::Status;
@@ -17,19 +18,13 @@ use std::fs;
 use tempfile::tempdir;
 
 #[derive(Debug, Clone)]
-pub struct RunnableCodeBlock {
-    pub code_block_id: DocCodeBlockId,
-    pub code: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct CodeBlockExecutionResult {
-    pub code_block_id: DocCodeBlockId,
+pub struct ExecutionResult {
+    pub code_block_id: CodeBlockId,
     pub print_output: String,
     pub program_output: String,
 }
 
-impl CodeBlockExecutionResult {
+impl ExecutionResult {
     /// Formats the execution result as markdown with code blocks.
     pub fn format_as_markdown(&self) -> String {
         let mut output = String::new();
@@ -50,14 +45,14 @@ impl CodeBlockExecutionResult {
     }
 }
 
-/// A runner for executing runnable code runnable_code_blocks extracted from documentation.
-/// Uses `scarb execute` to run the runnable_code_blocks in isolated temporary workspaces.
-pub struct SnippetRunner<'a> {
+/// A runner for executing examples (code blocks) found in documentation.
+/// Uses `scarb execute` and runs code blocks in isolated temporary workspaces.
+pub struct DocTestRunner<'a> {
     package_metadata: &'a PackageMetadata,
     ui: Ui,
 }
 
-impl<'a> SnippetRunner<'a> {
+impl<'a> DocTestRunner<'a> {
     pub fn new(package_metadata: &'a PackageMetadata, ui: Ui) -> Self {
         Self {
             package_metadata,
@@ -65,32 +60,28 @@ impl<'a> SnippetRunner<'a> {
         }
     }
 
-    pub fn execute(&self, snippets: &[RunnableCodeBlock]) -> Result<Vec<CodeBlockExecutionResult>> {
+    pub fn execute(&self, code_blocks: &[CodeBlock]) -> Result<Vec<ExecutionResult>> {
         let mut results = Vec::new();
-        for (index, snippet) in snippets.iter().enumerate() {
-            let result = self.execute_single(snippet, index)?;
+        for (index, code_block) in code_blocks.iter().enumerate() {
+            let result = self.execute_single(code_block, index)?;
             results.push(result);
         }
         Ok(results)
     }
 
-    fn execute_single(
-        &self,
-        snippet: &RunnableCodeBlock,
-        index: usize,
-    ) -> Result<CodeBlockExecutionResult> {
+    fn execute_single(&self, code_block: &CodeBlock, index: usize) -> Result<ExecutionResult> {
         let temp_dir =
             tempdir().context("failed to create temporary workspace for doc snippet execution")?;
         let project_dir = Utf8PathBuf::from_path_buf(temp_dir.path().to_path_buf())
             .map_err(|path| anyhow!("path `{}` is not UTF-8 encoded", path.display()))?;
 
         self.write_manifest(&project_dir, index)?;
-        self.write_lib_cairo(&project_dir, snippet)?;
+        self.write_lib_cairo(&project_dir, code_block)?;
 
-        let (print_output, program_output) = self.run_execute(&project_dir, index, snippet)?;
+        let (print_output, program_output) = self.run_execute(&project_dir, index, code_block)?;
 
-        Ok(CodeBlockExecutionResult {
-            code_block_id: snippet.code_block_id.clone(),
+        Ok(ExecutionResult {
+            code_block_id: code_block.id.clone(),
             print_output,
             program_output,
         })
@@ -107,7 +98,7 @@ impl<'a> SnippetRunner<'a> {
             .parent()
             .context("package manifest path has no parent directory")?;
 
-        let name = self.snippet_name(index);
+        let name = self.generated_package_name(index);
         let dependency_path = format!("\"{}\"", package_dir);
         let manifest = formatdoc! {r#"
             [package]
@@ -124,17 +115,17 @@ impl<'a> SnippetRunner<'a> {
 
             [executable]
         "#};
-        fs::write(dir.join("Scarb.toml"), manifest).context("failed to write snippet manifest")?;
+        fs::write(dir.join("Scarb.toml"), manifest).context("failed to write manifest for example")?;
         Ok(())
     }
 
-    fn write_lib_cairo(&self, dir: &Utf8Path, snippet: &RunnableCodeBlock) -> Result<()> {
+    fn write_lib_cairo(&self, dir: &Utf8Path, code_block: &CodeBlock) -> Result<()> {
         let package_name = &self.package_metadata.name;
         let src_dir = dir.join("src");
-        fs::create_dir_all(&src_dir).context("failed to create snippet src directory")?;
+        fs::create_dir_all(&src_dir).context("failed to create src directory")?;
 
         let mut body = String::new();
-        for line in snippet.code.lines() {
+        for line in code_block.content.lines() {
             if line.trim().is_empty() {
                 body.push_str("    \n");
             } else {
@@ -148,12 +139,12 @@ impl<'a> SnippetRunner<'a> {
             use {package_name}::*;
 
             #[executable]
-            fn snippet_main() {{
+            fn main() {{
             {body}
             }}
         "# };
         fs::write(src_dir.join("lib.cairo"), lib_cairo)
-            .context("failed to write snippet lib.cairo")?;
+            .context("failed to write lib.cairo")?;
         Ok(())
     }
 
@@ -161,24 +152,22 @@ impl<'a> SnippetRunner<'a> {
         &self,
         project_dir: &Utf8Path,
         index: usize,
-        snippet: &RunnableCodeBlock,
+        code_block: &CodeBlock,
     ) -> Result<(String, String)> {
         let target_dir = project_dir.join("target");
-        let output_dir = target_dir.join("execute").join(self.snippet_name(index));
+        let output_dir = target_dir
+            .join("execute")
+            .join(self.generated_package_name(index));
         create_output_dir(output_dir.as_std_path())?;
         let (output_dir, execution_id) = incremental_create_execution_output_dir(&output_dir)?;
 
         self.ui.print(Status::new(
             "Executing",
-            format!(
-                "snippet #{} from `{}`",
-                index, snippet.code_block_id.item_full_path
-            )
-            .as_str(),
+            format!("example #{} from `{}`", index, code_block.id.item_full_path).as_str(),
         ));
         ScarbCommand::new()
             .arg("execute")
-            // .args(["--executable-function", "snippet_main"])
+            // .args(["--executable-function", "main"])
             .arg("--save-program-output")
             .arg("--save-print-output")
             .current_dir(project_dir)
@@ -212,13 +201,14 @@ impl<'a> SnippetRunner<'a> {
         ))
     }
 
-    fn snippet_name(&self, index: usize) -> String {
+    fn generated_package_name(&self, index: usize) -> String {
         let package_name = &self.package_metadata.name;
-        format!("{package_name}_snippet_{index}")
+        format!("{package_name}_example_{index}")
     }
 }
 
-pub fn collect_runnable_code_blocks(crate_: &Crate<'_>) -> Vec<RunnableCodeBlock> {
+/// Collects all runnable `DocCodeBlock`s from the crate.
+pub fn collect_runnable_code_blocks(crate_: &Crate<'_>) -> Vec<CodeBlock> {
     let mut runnable_code_blocks = Vec::new();
     collect_from_module(&crate_.root_module, &mut runnable_code_blocks);
     // TODO: should these be ignored?
@@ -228,7 +218,7 @@ pub fn collect_runnable_code_blocks(crate_: &Crate<'_>) -> Vec<RunnableCodeBlock
     runnable_code_blocks
 }
 
-fn collect_from_module(module: &Module<'_>, runnable_code_blocks: &mut Vec<RunnableCodeBlock>) {
+fn collect_from_module(module: &Module<'_>, runnable_code_blocks: &mut Vec<CodeBlock>) {
     for item_data in module.get_all_item_ids().values() {
         collect_from_item_data(item_data, runnable_code_blocks);
     }
@@ -237,16 +227,10 @@ fn collect_from_module(module: &Module<'_>, runnable_code_blocks: &mut Vec<Runna
     }
 }
 
-fn collect_from_item_data(
-    item_data: &ItemData<'_>,
-    runnable_code_blocks: &mut Vec<RunnableCodeBlock>,
-) {
+fn collect_from_item_data(item_data: &ItemData<'_>, runnable_code_blocks: &mut Vec<CodeBlock>) {
     for block in &item_data.code_blocks {
-        if block.is_runnable() {
-            runnable_code_blocks.push(RunnableCodeBlock {
-                code: block.code.to_string(),
-                code_block_id: block.id.clone(),
-            });
+        if block.should_run() {
+            runnable_code_blocks.push(block.clone());
         }
     }
 }

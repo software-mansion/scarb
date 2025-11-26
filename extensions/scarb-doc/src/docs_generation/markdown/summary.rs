@@ -13,7 +13,7 @@ use crate::docs_generation::markdown::summary::files::{
 };
 use crate::docs_generation::markdown::traits::{MarkdownDocItem, TopLevelMarkdownDocItem};
 use crate::docs_generation::markdown::{BASE_HEADER_LEVEL, SummaryIndexMap};
-use crate::runner::CodeBlockExecutionResult;
+use crate::runner::ExecutionResult;
 use crate::types::crate_type::Crate;
 use anyhow::Result;
 use group_files::generate_global_groups_summary_files;
@@ -21,7 +21,7 @@ use group_files::generate_global_groups_summary_files;
 pub fn generate_summary_file_content(
     crate_: &Crate,
     output_format: OutputFilesExtension,
-    execution_results: Option<Vec<CodeBlockExecutionResult>>,
+    execution_results: Option<Vec<ExecutionResult>>,
 ) -> Result<(SummaryIndexMap, Vec<(String, String)>)> {
     let mut summary_index_map = SummaryIndexMap::new();
     let context = MarkdownGenerationContext::from_crate(crate_, output_format);

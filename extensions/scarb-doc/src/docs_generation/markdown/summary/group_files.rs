@@ -8,7 +8,7 @@ use crate::docs_generation::markdown::summary::files::{
 use crate::docs_generation::markdown::traits::generate_markdown_table_summary_for_top_level_subitems;
 
 use crate::docs_generation::common::SummaryIndexMap;
-use crate::runner::CodeBlockExecutionResult;
+use crate::runner::ExecutionResult;
 use crate::types::groups::Group;
 use itertools::Itertools;
 
@@ -29,7 +29,7 @@ pub fn generate_global_groups_summary_files(
     groups: &[Group],
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
-    execution_results: Option<Vec<CodeBlockExecutionResult>>,
+    execution_results: Option<Vec<ExecutionResult>>,
 ) -> anyhow::Result<Vec<(String, String)>> {
     let mut doc_files: Vec<(String, String)> = Vec::new();
 

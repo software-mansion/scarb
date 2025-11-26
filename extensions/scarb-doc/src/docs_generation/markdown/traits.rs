@@ -4,7 +4,7 @@ use crate::docs_generation::markdown::{
     SHORT_DOCUMENTATION_LEN,
 };
 use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem, common};
-use crate::runner::CodeBlockExecutionResult;
+use crate::runner::ExecutionResult;
 use crate::types::groups::Group;
 use crate::types::item_data::{ItemData, SubItemData};
 use crate::types::module_type::{Module, ModulePubUses};
@@ -83,7 +83,7 @@ macro_rules! impl_markdown_doc_item {
                 header_level: usize,
                 item_suffix: Option<usize>,
                 summary_index_map: &SummaryIndexMap,
-                execution_results: Option<Vec<CodeBlockExecutionResult>>,
+                execution_results: Option<Vec<ExecutionResult>>,
             ) -> Result<String> {
                 let mut markdown = String::new();
 
@@ -137,7 +137,7 @@ pub trait MarkdownDocItem: DocItem {
         header_level: usize,
         item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
-        execution_results: Option<Vec<CodeBlockExecutionResult>>,
+        execution_results: Option<Vec<ExecutionResult>>,
     ) -> Result<String>;
 
     fn get_short_documentation(&self, context: &MarkdownGenerationContext) -> String {
@@ -186,7 +186,7 @@ pub trait MarkdownDocItem: DocItem {
     fn get_documentation(
         &self,
         context: &MarkdownGenerationContext,
-        execution_results: Option<Vec<CodeBlockExecutionResult>>,
+        execution_results: Option<Vec<ExecutionResult>>,
     ) -> Option<String> {
         self.doc().as_ref().map(|doc_tokens| {
             // TODO: filter out execution results that do not belong to this item
@@ -244,7 +244,7 @@ where
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
-        execution_results: Option<Vec<CodeBlockExecutionResult>>,
+        execution_results: Option<Vec<ExecutionResult>>,
     ) -> Result<String> {
         generate_markdown_from_item_data(
             self,
@@ -264,7 +264,7 @@ impl<'db> MarkdownDocItem for Enum<'db> {
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
-        execution_results: Option<Vec<CodeBlockExecutionResult>>,
+        execution_results: Option<Vec<ExecutionResult>>,
     ) -> Result<String> {
         let mut markdown = generate_markdown_from_item_data(
             self,
@@ -295,7 +295,7 @@ impl<'db> MarkdownDocItem for Impl<'db> {
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
-        execution_results: Option<Vec<CodeBlockExecutionResult>>,
+        execution_results: Option<Vec<ExecutionResult>>,
     ) -> Result<String> {
         let mut markdown = generate_markdown_from_item_data(
             self,
@@ -429,7 +429,7 @@ impl<'db> MarkdownDocItem for Module<'db> {
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
-        execution_results: Option<Vec<CodeBlockExecutionResult>>,
+        execution_results: Option<Vec<ExecutionResult>>,
     ) -> Result<String> {
         let mut markdown = generate_markdown_from_item_data(
             self,
@@ -532,7 +532,7 @@ impl<'db> MarkdownDocItem for Struct<'db> {
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
-        execution_results: Option<Vec<CodeBlockExecutionResult>>,
+        execution_results: Option<Vec<ExecutionResult>>,
     ) -> Result<String> {
         let mut markdown = generate_markdown_from_item_data(
             self,
@@ -564,7 +564,7 @@ impl<'db> MarkdownDocItem for Trait<'db> {
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
-        execution_results: Option<Vec<CodeBlockExecutionResult>>,
+        execution_results: Option<Vec<ExecutionResult>>,
     ) -> Result<String> {
         let mut markdown = generate_markdown_from_item_data(
             self,
@@ -840,7 +840,7 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
     header_level: usize,
     suffix_calculator: &mut ItemSuffixCalculator,
     summary_index_map: &SummaryIndexMap,
-    execution_results: Option<Vec<CodeBlockExecutionResult>>,
+    execution_results: Option<Vec<ExecutionResult>>,
 ) -> Result<String> {
     let mut markdown = String::new();
 
@@ -874,7 +874,7 @@ fn generate_markdown_from_item_data(
     header_level: usize,
     item_suffix: Option<usize>,
     summary_index_map: &SummaryIndexMap,
-    execution_results: Option<Vec<CodeBlockExecutionResult>>,
+    execution_results: Option<Vec<ExecutionResult>>,
 ) -> Result<String> {
     let mut markdown = String::new();
 

@@ -2,12 +2,12 @@ use cairo_lang_doc::parser::DocumentationCommentToken;
 use std::str::from_utf8;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct DocCodeBlockId {
+pub struct CodeBlockId {
     pub item_full_path: String,
     pub close_token_idx: usize,
 }
 
-impl DocCodeBlockId {
+impl CodeBlockId {
     pub fn new(item_full_path: String, close_token_idx: usize) -> Self {
         Self {
             item_full_path,
@@ -16,45 +16,75 @@ impl DocCodeBlockId {
     }
 }
 
-/// Represents code block extracted from doc comments.
-#[derive(Debug, Clone, PartialEq)]
-pub struct DocCodeBlock {
-    pub id: DocCodeBlockId,
-    pub code: String,
-    pub language: String,
-    pub attributes: Vec<String>,
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum CodeBlockAttribute {
+    Cairo,
+    Runnable,
+    Ignore,
+    NoRun,
+    Other(String),
 }
 
-impl DocCodeBlock {
-    pub fn new(id: DocCodeBlockId, code: String, info_string: &String) -> Self {
-        let (language, attributes) = Self::parse_info_string(info_string);
+impl From<&str> for CodeBlockAttribute {
+    fn from(string: &str) -> Self {
+        match string.to_lowercase().as_str() {
+            "cairo" => CodeBlockAttribute::Cairo,
+            "runnable" => CodeBlockAttribute::Runnable,
+            "ignore" => CodeBlockAttribute::Ignore,
+            "no_run" | "no-run" => CodeBlockAttribute::NoRun,
+            _ => CodeBlockAttribute::Other(string.to_string()),
+        }
+    }
+}
+
+/// Represents code block extracted from doc comments.
+#[derive(Debug, Clone, PartialEq)]
+pub struct CodeBlock {
+    pub id: CodeBlockId,
+    pub content: String,
+    pub attributes: Vec<CodeBlockAttribute>,
+}
+
+impl CodeBlock {
+    pub fn new(id: CodeBlockId, content: String, info_string: &String) -> Self {
+        let attributes = Self::parse_attributes(info_string);
         Self {
             id,
-            code,
-            language,
+            content,
             attributes,
         }
     }
 
-    pub fn is_runnable(&self) -> bool {
-        self.language == "cairo" && self.attributes.iter().any(|attr| attr == "runnable")
+    // TODO: default to Cairo unless specified otherwise?
+    fn is_cairo(&self) -> bool {
+        if self.attributes.contains(&CodeBlockAttribute::Cairo) {
+            return true;
+        }
+        // Assume unknown attributes imply non-Cairo code.
+        // !self.attributes.iter().any(|attr| matches!(attr, CodeBlockAttribute::Other(_)))
+        false
     }
 
-    /// Parses info string into language and attributes. The results are lowercased.
-    fn parse_info_string(info_string: &str) -> (String, Vec<String>) {
-        let parts: Vec<_> = info_string
-            .trim()
-            .split(',')
-            .map(|s| s.trim().to_ascii_lowercase())
-            .filter(|s| !s.is_empty())
-            .collect();
+    // TODO: consider runnable by default unless specified otherwise?
+    pub fn should_run(&self) -> bool {
+        self.is_cairo() && self.attributes.contains(&CodeBlockAttribute::Runnable)
+        //     && !self.attributes.contains(&CodeBlockAttribute::Ignore)
+        //     && !self.attributes.contains(&CodeBlockAttribute::NoRun)
+    }
 
-        if parts.is_empty() {
-            return (String::new(), Vec::new());
-        }
-        let language = parts[0].to_string();
-        let attributes = parts[1..].iter().map(|s| s.to_string()).collect();
-        (language, attributes)
+    // TODO: implement building examples without running them
+    #[allow(unused)]
+    pub fn should_build(&self) -> bool {
+        self.is_cairo() && !self.attributes.contains(&CodeBlockAttribute::Ignore)
+    }
+
+    fn parse_attributes(info_string: &str) -> Vec<CodeBlockAttribute> {
+        info_string
+            .split(',')
+            .map(|attr| attr.trim())
+            .filter(|attr| !attr.is_empty())
+            .map(Into::into)
+            .collect()
     }
 }
 
@@ -62,7 +92,7 @@ impl DocCodeBlock {
 pub fn collect_code_blocks(
     doc_tokens: &Option<Vec<DocumentationCommentToken>>,
     full_path: &str,
-) -> Vec<DocCodeBlock> {
+) -> Vec<CodeBlock> {
     let Some(tokens) = doc_tokens else {
         return Vec::new();
     };
@@ -91,14 +121,12 @@ pub fn collect_code_blocks(
             Some(ref opening) => {
                 if is_matching_closing_fence(content, opening.char, opening.len) {
                     let end_idx = idx;
-                    let body = get_block_body(tokens, opening.token_idx + 1, end_idx)
-                        .trim()
-                        .to_string();
+                    let body = get_block_body(tokens, opening.token_idx + 1, end_idx);
 
                     // Skip empty code blocks.
-                    let id = DocCodeBlockId::new(full_path.to_string(), idx);
+                    let id = CodeBlockId::new(full_path.to_string(), end_idx);
                     if !body.is_empty() {
-                        code_blocks.push(DocCodeBlock::new(
+                        code_blocks.push(CodeBlock::new(
                             id,
                             body.to_string(),
                             &opening.info_string,
@@ -158,7 +186,8 @@ fn is_matching_closing_fence(content: &str, opening_char: u8, opening_len: usize
             .all(|&b| matches!(b, b' ' | b'\t' | b'\r' | b'\n'))
 }
 
-/// Copied from https://github.com/pulldown-cmark/pulldown-cmark/blob/a574ea8a5e6fda7bc26542a612130a2b458a68a7/pulldown-cmark/src/scanners.rs#L744
+/// Copied from `pulldown-cmark`:
+/// https://github.com/pulldown-cmark/pulldown-cmark/blob/a574ea8a5e6fda7bc26542a612130a2b458a68a7/pulldown-cmark/src/scanners.rs#L744
 fn scan_code_fence(data: &[u8]) -> Option<(usize, u8)> {
     let c = *data.first()?;
     if !(c == b'`' || c == b'~') {
