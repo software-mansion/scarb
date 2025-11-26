@@ -177,6 +177,5 @@ fn components_in_the_same_unit_can_depend_on_conflicting_plugins() {
             [..]Executing hello
             Program output:
             112
-            Saving output to: target/execute/hello/execution1
         "#});
 }

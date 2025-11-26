@@ -18,7 +18,7 @@ use crate::core::registry::client::{
 use crate::core::registry::index::{IndexRecord, IndexRecords};
 use crate::core::{Checksum, Config, ManifestDependency, PackageId, SourceId};
 use crate::flock::{AdvisoryLockGuard, Filesystem, LockedFile};
-use crate::internal::fsx;
+use scarb_fs_utils as fsx;
 
 // FIXME(mkaput): Avoid creating database if inner client does not trigger cache writes.
 // FIXME(mkaput): We probably have to call db.compact() after all write txs we run in Scarb run.

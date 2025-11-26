@@ -8,8 +8,8 @@ use tracing::{debug, trace};
 
 use crate::core::{Config, PackageId, SourceId};
 use crate::flock::{Filesystem, LockedFile, OK_FILE, protected_run_if_not_ok};
-use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::restricted_names::is_windows_restricted_path;
+use scarb_fs_utils::PathUtf8Ext;
 
 pub struct PackageSourceStore<'a> {
     fs: Filesystem,

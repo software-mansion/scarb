@@ -8,7 +8,7 @@ use camino::Utf8PathBuf;
 use directories::ProjectDirs;
 
 use crate::flock::Filesystem;
-use crate::internal::fsx::PathUtf8Ext;
+use scarb_fs_utils::PathUtf8Ext;
 
 #[derive(Debug)]
 pub struct AppDirs {

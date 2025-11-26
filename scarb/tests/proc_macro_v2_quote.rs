@@ -55,7 +55,6 @@ fn quote_macro() {
         [..]Executing hello
         Program output:
         5
-        Saving output to: target/execute/hello/execution1
         "#})
         .success();
 }
@@ -111,7 +110,6 @@ fn quote_macro_with_token_tree() {
         [..]Executing hello
         Program output:
         5
-        Saving output to: target/execute/hello/execution1
         "#})
         .success();
 }
@@ -167,8 +165,7 @@ fn quote_macro_with_token_stream() {
             [..]Executing hello
             Program output:
             5
-            Saving output to: target/execute/hello/execution1
-        "#})
+            "#})
         .success();
 }
 
@@ -865,7 +862,6 @@ fn quote_format_macro() {
         [..]Executing hello
         Program output:
         42
-        Saving output to: target/execute/hello/execution1
         "#})
         .success();
 }
@@ -928,7 +924,6 @@ fn quote_format_macro_with_code_block() {
         [..]Executing hello
         Program output:
         42
-        Saving output to: target/execute/hello/execution1
         "#})
         .success();
 }
@@ -982,7 +977,6 @@ fn quote_format_macro_no_args() {
         [..]Executing hello
         Program output:
         42
-        Saving output to: target/execute/hello/execution1
         "#})
         .success();
 }
@@ -1040,7 +1034,6 @@ fn quote_format_macro_multiple_args() {
         [..]Executing hello
         Program output:
         63
-        Saving output to: target/execute/hello/execution1
         "#})
         .success();
 }
@@ -1155,7 +1148,6 @@ fn quote_format_macro_with_indexed_args() {
         [..]Executing hello
         Program output:
         99
-        Saving output to: target/execute/hello/execution1
         "#})
         .success();
 }

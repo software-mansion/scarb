@@ -8,7 +8,6 @@ use crate::compiler::{
 };
 use crate::core::{Config, ManifestCompilerConfig, Workspace};
 use crate::flock::{Filesystem, LockedFile};
-use crate::internal::fsx;
 use crate::version::VersionInfo;
 use anyhow::{Context, Result};
 use cairo_lang_filesystem::cfg::CfgSet;
@@ -16,6 +15,7 @@ use cairo_lang_filesystem::db::Edition;
 use camino::Utf8PathBuf;
 use futures::{StreamExt, stream};
 use itertools::Itertools;
+use scarb_fs_utils as fsx;
 use scarb_stable_hash::{StableHasher, u64_hash};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
@@ -245,7 +245,7 @@ impl PluginFingerprint {
             tokio::spawn(async move {
                 let span = trace_span!("plugin_local_checksum");
                 let _guard = span.enter();
-                let content = fsx::read(&path)
+                let content = scarb_fs_utils::read(&path)
                     .with_context(|| format!("failed to read shared library at `{path}`",))?;
 
                 anyhow::Ok(vec![LocalFingerprint {

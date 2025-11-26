@@ -1,11 +1,19 @@
 use assert_fs::TempDir;
 use assert_fs::fixture::{FileWriteStr, PathChild};
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
+use test_case::test_case;
 
-#[test]
-fn can_take_big_number_as_arg() {
+#[test_case(
+    "standalone",
+    "1129815197211541481934112806673325772687763881719835256646064516195041515616"
+)]
+#[test_case(
+    "bootloader",
+    "1\n3\n-1272769738511508193392446484420387256363817420616635924344207712676117344847\n1129815197211541481934112806673325772687763881719835256646064516195041515616"
+)]
+fn can_take_big_number_as_arg(target: &str, output: &str) {
     let t = TempDir::new().unwrap();
 
     ProjectBuilder::start()
@@ -29,23 +37,30 @@ fn can_take_big_number_as_arg() {
     Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
+        .arg(format!("--target={target}"))
         .arg("--arguments")
         .arg(r#"1,1129815197211541481934112806673325772687763881719835256646064516195041515616"#)
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(formatdoc! {r#"
             [..]Compiling hello v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello
             Program output:
-            1129815197211541481934112806673325772687763881719835256646064516195041515616
-            Saving output to: target/execute/hello/execution1
+            {output}
         "#});
 }
 
-#[test]
-fn can_read_arguments_from_file() {
+#[test_case(
+    "standalone",
+    "1129815197211541481934112806673325772687763881719835256646064516195041515616"
+)]
+#[test_case(
+    "bootloader",
+    "1\n3\n-1272769738511508193392446484420387256363817420616635924344207712676117344847\n1129815197211541481934112806673325772687763881719835256646064516195041515616"
+)]
+fn can_read_arguments_from_file(target: &str, output: &str) {
     let t = TempDir::new().unwrap();
 
     ProjectBuilder::start()
@@ -53,7 +68,7 @@ fn can_read_arguments_from_file() {
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [executable]
-            
+
             [cairo]
             enable-gas = false
         "#})
@@ -73,16 +88,16 @@ fn can_read_arguments_from_file() {
     Scarb::quick_command()
         .arg("execute")
         .arg("--print-program-output")
+        .arg(format!("--target={target}"))
         .args(["--arguments-file", "args.txt"])
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(formatdoc! {r#"
             [..]Compiling hello v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello
             Program output:
-            1129815197211541481934112806673325772687763881719835256646064516195041515616
-            Saving output to: target/execute/hello/execution1
+            {output}
         "#});
 }

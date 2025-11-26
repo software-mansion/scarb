@@ -10,7 +10,7 @@ use tracing::{Span, debug, debug_span, warn};
 use scarb_ui::components::{Spinner, Status};
 
 use crate::core::Config;
-pub use crate::internal::fsx::is_executable;
+pub use scarb_fs_utils::is_executable;
 
 /// Replaces the current process with the target process.
 ///

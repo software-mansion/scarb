@@ -95,8 +95,7 @@ fn can_implement_derive_macro() {
             [..]Executing hello
             Program output:
             32
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -207,8 +206,7 @@ fn can_use_both_derive_and_attr() {
             [..]Executing hello
             Program output:
             32
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -606,8 +604,7 @@ fn can_use_two_derive_macros() {
             [..]Executing hello
             Program output:
             32
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
