@@ -4,9 +4,10 @@
 use anyhow::{Context, Result, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
-use create_output_dir::{create_output_dir, incremental_create_execution_output_dir};
+use create_output_dir::create_output_dir;
 use indoc::{formatdoc, indoc};
 use mimalloc::MiMalloc;
+use scarb_execute_utils::incremental_create_execution_output_dir;
 use scarb_extensions_cli::execute::unchecked::ToArgs;
 use scarb_extensions_cli::prove::Args;
 use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
