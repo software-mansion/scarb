@@ -50,8 +50,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure::public_field"
                           }
                         }
                       ],
@@ -72,8 +71,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -129,8 +127,7 @@
                         "name": "public_field",
                         "doc": "Public struct field",
                         "signature": "pub public_field: felt252",
-                        "full_path": "hello_world::PublicParent::PublicParentStructure::public_field",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PublicParentStructure::public_field"
                       }
                     }
                   ],
@@ -151,8 +148,7 @@
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
                         "signature": "PUBLIC_VARIANT",
-                        "full_path": "hello_world::PublicParent::PublicParentEnum::PUBLIC_VARIANT",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
                     }
                   ],
@@ -208,8 +204,7 @@
                     "name": "public_field",
                     "doc": "Public struct field",
                     "signature": "pub public_field: felt252",
-                    "full_path": "hello_world::PublicStructure::public_field",
-                    "group": null
+                    "full_path": "hello_world::PublicStructure::public_field"
                   }
                 }
               ],
@@ -230,8 +225,7 @@
                     "name": "PUBLIC_VARIANT",
                     "doc": "Public enum variant",
                     "signature": "PUBLIC_VARIANT",
-                    "full_path": "hello_world::PublicEnum::PUBLIC_VARIANT",
-                    "group": null
+                    "full_path": "hello_world::PublicEnum::PUBLIC_VARIANT"
                   }
                 }
               ],

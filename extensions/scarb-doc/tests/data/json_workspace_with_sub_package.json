@@ -97,8 +97,7 @@
                     "name": "radius",
                     "doc": "Radius of the circle",
                     "signature": "radius: u32",
-                    "full_path": "hello_world::Circle::radius",
-                    "group": null
+                    "full_path": "hello_world::Circle::radius"
                   }
                 }
               ],
@@ -119,8 +118,7 @@
                     "name": "Red",
                     "doc": "Red color",
                     "signature": "Red",
-                    "full_path": "hello_world::Color::Red",
-                    "group": null
+                    "full_path": "hello_world::Color::Red"
                   }
                 },
                 {
@@ -128,8 +126,7 @@
                     "name": "Green",
                     "doc": "Green color",
                     "signature": "Green",
-                    "full_path": "hello_world::Color::Green",
-                    "group": null
+                    "full_path": "hello_world::Color::Green"
                   }
                 },
                 {
@@ -137,8 +134,7 @@
                     "name": "Blue",
                     "doc": "Blue color",
                     "signature": "Blue",
-                    "full_path": "hello_world::Color::Blue",
-                    "group": null
+                    "full_path": "hello_world::Color::Blue"
                   }
                 }
               ],

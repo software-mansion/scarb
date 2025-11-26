@@ -31,8 +31,7 @@
                         "name": "works",
                         "doc": "for members as well",
                         "signature": "pub works: felt252",
-                        "full_path": "hello_world::regina::VisibleStruct::works",
-                        "group": null
+                        "full_path": "hello_world::regina::VisibleStruct::works"
                       }
                     }
                   ],
@@ -89,8 +88,7 @@
                     "name": "work",
                     "doc": null,
                     "signature": "pub work: felt252",
-                    "full_path": "hello_world::OuterStruct::work",
-                    "group": null
+                    "full_path": "hello_world::OuterStruct::work"
                   }
                 }
               ],

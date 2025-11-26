@@ -115,13 +115,7 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
 
         let included_items = crate_.root_module.get_all_item_ids();
         Self {
-            included_items: included_items
-                .into_iter()
-                .map(|(id, item)| {
-                    let item: &dyn WithPath = item;
-                    (id, item)
-                })
-                .collect(),
+            included_items,
             formatting,
             files_extension: format.get_string(),
         }

@@ -5,11 +5,12 @@ use crate::docs_generation::markdown::{
 };
 use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem};
 use crate::types::groups::Group;
+use crate::types::item_data::{ItemData, SubItemData};
 use crate::types::module_type::{Module, ModulePubUses};
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
-    ImplFunction, ImplType, ItemData, MacroDeclaration, Member, Struct, Trait, TraitConstant,
-    TraitFunction, TraitType, TypeAlias, Variant,
+    ImplFunction, ImplType, MacroDeclaration, Member, Struct, Trait, TraitConstant, TraitFunction,
+    TraitType, TypeAlias, Variant,
 };
 use anyhow::Result;
 use cairo_lang_doc::parser::{CommentLinkToken, DocumentationCommentToken};
@@ -893,5 +894,18 @@ impl<T: WithItemData> WithPath for T {
 impl<'db> WithItemData for ItemData<'db> {
     fn item_data(&self) -> &ItemData<'_> {
         self
+    }
+}
+
+// Allow SubItemData to be used wherever a WithPath is expected without converting into ItemData.
+impl<'db> WithPath for SubItemData<'db> {
+    fn name(&self) -> &str {
+        self.name.as_str()
+    }
+    fn full_path(&self) -> String {
+        self.full_path.clone()
+    }
+    fn parent_full_path(&self) -> Option<String> {
+        self.parent_full_path.clone()
     }
 }

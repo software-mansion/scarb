@@ -144,8 +144,7 @@
                         "name": "Var1",
                         "doc": null,
                         "signature": "Var1",
-                        "full_path": "sub_package::TestEnum::Var1",
-                        "group": null
+                        "full_path": "sub_package::TestEnum::Var1"
                       }
                     }
                   ],
@@ -411,8 +410,7 @@
                           "name": "Var1",
                           "doc": null,
                           "signature": "Var1",
-                          "full_path": "sub_package::TestEnum::Var1",
-                          "group": null
+                          "full_path": "sub_package::TestEnum::Var1"
                         }
                       }
                     ],

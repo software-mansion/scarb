@@ -1,21 +1,17 @@
-use anyhow::Result;
-
-use crate::attributes::find_groups_from_attributes;
 use crate::db::ScarbDocDatabase;
-use crate::location_links::DocLocationLink;
+use crate::docs_generation::markdown::context::IncludedItems;
+use crate::docs_generation::markdown::traits::WithPath;
+use crate::types::item_data::{ItemData, SubItemData};
 use crate::types::module_type::is_doc_hidden_attr;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LanguageElementId,
     LookupItemId, MacroDeclarationId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId,
-    NamedLanguageElementId, StructId, TopLevelLanguageElementId, TraitConstantId, TraitFunctionId,
-    TraitId, TraitItemId, TraitTypeId, VariantId,
+    NamedLanguageElementId, StructId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId,
+    TraitTypeId, VariantId,
 };
 use cairo_lang_diagnostics::Maybe;
-use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
-use cairo_lang_doc::parser::DocumentationCommentToken;
-use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::items::enm::EnumSemantic;
 use cairo_lang_semantic::items::imp::ImplSemantic;
 use cairo_lang_semantic::items::structure::StructSemantic;
@@ -23,27 +19,9 @@ use cairo_lang_semantic::items::trt::TraitSemantic;
 use cairo_lang_semantic::items::visibility::Visibility;
 use cairo_lang_syntax::node::ast;
 use serde::Serialize;
-use serde::Serializer;
 use std::collections::HashMap;
-use std::fmt::Debug;
 
-#[derive(Debug, Serialize, Clone)]
-pub struct ItemData<'db> {
-    #[serde(skip_serializing)]
-    pub id: DocumentableItemId<'db>,
-    #[serde(skip_serializing)]
-    pub parent_full_path: Option<String>,
-    pub name: String,
-    #[serde(serialize_with = "documentation_serializer")]
-    pub doc: Option<Vec<DocumentationCommentToken<'db>>>,
-    pub signature: Option<String>,
-    pub full_path: String,
-    #[serde(skip_serializing)]
-    pub doc_location_links: Vec<DocLocationLink>,
-    pub group: Option<String>,
-}
-
-/// Mimics the [`TopLevelLanguageElementId::full_path`] but skips the macro modules.
+/// Mimics the [`cairo_lang_defs::ids::TopLevelLanguageElementId::full_path`] but skips the macro modules.
 /// If not omitted, the path would look like, for example,
 /// `hello::define_fn_outter!(func_macro_fn_outter);::expose! {\n\t\t\tpub fn func_macro_fn_outter() -> felt252 { \n\t\t\t\tprintln!(\"hello world\");\n\t\t\t\t10 }\n\t\t}::func_macro_fn_outter`
 pub fn doc_full_path(module_id: &ModuleId, db: &ScarbDocDatabase) -> String {
@@ -57,87 +35,6 @@ pub fn doc_full_path(module_id: &ModuleId, db: &ScarbDocDatabase) -> String {
             )
         }
         ModuleId::MacroCall { id, .. } => doc_full_path(&id.parent_module(db), db),
-    }
-}
-
-impl<'db> ItemData<'db> {
-    pub fn new(
-        db: &'db ScarbDocDatabase,
-        id: impl TopLevelLanguageElementId<'db>,
-        documentable_item_id: DocumentableItemId<'db>,
-        parent_full_path: String,
-    ) -> Self {
-        let (signature, doc_location_links) =
-            db.get_item_signature_with_links(documentable_item_id);
-        let doc_location_links = doc_location_links
-            .iter()
-            .map(|link| DocLocationLink::new(link.start, link.end, link.item_id, db))
-            .collect::<Vec<_>>();
-        let group = find_groups_from_attributes(db, &id);
-        Self {
-            id: documentable_item_id,
-            name: id.name(db).to_string(db),
-            doc: db.get_item_documentation_as_tokens(documentable_item_id),
-            signature,
-            full_path: format!("{}::{}", parent_full_path, id.name(db).long(db)),
-            parent_full_path: Some(parent_full_path),
-            doc_location_links,
-            group,
-        }
-    }
-
-    pub fn new_without_signature(
-        db: &'db ScarbDocDatabase,
-        id: impl TopLevelLanguageElementId<'db>,
-        documentable_item_id: DocumentableItemId<'db>,
-    ) -> Self {
-        Self {
-            id: documentable_item_id,
-            name: id.name(db).to_string(db),
-            doc: db.get_item_documentation_as_tokens(documentable_item_id),
-            signature: None,
-            full_path: format!(
-                "{}::{}",
-                doc_full_path(&id.parent_module(db), db),
-                id.name(db).long(db)
-            ),
-            parent_full_path: Some(doc_full_path(&id.parent_module(db), db)),
-            doc_location_links: vec![],
-            group: find_groups_from_attributes(db, &id),
-        }
-    }
-
-    pub fn new_crate(db: &'db ScarbDocDatabase, id: CrateId<'db>) -> Self {
-        let documentable_id = DocumentableItemId::Crate(id);
-        Self {
-            id: documentable_id,
-            name: id.long(db).name().to_string(db),
-            doc: db.get_item_documentation_as_tokens(documentable_id),
-            signature: None,
-            full_path: ModuleId::CrateRoot(id).full_path(db),
-            parent_full_path: None,
-            doc_location_links: vec![],
-            group: None,
-        }
-    }
-}
-
-fn documentation_serializer<S>(
-    docs: &Option<Vec<DocumentationCommentToken>>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    match docs {
-        Some(doc_vec) => {
-            let combined = doc_vec
-                .iter()
-                .map(|dct| dct.to_string())
-                .collect::<Vec<String>>();
-            serializer.serialize_str(&combined.join(""))
-        }
-        None => serializer.serialize_none(),
     }
 }
 
@@ -243,10 +140,10 @@ impl<'db> Struct<'db> {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
+    pub fn get_all_item_ids<'a>(&'a self) -> IncludedItems<'a, 'db> {
         self.members
             .iter()
-            .map(|item| (item.item_data.id, &item.item_data))
+            .map(|item| (item.item_data.id, &item.item_data as &dyn WithPath))
             .collect()
     }
 }
@@ -258,7 +155,7 @@ pub struct Member<'db> {
     #[serde(skip)]
     pub node: ast::MemberPtr<'db>,
 
-    pub item_data: ItemData<'db>,
+    pub item_data: SubItemData<'db>,
 }
 
 impl<'db> Member<'db> {
@@ -273,7 +170,7 @@ impl<'db> Member<'db> {
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Member(id), parent_path),
+            item_data: ItemData::new(db, id, DocumentableItemId::Member(id), parent_path).into(),
         }
     }
 }
@@ -314,10 +211,10 @@ impl<'db> Enum<'db> {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
+    pub fn get_all_item_ids<'a>(&'a self) -> IncludedItems<'a, 'db> {
         self.variants
             .iter()
-            .map(|item| (item.item_data.id, &item.item_data))
+            .map(|item| (item.item_data.id, &item.item_data as &dyn WithPath))
             .collect()
     }
 }
@@ -329,7 +226,7 @@ pub struct Variant<'db> {
     #[serde(skip)]
     pub node: ast::VariantPtr<'db>,
 
-    pub item_data: ItemData<'db>,
+    pub item_data: SubItemData<'db>,
 }
 
 impl<'db> Variant<'db> {
@@ -343,7 +240,7 @@ impl<'db> Variant<'db> {
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Variant(id), parent_path),
+            item_data: ItemData::new(db, id, DocumentableItemId::Variant(id), parent_path).into(),
         }
     }
 }
@@ -452,8 +349,8 @@ impl<'db> Trait<'db> {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
-        let mut result: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
+    pub fn get_all_item_ids<'a>(&'a self) -> IncludedItems<'a, 'db> {
+        let mut result: IncludedItems<'a, 'db> = HashMap::default();
         self.trait_constants.iter().for_each(|item| {
             result.insert(item.item_data.id, &item.item_data);
         });
@@ -612,8 +509,8 @@ impl<'db> Impl<'db> {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
-        let mut result: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
+    pub fn get_all_item_ids<'a>(&'a self) -> IncludedItems<'a, 'db> {
+        let mut result: IncludedItems<'a, 'db> = HashMap::default();
         self.impl_constants.iter().for_each(|item| {
             result.insert(item.item_data.id, &item.item_data);
         });
