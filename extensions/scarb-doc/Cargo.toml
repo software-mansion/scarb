@@ -31,6 +31,7 @@ scarb-metadata = { path = "../../scarb-metadata" }
 scarb-build-metadata = { path = "../../utils/scarb-build-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["doc"] }
+scarb-execute-utils = { path = "../../utils/scarb-execute-utils" }
 serde.workspace = true
 serde_json.workspace = true
 salsa.workspace = true

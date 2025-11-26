@@ -6933,6 +6933,7 @@ dependencies = [
  "mimalloc",
  "salsa",
  "scarb-build-metadata",
+ "scarb-execute-utils",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
  "scarb-test-support",
