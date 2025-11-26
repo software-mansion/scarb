@@ -14,7 +14,7 @@ use cairo_vm::vm::vm_core::VirtualMachine;
 use scarb_oracle_hint_service::OracleHintService;
 use std::any::Any;
 use std::collections::HashMap;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct ExecuteHintProcessor<'a> {
     pub cairo_hint_processor: CairoHintProcessor<'a>,
@@ -71,13 +71,15 @@ impl<'a> HintProcessorLogic for ExecuteHintProcessor<'a> {
         ap_tracking_data: &ApTracking,
         reference_ids: &HashMap<String, usize>,
         references: &[HintReference],
-        constants: Rc<HashMap<String, Felt252>>,
+        accessible_scopes: &[String],
+        constants: Arc<HashMap<String, Felt252>>,
     ) -> Result<Box<dyn Any>, VirtualMachineError> {
         self.cairo_hint_processor.compile_hint(
             hint_code,
             ap_tracking_data,
             reference_ids,
             references,
+            accessible_scopes,
             constants,
         )
     }
