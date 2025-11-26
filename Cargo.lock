@@ -6881,6 +6881,7 @@ dependencies = [
  "itertools 0.14.0",
  "mimalloc",
  "salsa",
+ "scarb-execute-utils",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
  "scarb-test-support",
@@ -6912,6 +6913,7 @@ dependencies = [
  "indoc",
  "mimalloc",
  "predicates",
+ "scarb-execute-utils",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
  "scarb-oracle-hint-service",
@@ -6922,6 +6924,14 @@ dependencies = [
  "snapbox",
  "thousands",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "scarb-execute-utils"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "camino",
 ]
 
 [[package]]
@@ -7029,6 +7039,7 @@ dependencies = [
  "indoc",
  "mimalloc",
  "predicates",
+ "scarb-execute-utils",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
  "scarb-test-support",
