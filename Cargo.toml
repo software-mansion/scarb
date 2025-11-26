@@ -134,8 +134,8 @@ smallvec = "1"
 smol_str = { version = "=0.3.2", features = ["serde"] }
 snapbox = { version = "0.6", features = ["cmd", "path", "diff"] }
 starknet-core = "0.16.0"
-stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd", features = ["std"] }
-stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
+stwo-cairo-adapter = { git = "https://github.com/software-mansion-labs/stwo-cairo.git", rev = "e0f513d2c77f0b66735e30897f031f76aea13761" }
+stwo_cairo_prover = { git = "https://github.com/software-mansion-labs/stwo-cairo.git", rev = "e0f513d2c77f0b66735e30897f031f76aea13761" }
 syn = { version = "2", default-features = false }
 tar = "0.4"
 target-triple = "1.0"
