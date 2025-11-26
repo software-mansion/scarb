@@ -62,8 +62,7 @@ fn can_implement_inline_macro() {
             [..]Executing hello
             Program output:
             34
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -435,8 +434,7 @@ fn module_level_inline_macro() {
             [..]Executing hello
             Program output:
             42
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -507,8 +505,7 @@ fn module_level_inline_macro_with_args() {
             [..]Executing hello
             Program output:
             100
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -571,8 +568,7 @@ fn module_level_inline_macro_module_tree_root() {
             [..]Executing hello
             Program output:
             42
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -631,8 +627,7 @@ fn module_level_inline_macro_empty() {
             [..]Executing hello
             Program output:
             63
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -822,8 +817,7 @@ fn module_level_inline_macro_multiple() {
             [..]Executing hello
             Program output:
             63
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]

@@ -26,7 +26,8 @@ execute = [
     "dep:anyhow",
     "dep:camino",
     "dep:cairo-vm",
-    "dep:scarb-ui"
+    "dep:scarb-ui",
+    "cairo-vm/clap"
 ]
 mdbook = ["dep:camino", "dep:scarb-ui"]
 prove = ["execute_unchecked", "dep:scarb-ui"]

@@ -110,6 +110,7 @@ walkdir.workspace = true
 which.workspace = true
 windows-sys.workspace = true
 zstd.workspace = true
+scarb-fs-utils = { path = "../utils/scarb-fs-utils" }
 
 # Configure an SSL backend used on each supported target. On Windows and macOS we want to use native SSL backends,
 # enabled by the `native-tls` feature which is the default one in reqwest. On Linux, though, `native-tls` would attempt

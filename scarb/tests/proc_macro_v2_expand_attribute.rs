@@ -163,8 +163,7 @@ fn can_remove_original_node() {
             [..]Executing hello
             Program output:
             34
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -220,8 +219,7 @@ fn can_replace_original_node() {
             [..]Executing hello
             Program output:
             34
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -342,8 +340,7 @@ fn can_expand_trait_inner_func_attr() {
             [..]Executing hello
             Program output:
             34
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
