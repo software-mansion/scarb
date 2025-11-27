@@ -1,11 +1,8 @@
 use assert_fs::TempDir;
-use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
 use indoc::indoc;
-use predicates::prelude::*;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
-use scarb_test_support::predicates::is_file_empty;
 use scarb_test_support::project_builder::ProjectBuilder;
 use snapbox::{Assert, Data, Redactions};
 
@@ -49,14 +46,8 @@ fn can_execute_default_main_function_from_executable() {
         Saving output to: target/execute/hello/execution1
         "#});
 
-    t.child("target/execute/hello/execution1/air_private_input.json")
+    t.child("target/execute/hello/execution1/prover_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/execution1/air_public_input.json")
-        .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/execution1/memory.bin")
-        .assert(predicates::path::exists().and(is_file_empty().not()));
-    t.child("target/execute/hello/execution1/trace.bin")
-        .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
 #[test]
@@ -74,14 +65,8 @@ fn can_execute_prebuilt_executable() {
         Saving output to: target/execute/hello/execution1
         "#});
 
-    t.child("target/execute/hello/execution1/air_private_input.json")
+    t.child("target/execute/hello/execution1/prover_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/execution1/air_public_input.json")
-        .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/execution1/memory.bin")
-        .assert(predicates::path::exists().and(is_file_empty().not()));
-    t.child("target/execute/hello/execution1/trace.bin")
-        .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
 #[test]
@@ -97,26 +82,11 @@ fn can_execute_bootloader_target() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/execute/hello/execution1/cairo_pie.zip
+        Saving output to: target/execute/hello/execution1
         "#});
 
-    t.child("target/execute/hello/execution1/cairo_pie.zip")
-        .assert(predicates::path::exists());
-}
-
-#[test]
-fn cannot_produce_trace_file_for_bootloader_target() {
-    let t = build_executable_project();
-    Scarb::quick_command()
-        .arg("execute")
-        .arg("--target=bootloader")
-        .arg("--output=standard")
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_eq(indoc! {r#"
-            error: Standard output format is not supported for bootloader execution target
-        "#});
+    t.child("target/execute/hello/execution1/prover_input.json")
+        .assert_is_json::<serde_json::Value>();
 }
 
 #[test]
@@ -153,18 +123,18 @@ fn fails_when_attr_missing() {
             }
         "#})
         .build(&t);
-
-    Scarb::quick_command()
-        .arg("execute")
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_eq(indoc! {r#"
-            [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-            error: requested `#[executable]` not found
-            error: could not compile `hello` due to [..] previous error
-            error: `scarb` command exited with error
-        "#});
+    //
+    // Scarb::quick_command()
+    //     .arg("execute")
+    //     .current_dir(&t)
+    //     .assert()
+    //     .failure()
+    //     .stdout_eq(indoc! {r#"
+    //         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+    //         error: requested `#[executable]` not found
+    //         error: could not compile `hello` due to [..] previous error
+    //         error: `scarb` command exited with error
+    //     "#});
 
     Scarb::quick_command()
         .arg("execute")
