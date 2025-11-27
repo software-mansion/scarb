@@ -27,9 +27,11 @@ use scarb_oracle_hint_service::OracleHintService;
 use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars, WithManifestPath};
 use scarb_ui::components::Status;
+use serde::Serialize;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
+use stwo_cairo_adapter::adapter::adapt;
 
 mod hint_processor;
 mod profiler;
@@ -167,7 +169,7 @@ pub fn execute(
 
     let cairo_run_config = CairoRunConfig {
         allow_missing_builtins: Some(true),
-        layout: LayoutName::all_cairo,
+        layout: LayoutName::all_cairo_stwo,
         proof_mode,
         secure_run: None,
         relocate_mem: output.is_standard()
@@ -215,50 +217,55 @@ pub fn execute(
 
     let execution_output_dir = get_or_create_output_dir(&output_dir)?;
 
-    if output.is_cairo_pie() {
-        let output_value = runner.get_cairo_pie()?;
-        let output_file_path = execution_output_dir.join("cairo_pie.zip");
-        ui.print(Status::new(
-            "Saving output to:",
-            &display_path(&scarb_target_dir, &output_file_path),
-        ));
-        output_value.write_zip_file(output_file_path.as_std_path(), true)?;
-    } else {
-        ui.print(Status::new(
-            "Saving output to:",
-            &display_path(&scarb_target_dir, &execution_output_dir),
-        ));
+    // if output.is_cairo_pie() {
+    //     let output_value = runner.get_cairo_pie()?;
+    //     let output_file_path = execution_output_dir.join("cairo_pie.zip");
+    //     ui.print(Status::new(
+    //         "Saving output to:",
+    //         &display_path(&scarb_target_dir, &output_file_path),
+    //     ));
+    //     output_value.write_zip_file(output_file_path.as_std_path(), true)?;
+    // } else {
+    ui.print(Status::new(
+        "Saving output to:",
+        &display_path(&scarb_target_dir, &execution_output_dir),
+    ));
 
-        // Write trace file.
-        let trace_path = execution_output_dir.join("trace.bin");
-        let relocated_trace = runner
-            .relocated_trace
-            .as_ref()
-            .with_context(|| "trace not relocated")?;
-        let mut writer = FileWriter::new(3 * 1024 * 1024, &trace_path)?;
-        cairo_run::write_encoded_trace(relocated_trace, &mut writer)?;
-        writer.flush()?;
+    let adapted = adapt(&runner)?;
+    let input_path = execution_output_dir.join("prover_input.json");
+    fs::write(input_path, serde_json::to_string(&adapted)?)?;
 
-        // Write memory file.
-        let memory_path = execution_output_dir.join("memory.bin");
-        let mut writer = FileWriter::new(5 * 1024 * 1024, &memory_path)?;
-        cairo_run::write_encoded_memory(&runner.relocated_memory, &mut writer)?;
-        writer.flush()?;
-
-        // Write air public input file.
-        let air_public_input_path = execution_output_dir.join("air_public_input.json");
-        let json = runner.get_air_public_input()?.serialize_json()?;
-        fs::write(air_public_input_path, json)?;
-
-        // Write air private input file.
-        let air_private_input_path = execution_output_dir.join("air_private_input.json");
-        let output_value = runner
-            .get_air_private_input()
-            .to_serializable(trace_path.to_string(), memory_path.to_string())
-            .serialize_json()
-            .with_context(|| "failed serializing private input")?;
-        fs::write(air_private_input_path, output_value)?;
-    }
+    //
+    //     // Write trace file.
+    //     let trace_path = execution_output_dir.join("trace.bin");
+    //     let relocated_trace = runner
+    //         .relocated_trace
+    //         .as_ref()
+    //         .with_context(|| "trace not relocated")?;
+    //     let mut writer = FileWriter::new(3 * 1024 * 1024, &trace_path)?;
+    //     cairo_run::write_encoded_trace(relocated_trace, &mut writer)?;
+    //     writer.flush()?;
+    //
+    //     // Write memory file.
+    //     let memory_path = execution_output_dir.join("memory.bin");
+    //     let mut writer = FileWriter::new(5 * 1024 * 1024, &memory_path)?;
+    //     cairo_run::write_encoded_memory(&runner.relocated_memory, &mut writer)?;
+    //     writer.flush()?;
+    //
+    //     // Write air public input file.
+    //     let air_public_input_path = execution_output_dir.join("air_public_input.json");
+    //     let json = runner.get_air_public_input()?.serialize_json()?;
+    //     fs::write(air_public_input_path, json)?;
+    //
+    //     // Write air private input file.
+    //     let air_private_input_path = execution_output_dir.join("air_private_input.json");
+    //     let output_value = runner
+    //         .get_air_private_input()
+    //         .to_serializable(trace_path.to_string(), memory_path.to_string())
+    //         .serialize_json()
+    //         .with_context(|| "failed serializing private input")?;
+    //     fs::write(air_private_input_path, output_value)?;
+    // }
 
     if args.run.save_profiler_trace_data {
         ensure!(

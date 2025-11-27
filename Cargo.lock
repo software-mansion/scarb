@@ -811,7 +811,7 @@ dependencies = [
 [[package]]
 name = "cairo-air"
 version = "0.1.1"
-source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=e0f513d2c77f0b66735e30897f031f76aea13761#e0f513d2c77f0b66735e30897f031f76aea13761"
+source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=686748b695a298cf2dc7b4004c8556b9f73bf8f1#686748b695a298cf2dc7b4004c8556b9f73bf8f1"
 dependencies = [
  "bincode 1.3.3",
  "bzip2",
@@ -6964,6 +6964,7 @@ dependencies = [
  "serde",
  "serde_json",
  "snapbox",
+ "stwo-cairo-adapter",
  "thousands",
  "tracing-subscriber",
 ]
@@ -7067,6 +7068,7 @@ version = "2.14.0"
 dependencies = [
  "anyhow",
  "assert_fs",
+ "cairo-air",
  "camino",
  "clap",
  "create-output-dir",
@@ -7154,6 +7156,7 @@ version = "2.14.0"
 dependencies = [
  "anyhow",
  "assert_fs",
+ "cairo-air",
  "camino",
  "clap",
  "indoc",
@@ -7985,7 +7988,7 @@ dependencies = [
 [[package]]
 name = "stwo-cairo-adapter"
 version = "0.1.0"
-source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=e0f513d2c77f0b66735e30897f031f76aea13761#e0f513d2c77f0b66735e30897f031f76aea13761"
+source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=686748b695a298cf2dc7b4004c8556b9f73bf8f1#686748b695a298cf2dc7b4004c8556b9f73bf8f1"
 dependencies = [
  "anyhow",
  "bincode 2.0.1",
@@ -8011,7 +8014,7 @@ dependencies = [
 [[package]]
 name = "stwo-cairo-common"
 version = "0.1.0"
-source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=e0f513d2c77f0b66735e30897f031f76aea13761#e0f513d2c77f0b66735e30897f031f76aea13761"
+source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=686748b695a298cf2dc7b4004c8556b9f73bf8f1#686748b695a298cf2dc7b4004c8556b9f73bf8f1"
 dependencies = [
  "bytemuck",
  "itertools 0.12.1",
@@ -8030,7 +8033,7 @@ dependencies = [
 [[package]]
 name = "stwo-cairo-serialize"
 version = "0.1.0"
-source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=e0f513d2c77f0b66735e30897f031f76aea13761#e0f513d2c77f0b66735e30897f031f76aea13761"
+source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=686748b695a298cf2dc7b4004c8556b9f73bf8f1#686748b695a298cf2dc7b4004c8556b9f73bf8f1"
 dependencies = [
  "starknet-ff",
  "stwo",
@@ -8040,7 +8043,7 @@ dependencies = [
 [[package]]
 name = "stwo-cairo-serialize-derive"
 version = "0.1.0"
-source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=e0f513d2c77f0b66735e30897f031f76aea13761#e0f513d2c77f0b66735e30897f031f76aea13761"
+source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=686748b695a298cf2dc7b4004c8556b9f73bf8f1#686748b695a298cf2dc7b4004c8556b9f73bf8f1"
 dependencies = [
  "quote",
  "syn 2.0.111",
@@ -8064,7 +8067,7 @@ dependencies = [
 [[package]]
 name = "stwo_cairo_prover"
 version = "0.1.0"
-source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=e0f513d2c77f0b66735e30897f031f76aea13761#e0f513d2c77f0b66735e30897f031f76aea13761"
+source = "git+https://github.com/software-mansion-labs/stwo-cairo.git?rev=686748b695a298cf2dc7b4004c8556b9f73bf8f1#686748b695a298cf2dc7b4004c8556b9f73bf8f1"
 dependencies = [
  "anyhow",
  "cairo-air",
