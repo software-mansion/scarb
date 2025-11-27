@@ -52,7 +52,7 @@ impl SubPathDocItem for TraitType<'_> {}
 
 // Trait for items that have their own documentation page.
 // Used to enforce constraints on generic implementations of traits like `TopLevelMarkdownDocItem`.
-trait TopLevelDocItem: DocItem {}
+pub trait TopLevelDocItem: DocItem {}
 
 impl TopLevelDocItem for Constant<'_> {}
 impl TopLevelDocItem for Enum<'_> {}
@@ -68,7 +68,7 @@ impl TopLevelDocItem for TypeAlias<'_> {}
 impl TopLevelDocItem for MacroDeclaration<'_> {}
 
 // Wrapper trait over a documentable item to hide implementation details of the item type.
-trait DocItem {
+pub trait DocItem {
     const HEADER: &'static str;
 
     fn name(&self) -> &str;

@@ -1,13 +1,15 @@
 use crate::db::ScarbDocDatabase;
+use crate::docs_generation::markdown::context::IncludedItems;
 use crate::types::groups::{
     Group, aggregate_constants_groups, aggregate_enums_groups, aggregate_extern_functions_groups,
     aggregate_extern_types_groups, aggregate_free_functions_groups, aggregate_impl_aliases_groups,
     aggregate_impls_groups, aggregate_modules_groups, aggregate_pub_uses_groups,
     aggregate_structs_groups, aggregate_traits_groups, aggregate_type_aliases_groups,
 };
+use crate::types::item_data::ItemData;
 use crate::types::other_types::{
-    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData,
-    MacroDeclaration, Struct, Trait, TypeAlias,
+    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, MacroDeclaration,
+    Struct, Trait, TypeAlias,
 };
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
@@ -15,7 +17,6 @@ use cairo_lang_defs::ids::{
     NamedLanguageElementLongId, TopLevelLanguageElementId,
 };
 use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
-use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::items::imp::ImplSemantic;
@@ -515,8 +516,8 @@ impl<'db> Module<'db> {
     }
 
     /// Recursively traverses all the module and gets all the item [`DocumentableItemId`]s.
-    pub(crate) fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
-        let mut ids: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
+    pub(crate) fn get_all_item_ids<'a>(&'a self) -> IncludedItems<'a, 'db> {
+        let mut ids: IncludedItems<'a, 'db> = HashMap::default();
 
         ids.insert(self.item_data.id, &self.item_data);
         self.constants.iter().for_each(|item| {
@@ -545,7 +546,7 @@ impl<'db> Module<'db> {
         });
         self.structs.iter().for_each(|struct_| {
             ids.insert(struct_.item_data.id, &struct_.item_data);
-            struct_.get_all_item_ids();
+            ids.extend(struct_.get_all_item_ids());
         });
         self.enums.iter().for_each(|enum_| {
             ids.insert(enum_.item_data.id, &enum_.item_data);

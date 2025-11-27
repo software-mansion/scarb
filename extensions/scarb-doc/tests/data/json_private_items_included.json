@@ -68,8 +68,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure::public_field"
                           }
                         },
                         {
@@ -77,8 +76,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -86,8 +84,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure::private_field"
                           }
                         }
                       ],
@@ -106,8 +103,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure::public_field"
                           }
                         },
                         {
@@ -115,8 +111,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -124,8 +119,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure::private_field"
                           }
                         }
                       ],
@@ -144,8 +138,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildStructure::public_field"
                           }
                         },
                         {
@@ -153,8 +146,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -162,8 +154,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildStructure::private_field"
                           }
                         }
                       ],
@@ -184,8 +175,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -204,8 +194,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -224,8 +213,7 @@
                             "name": "PRIVATE_VARIANT",
                             "doc": "Private enum variant",
                             "signature": "PRIVATE_VARIANT",
-                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildEnum::PRIVATE_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildEnum::PRIVATE_VARIANT"
                           }
                         }
                       ],
@@ -307,8 +295,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure::public_field"
                           }
                         },
                         {
@@ -316,8 +303,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -325,8 +311,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure::private_field"
                           }
                         }
                       ],
@@ -345,8 +330,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure::public_field"
                           }
                         },
                         {
@@ -354,8 +338,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -363,8 +346,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure::private_field"
                           }
                         }
                       ],
@@ -383,8 +365,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildStructure::public_field"
                           }
                         },
                         {
@@ -392,8 +373,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -401,8 +381,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildStructure::private_field"
                           }
                         }
                       ],
@@ -423,8 +402,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -443,8 +421,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -463,8 +440,7 @@
                             "name": "PRIVATE_VARIANT",
                             "doc": "Private enum variant",
                             "signature": "PRIVATE_VARIANT",
-                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildEnum::PRIVATE_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildEnum::PRIVATE_VARIANT"
                           }
                         }
                       ],
@@ -546,8 +522,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildStructure::public_field"
                           }
                         },
                         {
@@ -555,8 +530,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -564,8 +538,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildStructure::private_field"
                           }
                         }
                       ],
@@ -584,8 +557,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildStructure::public_field"
                           }
                         },
                         {
@@ -593,8 +565,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -602,8 +573,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildStructure::private_field"
                           }
                         }
                       ],
@@ -622,8 +592,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildStructure::public_field"
                           }
                         },
                         {
@@ -631,8 +600,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -640,8 +608,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildStructure::private_field"
                           }
                         }
                       ],
@@ -662,8 +629,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -682,8 +648,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -702,8 +667,7 @@
                             "name": "PRIVATE_VARIANT",
                             "doc": "Private enum variant",
                             "signature": "PRIVATE_VARIANT",
-                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildEnum::PRIVATE_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildEnum::PRIVATE_VARIANT"
                           }
                         }
                       ],
@@ -777,8 +741,7 @@
                         "name": "public_field",
                         "doc": "Public struct field",
                         "signature": "pub public_field: felt252",
-                        "full_path": "hello_world::PublicParent::PublicParentStructure::public_field",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PublicParentStructure::public_field"
                       }
                     },
                     {
@@ -786,8 +749,7 @@
                         "name": "public_crate_field",
                         "doc": "Public crate struct field",
                         "signature": "pub(crate) public_crate_field: felt252",
-                        "full_path": "hello_world::PublicParent::PublicParentStructure::public_crate_field",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PublicParentStructure::public_crate_field"
                       }
                     },
                     {
@@ -795,8 +757,7 @@
                         "name": "private_field",
                         "doc": "Private struct field",
                         "signature": "private_field: felt252",
-                        "full_path": "hello_world::PublicParent::PublicParentStructure::private_field",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PublicParentStructure::private_field"
                       }
                     }
                   ],
@@ -815,8 +776,7 @@
                         "name": "public_field",
                         "doc": "Public struct field",
                         "signature": "pub public_field: felt252",
-                        "full_path": "hello_world::PublicParent::PublicCrateParentStructure::public_field",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PublicCrateParentStructure::public_field"
                       }
                     },
                     {
@@ -824,8 +784,7 @@
                         "name": "public_crate_field",
                         "doc": "Public crate struct field",
                         "signature": "pub(crate) public_crate_field: felt252",
-                        "full_path": "hello_world::PublicParent::PublicCrateParentStructure::public_crate_field",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PublicCrateParentStructure::public_crate_field"
                       }
                     },
                     {
@@ -833,8 +792,7 @@
                         "name": "private_field",
                         "doc": "Private struct field",
                         "signature": "private_field: felt252",
-                        "full_path": "hello_world::PublicParent::PublicCrateParentStructure::private_field",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PublicCrateParentStructure::private_field"
                       }
                     }
                   ],
@@ -853,8 +811,7 @@
                         "name": "public_field",
                         "doc": "Public struct field",
                         "signature": "pub public_field: felt252",
-                        "full_path": "hello_world::PublicParent::PrivateParentStructure::public_field",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PrivateParentStructure::public_field"
                       }
                     },
                     {
@@ -862,8 +819,7 @@
                         "name": "public_crate_field",
                         "doc": "Public crate struct field",
                         "signature": "pub(crate) public_crate_field: felt252",
-                        "full_path": "hello_world::PublicParent::PrivateParentStructure::public_crate_field",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PrivateParentStructure::public_crate_field"
                       }
                     },
                     {
@@ -871,8 +827,7 @@
                         "name": "private_field",
                         "doc": "Private struct field",
                         "signature": "private_field: felt252",
-                        "full_path": "hello_world::PublicParent::PrivateParentStructure::private_field",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PrivateParentStructure::private_field"
                       }
                     }
                   ],
@@ -893,8 +848,7 @@
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
                         "signature": "PUBLIC_VARIANT",
-                        "full_path": "hello_world::PublicParent::PublicParentEnum::PUBLIC_VARIANT",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
                     }
                   ],
@@ -913,8 +867,7 @@
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
                         "signature": "PUBLIC_VARIANT",
-                        "full_path": "hello_world::PublicParent::PublicCrateParentEnum::PUBLIC_VARIANT",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
                     }
                   ],
@@ -933,8 +886,7 @@
                         "name": "PRIVATE_VARIANT",
                         "doc": "Private enum variant",
                         "signature": "PRIVATE_VARIANT",
-                        "full_path": "hello_world::PublicParent::PrivateParentEnum::PRIVATE_VARIANT",
-                        "group": null
+                        "full_path": "hello_world::PublicParent::PrivateParentEnum::PRIVATE_VARIANT"
                       }
                     }
                   ],
@@ -1025,8 +977,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure::public_field"
                           }
                         },
                         {
@@ -1034,8 +985,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -1043,8 +993,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure::private_field"
                           }
                         }
                       ],
@@ -1063,8 +1012,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure::public_field"
                           }
                         },
                         {
@@ -1072,8 +1020,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -1081,8 +1028,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure::private_field"
                           }
                         }
                       ],
@@ -1101,8 +1047,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildStructure::public_field"
                           }
                         },
                         {
@@ -1110,8 +1055,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -1119,8 +1063,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildStructure::private_field"
                           }
                         }
                       ],
@@ -1141,8 +1084,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -1161,8 +1103,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -1181,8 +1122,7 @@
                             "name": "PRIVATE_VARIANT",
                             "doc": "Private enum variant",
                             "signature": "PRIVATE_VARIANT",
-                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildEnum::PRIVATE_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildEnum::PRIVATE_VARIANT"
                           }
                         }
                       ],
@@ -1264,8 +1204,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure::public_field"
                           }
                         },
                         {
@@ -1273,8 +1212,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -1282,8 +1220,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure::private_field"
                           }
                         }
                       ],
@@ -1302,8 +1239,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure::public_field"
                           }
                         },
                         {
@@ -1311,8 +1247,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -1320,8 +1255,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure::private_field"
                           }
                         }
                       ],
@@ -1340,8 +1274,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildStructure::public_field"
                           }
                         },
                         {
@@ -1349,8 +1282,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -1358,8 +1290,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildStructure::private_field"
                           }
                         }
                       ],
@@ -1380,8 +1311,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -1400,8 +1330,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -1420,8 +1349,7 @@
                             "name": "PRIVATE_VARIANT",
                             "doc": "Private enum variant",
                             "signature": "PRIVATE_VARIANT",
-                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildEnum::PRIVATE_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildEnum::PRIVATE_VARIANT"
                           }
                         }
                       ],
@@ -1503,8 +1431,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildStructure::public_field"
                           }
                         },
                         {
@@ -1512,8 +1439,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -1521,8 +1447,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildStructure::private_field"
                           }
                         }
                       ],
@@ -1541,8 +1466,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildStructure::public_field"
                           }
                         },
                         {
@@ -1550,8 +1474,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -1559,8 +1482,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildStructure::private_field"
                           }
                         }
                       ],
@@ -1579,8 +1501,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildStructure::public_field"
                           }
                         },
                         {
@@ -1588,8 +1509,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -1597,8 +1517,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildStructure::private_field"
                           }
                         }
                       ],
@@ -1619,8 +1538,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -1639,8 +1557,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -1659,8 +1576,7 @@
                             "name": "PRIVATE_VARIANT",
                             "doc": "Private enum variant",
                             "signature": "PRIVATE_VARIANT",
-                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildEnum::PRIVATE_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildEnum::PRIVATE_VARIANT"
                           }
                         }
                       ],
@@ -1734,8 +1650,7 @@
                         "name": "public_field",
                         "doc": "Public struct field",
                         "signature": "pub public_field: felt252",
-                        "full_path": "hello_world::PublicCrateParent::PublicParentStructure::public_field",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PublicParentStructure::public_field"
                       }
                     },
                     {
@@ -1743,8 +1658,7 @@
                         "name": "public_crate_field",
                         "doc": "Public crate struct field",
                         "signature": "pub(crate) public_crate_field: felt252",
-                        "full_path": "hello_world::PublicCrateParent::PublicParentStructure::public_crate_field",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PublicParentStructure::public_crate_field"
                       }
                     },
                     {
@@ -1752,8 +1666,7 @@
                         "name": "private_field",
                         "doc": "Private struct field",
                         "signature": "private_field: felt252",
-                        "full_path": "hello_world::PublicCrateParent::PublicParentStructure::private_field",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PublicParentStructure::private_field"
                       }
                     }
                   ],
@@ -1772,8 +1685,7 @@
                         "name": "public_field",
                         "doc": "Public struct field",
                         "signature": "pub public_field: felt252",
-                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure::public_field",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure::public_field"
                       }
                     },
                     {
@@ -1781,8 +1693,7 @@
                         "name": "public_crate_field",
                         "doc": "Public crate struct field",
                         "signature": "pub(crate) public_crate_field: felt252",
-                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure::public_crate_field",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure::public_crate_field"
                       }
                     },
                     {
@@ -1790,8 +1701,7 @@
                         "name": "private_field",
                         "doc": "Private struct field",
                         "signature": "private_field: felt252",
-                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure::private_field",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure::private_field"
                       }
                     }
                   ],
@@ -1810,8 +1720,7 @@
                         "name": "public_field",
                         "doc": "Public struct field",
                         "signature": "pub public_field: felt252",
-                        "full_path": "hello_world::PublicCrateParent::PrivateParentStructure::public_field",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PrivateParentStructure::public_field"
                       }
                     },
                     {
@@ -1819,8 +1728,7 @@
                         "name": "public_crate_field",
                         "doc": "Public crate struct field",
                         "signature": "pub(crate) public_crate_field: felt252",
-                        "full_path": "hello_world::PublicCrateParent::PrivateParentStructure::public_crate_field",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PrivateParentStructure::public_crate_field"
                       }
                     },
                     {
@@ -1828,8 +1736,7 @@
                         "name": "private_field",
                         "doc": "Private struct field",
                         "signature": "private_field: felt252",
-                        "full_path": "hello_world::PublicCrateParent::PrivateParentStructure::private_field",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PrivateParentStructure::private_field"
                       }
                     }
                   ],
@@ -1850,8 +1757,7 @@
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
                         "signature": "PUBLIC_VARIANT",
-                        "full_path": "hello_world::PublicCrateParent::PublicParentEnum::PUBLIC_VARIANT",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
                     }
                   ],
@@ -1870,8 +1776,7 @@
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
                         "signature": "PUBLIC_VARIANT",
-                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentEnum::PUBLIC_VARIANT",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
                     }
                   ],
@@ -1890,8 +1795,7 @@
                         "name": "PRIVATE_VARIANT",
                         "doc": "Private enum variant",
                         "signature": "PRIVATE_VARIANT",
-                        "full_path": "hello_world::PublicCrateParent::PrivateParentEnum::PRIVATE_VARIANT",
-                        "group": null
+                        "full_path": "hello_world::PublicCrateParent::PrivateParentEnum::PRIVATE_VARIANT"
                       }
                     }
                   ],
@@ -1982,8 +1886,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure::public_field"
                           }
                         },
                         {
@@ -1991,8 +1894,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -2000,8 +1902,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure::private_field"
                           }
                         }
                       ],
@@ -2020,8 +1921,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure::public_field"
                           }
                         },
                         {
@@ -2029,8 +1929,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -2038,8 +1937,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure::private_field"
                           }
                         }
                       ],
@@ -2058,8 +1956,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildStructure::public_field"
                           }
                         },
                         {
@@ -2067,8 +1964,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -2076,8 +1972,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildStructure::private_field"
                           }
                         }
                       ],
@@ -2098,8 +1993,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -2118,8 +2012,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -2138,8 +2031,7 @@
                             "name": "PRIVATE_VARIANT",
                             "doc": "Private enum variant",
                             "signature": "PRIVATE_VARIANT",
-                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildEnum::PRIVATE_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildEnum::PRIVATE_VARIANT"
                           }
                         }
                       ],
@@ -2221,8 +2113,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure::public_field"
                           }
                         },
                         {
@@ -2230,8 +2121,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -2239,8 +2129,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure::private_field"
                           }
                         }
                       ],
@@ -2259,8 +2148,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure::public_field"
                           }
                         },
                         {
@@ -2268,8 +2156,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -2277,8 +2164,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure::private_field"
                           }
                         }
                       ],
@@ -2297,8 +2183,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildStructure::public_field"
                           }
                         },
                         {
@@ -2306,8 +2191,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -2315,8 +2199,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildStructure::private_field"
                           }
                         }
                       ],
@@ -2337,8 +2220,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -2357,8 +2239,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -2377,8 +2258,7 @@
                             "name": "PRIVATE_VARIANT",
                             "doc": "Private enum variant",
                             "signature": "PRIVATE_VARIANT",
-                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildEnum::PRIVATE_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildEnum::PRIVATE_VARIANT"
                           }
                         }
                       ],
@@ -2460,8 +2340,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildStructure::public_field"
                           }
                         },
                         {
@@ -2469,8 +2348,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -2478,8 +2356,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildStructure::private_field"
                           }
                         }
                       ],
@@ -2498,8 +2375,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildStructure::public_field"
                           }
                         },
                         {
@@ -2507,8 +2383,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -2516,8 +2391,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildStructure::private_field"
                           }
                         }
                       ],
@@ -2536,8 +2410,7 @@
                             "name": "public_field",
                             "doc": "Public struct field",
                             "signature": "pub public_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildStructure::public_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildStructure::public_field"
                           }
                         },
                         {
@@ -2545,8 +2418,7 @@
                             "name": "public_crate_field",
                             "doc": "Public crate struct field",
                             "signature": "pub(crate) public_crate_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildStructure::public_crate_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildStructure::public_crate_field"
                           }
                         },
                         {
@@ -2554,8 +2426,7 @@
                             "name": "private_field",
                             "doc": "Private struct field",
                             "signature": "private_field: felt252",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildStructure::private_field",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildStructure::private_field"
                           }
                         }
                       ],
@@ -2576,8 +2447,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -2596,8 +2466,7 @@
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
                             "signature": "PUBLIC_VARIANT",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildEnum::PUBLIC_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
                       ],
@@ -2616,8 +2485,7 @@
                             "name": "PRIVATE_VARIANT",
                             "doc": "Private enum variant",
                             "signature": "PRIVATE_VARIANT",
-                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildEnum::PRIVATE_VARIANT",
-                            "group": null
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildEnum::PRIVATE_VARIANT"
                           }
                         }
                       ],
@@ -2691,8 +2559,7 @@
                         "name": "public_field",
                         "doc": "Public struct field",
                         "signature": "pub public_field: felt252",
-                        "full_path": "hello_world::PrivateParent::PublicParentStructure::public_field",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PublicParentStructure::public_field"
                       }
                     },
                     {
@@ -2700,8 +2567,7 @@
                         "name": "public_crate_field",
                         "doc": "Public crate struct field",
                         "signature": "pub(crate) public_crate_field: felt252",
-                        "full_path": "hello_world::PrivateParent::PublicParentStructure::public_crate_field",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PublicParentStructure::public_crate_field"
                       }
                     },
                     {
@@ -2709,8 +2575,7 @@
                         "name": "private_field",
                         "doc": "Private struct field",
                         "signature": "private_field: felt252",
-                        "full_path": "hello_world::PrivateParent::PublicParentStructure::private_field",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PublicParentStructure::private_field"
                       }
                     }
                   ],
@@ -2729,8 +2594,7 @@
                         "name": "public_field",
                         "doc": "Public struct field",
                         "signature": "pub public_field: felt252",
-                        "full_path": "hello_world::PrivateParent::PublicCrateParentStructure::public_field",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PublicCrateParentStructure::public_field"
                       }
                     },
                     {
@@ -2738,8 +2602,7 @@
                         "name": "public_crate_field",
                         "doc": "Public crate struct field",
                         "signature": "pub(crate) public_crate_field: felt252",
-                        "full_path": "hello_world::PrivateParent::PublicCrateParentStructure::public_crate_field",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PublicCrateParentStructure::public_crate_field"
                       }
                     },
                     {
@@ -2747,8 +2610,7 @@
                         "name": "private_field",
                         "doc": "Private struct field",
                         "signature": "private_field: felt252",
-                        "full_path": "hello_world::PrivateParent::PublicCrateParentStructure::private_field",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PublicCrateParentStructure::private_field"
                       }
                     }
                   ],
@@ -2767,8 +2629,7 @@
                         "name": "public_field",
                         "doc": "Public struct field",
                         "signature": "pub public_field: felt252",
-                        "full_path": "hello_world::PrivateParent::PrivateParentStructure::public_field",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PrivateParentStructure::public_field"
                       }
                     },
                     {
@@ -2776,8 +2637,7 @@
                         "name": "public_crate_field",
                         "doc": "Public crate struct field",
                         "signature": "pub(crate) public_crate_field: felt252",
-                        "full_path": "hello_world::PrivateParent::PrivateParentStructure::public_crate_field",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PrivateParentStructure::public_crate_field"
                       }
                     },
                     {
@@ -2785,8 +2645,7 @@
                         "name": "private_field",
                         "doc": "Private struct field",
                         "signature": "private_field: felt252",
-                        "full_path": "hello_world::PrivateParent::PrivateParentStructure::private_field",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PrivateParentStructure::private_field"
                       }
                     }
                   ],
@@ -2807,8 +2666,7 @@
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
                         "signature": "PUBLIC_VARIANT",
-                        "full_path": "hello_world::PrivateParent::PublicParentEnum::PUBLIC_VARIANT",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
                     }
                   ],
@@ -2827,8 +2685,7 @@
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
                         "signature": "PUBLIC_VARIANT",
-                        "full_path": "hello_world::PrivateParent::PublicCrateParentEnum::PUBLIC_VARIANT",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
                     }
                   ],
@@ -2847,8 +2704,7 @@
                         "name": "PRIVATE_VARIANT",
                         "doc": "Private enum variant",
                         "signature": "PRIVATE_VARIANT",
-                        "full_path": "hello_world::PrivateParent::PrivateParentEnum::PRIVATE_VARIANT",
-                        "group": null
+                        "full_path": "hello_world::PrivateParent::PrivateParentEnum::PRIVATE_VARIANT"
                       }
                     }
                   ],
@@ -2931,8 +2787,7 @@
                     "name": "public_field",
                     "doc": "Public struct field",
                     "signature": "pub public_field: felt252",
-                    "full_path": "hello_world::PublicStructure::public_field",
-                    "group": null
+                    "full_path": "hello_world::PublicStructure::public_field"
                   }
                 },
                 {
@@ -2940,8 +2795,7 @@
                     "name": "public_crate_field",
                     "doc": "Public crate struct field",
                     "signature": "pub(crate) public_crate_field: felt252",
-                    "full_path": "hello_world::PublicStructure::public_crate_field",
-                    "group": null
+                    "full_path": "hello_world::PublicStructure::public_crate_field"
                   }
                 },
                 {
@@ -2949,8 +2803,7 @@
                     "name": "private_field",
                     "doc": "Private struct field",
                     "signature": "private_field: felt252",
-                    "full_path": "hello_world::PublicStructure::private_field",
-                    "group": null
+                    "full_path": "hello_world::PublicStructure::private_field"
                   }
                 }
               ],
@@ -2969,8 +2822,7 @@
                     "name": "public_field",
                     "doc": "Public struct field",
                     "signature": "pub public_field: felt252",
-                    "full_path": "hello_world::PublicCrateStructure::public_field",
-                    "group": null
+                    "full_path": "hello_world::PublicCrateStructure::public_field"
                   }
                 },
                 {
@@ -2978,8 +2830,7 @@
                     "name": "public_crate_field",
                     "doc": "Public crate struct field",
                     "signature": "pub(crate) public_crate_field: felt252",
-                    "full_path": "hello_world::PublicCrateStructure::public_crate_field",
-                    "group": null
+                    "full_path": "hello_world::PublicCrateStructure::public_crate_field"
                   }
                 },
                 {
@@ -2987,8 +2838,7 @@
                     "name": "private_field",
                     "doc": "Private struct field",
                     "signature": "private_field: felt252",
-                    "full_path": "hello_world::PublicCrateStructure::private_field",
-                    "group": null
+                    "full_path": "hello_world::PublicCrateStructure::private_field"
                   }
                 }
               ],
@@ -3007,8 +2857,7 @@
                     "name": "public_field",
                     "doc": "Public struct field",
                     "signature": "pub public_field: felt252",
-                    "full_path": "hello_world::PrivateStructure::public_field",
-                    "group": null
+                    "full_path": "hello_world::PrivateStructure::public_field"
                   }
                 },
                 {
@@ -3016,8 +2865,7 @@
                     "name": "public_crate_field",
                     "doc": "Public crate struct field",
                     "signature": "pub(crate) public_crate_field: felt252",
-                    "full_path": "hello_world::PrivateStructure::public_crate_field",
-                    "group": null
+                    "full_path": "hello_world::PrivateStructure::public_crate_field"
                   }
                 },
                 {
@@ -3025,8 +2873,7 @@
                     "name": "private_field",
                     "doc": "Private struct field",
                     "signature": "private_field: felt252",
-                    "full_path": "hello_world::PrivateStructure::private_field",
-                    "group": null
+                    "full_path": "hello_world::PrivateStructure::private_field"
                   }
                 }
               ],
@@ -3047,8 +2894,7 @@
                     "name": "PUBLIC_VARIANT",
                     "doc": "Public enum variant",
                     "signature": "PUBLIC_VARIANT",
-                    "full_path": "hello_world::PublicEnum::PUBLIC_VARIANT",
-                    "group": null
+                    "full_path": "hello_world::PublicEnum::PUBLIC_VARIANT"
                   }
                 }
               ],
@@ -3067,8 +2913,7 @@
                     "name": "PUBLIC_VARIANT",
                     "doc": "Public enum variant",
                     "signature": "PUBLIC_VARIANT",
-                    "full_path": "hello_world::PublicCrateEnum::PUBLIC_VARIANT",
-                    "group": null
+                    "full_path": "hello_world::PublicCrateEnum::PUBLIC_VARIANT"
                   }
                 }
               ],
@@ -3087,8 +2932,7 @@
                     "name": "PRIVATE_VARIANT",
                     "doc": "Private enum variant",
                     "signature": "PRIVATE_VARIANT",
-                    "full_path": "hello_world::PrivateEnum::PRIVATE_VARIANT",
-                    "group": null
+                    "full_path": "hello_world::PrivateEnum::PRIVATE_VARIANT"
                   }
                 }
               ],

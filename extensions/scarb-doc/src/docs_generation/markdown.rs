@@ -8,9 +8,9 @@ use std::collections::HashMap;
 use std::fs;
 
 mod book_toml;
-mod context;
+pub mod context;
 mod summary;
-mod traits;
+pub mod traits;
 use crate::docs_generation::common::{
     GeneratedFile, OutputFilesExtension, SummaryIndexMap, SummaryListItem,
 };
