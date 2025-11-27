@@ -3,6 +3,7 @@
 //! Extension CLI arguments datastructures.
 
 use anyhow::{Result, ensure};
+use cairo_vm::Felt252;
 use camino::Utf8PathBuf;
 use clap::{Parser, ValueEnum};
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
@@ -161,7 +162,7 @@ impl ToArgs for RunArgs {
 pub struct ProgramArguments {
     /// Serialized arguments to the executable function.
     #[arg(long, value_delimiter = ',')]
-    pub arguments: Vec<String>,
+    pub arguments: Vec<Felt252>,
 
     /// Serialized arguments to the executable function from a file.
     #[arg(long, conflicts_with = "arguments")]
@@ -190,32 +191,23 @@ impl ToArgs for ProgramArguments {
 }
 
 /// Output format for the execution
-#[derive(ValueEnum, Clone, Debug)]
+#[derive(ValueEnum, Clone, Debug, Default)]
 pub enum OutputFormat {
+    /// Output in standard format
+    #[default]
+    Standard,
     /// Output in Cairo PIE (Program Independent Execution) format
     CairoPie,
-    /// Output in standard format
-    Standard,
     /// No output
     None,
 }
 
 #[doc(hidden)]
 impl OutputFormat {
-    pub fn default_for_target(target: ExecutionTarget) -> OutputFormat {
-        match target {
-            ExecutionTarget::Bootloader => OutputFormat::CairoPie,
-            ExecutionTarget::Standalone => OutputFormat::Standard,
-        }
-    }
     pub fn validate(&self, target: &ExecutionTarget) -> Result<()> {
         ensure!(
             !(self.is_cairo_pie() && target.is_standalone()),
             "Cairo pie output format is not supported for standalone execution target"
-        );
-        ensure!(
-            !(self.is_standard() && target.is_bootloader()),
-            "Standard output format is not supported for bootloader execution target"
         );
         Ok(())
     }
