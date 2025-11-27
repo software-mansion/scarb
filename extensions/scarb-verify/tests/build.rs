@@ -32,14 +32,8 @@ fn verify_from_execution_output() {
     let t = build_executable_project();
 
     Scarb::quick_command()
-        .arg("execute")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    Scarb::quick_command()
         .arg("prove")
-        .arg("--execution-id=1")
+        .arg("--execute")
         .current_dir(&t)
         .assert()
         .success();
@@ -63,14 +57,8 @@ fn verify_from_path() {
     let t = build_executable_project();
 
     Scarb::quick_command()
-        .arg("execute")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    Scarb::quick_command()
         .arg("prove")
-        .arg("--execution-id=1")
+        .arg("--execute")
         .current_dir(&t)
         .assert()
         .success();

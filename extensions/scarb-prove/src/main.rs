@@ -2,12 +2,13 @@
 #![deny(clippy::disallowed_methods)]
 
 use anyhow::{Context, Result, bail, ensure};
+use cairo_air::utils::ProofFormat;
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::{formatdoc, indoc};
 use mimalloc::MiMalloc;
-use scarb_extensions_cli::execute::unchecked::ToArgs;
+use scarb_extensions_cli::execute::for_proving::{ExecutionTarget, ToArgs};
 use scarb_extensions_cli::prove::Args;
 use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
 use scarb_ui::args::{PackagesFilter, ToEnvVars};
@@ -16,11 +17,8 @@ use scarb_ui::{OutputFormat, Ui};
 use std::fs;
 use std::process::ExitCode;
 use std::{env, io};
-use stwo_cairo_adapter::vm_import::adapt_vm_output;
-use stwo_cairo_prover::cairo_air::prover::{
-    ProverConfig, ProverParameters, default_prod_prover_parameters, prove_cairo,
-};
-use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
+use stwo_cairo_adapter::ProverInput;
+use stwo_cairo_prover::prover::create_and_serialize_proof;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -50,7 +48,9 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         }
     );
 
-    let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
+    let scarb_target_dir = Utf8PathBuf::from(
+        env::var("SCARB_TARGET_DIR").context("`SCARB_TARGET_DIR` env var must be defined")?,
+    );
 
     let metadata = MetadataCommand::new()
         .envs(args.execute_args.features.clone().to_env_vars())
@@ -62,12 +62,19 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         Some(id) => id,
         None => {
             assert!(args.execute);
-            let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
+            let scarb_target_dir = Utf8PathBuf::from(
+                env::var("SCARB_TARGET_DIR")
+                    .context("`SCARB_TARGET_DIR` env var must be defined")?,
+            );
             let output_dir = scarb_target_dir.join("execute").join(&package.name);
             create_output_dir(output_dir.as_std_path())?;
             let (_execution_output_dir, execution_id) = incremental_create_output_dir(&output_dir)?;
 
             let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
+            ensure!(
+                args.execute_args.run.target.is_bootloader(),
+                "only bootloader execution can be proven with `scarb prove` command"
+            );
             ScarbCommand::new()
                 .arg("execute")
                 .args(args.execute_args.to_args())
@@ -84,26 +91,24 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     ui.print(Status::new("Proving", &package.name));
     ui.warn("soundness of proof is not yet guaranteed by Stwo, use at your own risk");
 
-    let (pub_input_path, priv_input_path, proof_path) =
+    let (prover_input_path, proof_path) =
         resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?;
 
-    let prover_input = adapt_vm_output(pub_input_path.as_std_path(), priv_input_path.as_std_path())
-        .context("failed to adapt VM output")?;
+    let prover_input: ProverInput =
+        serde_json::from_str(fs::read_to_string(prover_input_path)?.as_str())?;
 
-    let config = ProverConfig {
-        display_components: args.prover.display_components,
-    };
-
-    let ProverParameters { pcs_config } = default_prod_prover_parameters();
-    let proof = prove_cairo::<Blake2sMerkleChannel>(prover_input, config, pcs_config)
-        .context("failed to generate proof")?;
+    create_and_serialize_proof(
+        prover_input,
+        false,
+        proof_path.as_std_path().to_path_buf(),
+        ProofFormat::Json,
+        None,
+    )?;
 
     ui.print(Status::new(
         "Saving proof to:",
         &display_path(&scarb_target_dir, &proof_path),
     ));
-
-    fs::write(proof_path.as_std_path(), serde_json::to_string(&proof)?)?;
 
     Ok(())
 }
@@ -112,7 +117,7 @@ fn resolve_paths_from_package(
     scarb_target_dir: &Utf8PathBuf,
     package_name: &str,
     execution_id: usize,
-) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
+) -> Result<(Utf8PathBuf, Utf8PathBuf)> {
     let execution_dir = scarb_target_dir
         .join("execute")
         .join(package_name)
@@ -138,15 +143,10 @@ fn resolve_paths_from_package(
     );
 
     // Get input files from execution directory
-    let pub_input_path = execution_dir.join("air_public_input.json");
-    let priv_input_path = execution_dir.join("air_private_input.json");
+    let prover_input_path = execution_dir.join("prover_input.json");
     ensure!(
-        pub_input_path.exists(),
-        format!("public input file does not exist at path: {pub_input_path}")
-    );
-    ensure!(
-        priv_input_path.exists(),
-        format!("private input file does not exist at path: {priv_input_path}")
+        prover_input_path.exists(),
+        format!("prover input file does not exist at path: {prover_input_path}")
     );
 
     // Create proof directory under this execution folder
@@ -154,7 +154,7 @@ fn resolve_paths_from_package(
     create_output_dir(proof_dir.as_std_path()).context("failed to create proof directory")?;
     let proof_path = proof_dir.join("proof.json");
 
-    Ok((pub_input_path, priv_input_path, proof_path))
+    Ok((prover_input_path, proof_path))
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {

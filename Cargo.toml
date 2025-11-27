@@ -44,6 +44,7 @@ async-trait = "0.1"
 axum = { version = "0.8.6", default-features = false, features = ["http1", "tokio", "tracing"] }
 bincode = "2.0.1"
 bumpalo = "=3.17.0"
+cairo-air = { git = "https://github.com/software-mansion-labs/stwo-cairo.git", rev = "686748b695a298cf2dc7b4004c8556b9f73bf8f1" }
 cairo-annotations = "0.7.0"
 cairo-lang-casm = "*"
 cairo-lang-compiler = "*"
@@ -73,7 +74,8 @@ cairo-lang-test-runner = "*"
 cairo-lang-utils = { version = "*", features = ["tracing"] }
 cairo-language-server = "*"
 cairo-lint = "*"
-cairo-vm = "3.0.0"
+cairo-program-runner-lib = { git = "https://github.com/software-mansion-labs/proving-utils.git", rev = "b3a9d7c5ef67eafe61db63d00a40d4f4d1979563" }
+cairo-vm = { version= "3.0.0", features = ["std"] }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 chrono = "0.4"
@@ -134,8 +136,8 @@ smallvec = "1"
 smol_str = { version = "=0.3.2", features = ["serde"] }
 snapbox = { version = "0.6", features = ["cmd", "path", "diff"] }
 starknet-core = "0.16.0"
-stwo-cairo-adapter = { git = "https://github.com/software-mansion-labs/stwo-cairo.git", rev = "e0f513d2c77f0b66735e30897f031f76aea13761" }
-stwo_cairo_prover = { git = "https://github.com/software-mansion-labs/stwo-cairo.git", rev = "e0f513d2c77f0b66735e30897f031f76aea13761" }
+stwo-cairo-adapter = { git = "https://github.com/software-mansion-labs/stwo-cairo.git", rev = "686748b695a298cf2dc7b4004c8556b9f73bf8f1" }
+stwo_cairo_prover = { git = "https://github.com/software-mansion-labs/stwo-cairo.git", rev = "686748b695a298cf2dc7b4004c8556b9f73bf8f1" }
 syn = { version = "2", default-features = false }
 tar = "0.4"
 target-triple = "1.0"

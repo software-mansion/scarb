@@ -3,7 +3,6 @@
 //! Extension CLI arguments datastructures.
 
 use anyhow::{Result, ensure};
-use cairo_vm::Felt252;
 use camino::Utf8PathBuf;
 use clap::{Parser, ValueEnum};
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
@@ -111,7 +110,7 @@ pub struct RunArgs {
     pub output: Option<OutputFormat>,
 
     /// Execution target.
-    #[arg(long, default_value = "standalone")]
+    #[arg(long, default_value = "bootloader")]
     pub target: ExecutionTarget,
 
     /// Whether to print the program outputs.
@@ -162,7 +161,7 @@ impl ToArgs for RunArgs {
 pub struct ProgramArguments {
     /// Serialized arguments to the executable function.
     #[arg(long, value_delimiter = ',')]
-    pub arguments: Vec<Felt252>,
+    pub arguments: Vec<String>,
 
     /// Serialized arguments to the executable function from a file.
     #[arg(long, conflicts_with = "arguments")]
@@ -191,12 +190,13 @@ impl ToArgs for ProgramArguments {
 }
 
 /// Output format for the execution
-#[derive(ValueEnum, Clone, Debug)]
+#[derive(ValueEnum, Clone, Debug, Default)]
 pub enum OutputFormat {
+    /// Output in standard format
+    #[default]
+    Standard,
     /// Output in Cairo PIE (Program Independent Execution) format
     CairoPie,
-    /// Output in standard format
-    Standard,
     /// No output
     None,
 }

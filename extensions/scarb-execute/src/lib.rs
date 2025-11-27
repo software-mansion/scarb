@@ -2,20 +2,25 @@
 #![deny(clippy::disallowed_methods)]
 
 use crate::hint_processor::ExecuteHintProcessor;
-use crate::output::{ExecutionOutput, ExecutionResources, ExecutionSummary};
+use crate::output::{
+    ExecutionOutput, ExecutionResources, ExecutionResourcesSource, ExecutionSummary,
+};
 use crate::profiler::{build_profiler_call_trace, get_profiler_tracked_resource};
 use anyhow::{Context, Result, anyhow, bail, ensure};
-use bincode::enc::write::Writer;
 use cairo_lang_executable::executable::{EntryPointKind, Executable};
 use cairo_lang_runner::casm_run::format_for_panic;
 use cairo_lang_runner::{Arg, CairoHintProcessor, build_hints_dict};
 use cairo_lang_utils::bigint::BigUintAsHex;
-use cairo_vm::cairo_run::CairoRunConfig;
+use cairo_program_runner_lib::utils::get_cairo_run_config;
+use cairo_program_runner_lib::{BootloaderHintProcessor, PROGRAM_INPUT, PROGRAM_OBJECT};
+use cairo_vm::Felt252;
 use cairo_vm::cairo_run::cairo_run_program;
+use cairo_vm::cairo_run::{CairoRunConfig, cairo_run_program_with_initial_scope};
+use cairo_vm::types::exec_scope::ExecutionScopes;
 use cairo_vm::types::layout_name::LayoutName;
 use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::MaybeRelocatable;
-use cairo_vm::{Felt252, cairo_run};
+use cairo_vm::vm::runners::cairo_runner::CairoRunner;
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
@@ -27,9 +32,11 @@ use scarb_oracle_hint_service::OracleHintService;
 use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars, WithManifestPath};
 use scarb_ui::components::Status;
+use serde_json::json;
 use std::env;
 use std::fs;
-use std::io::{self, Write};
+use std::io::{self};
+use stwo_cairo_adapter::adapter::adapt;
 
 mod hint_processor;
 mod profiler;
@@ -38,6 +45,8 @@ pub(crate) mod output;
 
 const MAX_ITERATION_COUNT: usize = 10000;
 const EXECUTION_ID_ENV: &str = "SCARB_EXECUTION_ID";
+
+const COMPILED_BOOTLOADER: &str = include_str!("../bootloaders/simple_bootloader.json");
 
 pub fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let metadata = MetadataCommand::new()
@@ -62,42 +71,53 @@ fn read_arguments(arguments: ProgramArguments) -> Result<Vec<Arg>> {
     }
 }
 
-pub fn execute(
-    metadata: &Metadata,
-    package: &PackageMetadata,
-    args: &ExecutionArgs,
-    ui: &Ui,
-) -> Result<()> {
-    let output = args
-        .run
-        .output
-        .as_ref()
-        .cloned()
-        .unwrap_or_else(|| OutputFormat::default_for_target(args.run.target.clone()));
-    output.validate(&args.run.target)?;
+fn execute_bootloader(
+    executable_path: Utf8PathBuf,
+    cairo_run_config: &CairoRunConfig,
+) -> Result<(CairoRunner, Box<dyn ExecutionResourcesSource>)> {
+    // Program input JSON for the bootloader.
+    let program_input = json!({
+        "single_page": true,
+        "tasks": [
+            {
+                "type": "Cairo1Executable",
+                "path": executable_path,
+                "program_hash_function": "blake",
+                "user_args_file": None::<Utf8PathBuf>,
+            }
+        ],
+    });
+    let program_input = serde_json::to_string(&program_input)?;
 
-    if !args.no_build {
-        let filter = PackagesFilter::generate_for::<Metadata>([package.clone()].iter());
-        ScarbCommand::new()
-            .arg("build")
-            .env("SCARB_PACKAGES_FILTER", filter.to_env())
-            .env("SCARB_UI_VERBOSITY", ui.verbosity().to_string())
-            .envs(args.features.clone().to_env_vars())
-            .run()?;
-    }
+    // Load bootloader program from embedded resource
+    let bootloader_program = Program::from_bytes(COMPILED_BOOTLOADER.as_bytes(), Some("main"))
+        .context("failed to load bootloader program")?;
 
-    let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
-    let scarb_build_dir = scarb_target_dir.join(env::var("SCARB_PROFILE")?);
+    let mut hint_processor = BootloaderHintProcessor::new();
 
-    let build_target = find_build_target(metadata, package, &args.build_target_args)?;
+    let mut exec_scopes = ExecutionScopes::new();
+    // Insert the program input into the execution scopes if exists
+    exec_scopes.insert_value(PROGRAM_INPUT, program_input);
+    // Insert the program object into the execution scopes
+    exec_scopes.insert_value(PROGRAM_OBJECT, bootloader_program.clone());
 
-    ui.print(Status::new("Executing", &package.name));
-    let executable_path = find_prebuilt_executable_path(
-        &scarb_build_dir,
-        format!("{}.executable.json", build_target.name),
+    // Run the program with the configured execution scopes and cairo_run_config
+    let runner = cairo_run_program_with_initial_scope(
+        &bootloader_program,
+        &cairo_run_config,
+        &mut hint_processor,
+        exec_scopes,
     )?;
-    let executable = load_prebuilt_executable(&executable_path)?;
 
+    Ok((runner, Box::new(hint_processor)))
+}
+
+fn execute_standalone(
+    executable_path: Utf8PathBuf,
+    executable: &Executable,
+    cairo_run_config: &CairoRunConfig,
+    arguments: ProgramArguments,
+) -> Result<(CairoRunner, Box<dyn ExecutionResourcesSource>)> {
     let data = executable
         .program
         .bytecode
@@ -108,47 +128,27 @@ pub fn execute(
 
     let (hints, string_to_hint) = build_hints_dict(&executable.program.hints);
 
-    let program = if args.run.target.is_standalone() {
-        let entrypoint = executable
-            .entrypoints
-            .iter()
-            .find(|e| matches!(e.kind, EntryPointKind::Standalone))
-            .with_context(|| "no `Standalone` entrypoint found")?;
-        Program::new_for_proof(
-            entrypoint.builtins.clone(),
-            data,
-            entrypoint.offset,
-            entrypoint.offset + 4,
-            hints,
-            Default::default(),
-            Default::default(),
-            vec![],
-            None,
-        )
-    } else {
-        let entrypoint = executable
-            .entrypoints
-            .iter()
-            .find(|e| matches!(e.kind, EntryPointKind::Bootloader))
-            .with_context(|| "no `Bootloader` entrypoint found")?;
-        Program::new(
-            entrypoint.builtins.clone(),
-            data,
-            Some(entrypoint.offset),
-            hints,
-            Default::default(),
-            Default::default(),
-            vec![],
-            None,
-        )
-    }
-    .with_context(|| "failed setting up program")?;
+    let entrypoint = executable
+        .entrypoints
+        .iter()
+        .find(|e| matches!(e.kind, EntryPointKind::Standalone))
+        .with_context(|| "no `Standalone` entrypoint found")?;
+    let program = Program::new_for_proof(
+        entrypoint.builtins.clone(),
+        data,
+        entrypoint.offset,
+        entrypoint.offset + 4,
+        hints,
+        Default::default(),
+        Default::default(),
+        vec![],
+        None,
+    )
+    .context("failed setting up program")?;
 
     let cairo_hint_processor = CairoHintProcessor {
         runner: None,
-        user_args: vec![vec![Arg::Array(read_arguments(
-            args.run.arguments.clone(),
-        )?)]],
+        user_args: vec![vec![Arg::Array(read_arguments(arguments)?)]],
         string_to_hint,
         starknet_state: Default::default(),
         run_resources: Default::default(),
@@ -163,24 +163,7 @@ pub fn execute(
         oracle_hint_service: OracleHintService::new(Some(executable_path.as_std_path())),
     };
 
-    let proof_mode = args.run.target.is_standalone();
-
-    let cairo_run_config = CairoRunConfig {
-        allow_missing_builtins: Some(true),
-        layout: LayoutName::all_cairo,
-        proof_mode,
-        secure_run: None,
-        relocate_mem: output.is_standard()
-            || args.run.print_resource_usage
-            || args.run.save_profiler_trace_data,
-        trace_enabled: output.is_standard()
-            || args.run.print_resource_usage
-            || args.run.save_profiler_trace_data,
-        disable_trace_padding: proof_mode,
-        ..Default::default()
-    };
-
-    let mut runner =
+    let runner =
         cairo_run_program(&program, &cairo_run_config, &mut hint_processor).map_err(|err| {
             if let Some(panic_data) = hint_processor.cairo_hint_processor.markers.last() {
                 anyhow!(format_for_panic(panic_data.iter().copied()))
@@ -189,9 +172,91 @@ pub fn execute(
             }
         })?;
 
+    Ok((runner, Box::new(hint_processor)))
+}
+
+fn build_cairo_run_config(
+    output: &OutputFormat,
+    args: &ExecutionArgs,
+) -> Result<CairoRunConfig<'static>> {
+    let relocate_mem =
+        output.is_standard() || args.run.print_resource_usage || args.run.save_profiler_trace_data;
+    if args.run.target.is_bootloader() {
+        Ok(get_cairo_run_config(
+            &None,
+            LayoutName::all_cairo_stwo,
+            true,
+            true,
+            true,
+            relocate_mem,
+        )?)
+    } else {
+        Ok(CairoRunConfig {
+            allow_missing_builtins: Some(true),
+            layout: LayoutName::all_cairo_stwo,
+            proof_mode: true,
+            disable_trace_padding: true,
+            fill_holes: true,
+            secure_run: None,
+            relocate_mem,
+            trace_enabled: output.is_standard()
+                || args.run.print_resource_usage
+                || args.run.save_profiler_trace_data,
+            ..Default::default()
+        })
+    }
+}
+
+pub fn execute(
+    metadata: &Metadata,
+    package: &PackageMetadata,
+    args: &ExecutionArgs,
+    ui: &Ui,
+) -> Result<()> {
+    let output = args.run.output.as_ref().cloned().unwrap_or_default();
+    output.validate(&args.run.target)?;
+
+    if !args.no_build {
+        let filter = PackagesFilter::generate_for::<Metadata>([package.clone()].iter());
+        ScarbCommand::new()
+            .arg("build")
+            .env("SCARB_PACKAGES_FILTER", filter.to_env())
+            .env("SCARB_UI_VERBOSITY", ui.verbosity().to_string())
+            .envs(args.features.clone().to_env_vars())
+            .run()?;
+    }
+
+    let scarb_target_dir = Utf8PathBuf::from(
+        env::var("SCARB_TARGET_DIR").context("`SCARB_TARGET_DIR` env var must be defined")?,
+    );
+    let scarb_build_dir = scarb_target_dir
+        .join(env::var("SCARB_PROFILE").context("`SCARB_PROFILE` env var must be defined")?);
+
+    let build_target = find_build_target(metadata, package, &args.build_target_args)?;
+
+    ui.print(Status::new("Executing", &package.name));
+    let executable_path = find_prebuilt_executable_path(
+        &scarb_build_dir,
+        format!("{}.executable.json", build_target.name),
+    )?;
+
+    let cairo_run_config = build_cairo_run_config(&output, args)?;
+    let executable = load_prebuilt_executable(&executable_path)?;
+
+    let (mut runner, hint_processor) = if args.run.target.is_bootloader() {
+        execute_bootloader(executable_path, &cairo_run_config)
+    } else {
+        execute_standalone(
+            executable_path,
+            &executable,
+            &cairo_run_config,
+            args.run.arguments.clone(),
+        )
+    }?;
+
     let execution_resources = (args.run.print_resource_usage || args.run.save_profiler_trace_data)
-        .then(|| ExecutionResources::try_new(&runner, hint_processor.cairo_hint_processor).ok())
-        .flatten();
+        .then(|| ExecutionResources::try_new(&runner, hint_processor))
+        .transpose()?;
 
     ui.print(ExecutionSummary {
         output: args
@@ -229,35 +294,9 @@ pub fn execute(
             &display_path(&scarb_target_dir, &execution_output_dir),
         ));
 
-        // Write trace file.
-        let trace_path = execution_output_dir.join("trace.bin");
-        let relocated_trace = runner
-            .relocated_trace
-            .as_ref()
-            .with_context(|| "trace not relocated")?;
-        let mut writer = FileWriter::new(3 * 1024 * 1024, &trace_path)?;
-        cairo_run::write_encoded_trace(relocated_trace, &mut writer)?;
-        writer.flush()?;
-
-        // Write memory file.
-        let memory_path = execution_output_dir.join("memory.bin");
-        let mut writer = FileWriter::new(5 * 1024 * 1024, &memory_path)?;
-        cairo_run::write_encoded_memory(&runner.relocated_memory, &mut writer)?;
-        writer.flush()?;
-
-        // Write air public input file.
-        let air_public_input_path = execution_output_dir.join("air_public_input.json");
-        let json = runner.get_air_public_input()?.serialize_json()?;
-        fs::write(air_public_input_path, json)?;
-
-        // Write air private input file.
-        let air_private_input_path = execution_output_dir.join("air_private_input.json");
-        let output_value = runner
-            .get_air_private_input()
-            .to_serializable(trace_path.to_string(), memory_path.to_string())
-            .serialize_json()
-            .with_context(|| "failed serializing private input")?;
-        fs::write(air_private_input_path, output_value)?;
+        let adapted = adapt(&runner)?;
+        let input_path = execution_output_dir.join("prover_input.json");
+        fs::write(input_path, serde_json::to_string(&adapted)?)?;
     }
 
     if args.run.save_profiler_trace_data {
@@ -424,6 +463,9 @@ fn find_prebuilt_executable_path(path: &Utf8Path, filename: String) -> Result<Ut
             help: run `scarb build` to compile the package
         "#}
     );
+    let file_path = file_path
+        .canonicalize_utf8()
+        .context("failed to canonicalize executable path")?;
     Ok(file_path)
 }
 
@@ -465,43 +507,4 @@ fn incremental_create_output_dir(path: &Utf8Path) -> Result<Utf8PathBuf> {
         };
     }
     bail!("failed to create output directory")
-}
-
-/// Writer implementation for a file.
-struct FileWriter {
-    buf_writer: io::BufWriter<fs::File>,
-    bytes_written: usize,
-}
-
-impl Writer for FileWriter {
-    fn write(&mut self, bytes: &[u8]) -> Result<(), bincode::error::EncodeError> {
-        self.buf_writer
-            .write_all(bytes)
-            .map_err(|e| bincode::error::EncodeError::Io {
-                inner: e,
-                index: self.bytes_written,
-            })?;
-
-        self.bytes_written += bytes.len();
-
-        Ok(())
-    }
-}
-
-impl FileWriter {
-    /// Create a new instance of `FileWriter` with the given file path.
-    fn new(capacity: usize, path: &Utf8Path) -> Result<Self> {
-        Ok(Self {
-            buf_writer: io::BufWriter::with_capacity(capacity, fs::File::create(path)?),
-            bytes_written: 0,
-        })
-    }
-
-    /// Flush the writer.
-    ///
-    /// Would automatically be called when the writer is dropped, but errors are ignored in that
-    /// case.
-    fn flush(&mut self) -> io::Result<()> {
-        self.buf_writer.flush()
-    }
 }

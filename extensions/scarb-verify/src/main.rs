@@ -2,6 +2,8 @@
 #![deny(clippy::disallowed_methods)]
 
 use anyhow::{Context, Result, ensure};
+use cairo_air::verifier::verify_cairo;
+use cairo_air::{CairoProof, PreProcessedTraceVariant};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use indoc::formatdoc;
@@ -13,10 +15,7 @@ use scarb_ui::{OutputFormat, Ui};
 use std::env;
 use std::fs;
 use std::process::ExitCode;
-use stwo_cairo_prover::cairo_air::CairoProof;
-use stwo_cairo_prover::cairo_air::prover::{ProverParameters, default_prod_prover_parameters};
-use stwo_cairo_prover::cairo_air::verifier::verify_cairo;
-use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::{
+use stwo_cairo_prover::stwo::core::vcs::blake2_merkle::{
     Blake2sMerkleChannel, Blake2sMerkleHasher,
 };
 
@@ -49,9 +48,8 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     };
 
     let proof = load_proof(&proof_path)?;
-    let ProverParameters { pcs_config } = default_prod_prover_parameters();
 
-    verify_cairo::<Blake2sMerkleChannel>(proof, pcs_config)
+    verify_cairo::<Blake2sMerkleChannel>(proof, PreProcessedTraceVariant::Canonical)
         .with_context(|| "failed to verify proof")?;
 
     ui.print(Status::new("Verified", "proof successfully"));
