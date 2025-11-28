@@ -7,7 +7,7 @@ use scarb_doc::docs_generation::common::OutputFilesExtension;
 use scarb_doc::docs_generation::markdown::{MarkdownContent, WorkspaceMarkdownBuilder};
 use scarb_doc::errors::{MetadataCommandError, PackagesSerializationError};
 use scarb_doc::metadata::get_target_dir;
-use scarb_doc::runner::{DocTestRunner, collect_runnable_code_blocks};
+use scarb_doc::runner::{DocTestRunner, ExecutionResults, collect_runnable_code_blocks};
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 use scarb_doc::{PackageInformation, generate_package_context, generate_package_information};
 use scarb_extensions_cli::doc::{Args, OutputFormat};
@@ -38,6 +38,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
     let workspace_root = metadata.workspace.root.clone();
+    let doc_tests_enabled = !args.no_run;
 
     if args.packages_filter.get_workspace() & !matches!(args.output_format, OutputFormat::Json) {
         let mut builder = WorkspaceMarkdownBuilder::new(args.output_format.into());
@@ -68,11 +69,24 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
             let ctx = generate_package_context(&metadata, pm, args.document_private_items)?;
             let info = generate_package_information(&ctx, ui.clone())?;
             print_diagnostics(&ui);
-            output.write(info)?;
+            let execution_results = doc_tests_enabled
+                .then(|| run_doc_tests(&info, &ui))
+                .transpose()?;
+            output.write(info, execution_results)?;
         }
         output.flush()?;
     }
     Ok(())
+}
+
+fn run_doc_tests(package: &PackageInformation, ui: &Ui) -> Result<ExecutionResults> {
+    let runnable_code_blocks = collect_runnable_code_blocks(&package.crate_);
+    if runnable_code_blocks.is_empty() {
+        Ok(Default::default())
+    } else {
+        let runner = DocTestRunner::new(&package.package_metadata, ui.clone());
+        runner.execute(&runnable_code_blocks)
+    }
 }
 
 pub enum OutputEmit {
@@ -126,7 +140,11 @@ impl OutputEmit {
         }
     }
 
-    pub fn write(&mut self, package: PackageInformation) -> Result<()> {
+    pub fn write(
+        &mut self,
+        package: PackageInformation,
+        execution_results: Option<ExecutionResults>,
+    ) -> Result<()> {
         match self {
             OutputEmit::Markdown {
                 output_dir,
@@ -135,21 +153,6 @@ impl OutputEmit {
                 ui,
                 files_extension,
             } => {
-                // TODO: refactor this
-                let execution_enabled = *build;
-                let execution_results = if execution_enabled {
-                    let runnable_code_blocks = collect_runnable_code_blocks(&package.crate_);
-                    if !runnable_code_blocks.is_empty() {
-                        let runner = DocTestRunner::new(&package.package_metadata, ui.clone());
-                        let execution_results = runner.execute(&runnable_code_blocks)?;
-                        Some(execution_results)
-                    } else {
-                        Some(vec![])
-                    }
-                } else {
-                    None
-                };
-
                 let content =
                     MarkdownContent::from_crate(&package, *files_extension, execution_results)?;
                 output_markdown(

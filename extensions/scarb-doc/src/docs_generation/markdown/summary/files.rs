@@ -6,7 +6,6 @@ use crate::docs_generation::markdown::traits::{
 };
 use crate::docs_generation::markdown::{BASE_HEADER_LEVEL, BASE_MODULE_CHAPTER_PREFIX};
 use crate::docs_generation::{DocItem, TopLevelItems, common};
-use crate::runner::ExecutionResult;
 use crate::types::module_type::Module;
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, MacroDeclaration,
@@ -39,7 +38,6 @@ pub fn generate_modules_summary_files(
     module: &Module,
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
-    execution_results: Option<Vec<ExecutionResult>>,
 ) -> Result<Vec<(String, String)>> {
     let mut top_level_items = TopLevelItems::default();
     let Module {
@@ -80,23 +78,14 @@ pub fn generate_modules_summary_files(
     )?;
 
     doc_files.extend::<Vec<(String, String)>>(
-        generate_doc_files_for_module_items(
-            &top_level_items,
-            context,
-            summary_index_map,
-            execution_results.clone(),
-        )?
+        generate_doc_files_for_module_items(&top_level_items, context, summary_index_map)?
         .to_owned(),
     );
 
     if !top_level_items.modules.is_empty() {
         for submodule in module.submodules.iter() {
-            let sub_summaries = &generate_modules_summary_files(
-                submodule,
-                context,
-                summary_index_map,
-                execution_results.clone(),
-            )?;
+            let sub_summaries =
+                &generate_modules_summary_files(submodule, context, summary_index_map)?;
             doc_files.extend::<Vec<(String, String)>>(sub_summaries.to_owned());
         }
     }
@@ -107,7 +96,6 @@ pub fn generate_foreign_crates_summary_files(
     foreign_modules: &Vec<Module>,
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
-    execution_results: Option<Vec<ExecutionResult>>,
 ) -> Result<Vec<(String, String)>> {
     let mut summary_files = vec![];
 
@@ -119,15 +107,10 @@ pub fn generate_foreign_crates_summary_files(
                 BASE_HEADER_LEVEL,
                 None,
                 summary_index_map,
-                execution_results.clone(),
             )?,
         )]);
-        let module_item_summaries = &generate_modules_summary_files(
-            module,
-            context,
-            summary_index_map,
-            execution_results.clone(),
-        )?;
+        let module_item_summaries =
+            &generate_modules_summary_files(module, context, summary_index_map)?;
         summary_files.extend(module_item_summaries.to_owned());
     }
     Ok(summary_files)
@@ -167,80 +150,67 @@ pub fn generate_doc_files_for_module_items(
     top_level_items: &TopLevelItems,
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
-    execution_results: Option<Vec<ExecutionResult>>,
 ) -> Result<Vec<(String, String)>> {
     Ok(chain!(
         generate_top_level_docs_contents(
             &top_level_items.modules,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
         generate_top_level_docs_contents(
             &top_level_items.constants,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
         generate_top_level_docs_contents(
             &top_level_items.free_functions,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
         generate_top_level_docs_contents(
             &top_level_items.structs,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
         generate_top_level_docs_contents(
             &top_level_items.enums,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
         generate_top_level_docs_contents(
             &top_level_items.type_aliases,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
         generate_top_level_docs_contents(
             &top_level_items.impl_aliases,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
         generate_top_level_docs_contents(
             &top_level_items.traits,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
         generate_top_level_docs_contents(
             &top_level_items.impls,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
         generate_top_level_docs_contents(
             &top_level_items.extern_types,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
         generate_top_level_docs_contents(
             &top_level_items.extern_functions,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
         generate_top_level_docs_contents(
             &top_level_items.macro_declarations,
             context,
             summary_index_map,
-            execution_results.clone()
         )?,
     )
     .collect::<Vec<(String, String)>>())
@@ -250,7 +220,6 @@ fn generate_top_level_docs_contents(
     items: &[&impl TopLevelMarkdownDocItem],
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
-    execution_results: Option<Vec<ExecutionResult>>,
 ) -> Result<Vec<(Filename, String)>> {
     items
         .iter()
@@ -260,7 +229,6 @@ fn generate_top_level_docs_contents(
                 BASE_HEADER_LEVEL,
                 None,
                 summary_index_map,
-                execution_results.clone(),
             )
             .map(|markdown| (item.filename(context.files_extension), markdown))
         })

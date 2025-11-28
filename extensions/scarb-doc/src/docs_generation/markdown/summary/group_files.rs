@@ -8,7 +8,6 @@ use crate::docs_generation::markdown::summary::files::{
 use crate::docs_generation::markdown::traits::generate_markdown_table_summary_for_top_level_subitems;
 
 use crate::docs_generation::common::SummaryIndexMap;
-use crate::runner::ExecutionResult;
 use crate::types::groups::Group;
 use itertools::Itertools;
 
@@ -29,7 +28,6 @@ pub fn generate_global_groups_summary_files(
     groups: &[Group],
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
-    execution_results: Option<Vec<ExecutionResult>>,
 ) -> anyhow::Result<Vec<(String, String)>> {
     let mut doc_files: Vec<(String, String)> = Vec::new();
 
@@ -70,13 +68,8 @@ pub fn generate_global_groups_summary_files(
             )?);
 
             doc_files.extend(
-                generate_doc_files_for_module_items(
-                    &top_level_items,
-                    context,
-                    summary_index_map,
-                    execution_results.clone(),
-                )?
-                .to_owned(),
+                generate_doc_files_for_module_items(&top_level_items, context, summary_index_map)?
+                    .to_owned(),
             );
 
             doc_files.push((
@@ -86,12 +79,8 @@ pub fn generate_global_groups_summary_files(
 
             if !top_level_items.modules.is_empty() {
                 for submodule in group.submodules.iter() {
-                    let sub_summaries = &generate_modules_summary_files(
-                        submodule,
-                        context,
-                        summary_index_map,
-                        execution_results.clone(),
-                    )?;
+                    let sub_summaries =
+                        &generate_modules_summary_files(submodule, context, summary_index_map)?;
                     doc_files.extend::<Vec<(String, String)>>(sub_summaries.to_owned());
                 }
             };

@@ -14,7 +14,7 @@ pub mod traits;
 use crate::docs_generation::common::{
     GeneratedFile, OutputFilesExtension, SummaryIndexMap, SummaryListItem,
 };
-use crate::runner::ExecutionResult;
+use crate::runner::ExecutionResults;
 use std::ops::Add;
 
 const BASE_HEADER_LEVEL: usize = 1;
@@ -42,7 +42,7 @@ impl MarkdownContent {
     pub fn from_crate(
         package_information: &PackageInformation,
         format: OutputFilesExtension,
-        execution_results: Option<Vec<ExecutionResult>>,
+        execution_results: Option<ExecutionResults>,
     ) -> Result<Self> {
         let (summary, doc_files) =
             generate_summary_file_content(&package_information.crate_, format, execution_results)?;

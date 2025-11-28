@@ -45,6 +45,10 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub build: bool,
 
+    /// Do not run doc tests.
+    #[arg(long, default_value_t = false)]
+    pub no_run: bool,
+
     /// Specifies features to enable.
     #[command(flatten)]
     pub features: FeaturesSpec,

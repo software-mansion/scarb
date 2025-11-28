@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::code_blocks::{CodeBlock, CodeBlockId};
 use crate::types::crate_type::Crate;
 use crate::types::module_type::Module;
@@ -17,16 +18,17 @@ use scarb_ui::components::Status;
 use std::fs;
 use tempfile::tempdir;
 
+pub type ExecutionResults = HashMap<CodeBlockId, ExecutionOutput>;
+
 #[derive(Debug, Clone)]
-pub struct ExecutionResult {
-    pub code_block_id: CodeBlockId,
+pub struct ExecutionOutput {
     pub print_output: String,
     pub program_output: String,
 }
 
-impl ExecutionResult {
+impl ExecutionOutput {
     /// Formats the execution result as markdown with code blocks.
-    pub fn format_as_markdown(&self) -> String {
+    pub fn as_markdown(&self) -> String {
         let mut output = String::new();
         if !self.print_output.is_empty() {
             output.push_str("\nOutput:\n```\n");
@@ -60,16 +62,16 @@ impl<'a> DocTestRunner<'a> {
         }
     }
 
-    pub fn execute(&self, code_blocks: &[CodeBlock]) -> Result<Vec<ExecutionResult>> {
-        let mut results = Vec::new();
+    pub fn execute(&self, code_blocks: &[CodeBlock]) -> Result<ExecutionResults> {
+        let mut results = HashMap::new();
         for (index, code_block) in code_blocks.iter().enumerate() {
             let result = self.execute_single(code_block, index)?;
-            results.push(result);
+            results.insert(code_block.id.clone(), result);
         }
         Ok(results)
     }
 
-    fn execute_single(&self, code_block: &CodeBlock, index: usize) -> Result<ExecutionResult> {
+    fn execute_single(&self, code_block: &CodeBlock, index: usize) -> Result<ExecutionOutput> {
         let temp_dir =
             tempdir().context("failed to create temporary workspace for doc snippet execution")?;
         let project_dir = Utf8PathBuf::from_path_buf(temp_dir.path().to_path_buf())
@@ -80,8 +82,7 @@ impl<'a> DocTestRunner<'a> {
 
         let (print_output, program_output) = self.run_execute(&project_dir, index, code_block)?;
 
-        Ok(ExecutionResult {
-            code_block_id: code_block.id.clone(),
+        Ok(ExecutionOutput {
             print_output,
             program_output,
         })
@@ -115,7 +116,8 @@ impl<'a> DocTestRunner<'a> {
 
             [executable]
         "#};
-        fs::write(dir.join("Scarb.toml"), manifest).context("failed to write manifest for example")?;
+        fs::write(dir.join("Scarb.toml"), manifest)
+            .context("failed to write manifest for example")?;
         Ok(())
     }
 
@@ -143,8 +145,7 @@ impl<'a> DocTestRunner<'a> {
             {body}
             }}
         "# };
-        fs::write(src_dir.join("lib.cairo"), lib_cairo)
-            .context("failed to write lib.cairo")?;
+        fs::write(src_dir.join("lib.cairo"), lib_cairo).context("failed to write lib.cairo")?;
         Ok(())
     }
 
