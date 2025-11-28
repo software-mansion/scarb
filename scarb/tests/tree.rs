@@ -1,7 +1,6 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use indoc::indoc;
-
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
@@ -511,4 +510,99 @@ fn no_dedupe_cycle() {
             └── dep1 v0.1.0 ([..])
                 └── root v0.1.0 ([..]) (*)
         "#});
+}
+
+#[test]
+fn workspace_exclude() {
+    let t = TempDir::new().unwrap().child("test_workspace");
+    let pkg1 = t.child("first");
+    ProjectBuilder::start().name("first").build(&pkg1);
+
+    let pkg2 = t.child("second");
+    ProjectBuilder::start().name("second").build(&pkg2);
+
+    let root = ProjectBuilder::start().name("root");
+
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .package(root)
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("tree")
+        .arg("--workspace")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            first v1.0.0 ([..])
+
+            root v1.0.0 ([..])
+
+            second v1.0.0 ([..])
+        "#});
+
+    Scarb::quick_command()
+        .arg("tree")
+        .arg("--workspace")
+        .arg("--exclude")
+        .arg("second")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            first v1.0.0 ([..])
+
+            root v1.0.0 ([..])
+        "#});
+
+    Scarb::quick_command()
+        .arg("tree")
+        .arg("--workspace")
+        .arg("--exclude=second, first")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            root v1.0.0 ([..])
+        "#});
+}
+
+#[test]
+fn exclude_requires_workspace() {
+    let t = TempDir::new().unwrap();
+    Scarb::quick_command()
+        .arg("tree")
+        .arg("--exclude=xyz")
+        .current_dir(&t)
+        .assert()
+        .stderr_eq(indoc! {r#"
+            error: the following required arguments were not provided:
+              --workspace
+
+            Usage: scarb tree --workspace --exclude <SPEC>
+
+            For more information, try '--help'.
+        "#})
+        .failure();
+}
+
+#[test]
+fn exclude_conflicts_with_package() {
+    let t = TempDir::new().unwrap();
+    Scarb::quick_command()
+        .arg("tree")
+        .arg("--exclude=xyz")
+        .arg("--package=abc")
+        .current_dir(&t)
+        .assert()
+        .stderr_eq(indoc! {r#"
+            error: the argument '--exclude <SPEC>' cannot be used with '--package <SPEC>'
+
+            Usage: scarb tree --workspace --exclude <SPEC>
+
+            For more information, try '--help'.
+        "#})
+        .failure();
 }

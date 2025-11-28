@@ -37,6 +37,15 @@ pub struct PackagesFilter {
     /// Run for all packages in the workspace.
     #[arg(short, long, conflicts_with = "package")]
     workspace: bool,
+    /// Exclude packages from the command.
+    #[arg(
+        long,
+        value_delimiter = PACKAGES_FILTER_DELIMITER,
+        value_name = "SPEC",
+        requires = "workspace",
+        conflicts_with = "package"
+        )]
+    exclude: Vec<String>,
 }
 
 /// [`clap`] structured arguments that provide package selection.
@@ -67,6 +76,15 @@ pub struct PackagesFilterLong {
     /// Run for all packages in the workspace.
     #[arg(long, conflicts_with = "package")]
     workspace: bool,
+    /// Exclude packages from the command.
+    #[arg(
+        long,
+        value_delimiter = PACKAGES_FILTER_DELIMITER,
+        value_name = "SPEC",
+        requires = "workspace",
+        conflicts_with = "package"
+    )]
+    exclude: Vec<String>,
 }
 
 impl PackagesFilter {
@@ -96,13 +114,17 @@ impl PackagesFilter {
                 help: use the `--package` option to specify the package"
             );
         }
-
+        if !self.exclude.is_empty() {
+            bail!(
+                "`--exclude` is not supported in a context that requires a single package selection"
+            );
+        }
         let specs_filter: String = specs
             .iter()
             .map(|s| s.to_string())
             .collect::<Vec<_>>()
             .join(PACKAGES_FILTER_DELIMITER.to_string().as_str());
-        let found = Self::do_match_all::<S>(specs, self.workspace, members)?;
+        let found = Self::do_match_all::<S>(specs, vec![], self.workspace, members)?;
 
         ensure!(
             found.len() <= 1,
@@ -118,6 +140,7 @@ impl PackagesFilter {
     /// Returns an error if no packages were found.
     pub fn match_many<S: PackagesSource>(&self, source: &S) -> Result<Vec<S::Package>> {
         let specs = self.package_specs()?;
+        let exclude = self.exclude_specs()?;
 
         // Check for current package.
         // If none (in case of virtual workspace), run for all members.
@@ -130,7 +153,7 @@ impl PackagesFilter {
         }
 
         let members = source.members();
-        Self::do_match_all::<S>(specs, self.workspace, members)
+        Self::do_match_all::<S>(specs, exclude, self.workspace, members)
     }
 
     /// Generate a new [`PackagesFilter`] for the given slice  of packages.
@@ -149,6 +172,7 @@ impl PackagesFilter {
         Self {
             package: names,
             workspace: false,
+            exclude: vec![],
         }
     }
 
@@ -161,17 +185,24 @@ impl PackagesFilter {
             .into()
     }
 
-    fn package_specs(&self) -> Result<Vec<Spec<'_>>> {
-        let specs = self
-            .package
-            .iter()
-            .map(|s| Spec::parse(s))
-            .collect::<Result<HashSet<Spec<'_>>>>()?;
+    fn specs_from<'a>(strings: impl IntoIterator<Item = &'a str>) -> Result<Vec<Spec<'a>>> {
+        let specs = strings
+            .into_iter()
+            .map(Spec::parse)
+            .collect::<Result<HashSet<Spec<'a>>>>()?;
         if specs.iter().any(|s| matches!(s, Spec::All)) {
             Ok(vec![Spec::All])
         } else {
             Ok(specs.into_iter().collect())
         }
+    }
+
+    fn package_specs(&self) -> Result<Vec<Spec<'_>>> {
+        Self::specs_from(self.package.iter().map(|s| s.as_str()))
+    }
+
+    fn exclude_specs(&self) -> Result<Vec<Spec<'_>>> {
+        Self::specs_from(self.exclude.iter().map(|s| s.as_str()))
     }
 
     fn current_package<S: PackagesSource>(&self, source: &S) -> Result<Option<S::Package>> {
@@ -188,6 +219,7 @@ impl PackagesFilter {
 
     fn do_match_all<S: PackagesSource>(
         specs: Vec<Spec<'_>>,
+        exclude: Vec<Spec<'_>>,
         workspace: bool,
         members: Vec<S::Package>,
     ) -> Result<Vec<S::Package>> {
@@ -199,6 +231,15 @@ impl PackagesFilter {
                 members.clone().into_iter(),
             )?);
         }
+
+        if !exclude.is_empty() {
+            packages.retain(|p| {
+                exclude
+                    .iter()
+                    .all(|spec| !spec.matches(S::package_name_of(p)))
+            });
+        }
+
         packages.dedup_by_key(|p| S::package_name_of(p).to_string());
         Ok(packages)
     }
@@ -242,6 +283,7 @@ impl PackagesFilterLong {
         PackagesFilter {
             package: self.package,
             workspace: self.workspace,
+            exclude: self.exclude,
         }
     }
 }
@@ -453,6 +495,7 @@ mod tests {
         let filter = PackagesFilter {
             package: vec!["first".into()],
             workspace: false,
+            exclude: vec![],
         };
         let packages = filter.match_many(&mock).unwrap();
         let filter = PackagesFilter::generate_for::<MockSource>(packages.iter());
@@ -462,6 +505,7 @@ mod tests {
         let filter = PackagesFilter {
             package: vec!["*".into()],
             workspace: false,
+            exclude: vec![],
         };
         let packages = filter.match_many(&mock).unwrap();
         let filter = PackagesFilter::generate_for::<MockSource>(packages.iter());
@@ -476,6 +520,7 @@ mod tests {
         let filter = PackagesFilter {
             package: vec!["second".into()],
             workspace: false,
+            exclude: vec![],
         };
         let packages = filter.match_many(&mock).unwrap();
         assert_eq!(packages.len(), 1);
@@ -492,6 +537,7 @@ mod tests {
         let filter = PackagesFilter {
             package: vec!["first".into(), "second".into()],
             workspace: false,
+            exclude: vec![],
         };
         let packages = filter.match_many(&mock).unwrap();
         assert_eq!(packages.len(), 2);
@@ -508,6 +554,7 @@ mod tests {
         let filter = PackagesFilter {
             package: vec!["pack*".into()],
             workspace: false,
+            exclude: vec![],
         };
         let packages = filter.match_many(&mock).unwrap();
         assert_eq!(packages.len(), 2);
@@ -524,6 +571,7 @@ mod tests {
         let filter = PackagesFilter {
             package: vec!["pack*".into(), "second".into()],
             workspace: false,
+            exclude: vec![],
         };
         let packages = filter.match_many(&mock).unwrap();
         assert_eq!(packages.len(), 3);
@@ -539,6 +587,7 @@ mod tests {
         let filter = PackagesFilter {
             package: vec!["pack*".into()],
             workspace: false,
+            exclude: vec![],
         };
         let package = filter.match_one(&mock);
         assert!(package.is_err());
@@ -552,6 +601,7 @@ mod tests {
         let filter = PackagesFilter {
             package: vec!["*".into()],
             workspace: false,
+            exclude: vec![],
         };
         let package = filter.match_one(&mock).unwrap();
         assert_eq!(package.name, "package_1");
@@ -566,6 +616,7 @@ mod tests {
         let filter = PackagesFilter {
             package: vec!["*".into()],
             workspace: true,
+            exclude: vec![],
         };
         let packages = filter.match_many(&mock).unwrap();
         assert_eq!(packages.len(), 2);
@@ -582,10 +633,49 @@ mod tests {
         let filter = PackagesFilterLong {
             package: vec!["second".into()],
             workspace: false,
+            exclude: vec![],
         };
         let filter: PackagesFilter = filter.into();
 
         let package = filter.match_one(&mock).unwrap();
         assert_eq!(package.name, "second");
+    }
+
+    #[test]
+    fn can_exclude() {
+        let names = vec!["package_1", "package_2"];
+        let packages = mock_packages(names.clone());
+        let mock = MockSource::new(packages.clone());
+        let mock = mock.with_runtime_manifest(packages[0].manifest_path.clone());
+        let filter = PackagesFilter {
+            package: vec!["*".into()],
+            workspace: true,
+            exclude: vec!["package_1".into()],
+        };
+        let packages = filter.match_many(&mock).unwrap();
+        assert_eq!(packages.len(), 1);
+        cmp_no_order(
+            vec!["package_2"],
+            packages.into_iter().map(|p| p.name).collect(),
+        );
+    }
+
+    #[test]
+    fn can_exclude_multiple() {
+        let names = vec!["package_1", "package_2", "package_3"];
+        let packages = mock_packages(names.clone());
+        let mock = MockSource::new(packages.clone());
+        let mock = mock.with_runtime_manifest(packages[0].manifest_path.clone());
+        let filter = PackagesFilter {
+            package: vec!["*".into()],
+            workspace: true,
+            exclude: vec!["package_1".into(), "package_2".into()],
+        };
+        let packages = filter.match_many(&mock).unwrap();
+        assert_eq!(packages.len(), 1);
+        cmp_no_order(
+            vec!["package_3"],
+            packages.into_iter().map(|p| p.name).collect(),
+        );
     }
 }
