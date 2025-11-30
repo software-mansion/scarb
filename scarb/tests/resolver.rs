@@ -63,3 +63,29 @@ fn issue_600_git() {
             [..] Updating git repository [..]
         "#});
 }
+
+#[test]
+fn no_core_package_with_yes_core_deps() {
+    let t = TempDir::new().unwrap();
+
+    let dep1 = t.child("dep1");
+    ProjectBuilder::start().name("dep1").build(&dep1);
+
+    ProjectBuilder::start()
+        .name("core")
+        .version("1.0.0")
+        .no_core()
+        .dep("dep1", &dep1)
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: found dependencies on the same package `core` coming from incompatible sources:
+            source 1: [..]Scarb.toml
+            source 2: std
+        "#});
+}
