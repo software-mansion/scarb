@@ -23,6 +23,7 @@ pub struct ProjectBuilder {
     version: Version,
     edition: Option<String>,
     cairo_version: Option<Version>,
+    no_core: bool,
     src: HashMap<Utf8PathBuf, Vec<u8>>,
     deps: Vec<(String, Value)>,
     dev_deps: Vec<(String, Value)>,
@@ -42,6 +43,7 @@ impl ProjectBuilder {
             version: Version::new(1, n, 0),
             edition: "2024_07".to_string().into(),
             cairo_version: None,
+            no_core: false,
             src: HashMap::from_iter([(
                 Utf8PathBuf::from("src/lib.cairo"),
                 format!(r#"fn f{n}() -> felt252 {{ {n} }}"#).into(),
@@ -71,6 +73,11 @@ impl ProjectBuilder {
 
     pub fn no_edition(mut self) -> Self {
         self.edition = None;
+        self
+    }
+
+    pub fn no_core(mut self) -> Self {
+        self.no_core = true;
         self
     }
 
@@ -159,6 +166,9 @@ impl ProjectBuilder {
         }
         if let Some(cairo_version) = self.cairo_version.as_ref() {
             doc["package"]["cairo-version"] = Item::Value(Value::from(cairo_version.to_string()));
+        }
+        if self.no_core {
+            doc["package"]["no-core"] = Item::Value(Value::from(true));
         }
         let mut manifest = doc.to_string();
         if !self.manifest_package_extra.is_empty() {
