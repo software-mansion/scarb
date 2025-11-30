@@ -222,7 +222,9 @@ fn scarb_resolver(
         Ok(solution.into())
     };
     let result = result();
-    solution_tx.send(result).unwrap();
+    solution_tx
+        .send(result)
+        .expect("failed to send workspace solution");
 }
 
 fn format_error(err: PubGrubError<PubGrubDependencyProvider>) -> Error {
