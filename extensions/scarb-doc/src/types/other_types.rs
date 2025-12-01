@@ -1,8 +1,8 @@
 use anyhow::Result;
 
 use crate::attributes::find_groups_from_attributes;
-use crate::code_blocks::{CodeBlock, collect_code_blocks_from_tokens};
 use crate::db::ScarbDocDatabase;
+use crate::doc_test::code_blocks::{CodeBlock, collect_code_blocks_from_tokens};
 use crate::docs_generation::markdown::context::IncludedItems;
 use crate::docs_generation::markdown::traits::WithPath;
 use crate::types::item_data::{ItemData, SubItemData};

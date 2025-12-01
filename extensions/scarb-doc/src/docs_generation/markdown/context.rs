@@ -1,8 +1,8 @@
+use crate::doc_test::runner::ExecutionResults;
 use crate::docs_generation::common::{OutputFilesExtension, SummaryIndexMap};
 use crate::docs_generation::markdown::SUMMARY_FILENAME;
 use crate::docs_generation::markdown::traits::WithPath;
 use crate::location_links::DocLocationLink;
-use crate::runner::ExecutionResults;
 use crate::types::crate_type::Crate;
 use cairo_lang_defs::ids::{ImplItemId, LookupItemId, TraitItemId};
 use cairo_lang_doc::documentable_item::DocumentableItemId;

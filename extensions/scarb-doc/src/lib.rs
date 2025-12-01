@@ -26,14 +26,13 @@ use scarb_ui::Ui;
 use serde::Serialize;
 
 pub mod attributes;
-pub mod code_blocks;
 pub mod db;
 pub mod diagnostics;
+pub mod doc_test;
 pub mod docs_generation;
 pub mod errors;
 pub mod location_links;
 pub mod metadata;
-pub mod runner;
 pub mod types;
 pub mod versioned_json_output;
 

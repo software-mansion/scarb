@@ -1,4 +1,4 @@
-use crate::runner::{ExecutionOutcome, RunStrategy};
+use crate::doc_test::runner::{ExecutionOutcome, RunStrategy};
 use crate::types::crate_type::Crate;
 use crate::types::module_type::Module;
 use crate::types::other_types::ItemData;
