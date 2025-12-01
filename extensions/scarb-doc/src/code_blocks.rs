@@ -65,7 +65,7 @@ impl CodeBlock {
         if self.attributes.contains(&CodeBlockAttribute::Cairo) {
             return true;
         }
-        // Assume unknown attributes imply non-Cairo code.
+        // TODO: Assume unknown attributes imply non-Cairo code.
         // !self.attributes.iter().any(|attr| matches!(attr, CodeBlockAttribute::Other(_)))
         false
     }
@@ -75,29 +75,33 @@ impl CodeBlock {
             return RunStrategy::Ignore;
         }
         // TODO: remove this later on
-        if !self.is_cairo() {
+        if !self.is_cairo() || !self.attributes.contains(&CodeBlockAttribute::Runnable) {
             return RunStrategy::Ignore;
         }
-        if self.attributes.contains(&CodeBlockAttribute::NoRun) {
-            return RunStrategy::Build;
+        match self.expected_outcome() {
+            ExecutionOutcome::None => RunStrategy::Ignore,
+            ExecutionOutcome::BuildSuccess => RunStrategy::Build,
+            ExecutionOutcome::RunSuccess => RunStrategy::Execute,
+            ExecutionOutcome::CompileError => RunStrategy::Build,
+            ExecutionOutcome::RuntimeError => RunStrategy::Execute,
         }
-        if self.attributes.contains(&CodeBlockAttribute::Runnable) {
-            return RunStrategy::Run;
-        }
-        // TODO: Default to run unless specified otherwise
-        RunStrategy::Ignore
     }
 
-    // TODO: implement building examples without running them
-    #[allow(unused)]
-    pub fn should_build(&self) -> bool {
-        self.is_cairo() && !self.attributes.contains(&CodeBlockAttribute::Ignore)
     /// Returns the expected execution outcome based on attributes.
     pub fn expected_outcome(&self) -> ExecutionOutcome {
         if self.attributes.contains(&CodeBlockAttribute::Ignore) {
             return ExecutionOutcome::None;
         }
-        ExecutionOutcome::Success
+        if self.attributes.contains(&CodeBlockAttribute::CompileFail) {
+            return ExecutionOutcome::CompileError;
+        }
+        if self.attributes.contains(&CodeBlockAttribute::ShouldPanic) {
+            return ExecutionOutcome::RuntimeError;
+        }
+        if self.attributes.contains(&CodeBlockAttribute::NoRun) {
+            return ExecutionOutcome::BuildSuccess;
+        }
+        ExecutionOutcome::RunSuccess
     }
 
     fn parse_attributes(info_string: &str) -> Vec<CodeBlockAttribute> {
