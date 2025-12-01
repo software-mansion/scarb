@@ -11,10 +11,10 @@ mod book_toml;
 pub mod context;
 mod summary;
 pub mod traits;
+use crate::doc_test::runner::ExecutionResults;
 use crate::docs_generation::common::{
     GeneratedFile, OutputFilesExtension, SummaryIndexMap, SummaryListItem,
 };
-use crate::runner::ExecutionResults;
 use std::ops::Add;
 
 const BASE_HEADER_LEVEL: usize = 1;

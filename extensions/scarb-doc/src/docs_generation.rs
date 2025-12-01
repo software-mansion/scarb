@@ -1,4 +1,4 @@
-use crate::code_blocks::CodeBlock;
+use crate::doc_test::code_blocks::CodeBlock;
 use crate::location_links::DocLocationLink;
 use crate::types::module_type::Module;
 use crate::types::other_types::{

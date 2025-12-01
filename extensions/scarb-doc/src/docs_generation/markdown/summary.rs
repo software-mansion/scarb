@@ -2,6 +2,7 @@ pub mod content;
 pub mod files;
 pub mod group_files;
 
+use crate::doc_test::runner::ExecutionResults;
 use crate::docs_generation::common::OutputFilesExtension;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::summary::content::{
@@ -13,7 +14,6 @@ use crate::docs_generation::markdown::summary::files::{
 };
 use crate::docs_generation::markdown::traits::{MarkdownDocItem, TopLevelMarkdownDocItem};
 use crate::docs_generation::markdown::{BASE_HEADER_LEVEL, SummaryIndexMap};
-use crate::runner::ExecutionResults;
 use crate::types::crate_type::Crate;
 use anyhow::Result;
 use group_files::generate_global_groups_summary_files;
