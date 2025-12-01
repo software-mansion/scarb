@@ -19,7 +19,7 @@ jobs:
       DEV_REGISTRY_URL: https://scarbs.dev/
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: software-mansion/setup-scarb@v1
         with:
