@@ -182,27 +182,32 @@ pub trait MarkdownDocItem: DocItem {
     }
 
     fn get_documentation(&self, context: &MarkdownGenerationContext) -> Option<String> {
+        let execution_results_map = context
+            .execution_results()
+            .map(|results| {
+                self.code_blocks()
+                    .iter()
+                    .filter_map(|block| {
+                        results
+                            .get(&block.id)
+                            .map(|res| (block.id.close_token_idx, res))
+                    })
+                    .collect::<HashMap<_, _>>()
+            })
+            .unwrap_or_default();
         self.doc().as_ref().map(|doc_tokens| {
-            // TODO: filter out execution results that do not belong to this item
             doc_tokens
                 .iter()
                 .enumerate()
-                .flat_map(|(idx, doc_token)| match doc_token {
+                .map(|(idx, token)| match token {
                     DocumentationCommentToken::Content(content) => {
-                        // Check if this token is the closing fence of a code block that has execution results
-                        if let Some(cb) = self
-                            .code_blocks()
-                            .iter()
-                            .find(|cb| cb.id.close_token_idx == idx)
-                            && let Some(results) = context.execution_results()
-                            && let Some(res) = results.get(&cb.id)
-                        {
-                            return vec![content.clone(), res.as_markdown()];
+                        match execution_results_map.get(&idx) {
+                            Some(res) => format!("{}{}", content, res.as_markdown()),
+                            None => content.clone(),
                         }
-                        vec![content.clone()]
                     }
                     DocumentationCommentToken::Link(link) => {
-                        vec![self.format_link_to_path(link, context)]
+                        self.format_link_to_path(link, context)
                     }
                 })
                 .join("")
