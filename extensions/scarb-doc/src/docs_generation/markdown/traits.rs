@@ -236,13 +236,7 @@ where
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        generate_markdown_from_item_data(
-            self,
-            context,
-            header_level,
-            None,
-            summary_index_map,
-        )
+        generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)
     }
 }
 
@@ -254,13 +248,8 @@ impl<'db> MarkdownDocItem for Enum<'db> {
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(
-            self,
-            context,
-            header_level,
-            None,
-            summary_index_map,
-        )?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
         markdown += &generate_markdown_for_subitems(
             &self.variants,
@@ -282,13 +271,8 @@ impl<'db> MarkdownDocItem for Impl<'db> {
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(
-            self,
-            context,
-            header_level,
-            None,
-            summary_index_map,
-        )?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
         markdown += &generate_markdown_for_subitems(
@@ -411,13 +395,8 @@ impl<'db> MarkdownDocItem for Module<'db> {
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(
-            self,
-            context,
-            header_level,
-            None,
-            summary_index_map,
-        )?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
 
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.submodules.iter().collect_vec(),
@@ -512,13 +491,8 @@ impl<'db> MarkdownDocItem for Struct<'db> {
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(
-            self,
-            context,
-            header_level,
-            None,
-            summary_index_map,
-        )?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
 
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
         markdown += &generate_markdown_for_subitems(
@@ -541,13 +515,8 @@ impl<'db> MarkdownDocItem for Trait<'db> {
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(
-            self,
-            context,
-            header_level,
-            None,
-            summary_index_map,
-        )?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
         markdown += &generate_markdown_for_subitems(
@@ -824,12 +793,7 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
             writeln!(
                 &mut markdown,
                 "{}",
-                item.generate_markdown(
-                    context,
-                    header_level + 2,
-                    postfix,
-                    summary_index_map,
-                )?
+                item.generate_markdown(context, header_level + 2, postfix, summary_index_map,)?
             )?;
         }
     }

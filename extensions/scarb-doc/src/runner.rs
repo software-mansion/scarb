@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use crate::code_blocks::{CodeBlock, CodeBlockId};
 use crate::types::crate_type::Crate;
 use crate::types::module_type::Module;
@@ -15,18 +14,20 @@ use scarb_execute_utils::{
 use scarb_metadata::{PackageMetadata, ScarbCommand};
 use scarb_ui::Ui;
 use scarb_ui::components::Status;
+use std::collections::HashMap;
 use std::fs;
 use tempfile::tempdir;
 
-pub type ExecutionResults = HashMap<CodeBlockId, ExecutionOutput>;
+pub type ExecutionResults = HashMap<CodeBlockId, ExecutionResult>;
 
 #[derive(Debug, Clone)]
-pub struct ExecutionOutput {
+pub struct ExecutionResult {
+    pub outcome: ExecutionOutcome,
     pub print_output: String,
     pub program_output: String,
 }
 
-impl ExecutionOutput {
+impl ExecutionResult {
     /// Formats the execution result as markdown with code blocks.
     pub fn as_markdown(&self) -> String {
         let mut output = String::new();
@@ -45,6 +46,34 @@ impl ExecutionOutput {
         }
         output
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExecutionOutcome {
+    Success,
+    CompileError,
+    RuntimeError,
+    None,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ExecutionSummary {
+    pub passed: usize,
+    pub failed: usize,
+    pub ignored: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TestStatus {
+    Passed,
+    Failed,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RunStrategy {
+    Ignore,
+    Build,
+    Run,
 }
 
 /// A runner for executing examples (code blocks) found in documentation.
@@ -71,7 +100,7 @@ impl<'a> DocTestRunner<'a> {
         Ok(results)
     }
 
-    fn execute_single(&self, code_block: &CodeBlock, index: usize) -> Result<ExecutionOutput> {
+    fn execute_single(&self, code_block: &CodeBlock, index: usize) -> Result<ExecutionResult> {
         let temp_dir =
             tempdir().context("failed to create temporary workspace for doc snippet execution")?;
         let project_dir = Utf8PathBuf::from_path_buf(temp_dir.path().to_path_buf())
@@ -82,9 +111,10 @@ impl<'a> DocTestRunner<'a> {
 
         let (print_output, program_output) = self.run_execute(&project_dir, index, code_block)?;
 
-        Ok(ExecutionOutput {
+        Ok(ExecutionResult {
             print_output,
             program_output,
+            outcome: ExecutionOutcome::Success,
         })
     }
 
@@ -179,6 +209,7 @@ impl<'a> DocTestRunner<'a> {
                 "SCARB_MANIFEST_PATH",
                 project_dir.join("Scarb.toml").as_str(),
             )
+            .env("SCARB_ALL_FEATURES", "true")
             .run()
             .with_context(|| "execution failed")?;
 
@@ -230,7 +261,7 @@ fn collect_from_module(module: &Module<'_>, runnable_code_blocks: &mut Vec<CodeB
 
 fn collect_from_item_data(item_data: &ItemData<'_>, runnable_code_blocks: &mut Vec<CodeBlock>) {
     for block in &item_data.code_blocks {
-        if block.should_run() {
+        if block.run_strategy() == RunStrategy::Run {
             runnable_code_blocks.push(block.clone());
         }
     }
