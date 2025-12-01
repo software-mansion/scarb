@@ -16,8 +16,8 @@ use scarb_metadata::{PackageMetadata, ScarbCommand};
 use scarb_ui::Ui;
 use scarb_ui::components::Status;
 use std::collections::HashMap;
-use std::fs;
 use std::fmt::Write;
+use std::fs;
 use tempfile::{TempDir, tempdir};
 
 pub type ExecutionResults = HashMap<CodeBlockId, ExecutionResult>;
@@ -126,7 +126,8 @@ impl<'a> TestRunner<'a> {
                 }
                 Err(e) => {
                     summary.failed += 1;
-                    self.ui.error(format!("Error running example #{}: {:#}", index, e));
+                    self.ui
+                        .error(format!("Error running example #{}: {:#}", index, e));
                 }
             }
         }
