@@ -2,7 +2,7 @@ use crate::runner::{ExecutionOutcome, RunStrategy};
 use cairo_lang_doc::parser::DocumentationCommentToken;
 use std::str::from_utf8;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct CodeBlockId {
     pub item_full_path: String,
     pub close_token_idx: usize,

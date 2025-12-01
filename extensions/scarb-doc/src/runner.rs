@@ -247,6 +247,8 @@ pub fn collect_runnable_code_blocks(crate_: &Crate<'_>) -> Vec<CodeBlock> {
     for module in &crate_.foreign_crates {
         collect_from_module(module, &mut runnable_code_blocks);
     }
+    // Sort to run deterministically
+    runnable_code_blocks.sort_by_key(|block| block.id.clone());
     runnable_code_blocks
 }
 
