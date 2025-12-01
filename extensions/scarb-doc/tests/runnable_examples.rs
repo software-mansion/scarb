@@ -25,13 +25,16 @@ fn supports_runnable_examples() {
         .assert()
         .success()
         .stdout_eq(formatdoc! {r#"
-            [..] Executing example #0 from `hello_world::foo_bar`
+            [..] Found 3 doc tests; 2 ignored
+            [..] Running 1 doc tests
+            [..] Running example #0 from `hello_world::foo_bar`
             [..] Compiling hello_world_example_0 v0.1.0 ([..])
             [..]  Finished `dev` profile target(s) in [..]
             [..] Executing hello_world_example_0
             foo
             bar
             Saving output to: target/execute/hello_world_example_0/execution1
+            [..] Passed example #0 from `hello_world::foo_bar`
             Saving output to: target/doc/hello_world
             Saving build output to: target/doc/hello_world/book
 
