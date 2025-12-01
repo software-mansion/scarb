@@ -2,12 +2,13 @@ use anyhow::{Result, ensure};
 use camino::Utf8PathBuf;
 use clap::Parser;
 use mimalloc::MiMalloc;
+use scarb_doc::code_blocks::collect_code_blocks;
 use scarb_doc::diagnostics::print_diagnostics;
 use scarb_doc::docs_generation::common::OutputFilesExtension;
 use scarb_doc::docs_generation::markdown::{MarkdownContent, WorkspaceMarkdownBuilder};
 use scarb_doc::errors::{MetadataCommandError, PackagesSerializationError};
 use scarb_doc::metadata::get_target_dir;
-use scarb_doc::runner::{ExecutionResults, TestRunner, collect_code_blocks};
+use scarb_doc::runner::{ExecutionResults, TestRunner};
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 use scarb_doc::{PackageInformation, generate_package_context, generate_package_information};
 use scarb_extensions_cli::doc::{Args, OutputFormat};
@@ -85,7 +86,7 @@ fn run_doc_tests(package: &PackageInformation, ui: &Ui) -> Result<ExecutionResul
         Ok(Default::default())
     } else {
         let runner = TestRunner::new(&package.package_metadata, ui.clone());
-        let (_summary, results) = runner.execute(&runnable_code_blocks)?;
+        let (_summary, results) = runner.run(&runnable_code_blocks)?;
         Ok(results)
     }
 }

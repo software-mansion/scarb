@@ -1,7 +1,4 @@
 use crate::code_blocks::{CodeBlock, CodeBlockId};
-use crate::types::crate_type::Crate;
-use crate::types::module_type::Module;
-use crate::types::other_types::ItemData;
 use anyhow::{Context, Result, anyhow};
 use cairo_lang_filesystem::db::Edition;
 use camino::{Utf8Path, Utf8PathBuf};
@@ -95,10 +92,7 @@ impl<'a> TestRunner<'a> {
         }
     }
 
-    pub fn execute(
-        &self,
-        code_blocks: &[CodeBlock],
-    ) -> Result<(ExecutionSummary, ExecutionResults)> {
+    pub fn run(&self, code_blocks: &[CodeBlock]) -> Result<(ExecutionSummary, ExecutionResults)> {
         let mut results = HashMap::new();
         let mut summary = ExecutionSummary::default();
         let (to_run, ignored): (Vec<_>, Vec<_>) = code_blocks
@@ -115,7 +109,7 @@ impl<'a> TestRunner<'a> {
         ));
         for (index, code_block) in to_run.iter().enumerate() {
             let strategy = code_block.run_strategy();
-            match self.execute_single(code_block, index, strategy) {
+            match self.run_single(code_block, index, strategy) {
                 Ok(res) => {
                     if res.status == TestStatus::Passed {
                         summary.passed += 1;
@@ -135,18 +129,18 @@ impl<'a> TestRunner<'a> {
         Ok((summary, results))
     }
 
-    fn execute_single(
+    fn run_single(
         &self,
         code_block: &CodeBlock,
         index: usize,
         strategy: RunStrategy,
     ) -> Result<ExecutionResult> {
-        let ws = TestWorkspace::new(self.package_metadata, index, code_block)?;
         self.ui.print(Status::new(
             "Running",
-            format!("example #{} from `{}`", ws.index, ws.item_full_path).as_str(),
+            &format!("example #{} from `{}`", index, code_block.id.item_full_path),
         ));
-        let (actual, print_output, program_output) = self.run_test(&ws, strategy)?;
+        let ws = TestWorkspace::new(self.package_metadata, index, code_block)?;
+        let (actual, print_output, program_output) = self.run_single_inner(&ws, strategy)?;
         let expected = code_block.expected_outcome();
         let status = if actual == expected {
             TestStatus::Passed
@@ -156,23 +150,23 @@ impl<'a> TestRunner<'a> {
         match status {
             TestStatus::Passed => self.ui.print(Status::new(
                 "Passed",
-                &format!("example #{} from `{}`", ws.index, ws.item_full_path),
+                &format!("example #{} from `{}`", index, ws.item_full_path),
             )),
             TestStatus::Failed => self.ui.print(Status::new(
                 "Failed",
-                &format!("example #{} from `{}`", ws.index, ws.item_full_path),
+                &format!("example #{} from `{}`", index, ws.item_full_path),
             )),
         }
 
         Ok(ExecutionResult {
+            outcome: actual,
             status,
             print_output,
             program_output,
-            outcome: actual,
         })
     }
 
-    fn run_test(
+    fn run_single_inner(
         &self,
         ws: &TestWorkspace,
         strategy: RunStrategy,
@@ -189,12 +183,13 @@ impl<'a> TestRunner<'a> {
             .env("SCARB_MANIFEST_PATH", ws.manifest_path().as_str())
             .env("SCARB_ALL_FEATURES", "true")
             .run();
+
         if build_result.is_err() {
             return Ok((ExecutionOutcome::CompileError, String::new(), String::new()));
+        } else if strategy == RunStrategy::Build {
+            return Ok((ExecutionOutcome::BuildSuccess, String::new(), String::new()));
         }
-        if strategy == RunStrategy::Build {
-            return Ok((ExecutionOutcome::RunSuccess, String::new(), String::new()));
-        }
+
         let output_dir = target_dir.join("execute").join(&ws.package_name);
         create_output_dir(output_dir.as_std_path())?;
         let (output_dir, execution_id) = incremental_create_execution_output_dir(&output_dir)?;
@@ -213,44 +208,45 @@ impl<'a> TestRunner<'a> {
             .run();
 
         if run_result.is_err() {
-            return Ok((ExecutionOutcome::RuntimeError, String::new(), String::new()));
+            Ok((ExecutionOutcome::RuntimeError, String::new(), String::new()))
+        } else {
+            let print_output = fs::read_to_string(output_dir.join(EXECUTE_PRINT_OUTPUT_FILENAME))
+                .unwrap_or_default()
+                .trim()
+                .to_string();
+            let program_output =
+                fs::read_to_string(output_dir.join(EXECUTE_PROGRAM_OUTPUT_FILENAME))
+                    .unwrap_or_default()
+                    .trim()
+                    .to_string();
+            Ok((ExecutionOutcome::RunSuccess, print_output, program_output))
         }
-        let print_output = fs::read_to_string(output_dir.join(EXECUTE_PRINT_OUTPUT_FILENAME))
-            .unwrap_or_default()
-            .trim()
-            .to_string();
-        let program_output = fs::read_to_string(output_dir.join(EXECUTE_PROGRAM_OUTPUT_FILENAME))
-            .unwrap_or_default()
-            .trim()
-            .to_string();
-        Ok((ExecutionOutcome::RunSuccess, print_output, program_output))
     }
 }
 
 struct TestWorkspace {
     _temp_dir: TempDir,
     root: Utf8PathBuf,
-    manifest_path: Utf8PathBuf,
     package_name: String,
-    index: usize,
     item_full_path: String,
 }
 
 impl TestWorkspace {
-    fn new(metadata: &PackageMetadata, index: usize, code_block: &CodeBlock) -> Result<Self> {
+    pub(crate) fn new(
+        metadata: &PackageMetadata,
+        index: usize,
+        code_block: &CodeBlock,
+    ) -> Result<Self> {
         let temp_dir = tempdir().context("failed to create temporary workspace")?;
         let root = Utf8PathBuf::from_path_buf(temp_dir.path().to_path_buf())
             .map_err(|path| anyhow!("path `{}` is not UTF-8 encoded", path.display()))?;
 
         let package_name = format!("{}_example_{}", metadata.name, index);
-        let manifest_path = root.join("Scarb.toml");
 
         let workspace = Self {
             _temp_dir: temp_dir,
             root,
-            manifest_path,
             package_name,
-            index,
             item_full_path: code_block.id.item_full_path.clone(),
         };
         workspace.write_manifest(metadata)?;
@@ -263,8 +259,8 @@ impl TestWorkspace {
         &self.root
     }
 
-    fn manifest_path(&self) -> &Utf8Path {
-        &self.manifest_path
+    fn manifest_path(&self) -> Utf8PathBuf {
+        self.root.join("Scarb.toml")
     }
 
     fn write_manifest(&self, metadata: &PackageMetadata) -> Result<()> {
@@ -294,12 +290,12 @@ impl TestWorkspace {
             [executable]
         "#
         };
-        fs::write(&self.manifest_path, manifest).context("failed to write manifest for example")?;
+        fs::write(&self.manifest_path(), manifest).context("failed to write manifest")?;
         Ok(())
     }
 
     fn write_src(&self, content: &str, package_name: &str) -> Result<()> {
-        let src_dir = self.root.join("src");
+        let src_dir = self.root().join("src");
         fs::create_dir_all(&src_dir).context("failed to create src directory")?;
 
         let mut body = String::with_capacity(content.len() + content.lines().count() * 5);
@@ -316,32 +312,6 @@ impl TestWorkspace {
         "#};
         fs::write(src_dir.join("lib.cairo"), lib_cairo).context("failed to write lib.cairo")?;
         Ok(())
-    }
-}
-
-pub fn collect_code_blocks(crate_: &Crate<'_>) -> Vec<CodeBlock> {
-    let mut runnable_code_blocks = Vec::new();
-    collect_from_module(&crate_.root_module, &mut runnable_code_blocks);
-    for module in &crate_.foreign_crates {
-        collect_from_module(module, &mut runnable_code_blocks);
-    }
-    // Sort to run deterministically
-    runnable_code_blocks.sort_by_key(|block| block.id.clone());
-    runnable_code_blocks
-}
-
-fn collect_from_module(module: &Module<'_>, runnable_code_blocks: &mut Vec<CodeBlock>) {
-    for item_data in module.get_all_item_ids().values() {
-        collect_from_item_data(item_data, runnable_code_blocks);
-    }
-    for item_data in module.pub_uses.get_all_item_ids().values() {
-        collect_from_item_data(item_data, runnable_code_blocks);
-    }
-}
-
-fn collect_from_item_data(item_data: &ItemData<'_>, runnable_code_blocks: &mut Vec<CodeBlock>) {
-    for block in &item_data.code_blocks {
-        runnable_code_blocks.push(block.clone());
     }
 }
 

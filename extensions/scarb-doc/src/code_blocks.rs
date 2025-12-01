@@ -1,4 +1,7 @@
 use crate::runner::{ExecutionOutcome, RunStrategy};
+use crate::types::crate_type::Crate;
+use crate::types::module_type::Module;
+use crate::types::other_types::ItemData;
 use cairo_lang_doc::parser::DocumentationCommentToken;
 use std::str::from_utf8;
 
@@ -114,8 +117,33 @@ impl CodeBlock {
     }
 }
 
-/// Collects code blocks from documentation comment tokens.
-pub fn collect_code_blocks(
+pub fn collect_code_blocks(crate_: &Crate<'_>) -> Vec<CodeBlock> {
+    let mut runnable_code_blocks = Vec::new();
+    collect_from_module(&crate_.root_module, &mut runnable_code_blocks);
+    for module in &crate_.foreign_crates {
+        collect_from_module(module, &mut runnable_code_blocks);
+    }
+    // Sort to run deterministically
+    runnable_code_blocks.sort_by_key(|block| block.id.clone());
+    runnable_code_blocks
+}
+
+fn collect_from_module(module: &Module<'_>, runnable_code_blocks: &mut Vec<CodeBlock>) {
+    for item_data in module.get_all_item_ids().values() {
+        collect_from_item_data(item_data, runnable_code_blocks);
+    }
+    for item_data in module.pub_uses.get_all_item_ids().values() {
+        collect_from_item_data(item_data, runnable_code_blocks);
+    }
+}
+
+fn collect_from_item_data(item_data: &ItemData<'_>, runnable_code_blocks: &mut Vec<CodeBlock>) {
+    for block in &item_data.code_blocks {
+        runnable_code_blocks.push(block.clone());
+    }
+}
+
+pub fn collect_code_blocks_from_tokens(
     doc_tokens: &Option<Vec<DocumentationCommentToken>>,
     full_path: &str,
 ) -> Vec<CodeBlock> {

@@ -10,7 +10,7 @@ use cairo_lang_filesystem::ids::CrateId;
 use serde::Serialize;
 use serde::Serializer;
 use std::fmt::Debug;
-use crate::code_blocks::{collect_code_blocks, CodeBlock};
+use crate::code_blocks::{collect_code_blocks, collect_code_blocks_from_tokens, CodeBlock};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ItemData<'db> {
@@ -46,7 +46,7 @@ impl<'db> ItemData<'db> {
         let group = find_groups_from_attributes(db, &id);
         let full_path = id.full_path(db);
         let doc = db.get_item_documentation_as_tokens(documentable_item_id);
-        let code_blocks = collect_code_blocks(&doc, &full_path);
+        let code_blocks = collect_code_blocks_from_tokens(&doc, &full_path);
 
         Self {
             id: documentable_item_id,
@@ -72,7 +72,7 @@ impl<'db> ItemData<'db> {
             id.name(db).long(db)
         );
         let doc = db.get_item_documentation_as_tokens(documentable_item_id);
-        let code_blocks = collect_code_blocks(&doc, &full_path);
+        let code_blocks = collect_code_blocks_from_tokens(&doc, &full_path);
 
         Self {
             id: documentable_item_id,
@@ -91,7 +91,7 @@ impl<'db> ItemData<'db> {
         let documentable_id = DocumentableItemId::Crate(id);
         let full_path = ModuleId::CrateRoot(id).full_path(db);
         let doc = db.get_item_documentation_as_tokens(documentable_id);
-        let code_blocks = collect_code_blocks(&doc, &full_path);
+        let code_blocks = collect_code_blocks_from_tokens(&doc, &full_path);
 
         Self {
             id: documentable_id,
