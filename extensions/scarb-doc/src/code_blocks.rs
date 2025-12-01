@@ -1,3 +1,4 @@
+use crate::runner::{ExecutionOutcome, RunStrategy};
 use cairo_lang_doc::parser::DocumentationCommentToken;
 use std::str::from_utf8;
 
@@ -22,6 +23,8 @@ pub enum CodeBlockAttribute {
     Runnable,
     Ignore,
     NoRun,
+    CompileFail,
+    ShouldPanic,
     Other(String),
 }
 
@@ -32,6 +35,8 @@ impl From<&str> for CodeBlockAttribute {
             "runnable" => CodeBlockAttribute::Runnable,
             "ignore" => CodeBlockAttribute::Ignore,
             "no_run" | "no-run" => CodeBlockAttribute::NoRun,
+            "should_panic" | "should-panic" => CodeBlockAttribute::ShouldPanic,
+            "compile_fail" | "compile-fail" => CodeBlockAttribute::CompileFail,
             _ => CodeBlockAttribute::Other(string.to_string()),
         }
     }
@@ -65,17 +70,34 @@ impl CodeBlock {
         false
     }
 
-    // TODO: consider runnable by default unless specified otherwise?
-    pub fn should_run(&self) -> bool {
-        self.is_cairo() && self.attributes.contains(&CodeBlockAttribute::Runnable)
-        //     && !self.attributes.contains(&CodeBlockAttribute::Ignore)
-        //     && !self.attributes.contains(&CodeBlockAttribute::NoRun)
+    pub fn run_strategy(&self) -> RunStrategy {
+        if self.attributes.contains(&CodeBlockAttribute::Ignore) {
+            return RunStrategy::Ignore;
+        }
+        // TODO: remove this later on
+        if !self.is_cairo() {
+            return RunStrategy::Ignore;
+        }
+        if self.attributes.contains(&CodeBlockAttribute::NoRun) {
+            return RunStrategy::Build;
+        }
+        if self.attributes.contains(&CodeBlockAttribute::Runnable) {
+            return RunStrategy::Run;
+        }
+        // TODO: Default to run unless specified otherwise
+        RunStrategy::Ignore
     }
 
     // TODO: implement building examples without running them
     #[allow(unused)]
     pub fn should_build(&self) -> bool {
         self.is_cairo() && !self.attributes.contains(&CodeBlockAttribute::Ignore)
+    /// Returns the expected execution outcome based on attributes.
+    pub fn expected_outcome(&self) -> ExecutionOutcome {
+        if self.attributes.contains(&CodeBlockAttribute::Ignore) {
+            return ExecutionOutcome::None;
+        }
+        ExecutionOutcome::Success
     }
 
     fn parse_attributes(info_string: &str) -> Vec<CodeBlockAttribute> {

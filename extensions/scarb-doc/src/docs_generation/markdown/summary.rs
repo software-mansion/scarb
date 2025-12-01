@@ -53,11 +53,8 @@ pub fn generate_summary_file_content(
         )?,
     )];
 
-    let module_item_summaries = &generate_modules_summary_files(
-        &crate_.root_module,
-        &context,
-        &summary_index_map,
-    )?;
+    let module_item_summaries =
+        &generate_modules_summary_files(&crate_.root_module, &context, &summary_index_map)?;
     summary_files.extend(module_item_summaries.to_owned());
 
     let foreign_modules_files = generate_foreign_crates_summary_files(
@@ -68,11 +65,8 @@ pub fn generate_summary_file_content(
 
     summary_files.extend(foreign_modules_files);
 
-    let groups_files = generate_global_groups_summary_files(
-        &crate_.groups,
-        &context,
-        &summary_index_map,
-    )?;
+    let groups_files =
+        generate_global_groups_summary_files(&crate_.groups, &context, &summary_index_map)?;
     summary_files.extend(groups_files.to_owned());
     Ok((summary_index_map, summary_files))
 }
