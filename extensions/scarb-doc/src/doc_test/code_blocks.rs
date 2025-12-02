@@ -3,19 +3,33 @@ use crate::types::crate_type::Crate;
 use crate::types::module_type::Module;
 use crate::types::other_types::ItemData;
 use cairo_lang_doc::parser::DocumentationCommentToken;
+use std::collections::HashMap;
 use std::str::from_utf8;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct CodeBlockId {
     pub item_full_path: String,
     pub close_token_idx: usize,
+    /// Index of this block in the item's documentation.
+    pub block_index: usize,
 }
 
 impl CodeBlockId {
-    pub fn new(item_full_path: String, close_token_idx: usize) -> Self {
+    pub fn new(item_full_path: String, block_index: usize, close_token_idx: usize) -> Self {
         Self {
             item_full_path,
+            block_index,
             close_token_idx,
+        }
+    }
+
+    // TODO: ideally, this should be replaced with logic that
+    //  tracks the exact line of the code block in the source file.
+    pub fn display_name(&self, total_blocks_in_item: usize) -> String {
+        if total_blocks_in_item <= 1 {
+            self.item_full_path.clone()
+        } else {
+            format!("{} (example {})", self.item_full_path, self.block_index)
         }
     }
 }
@@ -54,7 +68,7 @@ pub struct CodeBlock {
 }
 
 impl CodeBlock {
-    pub fn new(id: CodeBlockId, content: String, info_string: &String) -> Self {
+    pub fn new(id: CodeBlockId, content: String, info_string: &str) -> Self {
         let attributes = Self::parse_attributes(info_string);
         Self {
             id,
@@ -128,6 +142,19 @@ pub fn collect_code_blocks(crate_: &Crate<'_>) -> Vec<CodeBlock> {
     runnable_code_blocks
 }
 
+/// Counts the number of code blocks per documented item.
+/// This is used to generate display names for code blocks,
+/// allowing to distinguish between multiple code blocks in the same item.
+///
+/// Returns the mapping from `item_full_path` to the number of code blocks in that item.
+pub fn count_blocks_per_item(code_blocks: &[CodeBlock]) -> HashMap<String, usize> {
+    let mut counts = HashMap::new();
+    for block in code_blocks {
+        *counts.entry(block.id.item_full_path.clone()).or_insert(0) += 1;
+    }
+    counts
+}
+
 fn collect_from_module(module: &Module<'_>, runnable_code_blocks: &mut Vec<CodeBlock>) {
     for item_data in module.get_all_item_ids().values() {
         collect_from_item_data(item_data, runnable_code_blocks);
@@ -161,6 +188,7 @@ pub fn collect_code_blocks_from_tokens(
 
     let mut code_blocks = Vec::new();
     let mut current_fence: Option<CodeFence> = None;
+    let mut block_index: usize = 0;
 
     for (idx, token) in tokens.iter().enumerate() {
         let content = match token {
@@ -178,13 +206,14 @@ pub fn collect_code_blocks_from_tokens(
                     let body = get_block_body(tokens, opening.token_idx + 1, end_idx);
 
                     // Skip empty code blocks.
-                    let id = CodeBlockId::new(full_path.to_string(), end_idx);
                     if !body.is_empty() {
+                        let id = CodeBlockId::new(full_path.to_string(), block_index, end_idx);
                         code_blocks.push(CodeBlock::new(
                             id,
                             body.to_string(),
                             &opening.info_string,
                         ));
+                        block_index += 1;
                     }
                     current_fence = None;
                 }

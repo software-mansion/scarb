@@ -9,11 +9,10 @@ use std::fmt::Write;
 use std::fs;
 use tempfile::{TempDir, tempdir};
 
-pub struct TestWorkspace {
+pub(crate) struct TestWorkspace {
     _temp_dir: TempDir,
     root: Utf8PathBuf,
     package_name: String,
-    item_full_path: String,
 }
 
 impl TestWorkspace {
@@ -28,7 +27,6 @@ impl TestWorkspace {
             _temp_dir: temp_dir,
             root,
             package_name,
-            item_full_path: code_block.id.item_full_path.clone(),
         };
         workspace.write_manifest(metadata)?;
         workspace.write_src(&code_block.content, &metadata.name)?;
@@ -48,10 +46,6 @@ impl TestWorkspace {
         &self.package_name
     }
 
-    pub fn item_full_path(&self) -> &str {
-        &self.item_full_path
-    }
-
     fn write_manifest(&self, metadata: &PackageMetadata) -> Result<()> {
         let package_dir = metadata
             .manifest_path
@@ -59,7 +53,7 @@ impl TestWorkspace {
             .context("package manifest path has no parent directory")?;
 
         let dep = &metadata.name;
-        let dep_path = format!("\"{}\"", package_dir);
+        let dep_path = format!("{}", package_dir);
         let name = &self.package_name;
         let edition = edition_variant(Edition::latest());
 
@@ -70,7 +64,7 @@ impl TestWorkspace {
             edition = "{edition}"
 
             [dependencies]
-            {dep} = {{ path = {dep_path} }}
+            {dep} = {{ path = "{dep_path}" }}
             cairo_execute = "{CAIRO_VERSION}"
 
             [cairo]
@@ -79,7 +73,7 @@ impl TestWorkspace {
             [executable]
         "#
         };
-        fs::write(&self.manifest_path(), manifest).context("failed to write manifest")?;
+        fs::write(self.manifest_path(), manifest).context("failed to write manifest")?;
         Ok(())
     }
 
@@ -87,17 +81,28 @@ impl TestWorkspace {
         let src_dir = self.root().join("src");
         fs::create_dir_all(&src_dir).context("failed to create src directory")?;
 
-        let mut body = String::with_capacity(content.len() + content.lines().count() * 5);
-        for line in content.lines() {
-            writeln!(body, "    {}", line)?;
-        }
+        // TODO: This check is flawed and can be improved.
+        let has_main_fn = content.lines().any(|line| {
+            line.trim_start().starts_with("fn main()")
+                || line.trim_start().starts_with("pub fn main()")
+        });
+
+        let body = if has_main_fn {
+            content.to_string()
+        } else {
+            let mut body = String::with_capacity(content.len() + content.lines().count() * 5);
+            writeln!(body, "fn main() {{")?;
+            for line in content.lines() {
+                writeln!(body, "    {}", line)?;
+            }
+            writeln!(body, "}}")?;
+            body
+        };
         let lib_cairo = formatdoc! {r#"
             use {package_name}::*;
 
             #[executable]
-            fn main() {{
             {body}
-            }}
         "#};
         fs::write(src_dir.join("lib.cairo"), lib_cairo).context("failed to write lib.cairo")?;
         Ok(())

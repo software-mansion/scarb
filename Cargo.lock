@@ -6885,6 +6885,7 @@ dependencies = [
  "cairo-lang-utils",
  "camino",
  "clap",
+ "console 0.16.1",
  "create-output-dir",
  "expect-test",
  "indoc",
