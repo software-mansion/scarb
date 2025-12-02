@@ -124,6 +124,14 @@ pub struct RunArgs {
     /// Whether to save cairo-profiler trace data.
     #[arg(long, default_value_t = false)]
     pub save_profiler_trace_data: bool,
+
+    /// Whether to save program output to a file.
+    #[arg(long, default_value_t = false)]
+    pub save_program_output: bool,
+
+    /// Whether to save stdout output to a file.
+    #[arg(long, default_value_t = false)]
+    pub save_print_output: bool,
 }
 
 impl ToArgs for RunArgs {
@@ -135,6 +143,8 @@ impl ToArgs for RunArgs {
             print_program_output,
             print_resource_usage,
             save_profiler_trace_data,
+            save_program_output,
+            save_print_output,
         } = self;
         let mut args = arguments.to_args();
         if let Some(output) = output {
@@ -151,6 +161,12 @@ impl ToArgs for RunArgs {
         }
         if *save_profiler_trace_data {
             args.push("--save-profiler-trace-data".to_string());
+        }
+        if *save_program_output {
+            args.push("--save-program-output".to_string());
+        }
+        if *save_print_output {
+            args.push("--save-print-output".to_string());
         }
         args
     }

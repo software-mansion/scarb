@@ -7,7 +7,7 @@ use crate::profiler::{build_profiler_call_trace, get_profiler_tracked_resource};
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use bincode::enc::write::Writer;
 use cairo_lang_executable::executable::{EntryPointKind, Executable};
-use cairo_lang_runner::casm_run::format_for_panic;
+use cairo_lang_runner::casm_run::{format_for_debug, format_for_panic};
 use cairo_lang_runner::{Arg, CairoHintProcessor, build_hints_dict};
 use cairo_lang_utils::bigint::BigUintAsHex;
 use cairo_vm::cairo_run::CairoRunConfig;
@@ -17,7 +17,9 @@ use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::MaybeRelocatable;
 use cairo_vm::{Felt252, cairo_run};
 use camino::{Utf8Path, Utf8PathBuf};
-use create_output_dir::create_output_dir;
+use create_output_dir::{
+    EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME, create_output_dir,
+};
 use indoc::formatdoc;
 use scarb_extensions_cli::execute::{
     Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
@@ -161,6 +163,8 @@ pub fn execute(
     let mut hint_processor = ExecuteHintProcessor {
         cairo_hint_processor,
         oracle_hint_service: OracleHintService::new(Some(executable_path.as_std_path())),
+        capture_enabled: args.run.save_print_output,
+        captured_print_felts: Default::default(),
     };
 
     let proof_mode = args.run.target.is_standalone();
@@ -193,12 +197,23 @@ pub fn execute(
         .then(|| ExecutionResources::try_new(&runner, hint_processor.cairo_hint_processor).ok())
         .flatten();
 
+    let captured_print_output = hint_processor
+        .captured_print_felts
+        .into_iter()
+        .map(|felts| format_for_debug(felts.into_iter()).to_string())
+        .collect::<Vec<_>>()
+        .join("");
+
+    let execution_output = (args.run.print_program_output || args.run.save_program_output)
+        .then(|| ExecutionOutput::try_new(&mut runner))
+        .transpose()?;
+
     ui.print(ExecutionSummary {
         output: args
             .run
             .print_program_output
-            .then(|| ExecutionOutput::try_new(&mut runner))
-            .transpose()?,
+            .then_some(execution_output.clone())
+            .flatten(),
         resources: args
             .run
             .print_resource_usage
@@ -316,6 +331,18 @@ pub fn execute(
         let serialized_trace = serde_json::to_string(&call_trace)
             .expect("Failed to serialize call trace for profiler");
         fs::write(profiler_trace_path, serialized_trace)?;
+    }
+
+    if args.run.save_program_output
+        && let Some(output) = &execution_output
+    {
+        let program_output_path = execution_output_dir.join(EXECUTE_PROGRAM_OUTPUT_FILENAME);
+        fs::write(program_output_path, output.as_str())?;
+    }
+
+    if args.run.save_print_output {
+        let print_output_path = execution_output_dir.join(EXECUTE_PRINT_OUTPUT_FILENAME);
+        fs::write(print_output_path, &captured_print_output)?;
     }
 
     Ok(())
