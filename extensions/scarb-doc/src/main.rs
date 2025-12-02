@@ -86,8 +86,9 @@ fn run_doc_tests(package: &PackageInformation, ui: &Ui) -> Result<ExecutionResul
         Ok(Default::default())
     } else {
         let runner = TestRunner::new(&package.package_metadata, ui.clone());
-        let (_summary, results) = runner.run(&runnable_code_blocks)?;
-        Ok(results)
+        let (summary, execution_results) = runner.run_all(&runnable_code_blocks)?;
+        ensure!(!summary.is_fail(), "doc tests failed");
+        Ok(execution_results)
     }
 }
 

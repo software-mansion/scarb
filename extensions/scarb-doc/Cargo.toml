@@ -22,6 +22,7 @@ cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
 cairo-lang-utils.workspace = true
 create-output-dir = { path = "../../utils/create-output-dir" }
+console.workspace = true
 expect-test.workspace = true
 indoc.workspace = true
 itertools.workspace = true
