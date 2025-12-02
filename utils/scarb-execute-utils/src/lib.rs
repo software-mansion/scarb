@@ -26,7 +26,7 @@ pub fn incremental_create_execution_output_dir(path: &Utf8Path) -> Result<(Utf8P
                 Err(e.into())
             }
             Ok(_) => Ok((filepath, i)),
-        }
+        };
     }
     bail!("failed to create output directory")
 }
