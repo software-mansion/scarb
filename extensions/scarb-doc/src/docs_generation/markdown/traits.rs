@@ -1,4 +1,5 @@
 use super::context::MarkdownGenerationContext;
+use crate::doc_test::code_blocks::CodeBlock;
 use crate::docs_generation::markdown::{
     BASE_MODULE_CHAPTER_PREFIX, GROUP_CHAPTER_PREFIX, SHORT_DOCUMENTATION_AVOID_PREFIXES,
     SHORT_DOCUMENTATION_LEN,
@@ -888,17 +889,18 @@ fn get_full_subitem_path<T: MarkdownDocItem + SubPathDocItem>(
     }
 }
 
-pub trait WithPath {
+pub trait WithItemDataCommon {
     fn name(&self) -> &str;
     fn full_path(&self) -> String;
     fn parent_full_path(&self) -> Option<String>;
+    fn code_blocks(&self) -> Vec<CodeBlock>;
 }
 
 pub trait WithItemData {
     fn item_data(&self) -> &ItemData<'_>;
 }
 
-impl<T: WithItemData> WithPath for T {
+impl<T: WithItemData> WithItemDataCommon for T {
     fn name(&self) -> &str {
         self.item_data().name.as_str()
     }
@@ -910,6 +912,9 @@ impl<T: WithItemData> WithPath for T {
     fn parent_full_path(&self) -> Option<String> {
         self.item_data().parent_full_path.clone()
     }
+    fn code_blocks(&self) -> Vec<CodeBlock> {
+        self.item_data().code_blocks.clone()
+    }
 }
 
 impl<'db> WithItemData for ItemData<'db> {
@@ -918,8 +923,8 @@ impl<'db> WithItemData for ItemData<'db> {
     }
 }
 
-// Allow SubItemData to be used wherever a WithPath is expected without converting into ItemData.
-impl<'db> WithPath for SubItemData<'db> {
+/// Allow SubItemData to be used wherever a [`WithItemDataCommon`] is expected without converting into ItemData.
+impl<'db> WithItemDataCommon for SubItemData<'db> {
     fn name(&self) -> &str {
         self.name.as_str()
     }
@@ -928,5 +933,8 @@ impl<'db> WithPath for SubItemData<'db> {
     }
     fn parent_full_path(&self) -> Option<String> {
         self.parent_full_path.clone()
+    }
+    fn code_blocks(&self) -> Vec<CodeBlock> {
+        self.code_blocks.clone()
     }
 }

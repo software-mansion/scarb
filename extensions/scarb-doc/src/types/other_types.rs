@@ -1,10 +1,6 @@
-use anyhow::Result;
-
-use crate::attributes::find_groups_from_attributes;
 use crate::db::ScarbDocDatabase;
-use crate::doc_test::code_blocks::{CodeBlock, collect_code_blocks_from_tokens};
 use crate::docs_generation::markdown::context::IncludedItems;
-use crate::docs_generation::markdown::traits::WithPath;
+use crate::docs_generation::markdown::traits::WithItemDataCommon;
 use crate::types::item_data::{ItemData, SubItemData};
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_defs::ids::{
@@ -22,25 +18,7 @@ use cairo_lang_syntax::node::ast;
 use serde::Serialize;
 use std::collections::HashMap;
 
-#[derive(Debug, Serialize, Clone)]
-pub struct ItemData<'db> {
-    #[serde(skip_serializing)]
-    pub id: DocumentableItemId<'db>,
-    #[serde(skip_serializing)]
-    pub parent_full_path: Option<String>,
-    pub name: String,
-    #[serde(serialize_with = "documentation_serializer")]
-    pub doc: Option<Vec<DocumentationCommentToken<'db>>>,
-    pub signature: Option<String>,
-    pub full_path: String,
-    #[serde(skip_serializing)]
-    pub code_blocks: Vec<CodeBlock>,
-    #[serde(skip_serializing)]
-    pub doc_location_links: Vec<DocLocationLink>,
-    pub group: Option<String>,
-}
-
-/// Mimics the [`TopLevelLanguageElementId::full_path`] but skips the macro modules.
+/// Mimics the [`cairo_lang_defs::ids::TopLevelLanguageElementId::full_path`] but skips the macro modules.
 /// If not omitted, the path would look like, for example,
 /// `hello::define_fn_outter!(func_macro_fn_outter);::expose! {\n\t\t\tpub fn func_macro_fn_outter() -> felt252 { \n\t\t\t\tprintln!(\"hello world\");\n\t\t\t\t10 }\n\t\t}::func_macro_fn_outter`
 pub fn doc_full_path(module_id: &ModuleId, db: &ScarbDocDatabase) -> String {
@@ -54,102 +32,6 @@ pub fn doc_full_path(module_id: &ModuleId, db: &ScarbDocDatabase) -> String {
             )
         }
         ModuleId::MacroCall { id, .. } => doc_full_path(&id.parent_module(db), db),
-    }
-}
-
-impl<'db> ItemData<'db> {
-    pub fn new(
-        db: &'db ScarbDocDatabase,
-        id: impl TopLevelLanguageElementId<'db>,
-        documentable_item_id: DocumentableItemId<'db>,
-        parent_full_path: String,
-    ) -> Self {
-        let (signature, doc_location_links) =
-            db.get_item_signature_with_links(documentable_item_id);
-        let doc_location_links = doc_location_links
-            .iter()
-            .map(|link| DocLocationLink::new(link.start, link.end, link.item_id, db))
-            .collect::<Vec<_>>();
-        let group = find_groups_from_attributes(db, &id);
-        let full_path = id.full_path(db);
-        let doc = db.get_item_documentation_as_tokens(documentable_item_id);
-        let code_blocks = collect_code_blocks_from_tokens(&doc, &full_path);
-
-        Self {
-            id: documentable_item_id,
-            name: id.name(db).to_string(db),
-            doc,
-            signature,
-            full_path: format!("{}::{}", parent_full_path, id.name(db).long(db)),
-            parent_full_path: Some(parent_full_path),
-            code_blocks,
-            doc_location_links,
-            group,
-        }
-    }
-
-    pub fn new_without_signature(
-        db: &'db ScarbDocDatabase,
-        id: impl TopLevelLanguageElementId<'db>,
-        documentable_item_id: DocumentableItemId<'db>,
-    ) -> Self {
-        let full_path = format!(
-            "{}::{}",
-            doc_full_path(&id.parent_module(db), db),
-            id.name(db).long(db)
-        );
-        let doc = db.get_item_documentation_as_tokens(documentable_item_id);
-        let code_blocks = collect_code_blocks_from_tokens(&doc, &full_path);
-
-        Self {
-            id: documentable_item_id,
-            name: id.name(db).to_string(db),
-            doc,
-            signature: None,
-            full_path,
-            parent_full_path: Some(id.parent_module(db).full_path(db)),
-            code_blocks,
-            doc_location_links: vec![],
-            group: find_groups_from_attributes(db, &id),
-        }
-    }
-
-    pub fn new_crate(db: &'db ScarbDocDatabase, id: CrateId<'db>) -> Self {
-        let documentable_id = DocumentableItemId::Crate(id);
-        let full_path = ModuleId::CrateRoot(id).full_path(db);
-        let doc = db.get_item_documentation_as_tokens(documentable_id);
-        let code_blocks = collect_code_blocks_from_tokens(&doc, &full_path);
-
-        Self {
-            id: documentable_id,
-            name: id.long(db).name().to_string(db),
-            doc,
-            signature: None,
-            full_path,
-            parent_full_path: None,
-            code_blocks,
-            doc_location_links: vec![],
-            group: None,
-        }
-    }
-}
-
-fn documentation_serializer<S>(
-    docs: &Option<Vec<DocumentationCommentToken>>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    match docs {
-        Some(doc_vec) => {
-            let combined = doc_vec
-                .iter()
-                .map(|dct| dct.to_string())
-                .collect::<Vec<String>>();
-            serializer.serialize_str(&combined.join(""))
-        }
-        None => serializer.serialize_none(),
     }
 }
 
@@ -208,6 +90,94 @@ impl<'db> FreeFunction<'db> {
 }
 
 #[derive(Serialize, Clone)]
+pub struct Struct<'db> {
+    #[serde(skip)]
+    pub id: StructId<'db>,
+    #[serde(skip)]
+    pub node: ast::ItemStructPtr<'db>,
+
+    pub members: Vec<Member<'db>>,
+
+    pub item_data: ItemData<'db>,
+}
+
+impl<'db> Struct<'db> {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: StructId<'db>,
+        include_private_items: bool,
+    ) -> Maybe<Self> {
+        let members = db.struct_members(id)?;
+
+        let item_data = ItemData::new(
+            db,
+            id,
+            LookupItemId::ModuleItem(ModuleItemId::Struct(id)).into(),
+            doc_full_path(&id.parent_module(db), db),
+        );
+        let members = members
+            .iter()
+            .filter_map(|(_, semantic_member)| {
+                let visible = matches!(semantic_member.visibility, Visibility::Public);
+                let syntax_node = &semantic_member.id.stable_location(db).syntax_node(db);
+                if (include_private_items || visible) && !is_doc_hidden_attr(db, syntax_node) {
+                    Some(Ok(Member::new(db, semantic_member.id)))
+                } else {
+                    None
+                }
+            })
+            .collect::<Maybe<Vec<_>>>()?;
+
+        let node = id.stable_ptr(db);
+        Ok(Self {
+            id,
+            node,
+            members,
+            item_data,
+        })
+    }
+
+    pub fn get_all_item_ids<'a>(&'a self) -> IncludedItems<'a, 'db> {
+        self.members
+            .iter()
+            .map(|item| {
+                (
+                    item.item_data.id,
+                    &item.item_data as &dyn WithItemDataCommon,
+                )
+            })
+            .collect()
+    }
+}
+
+#[derive(Serialize, Clone)]
+pub struct Member<'db> {
+    #[serde(skip)]
+    pub id: MemberId<'db>,
+    #[serde(skip)]
+    pub node: ast::MemberPtr<'db>,
+
+    pub item_data: SubItemData<'db>,
+}
+
+impl<'db> Member<'db> {
+    pub fn new(db: &'db ScarbDocDatabase, id: MemberId<'db>) -> Self {
+        let node = id.stable_ptr(db);
+
+        let parent_path = format!(
+            "{}::{}",
+            doc_full_path(&id.parent_module(db), db),
+            id.struct_id(db).name(db).to_string(db)
+        );
+        Self {
+            id,
+            node,
+            item_data: ItemData::new(db, id, DocumentableItemId::Member(id), parent_path).into(),
+        }
+    }
+}
+
+#[derive(Serialize, Clone)]
 pub struct Enum<'db> {
     #[serde(skip)]
     pub id: EnumId<'db>,
@@ -246,7 +216,12 @@ impl<'db> Enum<'db> {
     pub fn get_all_item_ids<'a>(&'a self) -> IncludedItems<'a, 'db> {
         self.variants
             .iter()
-            .map(|item| (item.item_data.id, &item.item_data as &dyn WithPath))
+            .map(|item| {
+                (
+                    item.item_data.id,
+                    &item.item_data as &dyn WithItemDataCommon,
+                )
+            })
             .collect()
     }
 }

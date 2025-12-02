@@ -241,8 +241,8 @@ impl<'db> ModulePubUses<'db> {
         self.use_macro_declarations.extend(use_macro_declarations);
     }
 
-    pub(crate) fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
-        let mut ids: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
+    pub fn get_all_item_ids<'a>(&'a self) -> IncludedItems<'a, 'db> {
+        let mut ids: IncludedItems<'a, 'db> = HashMap::default();
 
         self.use_constants.iter().for_each(|item| {
             ids.insert(item.item_data.id, &item.item_data);
