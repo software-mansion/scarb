@@ -11,9 +11,6 @@ use std::ffi::OsStr;
 use std::path::Path;
 use std::{env, fs};
 
-pub const EXECUTE_PROGRAM_OUTPUT_FILENAME: &str = "program_output.txt";
-pub const EXECUTE_PRINT_OUTPUT_FILENAME: &str = "stdout_output.txt";
-
 /// Creates an excluded from cache directory atomically with its parents as needed.
 ///
 /// The atomicity only covers creating the leaf directory and exclusion from cache. Any missing

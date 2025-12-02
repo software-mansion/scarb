@@ -27,6 +27,7 @@ indoc.workspace = true
 mimalloc = { workspace = true, features = ["secure"] }
 predicates.workspace = true
 scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["execute"] }
+scarb-execute-utils = { path = "../../utils/scarb-execute-utils" }
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-oracle-hint-service = { path = "../../utils/scarb-oracle-hint-service" }
 scarb-ui = { path = "../../utils/scarb-ui" }
