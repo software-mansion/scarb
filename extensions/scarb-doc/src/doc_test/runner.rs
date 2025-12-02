@@ -1,17 +1,16 @@
 use crate::doc_test::code_blocks::{CodeBlock, CodeBlockId, count_blocks_per_item};
-use crate::doc_test::test_result::TestResult;
+use crate::doc_test::ui::TestResult;
 use crate::doc_test::workspace::TestWorkspace;
 use anyhow::Result;
-use console::Style;
 use create_output_dir::create_output_dir;
 use scarb_execute_utils::{
     EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME,
     incremental_create_execution_output_dir,
 };
 use scarb_metadata::{PackageMetadata, ScarbCommand};
+use scarb_ui::Ui;
 use scarb_ui::components::{NewLine, Status};
-use scarb_ui::{Message, Ui};
-use serde::{Serialize, Serializer};
+use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
 
@@ -59,27 +58,6 @@ impl TestSummary {
 
     pub fn is_fail(&self) -> bool {
         self.failed > 0
-    }
-}
-
-impl Message for TestSummary {
-    fn text(self) -> String {
-        let (result, style) = if self.is_ok() {
-            ("ok", Style::new().green())
-        } else {
-            ("FAILED", Style::new().red())
-        };
-        format!(
-            "test result: {}. {} passed; {} failed; {} ignored",
-            style.apply_to(result),
-            self.passed,
-            self.failed,
-            self.ignored
-        )
-    }
-
-    fn structured<S: Serializer>(self, ser: S) -> Result<S::Ok, S::Error> {
-        self.serialize(ser)
     }
 }
 
@@ -170,6 +148,7 @@ impl<'a> TestRunner<'a> {
                 },
             }
         }
+        // TODO: add struct with `impl Message` to display this
         if !failed_names.is_empty() {
             self.ui.print("\nfailures:");
             for display_name in &failed_names {
