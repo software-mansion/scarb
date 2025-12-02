@@ -6,7 +6,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
 use axum::Router;
-use axum::body::Body;
+use axum::body::{Body, to_bytes};
 use axum::extract::State;
 use axum::http::Method;
 use axum::http::Request;
@@ -63,7 +63,7 @@ impl SimpleHttpServer {
             .fallback_service(ServeDir::new(dir))
             .route(
                 "/api/v1/packages/new",
-                post(move || post_handler(post_response.clone())),
+                post(move |body| post_handler(post_response.clone(), body)),
             )
             .layer(middleware::from_fn(set_etag))
             .layer(middleware::from_fn_with_state(
@@ -118,7 +118,9 @@ impl Drop for SimpleHttpServer {
     }
 }
 
-async fn post_handler(post_response: Option<HttpPostResponse>) -> impl IntoResponse {
+async fn post_handler(post_response: Option<HttpPostResponse>, body: Body) -> impl IntoResponse {
+    let _ = to_bytes(body, usize::MAX).await;
+
     let (status_code, message) = match post_response {
         Some(response) => (
             StatusCode::from_u16(response.code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
