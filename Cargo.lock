@@ -1263,7 +1263,7 @@ dependencies = [
  "anyhow",
  "cairo-lang-utils",
  "const-fnv1a-hash",
- "convert_case 0.10.0",
+ "convert_case",
  "derivative",
  "itertools 0.14.0",
  "lalrpop",
@@ -1402,7 +1402,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-sierra-type-size",
  "cairo-lang-utils",
- "convert_case 0.10.0",
+ "convert_case",
  "itertools 0.14.0",
  "num-bigint",
  "num-integer",
@@ -1527,9 +1527,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-language-common"
+version = "0.1.0"
+source = "git+https://github.com/software-mansion/cairo-language-common?rev=efd67382996783c67d7466536641cdee939326ae#efd67382996783c67d7466536641cdee939326ae"
+dependencies = [
+ "cairo-lang-defs",
+ "cairo-lang-diagnostics",
+ "cairo-lang-filesystem",
+ "cairo-lang-parser",
+ "cairo-lang-semantic",
+ "cairo-lang-syntax",
+ "cairo-lang-utils",
+ "salsa",
+ "semver 1.0.27",
+ "tracing",
+]
+
+[[package]]
 name = "cairo-language-server"
-version = "2.14.0-rc.0"
-source = "git+https://github.com/software-mansion/cairols?rev=c7039c331c74ef9c2f9fd537434157ad2870fd3f#c7039c331c74ef9c2f9fd537434157ad2870fd3f"
+version = "2.14.0"
+source = "git+https://github.com/software-mansion/cairols?rev=c0f3616132fe1d5b3b8df6fd4d45972923d3a52d#c0f3616132fe1d5b3b8df6fd4d45972923d3a52d"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1552,9 +1569,10 @@ dependencies = [
  "cairo-lang-syntax-codegen",
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
+ "cairo-language-common",
  "cairo-lint",
  "colored",
- "convert_case 0.8.0",
+ "convert_case",
  "crossbeam",
  "governor",
  "indoc",
@@ -1584,8 +1602,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lint"
-version = "2.14.0-rc.0"
-source = "git+https://github.com/software-mansion/cairo-lint.git?rev=73ef36f59dc81848abfffbeb028695d29409023c#73ef36f59dc81848abfffbeb028695d29409023c"
+version = "2.14.0"
+source = "git+https://github.com/software-mansion/cairo-lint.git?rev=1957cc52db5fc17cd250ef3c7726f1839d58bf66#1957cc52db5fc17cd250ef3c7726f1839d58bf66"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1996,15 +2014,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b7bda66e858c683005a53a9a60c69a4aca7eeaa45d124526e389f7aec8e62f38"
 dependencies = [
  "memchr",
-]
-
-[[package]]
-name = "convert_case"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baaaa0ecca5b51987b9423ccdc971514dd8b0bb7b4060b983d3664dad3f1f89f"
-dependencies = [
- "unicode-segmentation",
 ]
 
 [[package]]
@@ -6736,7 +6745,7 @@ dependencies = [
  "chrono",
  "clap",
  "clap_complete",
- "convert_case 0.8.0",
+ "convert_case",
  "create-output-dir",
  "crossbeam-channel",
  "data-encoding",

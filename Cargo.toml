@@ -45,6 +45,7 @@ axum = { version = "0.8.6", default-features = false, features = ["http1", "toki
 bincode = "2.0.1"
 bumpalo = "=3.17.0"
 cairo-annotations = "0.7.0"
+cairo-language-common = "*"
 cairo-lang-casm = "*"
 cairo-lang-compiler = "*"
 cairo-lang-defs = "*"
@@ -71,7 +72,7 @@ cairo-lang-syntax = "*"
 cairo-lang-test-plugin = "*"
 cairo-lang-test-runner = "*"
 cairo-lang-utils = { version = "*", features = ["tracing"] }
-cairo-language-server = "2.14.0-rc.0"
+cairo-language-server = "2.14.0"
 cairo-lint = "2.14.0-rc.0"
 cairo-vm = "3.0.0"
 camino = { version = "1", features = ["serde1"] }
@@ -183,6 +184,7 @@ strip = "debuginfo"
 opt-level = 3
 
 [patch.crates-io]
+cairo-language-common = { git = "https://github.com/software-mansion/cairo-language-common", rev = "efd67382996783c67d7466536641cdee939326ae"}
 cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo", rev = "000588cd8ed807d0e10edefe688dd431d7ea9e45" }
 cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo", rev = "000588cd8ed807d0e10edefe688dd431d7ea9e45" }
 cairo-lang-debug = { git = "https://github.com/starkware-libs/cairo", rev = "000588cd8ed807d0e10edefe688dd431d7ea9e45" }
@@ -216,5 +218,5 @@ cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo", rev 
 cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev = "000588cd8ed807d0e10edefe688dd431d7ea9e45" }
 cairo-lang-test-utils = { git = "https://github.com/starkware-libs/cairo", rev = "000588cd8ed807d0e10edefe688dd431d7ea9e45" }
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "000588cd8ed807d0e10edefe688dd431d7ea9e45" }
-cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "c7039c331c74ef9c2f9fd537434157ad2870fd3f" }
-cairo-lint = { git = "https://github.com/software-mansion/cairo-lint.git", rev = "73ef36f59dc81848abfffbeb028695d29409023c"}
+cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "c0f3616132fe1d5b3b8df6fd4d45972923d3a52d" }
+cairo-lint = { git = "https://github.com/software-mansion/cairo-lint.git", rev = "1957cc52db5fc17cd250ef3c7726f1839d58bf66"}
