@@ -1,5 +1,6 @@
 use crate::attributes::find_groups_from_attributes;
 use crate::db::ScarbDocDatabase;
+use crate::doc_test::code_blocks::{CodeBlock, collect_code_blocks_from_tokens};
 use crate::location_links::DocLocationLink;
 use crate::types::other_types::doc_full_path;
 use cairo_lang_defs::ids::{ModuleId, TopLevelLanguageElementId};
@@ -10,7 +11,6 @@ use cairo_lang_filesystem::ids::CrateId;
 use serde::Serialize;
 use serde::Serializer;
 use std::fmt::Debug;
-use crate::code_blocks::{collect_code_blocks, collect_code_blocks_from_tokens, CodeBlock};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ItemData<'db> {
@@ -120,6 +120,8 @@ pub struct SubItemData<'db> {
     pub signature: Option<String>,
     pub full_path: String,
     #[serde(skip_serializing)]
+    pub code_blocks: Vec<CodeBlock>,
+    #[serde(skip_serializing)]
     pub doc_location_links: Vec<DocLocationLink>,
     #[serde(skip_serializing)]
     pub group: Option<String>,
@@ -134,8 +136,7 @@ impl<'db> From<SubItemData<'db>> for ItemData<'db> {
             doc: val.doc,
             signature: val.signature,
             full_path: val.full_path,
-            // TODO: fix this
-            code_blocks: Default::default(),
+            code_blocks: val.code_blocks,
             doc_location_links: val.doc_location_links,
             group: val.group,
         }
@@ -152,6 +153,7 @@ impl<'db> From<ItemData<'db>> for SubItemData<'db> {
             signature: val.signature,
             full_path: val.full_path,
             doc_location_links: val.doc_location_links,
+            code_blocks: val.code_blocks,
             group: val.group,
         }
     }

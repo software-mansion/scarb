@@ -1,7 +1,7 @@
 use crate::doc_test::runner::ExecutionResults;
 use crate::docs_generation::common::{OutputFilesExtension, SummaryIndexMap};
 use crate::docs_generation::markdown::SUMMARY_FILENAME;
-use crate::docs_generation::markdown::traits::WithPath;
+use crate::docs_generation::markdown::traits::WithItemDataCommon;
 use crate::location_links::DocLocationLink;
 use crate::types::crate_type::Crate;
 use cairo_lang_defs::ids::{ImplItemId, LookupItemId, TraitItemId};
@@ -10,7 +10,7 @@ use cairo_lang_doc::parser::CommentLinkToken;
 use itertools::Itertools;
 use std::collections::HashMap;
 
-pub type IncludedItems<'a, 'db> = HashMap<DocumentableItemId<'db>, &'a dyn WithPath>;
+pub type IncludedItems<'a, 'db> = HashMap<DocumentableItemId<'db>, &'a dyn WithItemDataCommon>;
 
 pub struct MarkdownGenerationContext<'a, 'db> {
     included_items: IncludedItems<'a, 'db>,

@@ -1,7 +1,7 @@
 use crate::doc_test::runner::{ExecutionOutcome, RunStrategy};
+use crate::docs_generation::markdown::traits::WithItemDataCommon;
 use crate::types::crate_type::Crate;
 use crate::types::module_type::Module;
-use crate::types::other_types::ItemData;
 use cairo_lang_doc::parser::DocumentationCommentToken;
 use std::collections::HashMap;
 use std::str::from_utf8;
@@ -156,16 +156,19 @@ pub fn count_blocks_per_item(code_blocks: &[CodeBlock]) -> HashMap<String, usize
 }
 
 fn collect_from_module(module: &Module<'_>, runnable_code_blocks: &mut Vec<CodeBlock>) {
-    for item_data in module.get_all_item_ids().values() {
+    for &item_data in module.get_all_item_ids().values() {
         collect_from_item_data(item_data, runnable_code_blocks);
     }
-    for item_data in module.pub_uses.get_all_item_ids().values() {
+    for &item_data in module.pub_uses.get_all_item_ids().values() {
         collect_from_item_data(item_data, runnable_code_blocks);
     }
 }
 
-fn collect_from_item_data(item_data: &ItemData<'_>, runnable_code_blocks: &mut Vec<CodeBlock>) {
-    for block in &item_data.code_blocks {
+fn collect_from_item_data(
+    item_data: &dyn WithItemDataCommon,
+    runnable_code_blocks: &mut Vec<CodeBlock>,
+) {
+    for block in &item_data.code_blocks() {
         runnable_code_blocks.push(block.clone());
     }
 }
