@@ -23,8 +23,7 @@ impl CodeBlockId {
         }
     }
 
-    // TODO: ideally, this should be replaced with logic that
-    //  tracks the exact line of the code block in the source file.
+    // TODO: (#2888): Display exact code block location when running doc-tests
     pub fn display_name(&self, total_blocks_in_item: usize) -> String {
         if total_blocks_in_item <= 1 {
             self.item_full_path.clone()
@@ -77,13 +76,11 @@ impl CodeBlock {
         }
     }
 
-    // TODO: default to Cairo unless specified otherwise?
+    // TODO: default to Cairo unless specified otherwise
     fn is_cairo(&self) -> bool {
         if self.attributes.contains(&CodeBlockAttribute::Cairo) {
             return true;
         }
-        // TODO: Assume unknown attributes imply non-Cairo code.
-        // !self.attributes.iter().any(|attr| matches!(attr, CodeBlockAttribute::Other(_)))
         false
     }
 
@@ -91,7 +88,7 @@ impl CodeBlock {
         if self.attributes.contains(&CodeBlockAttribute::Ignore) {
             return RunStrategy::Ignore;
         }
-        // TODO: remove this later on
+        // TODO: drop the `runnable` attribute requirement; default to runnable for Cairo blocks
         if !self.is_cairo() || !self.attributes.contains(&CodeBlockAttribute::Runnable) {
             return RunStrategy::Ignore;
         }
@@ -104,7 +101,6 @@ impl CodeBlock {
         }
     }
 
-    /// Returns the expected execution outcome based on attributes.
     pub fn expected_outcome(&self) -> ExecutionOutcome {
         if self.attributes.contains(&CodeBlockAttribute::Ignore) {
             return ExecutionOutcome::None;
@@ -137,14 +133,12 @@ pub fn collect_code_blocks(crate_: &Crate<'_>) -> Vec<CodeBlock> {
     for module in &crate_.foreign_crates {
         collect_from_module(module, &mut runnable_code_blocks);
     }
-    // Sort to run deterministically
     runnable_code_blocks.sort_by_key(|block| block.id.clone());
     runnable_code_blocks
 }
 
-/// Counts the number of code blocks per documented item.
-/// This is used to generate display names for code blocks,
-/// allowing to distinguish between multiple code blocks in the same item.
+/// Counts the number of code blocks per documented item. Used to generate display names
+/// for code blocks, allowing to distinguish between multiple code blocks in the same item.
 ///
 /// Returns the mapping from `item_full_path` to the number of code blocks in that item.
 pub fn count_blocks_per_item(code_blocks: &[CodeBlock]) -> HashMap<String, usize> {

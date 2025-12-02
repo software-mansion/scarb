@@ -1,4 +1,5 @@
 use crate::doc_test::code_blocks::{CodeBlock, CodeBlockId, count_blocks_per_item};
+use crate::doc_test::test_result::TestResult;
 use crate::doc_test::workspace::TestWorkspace;
 use anyhow::Result;
 use console::Style;
@@ -8,7 +9,7 @@ use scarb_execute_utils::{
     incremental_create_execution_output_dir,
 };
 use scarb_metadata::{PackageMetadata, ScarbCommand};
-use scarb_ui::components::{NewLine, Status, TestResult};
+use scarb_ui::components::{NewLine, Status};
 use scarb_ui::{Message, Ui};
 use serde::{Serialize, Serializer};
 use std::collections::HashMap;
@@ -25,7 +26,6 @@ pub struct ExecutionResult {
 }
 
 impl ExecutionResult {
-    /// Formats the execution result as markdown with code blocks.
     pub fn as_markdown(&self) -> String {
         let mut output = String::new();
         if !self.print_output.is_empty() {
@@ -64,14 +64,14 @@ impl TestSummary {
 
 impl Message for TestSummary {
     fn text(self) -> String {
-        let (status_word, style) = if self.failed == 0 {
+        let (result, style) = if self.is_ok() {
             ("ok", Style::new().green())
         } else {
             ("FAILED", Style::new().red())
         };
         format!(
             "test result: {}. {} passed; {} failed; {} ignored",
-            style.apply_to(status_word),
+            style.apply_to(result),
             self.passed,
             self.failed,
             self.ignored
@@ -105,9 +105,14 @@ pub enum RunStrategy {
     Execute,
 }
 
-/// A runner for executing examples (code blocks) found in documentation.
-/// Uses `scarb execute` and runs code blocks in isolated temporary workspaces.
+/// A runner for executing ([`CodeBlock`]) examples found in documentation.
+/// Uses the target package as a dependency and runs each code block in an isolated temporary workspace.
+/// Relies on `scarb build` and `scarb execute` commands to build and run the examples,
+/// based on the requested [`RunStrategy`] for the given code block.
+///
+/// Note: it is expected examples (`code_blocks`) that this runner executes only depend on the target package and standard libraries.
 pub struct TestRunner<'a> {
+    /// Metadata of the target package whose documentation is being tested.
     package_metadata: &'a PackageMetadata,
     ui: Ui,
 }
@@ -120,7 +125,6 @@ impl<'a> TestRunner<'a> {
         }
     }
 
-    /// Run all the code code blocks for a given package.
     pub fn run_all(&self, code_blocks: &[CodeBlock]) -> Result<(TestSummary, ExecutionResults)> {
         let pkg_name = &self.package_metadata.name;
 

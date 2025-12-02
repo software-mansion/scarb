@@ -81,7 +81,7 @@ impl TestWorkspace {
         let src_dir = self.root().join("src");
         fs::create_dir_all(&src_dir).context("failed to create src directory")?;
 
-        // TODO: This check is flawed and can be improved.
+        // TODO: (#2889) Improve this logic to be more precise
         let has_main_fn = content.lines().any(|line| {
             line.trim_start().starts_with("fn main()")
                 || line.trim_start().starts_with("pub fn main()")
