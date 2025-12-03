@@ -10,6 +10,8 @@ const CODE_WITH_RUNNABLE_CODE_BLOCKS: &str = include_str!("code/code_12.cairo");
 const CODE_WITH_COMPILE_ERROR: &str = include_str!("code/code_13.cairo");
 const CODE_WITH_RUNTIME_ERROR: &str = include_str!("code/code_14.cairo");
 const CODE_WITH_MULTIPLE_CODE_BLOCKS_PER_ITEM: &str = include_str!("code/code_15.cairo");
+const CODE_WITH_SHOULD_PANIC: &str = include_str!("code/code_16.cairo");
+const CODE_WITH_COMPILE_FAIL: &str = include_str!("code/code_17.cairo");
 const EXPECTED_WITH_EMBEDDINGS_PATH: &str = "tests/data/runnable_examples";
 const EXPECTED_MULTIPLE_PER_ITEM_PATH: &str = "tests/data/runnable_examples_multiple_per_item";
 
