@@ -32,12 +32,12 @@ fn supports_runnable_examples() {
             [..] Running 3 doc examples for `hello_world`
             test hello_world::bar ... ignored
             test hello_world::foo ... ignored
-            [..] Compiling hello_world_example_0 v0.1.0 ([..])
+            [..] Compiling hello_world_example_1 v0.1.0 ([..])
             [..]  Finished `dev` profile target(s) in [..]
-            [..] Executing hello_world_example_0
+            [..] Executing hello_world_example_1
             foo
             bar
-            Saving output to: target/execute/hello_world_example_0/execution1
+            Saving output to: target/execute/hello_world_example_1/execution1
             test hello_world::foo_bar ... ok
 
             test result: ok. 1 passed; 0 failed; 2 ignored
@@ -74,16 +74,16 @@ fn supports_runnable_examples_multiple_per_item() {
         .success()
         .stdout_eq(formatdoc! {r#"
             [..] Running 2 doc examples for `hello_world`
-            [..] Compiling hello_world_example_0 v0.1.0 ([..])
-            [..]  Finished `dev` profile target(s) in [..]
-            [..] Executing hello_world_example_0
-            5
-            Saving output to: target/execute/hello_world_example_0/execution1
-            test hello_world::add (example 0) ... ok
             [..] Compiling hello_world_example_1 v0.1.0 ([..])
             [..]  Finished `dev` profile target(s) in [..]
             [..] Executing hello_world_example_1
+            5
             Saving output to: target/execute/hello_world_example_1/execution1
+            test hello_world::add (example 0) ... ok
+            [..] Compiling hello_world_example_2 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            [..] Executing hello_world_example_2
+            Saving output to: target/execute/hello_world_example_2/execution1
             test hello_world::add (example 1) ... ok
 
             test result: ok. 2 passed; 0 failed; 0 ignored
@@ -120,13 +120,13 @@ fn runnable_example_fails_at_compile_time() {
         .failure()
         .stdout_eq(indoc! {r#"
             [..] Running 1 doc examples for `hello_world`
-            [..] Compiling hello_world_example_0 v0.1.0 ([..])
+            [..] Compiling hello_world_example_1 v0.1.0 ([..])
             error[E0006]: Function not found.
              --> [..]lib.cairo[..]
                 undefined();
                 ^^^^^^^^^
 
-            error: could not compile `hello_world_example_0` due to 1 previous error
+            error: could not compile `hello_world_example_1` due to 1 previous error
             test hello_world::foo ... FAILED
 
             failures:
@@ -154,10 +154,10 @@ fn runnable_example_fails_at_runtime() {
         .failure()
         .stdout_eq(indoc! {r#"
             [..] Running 1 doc examples for `hello_world`
-            [..] Compiling hello_world_example_0 v0.1.0 ([..])
+            [..] Compiling hello_world_example_1 v0.1.0 ([..])
             [..]  Finished `dev` profile target(s) in [..]
-            [..] Executing hello_world_example_0
-            error: Panicked with [..]
+            [..] Executing hello_world_example_1
+            error: Panicked with "Runtime error occurred".
             test hello_world::foo ... FAILED
 
             failures:
