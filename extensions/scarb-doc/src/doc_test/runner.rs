@@ -169,7 +169,7 @@ impl<'a> TestRunner<'a> {
         strategy: RunStrategy,
         index: usize,
     ) -> Result<ExecutionResult> {
-        let ws = TestWorkspace::new(&self.metadata, index, code_block)?;
+        let ws = TestWorkspace::new(self.metadata, index, code_block)?;
         let (actual, print_output, program_output) = self.run_single_inner(&ws, strategy)?;
         let expected = code_block.expected_outcome();
         let status = if actual == expected {
