@@ -116,7 +116,7 @@ impl<'a> TestRunner<'a> {
             &format!("{} doc examples for `{pkg_name}`", code_blocks.len()),
         ));
 
-        let mut idx  = 0;
+        let mut idx = 0;
         for block in code_blocks {
             let strategy = block.run_strategy();
             let total_in_item = *blocks_per_item.get(&block.id.item_full_path).unwrap_or(&1);
@@ -127,7 +127,7 @@ impl<'a> TestRunner<'a> {
                     summary.ignored += 1;
                     self.ui.print(TestResult::ignored(&display_name));
                 }
-                _ =>  {
+                _ => {
                     idx += 1;
                     match self.run_single(block, strategy, idx) {
                         Ok(res) => match res.status {
@@ -149,7 +149,7 @@ impl<'a> TestRunner<'a> {
                             self.ui.error(format!("Error running example: {:#}", e));
                         }
                     }
-                },
+                }
             }
         }
         // TODO: add struct with `impl Message` to display this
@@ -165,8 +165,13 @@ impl<'a> TestRunner<'a> {
         Ok((summary, results))
     }
 
-    fn run_single(&self, code_block: &CodeBlock, strategy: RunStrategy, index: usize) -> Result<ExecutionResult> {
-        let ws = TestWorkspace::new(self.package_metadata, index , code_block)?;
+    fn run_single(
+        &self,
+        code_block: &CodeBlock,
+        strategy: RunStrategy,
+        index: usize,
+    ) -> Result<ExecutionResult> {
+        let ws = TestWorkspace::new(self.package_metadata, index, code_block)?;
         let (actual, print_output, program_output) = self.run_single_inner(&ws, strategy)?;
         let expected = code_block.expected_outcome();
         let status = if actual == expected {
