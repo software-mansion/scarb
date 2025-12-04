@@ -1,3 +1,4 @@
+use crate::doc_test::code_blocks::CodeBlock;
 use crate::location_links::DocLocationLink;
 use crate::types::module_type::Module;
 use crate::types::other_types::{
@@ -78,6 +79,7 @@ pub trait DocItem {
     fn doc_location_links(&self) -> &Vec<DocLocationLink>;
     fn markdown_formatted_path(&self) -> String;
     fn group_name(&self) -> &Option<String>;
+    fn code_blocks(&self) -> &Vec<CodeBlock>;
 }
 
 macro_rules! impl_doc_item {
@@ -111,6 +113,10 @@ macro_rules! impl_doc_item {
 
             fn group_name(&self) -> &Option<String> {
                 &self.item_data.group
+            }
+
+            fn code_blocks(&self) -> &Vec<CodeBlock> {
+                &self.item_data.code_blocks
             }
         }
     };

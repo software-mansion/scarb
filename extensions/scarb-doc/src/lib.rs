@@ -17,6 +17,7 @@ use cairo_lang_filesystem::{
     ids::{CrateId, CrateLongId},
 };
 use cairo_lang_utils::Intern;
+use camino::Utf8PathBuf;
 use errors::DiagnosticError;
 use itertools::Itertools;
 use scarb_metadata::{
@@ -28,6 +29,7 @@ use serde::Serialize;
 pub mod attributes;
 pub mod db;
 pub mod diagnostics;
+pub mod doc_test;
 pub mod docs_generation;
 pub mod errors;
 pub mod location_links;
@@ -45,6 +47,8 @@ pub struct PackageInformation<'db> {
 pub struct AdditionalMetadata {
     pub name: String,
     pub authors: Option<Vec<String>>,
+    #[serde(skip)]
+    pub manifest_path: Utf8PathBuf,
 }
 
 pub struct PackageContext {
@@ -101,6 +105,7 @@ pub fn generate_package_context(
         metadata: AdditionalMetadata {
             name: package_metadata.name.clone(),
             authors,
+            manifest_path: package_metadata.manifest_path.clone(),
         },
     })
 }
