@@ -169,3 +169,78 @@ fn runnable_example_fails_at_runtime() {
             error: doc tests failed
         "#});
 }
+
+#[test]
+fn should_panic() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(CODE_WITH_SHOULD_PANIC)
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args(["--output-format", "markdown"])
+        .arg("--build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            [..] Running 2 doc examples for `hello_world`
+            [..] Compiling hello_world_example_1 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            [..] Executing hello_world_example_1
+            error: Panicked with 0x32206973206e6f74206f6464 ('2 is not odd').
+            test hello_world::is_odd (example 0) ... ok
+            [..] Compiling hello_world_example_2 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            [..] Executing hello_world_example_2
+            Saving output to: target/execute/hello_world_example_2/execution1
+            error: Test executable succeeded, but it's marked `should_panic`.
+            test hello_world::is_odd (example 1) ... FAILED
+
+            failures:
+                hello_world::is_odd (example 1)
+
+            test result: FAILED. 1 passed; 1 failed; 0 ignored
+            error: doc tests failed
+        "#});
+}
+
+#[test]
+fn compile_fail() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(CODE_WITH_COMPILE_FAIL)
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args(["--output-format", "markdown"])
+        .arg("--build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            [..] Running 2 doc examples for `hello_world`
+            [..] Compiling hello_world_example_1 v0.1.0 ([..])
+            error: Unexpected argument type. Expected: "core::integer::i32", found: "core::bool".
+             --> [..]lib.cairo[..]
+                is_odd(true);
+                       ^^^^
+
+            error: could not compile `hello_world_example_1` due to 1 previous error
+            test hello_world::is_odd (example 0) ... ok
+            [..] Compiling hello_world_example_2 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            error: Test compiled successfully, but it's marked `compile_fail`.
+            test hello_world::is_odd (example 1) ... FAILED
+
+            failures:
+                hello_world::is_odd (example 1)
+
+            test result: FAILED. 1 passed; 1 failed; 0 ignored
+            error: doc tests failed
+        "#});
+}
