@@ -174,6 +174,15 @@ impl<'a> TestRunner<'a> {
         let status = if actual == expected {
             TestStatus::Passed
         } else {
+            match (actual, expected) {
+            (ExecutionOutcome::RunSuccess, ExecutionOutcome::RuntimeError) => {
+                self.ui.error("Test executable succeeded, but it's marked `should_panic`.");
+            }
+            (ExecutionOutcome::BuildSuccess, ExecutionOutcome::CompileError) => {
+                self.ui.error("Test compiled successfully, but it's marked `compile_fail`.");
+            }
+            _ => { }
+        }
             TestStatus::Failed
         };
 
