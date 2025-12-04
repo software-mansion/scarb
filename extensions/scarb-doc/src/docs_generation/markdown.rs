@@ -3,7 +3,7 @@ use crate::docs_generation::markdown::book_toml::generate_book_toml_content;
 use crate::docs_generation::markdown::summary::generate_summary_file_content;
 use crate::errors::{IODirectoryCreationError, IOWriteError};
 use anyhow::Result;
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
 use std::collections::HashMap;
 use std::fs;
 
@@ -104,6 +104,7 @@ fn package_information_placeholder() -> crate::AdditionalMetadata {
     crate::AdditionalMetadata {
         name: "workspace".to_string(),
         authors: None,
+        manifest_path: Utf8PathBuf::from("Scarb.toml"),
     }
 }
 

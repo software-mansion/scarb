@@ -1,10 +1,10 @@
+use crate::AdditionalMetadata;
 use crate::doc_test::code_blocks::CodeBlock;
 use anyhow::{Context, Result, anyhow};
 use cairo_lang_filesystem::db::Edition;
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::formatdoc;
 use scarb_build_metadata::CAIRO_VERSION;
-use scarb_metadata::PackageMetadata;
 use std::fmt::Write;
 use std::fs;
 use tempfile::{TempDir, tempdir};
@@ -16,7 +16,11 @@ pub(crate) struct TestWorkspace {
 }
 
 impl TestWorkspace {
-    pub fn new(metadata: &PackageMetadata, index: usize, code_block: &CodeBlock) -> Result<Self> {
+    pub fn new(
+        metadata: &AdditionalMetadata,
+        index: usize,
+        code_block: &CodeBlock,
+    ) -> Result<Self> {
         let temp_dir = tempdir().context("failed to create temporary workspace")?;
         let root = Utf8PathBuf::from_path_buf(temp_dir.path().to_path_buf())
             .map_err(|path| anyhow!("path `{}` is not UTF-8 encoded", path.display()))?;
@@ -46,7 +50,7 @@ impl TestWorkspace {
         &self.package_name
     }
 
-    fn write_manifest(&self, metadata: &PackageMetadata) -> Result<()> {
+    fn write_manifest(&self, metadata: &AdditionalMetadata) -> Result<()> {
         let package_dir = metadata
             .manifest_path
             .parent()

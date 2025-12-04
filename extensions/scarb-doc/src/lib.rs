@@ -17,6 +17,7 @@ use cairo_lang_filesystem::{
     ids::{CrateId, CrateLongId},
 };
 use cairo_lang_utils::Intern;
+use camino::Utf8PathBuf;
 use errors::DiagnosticError;
 use itertools::Itertools;
 use scarb_metadata::{
@@ -40,20 +41,20 @@ pub mod versioned_json_output;
 pub struct PackageInformation<'db> {
     pub crate_: Crate<'db>,
     pub metadata: AdditionalMetadata,
-    pub package_metadata: PackageMetadata,
 }
 
 #[derive(Serialize, Clone)]
 pub struct AdditionalMetadata {
     pub name: String,
     pub authors: Option<Vec<String>>,
+    #[serde(skip)]
+    pub manifest_path: Utf8PathBuf,
 }
 
 pub struct PackageContext {
     pub db: ScarbDocDatabase,
     pub should_document_private_items: bool,
     pub metadata: AdditionalMetadata,
-    pub package_metadata: PackageMetadata,
     package_compilation_unit: Option<CompilationUnitMetadata>,
     main_component: CompilationUnitComponentMetadata,
 }
@@ -101,10 +102,10 @@ pub fn generate_package_context(
         should_document_private_items,
         package_compilation_unit,
         main_component: main_component.clone(),
-        package_metadata: package_metadata.clone(),
         metadata: AdditionalMetadata {
             name: package_metadata.name.clone(),
             authors,
+            manifest_path: package_metadata.manifest_path.clone(),
         },
     })
 }
@@ -145,7 +146,6 @@ pub fn generate_package_information(
     Ok(PackageInformation {
         crate_,
         metadata: context.metadata.clone(),
-        package_metadata: context.package_metadata.clone(),
     })
 }
 

@@ -1,3 +1,4 @@
+use crate::AdditionalMetadata;
 use crate::doc_test::code_blocks::{CodeBlock, CodeBlockId, count_blocks_per_item};
 use crate::doc_test::ui::TestResult;
 use crate::doc_test::workspace::TestWorkspace;
@@ -7,7 +8,7 @@ use scarb_execute_utils::{
     EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME,
     incremental_create_execution_output_dir,
 };
-use scarb_metadata::{PackageMetadata, ScarbCommand};
+use scarb_metadata::ScarbCommand;
 use scarb_ui::Ui;
 use scarb_ui::components::{NewLine, Status};
 use serde::Serialize;
@@ -76,7 +77,7 @@ pub enum ExecutionOutcome {
     None,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RunStrategy {
     Ignore,
     Build,
@@ -91,20 +92,17 @@ pub enum RunStrategy {
 /// Note: it is expected examples (`code_blocks`) that this runner executes only depend on the target package and standard libraries.
 pub struct TestRunner<'a> {
     /// Metadata of the target package whose documentation is being tested.
-    package_metadata: &'a PackageMetadata,
+    metadata: &'a AdditionalMetadata,
     ui: Ui,
 }
 
 impl<'a> TestRunner<'a> {
-    pub fn new(package_metadata: &'a PackageMetadata, ui: Ui) -> Self {
-        Self {
-            package_metadata,
-            ui,
-        }
+    pub fn new(metadata: &'a AdditionalMetadata, ui: Ui) -> Self {
+        Self { metadata, ui }
     }
 
     pub fn run_all(&self, code_blocks: &[CodeBlock]) -> Result<(TestSummary, ExecutionResults)> {
-        let pkg_name = &self.package_metadata.name;
+        let pkg_name = &self.metadata.name;
 
         let mut results = HashMap::new();
         let mut summary = TestSummary::default();
@@ -171,7 +169,7 @@ impl<'a> TestRunner<'a> {
         strategy: RunStrategy,
         index: usize,
     ) -> Result<ExecutionResult> {
-        let ws = TestWorkspace::new(self.package_metadata, index, code_block)?;
+        let ws = TestWorkspace::new(&self.metadata, index, code_block)?;
         let (actual, print_output, program_output) = self.run_single_inner(&ws, strategy)?;
         let expected = code_block.expected_outcome();
         let status = if actual == expected {
