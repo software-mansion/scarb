@@ -33,21 +33,14 @@ impl Message for TestSummary {
 #[derive(Serialize)]
 pub struct TestResult<'a> {
     name: &'a str,
-    #[serde(skip)]
     status: TestResultStatus,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Serialize)]
 pub enum TestResultStatus {
     Ok,
     Failed,
     Ignored,
-}
-
-impl Serialize for TestResultStatus {
-    fn serialize<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
-        ser.serialize_str(self.as_str())
-    }
 }
 
 impl TestResultStatus {
@@ -96,18 +89,6 @@ impl Message for TestResult<'_> {
     }
 
     fn structured<S: Serializer>(self, ser: S) -> Result<S::Ok, S::Error> {
-        TestResultJson {
-            r#type: "test_result",
-            name: self.name,
-            status: self.status,
-        }
-        .serialize(ser)
+        self.serialize(ser)
     }
-}
-
-#[derive(Serialize)]
-struct TestResultJson<'a> {
-    r#type: &'static str,
-    name: &'a str,
-    status: TestResultStatus,
 }

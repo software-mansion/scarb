@@ -34,7 +34,7 @@ impl CodeBlockId {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CodeBlockAttribute {
     Cairo,
     Runnable,
