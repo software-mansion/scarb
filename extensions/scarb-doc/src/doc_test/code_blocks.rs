@@ -3,6 +3,7 @@ use crate::docs_generation::markdown::traits::WithItemDataCommon;
 use crate::types::crate_type::Crate;
 use crate::types::module_type::Module;
 use cairo_lang_doc::parser::DocumentationCommentToken;
+use itertools::Itertools;
 use std::collections::HashMap;
 use std::str::from_utf8;
 
@@ -112,6 +113,7 @@ impl CodeBlock {
             .split(',')
             .map(|attr| attr.trim())
             .filter(|attr| !attr.is_empty())
+            .dedup()
             .map(Into::into)
             .collect()
     }
