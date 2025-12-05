@@ -1,7 +1,6 @@
 [book]
 authors = ["<unknown>"]
 language = "en"
-multilingual = false
 src = "src"
 title = "hello_world_sub_package - Cairo"
 
