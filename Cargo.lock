@@ -7598,6 +7598,7 @@ dependencies = [
  "derive_builder",
  "indoc",
  "mimalloc",
+ "num-bigint",
  "predicates",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",

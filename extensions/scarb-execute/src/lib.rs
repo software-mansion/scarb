@@ -24,6 +24,7 @@ use cairo_vm::vm::runners::cairo_runner::CairoRunner;
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
+use num_bigint::BigInt;
 use scarb_extensions_cli::execute::{
     Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
 };
@@ -32,10 +33,11 @@ use scarb_oracle_hint_service::OracleHintService;
 use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars, WithManifestPath};
 use scarb_ui::components::Status;
-use serde_json::json;
+use serde_json::{Value, json};
 use std::env;
 use std::fs;
 use std::io::{self};
+use std::str::FromStr;
 use stwo_cairo_adapter::adapter::adapt;
 
 mod hint_processor;
@@ -57,7 +59,7 @@ pub fn main_inner(args: Args, ui: Ui) -> Result<()> {
     execute(&metadata, &package, &args.execution, &ui)
 }
 
-fn read_arguments(arguments: ProgramArguments) -> Result<Vec<Arg>> {
+fn read_arguments_as_felt(arguments: ProgramArguments) -> Result<Vec<Arg>> {
     if let Some(path) = arguments.arguments_file {
         let file = fs::File::open(&path).with_context(|| "reading arguments file failed")?;
         let as_vec: Vec<BigUintAsHex> =
@@ -71,10 +73,37 @@ fn read_arguments(arguments: ProgramArguments) -> Result<Vec<Arg>> {
     }
 }
 
+fn read_arguments_as_value(arguments: ProgramArguments) -> Result<Vec<Value>> {
+    if let Some(path) = arguments.arguments_file {
+        let file = fs::File::open(&path).with_context(|| "reading arguments file failed")?;
+        let as_vec: Vec<BigUintAsHex> =
+            serde_json::from_reader(file).with_context(|| "deserializing arguments file failed")?;
+        Ok(as_vec
+            .into_iter()
+            .map(|v| {
+                Value::Number(
+                    serde_json::Number::from_str(&BigInt::from(v.value).to_string()).unwrap(),
+                )
+            })
+            .collect())
+    } else {
+        Ok(arguments
+            .arguments
+            .into_iter()
+            .map(|v| {
+                Value::Number(serde_json::Number::from_str(&v.to_bigint().to_string()).unwrap())
+            })
+            .collect())
+    }
+}
+
 fn execute_bootloader(
     executable_path: Utf8PathBuf,
     cairo_run_config: &CairoRunConfig,
+    arguments: ProgramArguments,
 ) -> Result<(CairoRunner, Box<dyn ExecutionResourcesSource>)> {
+    let args = read_arguments_as_value(arguments)?;
+
     // Program input JSON for the bootloader.
     let program_input = json!({
         "single_page": true,
@@ -83,7 +112,7 @@ fn execute_bootloader(
                 "type": "Cairo1Executable",
                 "path": executable_path,
                 "program_hash_function": "blake",
-                "user_args_file": None::<Utf8PathBuf>,
+                "user_args_list": args,
             }
         ],
     });
@@ -104,7 +133,7 @@ fn execute_bootloader(
     // Run the program with the configured execution scopes and cairo_run_config
     let runner = cairo_run_program_with_initial_scope(
         &bootloader_program,
-        &cairo_run_config,
+        cairo_run_config,
         &mut hint_processor,
         exec_scopes,
     )?;
@@ -148,7 +177,7 @@ fn execute_standalone(
 
     let cairo_hint_processor = CairoHintProcessor {
         runner: None,
-        user_args: vec![vec![Arg::Array(read_arguments(arguments)?)]],
+        user_args: vec![vec![Arg::Array(read_arguments_as_felt(arguments)?)]],
         string_to_hint,
         starknet_state: Default::default(),
         run_resources: Default::default(),
@@ -164,7 +193,7 @@ fn execute_standalone(
     };
 
     let runner =
-        cairo_run_program(&program, &cairo_run_config, &mut hint_processor).map_err(|err| {
+        cairo_run_program(&program, cairo_run_config, &mut hint_processor).map_err(|err| {
             if let Some(panic_data) = hint_processor.cairo_hint_processor.markers.last() {
                 anyhow!(format_for_panic(panic_data.iter().copied()))
             } else {
@@ -243,8 +272,17 @@ pub fn execute(
     let cairo_run_config = build_cairo_run_config(&output, args)?;
     let executable = load_prebuilt_executable(&executable_path)?;
 
+    let output_dir = scarb_target_dir.join("execute").join(&package.name);
+    create_output_dir(output_dir.as_std_path())?;
+
+    let execution_output_dir = get_or_create_output_dir(&output_dir)?;
+
     let (mut runner, hint_processor) = if args.run.target.is_bootloader() {
-        execute_bootloader(executable_path, &cairo_run_config)
+        execute_bootloader(
+            executable_path,
+            &cairo_run_config,
+            args.run.arguments.clone(),
+        )
     } else {
         execute_standalone(
             executable_path,
@@ -274,11 +312,6 @@ pub fn execute(
     if output.is_none() {
         return Ok(());
     }
-
-    let output_dir = scarb_target_dir.join("execute").join(&package.name);
-    create_output_dir(output_dir.as_std_path())?;
-
-    let execution_output_dir = get_or_create_output_dir(&output_dir)?;
 
     if output.is_cairo_pie() {
         let output_value = runner.get_cairo_pie()?;
