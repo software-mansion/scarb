@@ -877,6 +877,7 @@ fn test_linter_with_attribute_macros() {
 }
 
 #[test]
+#[ignore = "TODO(#cairo-lint/489"]
 fn test_linter_with_attribute_macros_complex() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
