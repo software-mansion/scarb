@@ -581,7 +581,7 @@ fn exclude_requires_workspace() {
             error: the following required arguments were not provided:
               --workspace
 
-            Usage: scarb tree --workspace --exclude <SPEC>
+            Usage: scarb[..] tree --workspace --exclude <SPEC>
 
             For more information, try '--help'.
         "#})
@@ -600,7 +600,7 @@ fn exclude_conflicts_with_package() {
         .stderr_eq(indoc! {r#"
             error: the argument '--exclude <SPEC>' cannot be used with '--package <SPEC>'
 
-            Usage: scarb tree --workspace --exclude <SPEC>
+            Usage: scarb[..] tree --workspace --exclude <SPEC>
 
             For more information, try '--help'.
         "#})
