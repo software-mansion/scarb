@@ -33,7 +33,47 @@
                   }
                 }
               ],
-              "structs": [],
+              "structs": [
+                {
+                  "members": [],
+                  "item_data": {
+                    "name": "LinkedStruct",
+                    "doc": null,
+                    "signature": "pub struct LinkedStruct {}",
+                    "full_path": "hello_world::inner_module::LinkedStruct",
+                    "group": null
+                  }
+                },
+                {
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "visible_field",
+                        "doc": null,
+                        "signature": "pub visible_field: LinkedStruct",
+                        "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field",
+                        "group": null
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one",
+                        "doc": null,
+                        "signature": "pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct",
+                        "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one",
+                        "group": null
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "TestMembersVisibility",
+                    "doc": null,
+                    "signature": "pub struct TestMembersVisibility {\n    pub visible_field: LinkedStruct,\n    pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct,\n    /* private fields */\n}",
+                    "full_path": "hello_world::inner_module::TestMembersVisibility",
+                    "group": null
+                  }
+                }
+              ],
               "enums": [],
               "type_aliases": [],
               "impl_aliases": [],
@@ -135,7 +175,57 @@
                 }
               }
             ],
-            "use_structs": [],
+            "use_structs": [
+              {
+                "members": [],
+                "item_data": {
+                  "name": "LinkedStruct",
+                  "doc": null,
+                  "signature": "pub struct LinkedStruct {}",
+                  "full_path": "hello_world::inner_module::LinkedStruct",
+                  "group": null
+                }
+              },
+              {
+                "members": [
+                  {
+                    "item_data": {
+                      "name": "visible_field",
+                      "doc": null,
+                      "signature": "pub visible_field: LinkedStruct",
+                      "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field",
+                      "group": null
+                    }
+                  },
+                  {
+                    "item_data": {
+                      "name": "visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one",
+                      "doc": null,
+                      "signature": "pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct",
+                      "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one",
+                      "group": null
+                    }
+                  }
+                ],
+                "item_data": {
+                  "name": "TestMembersVisibility",
+                  "doc": null,
+                  "signature": "pub struct TestMembersVisibility {\n    pub visible_field: LinkedStruct,\n    pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct,\n    /* private fields */\n}",
+                  "full_path": "hello_world::inner_module::TestMembersVisibility",
+                  "group": null
+                }
+              },
+              {
+                "members": [],
+                "item_data": {
+                  "name": "TestMembersVisibility2",
+                  "doc": null,
+                  "signature": "#[doc(group: \"visible\")]\npub struct TestMembersVisibility2 {/* private fields */}",
+                  "full_path": "hello_world::inner_module::TestMembersVisibility2",
+                  "group": "visible"
+                }
+              }
+            ],
             "use_enums": [],
             "use_module_type_aliases": [],
             "use_impl_aliases": [],
@@ -183,7 +273,18 @@
                 }
               }
             ],
-            "structs": [],
+            "structs": [
+              {
+                "members": [],
+                "item_data": {
+                  "name": "TestMembersVisibility2",
+                  "doc": null,
+                  "signature": "#[doc(group: \"visible\")]\npub struct TestMembersVisibility2 {/* private fields */}",
+                  "full_path": "hello_world::inner_module::TestMembersVisibility2",
+                  "group": "visible"
+                }
+              }
+            ],
             "enums": [],
             "type_aliases": [],
             "impl_aliases": [],
