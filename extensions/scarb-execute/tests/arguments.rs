@@ -123,6 +123,9 @@ fn bootloader_can_take_big_number_as_arg() {
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello
             Program output:
+            1
+            3
+            -1272769738511508193392446484420387256363817420616635924344207712676117344847
             1129815197211541481934112806673325772687763881719835256646064516195041515616
             Saving output to: target/execute/hello/execution1
         "#});
@@ -167,6 +170,9 @@ fn bootloader_can_read_arguments_from_file() {
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello
             Program output:
+            1
+            3
+            -1272769738511508193392446484420387256363817420616635924344207712676117344847
             1129815197211541481934112806673325772687763881719835256646064516195041515616
             Saving output to: target/execute/hello/execution1
         "#});
