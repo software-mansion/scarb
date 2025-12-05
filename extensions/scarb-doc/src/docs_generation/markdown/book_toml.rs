@@ -8,7 +8,6 @@ pub fn generate_book_toml_content(package_metadata: &AdditionalMetadata) -> Stri
             [book]
             authors = {:?}
             language = "en"
-            multilingual = false
             src = "src"
             title = "{} - Cairo"
 
