@@ -13,9 +13,9 @@ use crate::core::manifest::{ManifestDependency, Summary, TomlManifest};
 use crate::core::package::{Package, PackageId};
 use crate::core::source::Source;
 use crate::flock::protected_run_if_not_ok;
-use crate::internal::fsx;
-use crate::internal::fsx::PathUtf8Ext;
 use crate::sources::PathSource;
+use scarb_fs_utils as fsx;
+use scarb_fs_utils::PathUtf8Ext;
 
 /// Serves Cairo standard library packages.
 pub struct StandardLibSource<'c> {

@@ -16,8 +16,8 @@ use crate::core::registry::client::{
 use crate::core::registry::index::{IndexDependency, IndexRecord, IndexRecords, TemplateUrl};
 use crate::core::{Checksum, Config, Digest, Package, PackageId, PackageName, Summary};
 use crate::flock::{Filesystem, LockedFile};
-use crate::internal::fsx;
-use crate::internal::fsx::PathBufUtf8Ext;
+use scarb_fs_utils as fsx;
+use scarb_fs_utils::PathBufUtf8Ext;
 
 /// Local registry that lives on the filesystem as a set of `.tar.zst` files with an `index`
 /// directory in the standard registry index format.

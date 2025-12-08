@@ -37,6 +37,7 @@ stwo-cairo-adapter.workspace = true
 thousands.workspace = true
 tracing-subscriber.workspace = true
 num-bigint = { version = "0.4", features = ["serde"] }
+scarb-fs-utils = { path = "../../utils/scarb-fs-utils" }
 
 [dev-dependencies]
 assert_fs.workspace = true

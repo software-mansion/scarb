@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 use std::sync::LazyLock;
 
+use crate::fsx;
 #[cfg(feature = "scarb-config")]
 use camino::Utf8Path;
 
@@ -99,7 +100,7 @@ impl Scarb {
 
     #[cfg(feature = "scarb-config")]
     pub fn test_config(
-        manifest: impl crate::fsx::AssertFsUtf8Ext,
+        manifest: impl fsx::AssertFsUtf8Ext,
         cache_dir: &Utf8Path,
         config_dir: &Utf8Path,
     ) -> scarb::core::Config {

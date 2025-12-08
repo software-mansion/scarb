@@ -28,6 +28,7 @@ use num_bigint::BigInt;
 use scarb_extensions_cli::execute::{
     Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
 };
+use scarb_fs_utils::canonicalize_utf8;
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
 use scarb_oracle_hint_service::OracleHintService;
 use scarb_ui::Ui;
@@ -496,9 +497,9 @@ fn find_prebuilt_executable_path(path: &Utf8Path, filename: String) -> Result<Ut
             help: run `scarb build` to compile the package
         "#}
     );
-    let file_path = file_path
-        .canonicalize_utf8()
-        .context("failed to canonicalize executable path")?;
+
+    let file_path =
+        canonicalize_utf8(file_path).context("failed to canonicalize executable path")?;
     Ok(file_path)
 }
 
