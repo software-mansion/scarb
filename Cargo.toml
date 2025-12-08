@@ -81,7 +81,7 @@ clap = { version = "4", features = ["derive", "env", "string"] }
 clap_complete = "4"
 console = "0.16"
 convert_case = "0"
-darling = "0.21"
+darling = "0.23"
 dashmap = "6"
 data-encoding = "2"
 deno_task_shell = ">=0.13"
