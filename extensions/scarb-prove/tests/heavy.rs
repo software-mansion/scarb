@@ -29,7 +29,7 @@ fn build_executable_project() -> TempDir {
 
 #[test]
 #[cfg(not(windows))]
-fn prove_with_execute() {
+fn sequential_prove_with_execute() {
     let t = build_executable_project();
 
     Scarb::quick_command()
@@ -54,7 +54,7 @@ fn prove_with_execute() {
 
 #[test]
 #[cfg(not(windows))]
-fn prove_from_execution_output() {
+fn sequential_prove_from_execution_output() {
     let t = build_executable_project();
 
     Scarb::quick_command()
