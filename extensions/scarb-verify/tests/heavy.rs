@@ -28,7 +28,7 @@ fn build_executable_project() -> TempDir {
 // Disabled due to `scarb prove` not being supported on Windows
 #[cfg(not(windows))]
 #[test]
-fn verify_from_execution_output() {
+fn sequential_verify_from_execution_output() {
     let t = build_executable_project();
 
     Scarb::quick_command()
@@ -53,7 +53,7 @@ fn verify_from_execution_output() {
 // Disabled due to `scarb prove` not being supported on Windows
 #[cfg(not(windows))]
 #[test]
-fn verify_from_path() {
+fn sequential_verify_from_path() {
     let t = build_executable_project();
 
     Scarb::quick_command()
