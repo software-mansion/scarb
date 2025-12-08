@@ -9,8 +9,9 @@ use crate::types::groups::{
 use crate::types::item_data::ItemData;
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, MacroDeclaration,
-    Struct, Trait, TypeAlias,
+    Trait, TypeAlias,
 };
+use crate::types::struct_types::Struct;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
     GenericTypeId, ImplDefId, LanguageElementId, LookupItemId, ModuleId, ModuleItemId,
