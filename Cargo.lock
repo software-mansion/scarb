@@ -855,7 +855,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-casm"
 version = "2.14.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=main#144c7b19bd6f9d72280f1741aa2d8d963f41dd7f"
+source = "git+https://github.com/starkware-libs/cairo?branch=main#df523d2ed5d1fa2a245fe25f7aba36d0b22f0ae8"
 dependencies = [
  "cairo-lang-utils 2.14.0 (git+https://github.com/starkware-libs/cairo?branch=main)",
  "indoc",
@@ -2124,7 +2124,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-utils"
 version = "2.14.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=main#144c7b19bd6f9d72280f1741aa2d8d963f41dd7f"
+source = "git+https://github.com/starkware-libs/cairo?branch=main#df523d2ed5d1fa2a245fe25f7aba36d0b22f0ae8"
 dependencies = [
  "hashbrown 0.16.0",
  "indexmap",
@@ -7458,6 +7458,7 @@ dependencies = [
  "salsa",
  "scarb-build-metadata",
  "scarb-extensions-cli",
+ "scarb-fs-utils",
  "scarb-metadata 1.15.1",
  "scarb-proc-macro-server-types 0.5.0",
  "scarb-stable-hash 1.0.0",
@@ -7601,6 +7602,7 @@ dependencies = [
  "num-bigint",
  "predicates",
  "scarb-extensions-cli",
+ "scarb-fs-utils",
  "scarb-metadata 1.15.1",
  "scarb-oracle-hint-service",
  "scarb-test-support",
@@ -7622,6 +7624,15 @@ dependencies = [
  "camino",
  "clap",
  "scarb-ui",
+]
+
+[[package]]
+name = "scarb-fs-utils"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "camino",
+ "dunce",
 ]
 
 [[package]]
@@ -7764,6 +7775,7 @@ dependencies = [
  "predicates",
  "scarb",
  "scarb-build-metadata",
+ "scarb-fs-utils",
  "scarb-proc-macro-server-types 0.5.0",
  "scarb-ui",
  "semver 1.0.27",

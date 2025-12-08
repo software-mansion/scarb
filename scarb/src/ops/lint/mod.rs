@@ -23,7 +23,7 @@ use itertools::Itertools;
 use scarb_ui::components::Status;
 
 use crate::core::{Package, Workspace};
-use crate::internal::fsx::canonicalize;
+use scarb_fs_utils::canonicalize;
 
 use super::{
     CompilationUnitsOpts, FeaturesOpts, compile_unit, plugins_required_for_units, validate_features,

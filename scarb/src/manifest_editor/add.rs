@@ -7,8 +7,8 @@ use toml_edit::{DocumentMut, Entry, InlineTable, Item, value};
 use url::Url;
 
 use crate::core::{GitReference, PackageName};
-use crate::internal::fsx;
 use crate::sources::canonical_url::CanonicalUrl;
+use scarb_fs_utils as fsx;
 
 use super::tomlx::get_table_mut;
 use super::{DepId, DepType, Op, OpCtx};

@@ -18,7 +18,6 @@ use crate::errors::ErrorWithExitCode;
 mod args;
 mod commands;
 mod errors;
-mod fsx;
 mod interactive;
 
 #[global_allocator]
@@ -87,7 +86,7 @@ fn init_logging(verbose: VerbositySpec, ui: &Ui) -> Option<impl Drop> {
         let profile_file = fs::File::create(&path).expect("failed to create profile file");
 
         // Try to canonicalise the path so that it is easier to find the file from logs.
-        if let Ok(canonical) = fsx::canonicalize(&path) {
+        if let Ok(canonical) = scarb_fs_utils::canonicalize(&path) {
             path = canonical;
         }
 

@@ -23,7 +23,7 @@ members = [
     "utils/test-for-each-example",
     "utils/scarb-extensions-cli",
     "utils/scarb-oracle-hint-service",
-    "xtask",
+    "xtask", "utils/scarb-fs-utils",
 ]
 "resolver" = "2"
 

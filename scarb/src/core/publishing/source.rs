@@ -4,11 +4,11 @@ use ignore::{DirEntry, WalkBuilder};
 use std::collections::HashSet;
 
 use crate::core::Package;
-use crate::internal::fsx::PathBufUtf8Ext;
 use crate::{
     CAIRO_PROJECT_FILE_NAME, CARGO_LOCKFILE_FILE_NAME, CARGO_MANIFEST_FILE_NAME,
     DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME, SCARB_IGNORE_FILE_NAME,
 };
+use scarb_fs_utils::PathBufUtf8Ext;
 
 /// List all files relevant to building this package inside this source.
 ///

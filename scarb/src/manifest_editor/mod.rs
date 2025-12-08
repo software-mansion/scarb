@@ -12,7 +12,7 @@ pub use dep_type::{DepType, SectionArgs};
 pub use remove::RemoveDependency;
 
 use crate::core::Config;
-use crate::internal::fsx;
+use scarb_fs_utils as fsx;
 
 mod add;
 mod dep_id;
