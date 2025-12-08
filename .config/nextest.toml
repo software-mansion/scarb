@@ -1,0 +1,6 @@
+[test-groups]
+stwo-serial = { max-threads = 1 }
+
+[[profile.default.overrides]]
+filter = 'test(stwo_serial::)'
+test-group = 'stwo-serial'

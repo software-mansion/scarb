@@ -25,37 +25,53 @@ fn build_executable_project() -> TempDir {
     t
 }
 
+// Disabled due to `scarb prove` not being supported on Windows
+#[cfg(not(windows))]
 #[test]
-fn verify_fails_when_execution_output_not_found() {
+fn verify_from_execution_output() {
     let t = build_executable_project();
+
+    Scarb::quick_command()
+        .arg("prove")
+        .arg("--execute")
+        .current_dir(&t)
+        .assert()
+        .success();
 
     Scarb::quick_command()
         .arg("verify")
         .arg("--execution-id=1")
         .current_dir(&t)
         .assert()
-        .failure()
+        .success()
         .stdout_eq(indoc! {r#"
-            [..]Verifying hello
-            error: execution directory does not exist at path: [..]/target/execute/hello/execution1
-            help: make sure to run `scarb prove --execute` first
-            and that the execution ID is correct
-
+        [..]Verifying hello
+        [..]Verified proof successfully
         "#});
 }
 
+// Disabled due to `scarb prove` not being supported on Windows
+#[cfg(not(windows))]
 #[test]
-fn verify_fails_when_proof_file_not_found() {
+fn verify_from_path() {
     let t = build_executable_project();
 
     Scarb::quick_command()
-        .arg("verify")
-        .arg("--proof-file=nonexistent.json")
+        .arg("prove")
+        .arg("--execute")
         .current_dir(&t)
         .assert()
-        .failure()
+        .success();
+
+    let proof_path = t.join("target/execute/hello/execution1/proof/proof.json");
+    Scarb::quick_command()
+        .arg("verify")
+        .arg("--proof-file")
+        .arg(proof_path)
+        .assert()
+        .success()
         .stdout_eq(indoc! {r#"
-            [..]Verifying proof
-            error: proof file does not exist at path: nonexistent.json
+        [..]Verifying proof
+        [..]Verified proof successfully
         "#});
 }
