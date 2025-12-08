@@ -89,7 +89,7 @@ impl<'db> ItemData<'db> {
     }
 }
 
-/// Helper struct for custom serialization of [`ItemData`] for [`crate::types::other_types::Variant`] and [`crate::types::other_types::Member`].
+/// Helper struct for custom serialization of [`ItemData`] for [`crate::types::other_types::Variant`] and [`crate::types::struct_types::Member`].
 #[derive(Debug, Serialize, Clone)]
 pub struct SubItemData<'db> {
     #[serde(skip_serializing)]
