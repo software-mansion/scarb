@@ -7575,7 +7575,6 @@ version = "2.14.0"
 dependencies = [
  "anyhow",
  "assert_fs",
- "bincode 2.0.1",
  "cairo-annotations",
  "cairo-lang-casm 2.14.0 (git+https://github.com/starkware-libs/cairo?rev=1c409283b8714115363ac1a59dcb26cc3eda6c12)",
  "cairo-lang-executable 2.14.0 (git+https://github.com/starkware-libs/cairo?rev=1c409283b8714115363ac1a59dcb26cc3eda6c12)",
