@@ -8,7 +8,7 @@ use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::{formatdoc, indoc};
 use mimalloc::MiMalloc;
-use scarb_extensions_cli::execute::for_proving::{ExecutionTarget, ToArgs};
+use scarb_extensions_cli::execute::for_proving::ToArgs;
 use scarb_extensions_cli::prove::Args;
 use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
 use scarb_ui::args::{PackagesFilter, ToEnvVars};
@@ -121,25 +121,25 @@ fn resolve_paths_from_package(
     let execution_dir = scarb_target_dir
         .join("execute")
         .join(package_name)
-        .join(format!("execution{}", execution_id));
+        .join(format!("execution{execution_id}",));
 
     ensure!(
         execution_dir.exists(),
         formatdoc! {r#"
-            execution directory not found: {}
+            execution directory not found: {execution_dir}
             help: make sure to run `scarb execute` first
             and then run `scarb prove` with correct execution ID
-            "#, execution_dir}
+            "#, }
     );
 
     let cairo_pie_path = execution_dir.join("cairo_pie.zip");
     ensure!(
         !cairo_pie_path.exists(),
         formatdoc! {r#"
-            proving cairo pie output is not supported: {}
+            proving cairo pie output is not supported: {cairo_pie_path}
             help: run `scarb execute --output=standard` first
             and then run `scarb prove` with correct execution ID
-            "#, cairo_pie_path}
+            "#, }
     );
 
     // Get input files from execution directory
