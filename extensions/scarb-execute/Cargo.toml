@@ -25,18 +25,19 @@ console.workspace = true
 create-output-dir = { path = "../../utils/create-output-dir" }
 indoc.workspace = true
 mimalloc = { workspace = true, features = ["secure"] }
+num-bigint = { version = "0.4", features = ["serde"] }
 predicates.workspace = true
 scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["execute"] }
+scarb-fs-utils = { path = "../../utils/scarb-fs-utils" }
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-oracle-hint-service = { path = "../../utils/scarb-oracle-hint-service" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 serde.workspace = true
 serde_json.workspace = true
 stwo-cairo-adapter.workspace = true
+test-case.workspace = true
 thousands.workspace = true
 tracing-subscriber.workspace = true
-num-bigint = { version = "0.4", features = ["serde"] }
-scarb-fs-utils = { path = "../../utils/scarb-fs-utils" }
 
 [dev-dependencies]
 assert_fs.workspace = true
