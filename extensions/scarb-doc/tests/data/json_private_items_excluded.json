@@ -57,7 +57,7 @@
                       "item_data": {
                         "name": "PublicChildStructure",
                         "doc": "Child public struct",
-                        "signature": "pub struct PublicChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252,\n}",
+                        "signature": "pub struct PublicChildStructure {\n    pub public_field: felt252,\n    /* private fields */\n}",
                         "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure",
                         "group": null
                       }
@@ -134,7 +134,7 @@
                   "item_data": {
                     "name": "PublicParentStructure",
                     "doc": "Parent public struct",
-                    "signature": "pub struct PublicParentStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252,\n}",
+                    "signature": "pub struct PublicParentStructure {\n    pub public_field: felt252,\n    /* private fields */\n}",
                     "full_path": "hello_world::PublicParent::PublicParentStructure",
                     "group": null
                   }
@@ -211,7 +211,7 @@
               "item_data": {
                 "name": "PublicStructure",
                 "doc": "Public struct",
-                "signature": "pub struct PublicStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252,\n}",
+                "signature": "pub struct PublicStructure {\n    pub public_field: felt252,\n    /* private fields */\n}",
                 "full_path": "hello_world::PublicStructure",
                 "group": null
               }
