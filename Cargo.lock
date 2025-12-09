@@ -7610,6 +7610,7 @@ dependencies = [
  "serde_json",
  "snapbox",
  "stwo-cairo-adapter",
+ "test-case",
  "thousands",
  "tracing-subscriber",
 ]

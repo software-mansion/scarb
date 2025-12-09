@@ -1,10 +1,13 @@
 use assert_fs::TempDir;
 use assert_fs::fixture::PathChild;
-use indoc::indoc;
+use assert_fs::prelude::PathAssert;
+use indoc::{formatdoc, indoc};
+use predicates::prelude::predicate;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
 use snapbox::{Assert, Data, Redactions};
+use test_case::test_case;
 
 fn executable_project_builder() -> ProjectBuilder {
     ProjectBuilder::start()
@@ -31,11 +34,13 @@ fn build_executable_project() -> TempDir {
     t
 }
 
-#[test]
-fn can_execute_default_main_function_from_executable() {
+#[test_case("standalone")]
+#[test_case("bootloader")]
+fn can_execute_default_main_function_from_executable(target: &str) {
     let t = build_executable_project();
     Scarb::quick_command()
         .arg("execute")
+        .arg(format!("--target={target}"))
         .current_dir(&t)
         .assert()
         .success()
@@ -50,37 +55,19 @@ fn can_execute_default_main_function_from_executable() {
         .assert_is_json::<serde_json::Value>();
 }
 
-#[test]
-fn can_execute_prebuilt_executable() {
+#[test_case("standalone")]
+#[test_case("bootloader")]
+fn can_execute_prebuilt_executable(target: &str) {
     let t = build_executable_project();
     Scarb::quick_command().arg("build").current_dir(&t).assert();
     Scarb::quick_command()
         .arg("execute")
+        .arg(format!("--target={target}"))
         .arg("--no-build")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_eq(indoc! {r#"
-        [..]Executing hello
-        Saving output to: target/execute/hello/execution1
-        "#});
-
-    t.child("target/execute/hello/execution1/prover_input.json")
-        .assert_is_json::<serde_json::Value>();
-}
-
-#[test]
-fn can_execute_bootloader_target() {
-    let t = build_executable_project();
-    Scarb::quick_command()
-        .arg("execute")
-        .arg("--target=bootloader")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_eq(indoc! {r#"
-        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
         Saving output to: target/execute/hello/execution1
         "#});
@@ -105,6 +92,27 @@ fn cannot_produce_cairo_pie_for_standalone_target() {
 }
 
 #[test]
+fn can_produce_cairo_pie_for_bootloader_target() {
+    let t = build_executable_project();
+    Scarb::quick_command()
+        .arg("execute")
+        .arg("--target=bootloader")
+        .arg("--output=cairo-pie")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        [..]Saving output to: target/execute/hello/execution1/cairo_pie.zip
+        "#});
+
+    t.child("target/execute/hello/execution1/cairo_pie.zip")
+        .assert(predicate::path::exists());
+}
+
+#[test]
 fn fails_when_attr_missing() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -123,18 +131,18 @@ fn fails_when_attr_missing() {
             }
         "#})
         .build(&t);
-    //
-    // Scarb::quick_command()
-    //     .arg("execute")
-    //     .current_dir(&t)
-    //     .assert()
-    //     .failure()
-    //     .stdout_eq(indoc! {r#"
-    //         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-    //         error: requested `#[executable]` not found
-    //         error: could not compile `hello` due to [..] previous error
-    //         error: `scarb` command exited with error
-    //     "#});
+
+    Scarb::quick_command()
+        .arg("execute")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+            error: requested `#[executable]` not found
+            error: could not compile `hello` due to [..] previous error
+            error: `scarb` command exited with error
+        "#});
 
     Scarb::quick_command()
         .arg("execute")
@@ -151,8 +159,21 @@ fn fails_when_attr_missing() {
         "#});
 }
 
-#[test]
-fn can_print_panic_reason() {
+#[test_case("standalone", "error: Panicked with \"abcd\".")]
+#[test_case(
+    "bootloader",
+    indoc! {r#"
+        error: Error at pc=14:19:
+        An ASSERT_EQ instruction failed: 0 != 1.
+        Cairo traceback (most recent call last):
+        <start>:3:1: (pc=0:2)
+        src/starkware/cairo/bootloaders/simple_bootloader/simple_bootloader.cairo:55:5: (pc=0:3192)
+        /var/lib/engflow/worker/exec/src/starkware/cairo/bootloaders/simple_bootloader/run_simple_bootloader.cairo:107:9: (pc=0:756)
+        /var/lib/engflow/worker/exec/src/starkware/cairo/bootloaders/simple_bootloader/run_simple_bootloader.cairo:192:5: (pc=0:811)
+        /var/lib/engflow/worker/exec/src/starkware/cairo/bootloaders/simple_bootloader/execute_task.cairo:246:5: (pc=0:644)
+"#}
+)]
+fn can_print_panic_reason(target: &str, panic: &str) {
     let t = TempDir::new().unwrap();
     executable_project_builder()
         .lib_cairo(indoc! {r#"
@@ -170,14 +191,15 @@ fn can_print_panic_reason() {
         .arg("execute")
         .arg("--print-program-output")
         .arg("--print-resource-usage")
+        .arg(format!("--target={target}"))
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(formatdoc! {r#"
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello
-            error: Panicked with "abcd".
+            {panic}
         "#});
 }
 
@@ -234,7 +256,7 @@ fn undefined_target_specified() {
         .dep_cairo_execute()
         .manifest_extra(indoc! {r#"
             [executable]
-            
+
             [cairo]
             enable-gas = false
         "#})
@@ -357,7 +379,7 @@ fn executable_must_be_chosen() {
         .stdout_eq(indoc! {r#"
             error: more than one executable target found for package `hello_world`
             help: specify the target with `--executable-name` or `--executable-function`
-    
+
         "#});
 }
 
@@ -419,8 +441,9 @@ fn can_use_features() {
         "#});
 }
 
-#[test]
-fn can_create_profiler_trace_file() {
+#[test_case("standalone")]
+#[test_case("bootloader")]
+fn can_create_profiler_trace_file(target: &str) {
     let t = TempDir::new().unwrap();
     executable_project_builder()
         .manifest_extra(indoc! {r#"
@@ -437,6 +460,7 @@ fn can_create_profiler_trace_file() {
 
     Scarb::quick_command()
         .arg("execute")
+        .arg(format!("--target={target}"))
         .arg("--save-profiler-trace-data")
         .current_dir(&t)
         .assert()
