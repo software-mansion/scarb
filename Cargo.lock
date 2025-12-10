@@ -1592,7 +1592,7 @@ dependencies = [
  "mimalloc",
  "salsa",
  "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "scarb-proc-macro-server-types 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "scarb-proc-macro-server-types 0.4.0",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "semver 1.0.27",
  "serde",
@@ -6833,7 +6833,7 @@ dependencies = [
  "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
- "scarb-proc-macro-server-types 0.4.0",
+ "scarb-proc-macro-server-types 0.5.0",
  "scarb-stable-hash 1.0.0",
  "scarb-test-support",
  "scarb-ui",
@@ -7058,21 +7058,21 @@ dependencies = [
 [[package]]
 name = "scarb-proc-macro-server-types"
 version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "278ce40a646c98bd76e2fab9dc338eb6b3763eccc31133ba6f15f7e03570b308"
 dependencies = [
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.2",
+ "cairo-lang-macro 0.2.1",
  "serde",
  "serde_json",
 ]
 
 [[package]]
 name = "scarb-proc-macro-server-types"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "278ce40a646c98bd76e2fab9dc338eb6b3763eccc31133ba6f15f7e03570b308"
+version = "0.5.0"
 dependencies = [
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.1",
+ "cairo-lang-macro 0.2.2",
  "serde",
  "serde_json",
 ]
@@ -7134,7 +7134,7 @@ dependencies = [
  "predicates",
  "scarb",
  "scarb-build-metadata",
- "scarb-proc-macro-server-types 0.4.0",
+ "scarb-proc-macro-server-types 0.5.0",
  "scarb-ui",
  "semver 1.0.27",
  "serde",

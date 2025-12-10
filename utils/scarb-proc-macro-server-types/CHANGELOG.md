@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.5.0 (2025-12-10)
+- Add `MacroWithHash` struct. 
+- Use `MacroWithHash` to identify procedural macros in `CompilationUnitComponentMacros`, instead of macro name only.
+- Add `fingerprint` field to `ProcMacroResult` struct.
+
 ## 0.4.0 (2025-10-23)
 - Add `Workspace` type.
 - Limit `DefinedMacros` request and `ProcMacroScope` to specific Scarb workspace.
