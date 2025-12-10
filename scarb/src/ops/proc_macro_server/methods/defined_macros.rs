@@ -4,7 +4,7 @@ use anyhow::Result;
 use camino::Utf8Path;
 use itertools::Itertools;
 use scarb_proc_macro_server_types::methods::defined_macros::{
-    CompilationUnitComponentMacros, DebugInfo, DefinedMacros, DefinedMacrosResponse,
+    CompilationUnitComponentMacros, DebugInfo, DefinedMacros, DefinedMacrosResponse, MacroWithHash,
 };
 
 use crate::{
@@ -94,9 +94,30 @@ fn get_macros_for_components(
             plugin
                 .iter()
                 .map(|plugin| {
-                    let attributes = plugin.declared_attributes_without_executables();
-                    let inline_macros = plugin.declared_inline_macros();
-                    let derives = plugin.declared_derives_snake_case();
+                    let attributes = plugin
+                        .declared_attributes_without_executables_with_package()
+                        .into_iter()
+                        .map(|(name, package)| MacroWithHash {
+                            name,
+                            hash: *workspace_macros.instance_to_hash.get(&package).unwrap(),
+                        })
+                        .collect();
+                    let inline_macros = plugin
+                        .declared_inline_macros_with_package()
+                        .into_iter()
+                        .map(|(name, package)| MacroWithHash {
+                            name,
+                            hash: *workspace_macros.instance_to_hash.get(&package).unwrap(),
+                        })
+                        .collect();
+                    let derives = plugin
+                        .declared_derives_snake_case_with_package()
+                        .into_iter()
+                        .map(|(name, package)| MacroWithHash {
+                            name,
+                            hash: *workspace_macros.instance_to_hash.get(&package).unwrap(),
+                        })
+                        .collect();
                     let executables = plugin.executable_attributes();
                     let source_packages = plugin
                         .instances()

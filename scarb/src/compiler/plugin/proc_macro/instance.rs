@@ -8,6 +8,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::fmt::Debug;
+use std::hash::Hash;
 use tracing::trace;
 
 #[derive(

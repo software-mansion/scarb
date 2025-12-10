@@ -1,5 +1,6 @@
 use crate::compiler::plugin::proc_macro::{ExpansionQuery, ProcMacroInstance};
 use crate::compiler::plugin::{ProcMacroApiVersion, proc_macro};
+use crate::core::PackageId;
 use anyhow::Result;
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::plugin::PluginSuite;
@@ -76,15 +77,6 @@ pub trait DeclaredProcMacroInstances {
         })
     }
 
-    // NOTE: Required for proc macro server. `<ProcMacroHostPlugin as MacroPlugin>::declared_attributes`
-    // returns attributes **and** executables. In PMS, we only need the former because the latter is handled separately.
-    fn declared_attributes_without_executables(&self) -> Vec<String> {
-        self.instances()
-            .iter()
-            .flat_map(|instance| instance.declared_attributes())
-            .collect()
-    }
-
     fn declared_inline_macros(&self) -> Vec<String> {
         self.instances()
             .iter()
@@ -96,13 +88,6 @@ pub trait DeclaredProcMacroInstances {
         self.instances()
             .iter()
             .flat_map(|m| m.declared_derives())
-            .collect()
-    }
-
-    fn declared_derives_snake_case(&self) -> Vec<String> {
-        self.instances()
-            .iter()
-            .flat_map(|m| m.declared_derives_snake_case())
             .collect()
     }
 
@@ -118,6 +103,43 @@ pub trait DeclaredProcMacroInstances {
             .iter()
             .flat_map(|m| m.declared_attributes_and_executables())
             .chain(vec![FULL_PATH_MARKER_KEY.to_string()])
+            .collect()
+    }
+
+    // NOTE: Required for proc macro server. `<ProcMacroHostPlugin as MacroPlugin>::declared_attributes`
+    // returns attributes **and** executables. In PMS, we only need the former because the latter is handled separately.
+    fn declared_attributes_without_executables_with_package(&self) -> Vec<(String, PackageId)> {
+        self.instances()
+            .iter()
+            .flat_map(|instance| {
+                instance
+                    .declared_attributes()
+                    .into_iter()
+                    .map(|name| (name, instance.package_id()))
+            })
+            .collect()
+    }
+
+    fn declared_inline_macros_with_package(&self) -> Vec<(String, PackageId)> {
+        self.instances()
+            .iter()
+            .flat_map(|instance| {
+                instance
+                    .inline_macros()
+                    .into_iter()
+                    .map(|name| (name, instance.package_id()))
+            })
+            .collect()
+    }
+
+    fn declared_derives_snake_case_with_package(&self) -> Vec<(String, PackageId)> {
+        self.instances()
+            .iter()
+            .flat_map(|m| {
+                m.declared_derives_snake_case()
+                    .into_iter()
+                    .map(|name| (name, m.package_id()))
+            })
             .collect()
     }
 }

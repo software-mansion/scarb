@@ -24,6 +24,8 @@ pub struct ProcMacroResult {
     pub diagnostics: Vec<DiagnosticV2>,
     /// A list of code mappings produced by the macro
     pub code_mappings: Option<Vec<CodeMapping>>,
+    /// A proc macro fingerprint
+    pub fingerprint: u64,
 }
 
 impl Default for ProcMacroResult {
@@ -32,6 +34,7 @@ impl Default for ProcMacroResult {
             token_stream: TokenStreamV1::empty(),
             diagnostics: Vec::new(),
             code_mappings: None,
+            fingerprint: 0,
         }
     }
 }

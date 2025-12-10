@@ -1,10 +1,11 @@
+use std::hash::{Hash, Hasher};
 use std::sync::{Arc, Mutex};
 
 use super::{Handler, interface_code_mapping_from_cairo};
 use crate::compiler::plugin::proc_macro::ExpansionKind;
 use crate::compiler::plugin::proc_macro::v2::derive::generate_code_mappings_with_offset;
 use crate::compiler::plugin::proc_macro::{
-    DeclaredProcMacroInstances, Expansion, ExpansionQuery, ProcMacroApiVersion, ProcMacroInstance,
+    Expansion, ExpansionQuery, ProcMacroApiVersion, ProcMacroInstance,
 };
 use crate::core::Config;
 use crate::ops::store::ProcMacroStore;
@@ -16,6 +17,7 @@ use scarb_proc_macro_server_types::conversions::{diagnostic_v1_to_v2, token_stre
 use scarb_proc_macro_server_types::methods::{
     CodeMapping, CodeOrigin, ProcMacroResult, expand::ExpandDerive,
 };
+use scarb_stable_hash::StableHasher;
 
 impl Handler for ExpandDerive {
     fn handle(
@@ -25,29 +27,30 @@ impl Handler for ExpandDerive {
     ) -> Result<Self::Response> {
         let Self::Params {
             context,
-            derives,
+            mut derives,
             item,
             call_site,
         } = params;
+
+        // We need derives to be in deterministic order for hasing later.
+        // LS capable of using fingerprint hash sends already sorted derives, so this should be linear.
+        derives.sort();
 
         let mut derived_code = String::new();
         let mut all_diagnostics = vec![];
         let mut code_mappings = vec![];
         // Needed to provide offset for code mappings in v2-style macros
         let mut current_width = TextWidth::default();
+        let mut hasher = StableHasher::new();
 
         for derive in derives {
             let expansion =
                 ExpansionQuery::with_expansion_name(derive.clone(), ExpansionKind::Derive);
 
-            let plugins = proc_macros.lock().unwrap().get_plugins(&context);
-            let proc_macro_instance = plugins
-                .as_ref()
-                .and_then(|v| {
-                    v.iter()
-                        .filter_map(|plugin| plugin.find_instance_with_expansion(&expansion))
-                        .next()
-                })
+            let (proc_macro_instance, hash) = proc_macros
+                .lock()
+                .unwrap()
+                .get_instance_and_hash(&context, &expansion)
                 .with_context(|| {
                     format!("No \"{derive}\" derive macros found in scope {context:?}")
                 })?;
@@ -60,20 +63,24 @@ impl Handler for ExpandDerive {
 
             let result = match proc_macro_instance.api_version() {
                 ProcMacroApiVersion::V1 => expand_derive_v1(
-                    proc_macro_instance,
+                    &proc_macro_instance,
+                    hash,
                     current_width,
                     call_site.clone(),
                     expansion,
                     token_stream_v2_to_v1(&item),
                 ),
                 ProcMacroApiVersion::V2 => expand_derive_v2(
-                    proc_macro_instance,
+                    &proc_macro_instance,
+                    hash,
                     current_width,
                     expansion,
                     call_site.clone(),
                     item.clone(),
                 ),
             }?;
+
+            result.fingerprint.hash(&mut hasher);
 
             current_width = current_width + TextWidth::from_str(&result.token_stream.to_string());
 
@@ -91,12 +98,14 @@ impl Handler for ExpandDerive {
             token_stream: TokenStreamV1::new(derived_code),
             diagnostics: all_diagnostics,
             code_mappings: Some(code_mappings),
+            fingerprint: hasher.finish(),
         })
     }
 }
 
 fn expand_derive_v1(
     proc_macro_instance: &Arc<ProcMacroInstance>,
+    fingerprint: u64,
     current_width: TextWidth,
     call_site: TextSpan,
     expansion: &Expansion,
@@ -122,11 +131,13 @@ fn expand_derive_v1(
         token_stream: result.token_stream,
         diagnostics: result.diagnostics.iter().map(diagnostic_v1_to_v2).collect(),
         code_mappings,
+        fingerprint,
     })
 }
 
 fn expand_derive_v2(
     proc_macro_instance: &Arc<ProcMacroInstance>,
+    fingerprint: u64,
     current_width: TextWidth,
     expansion: &Expansion,
     call_site: TextSpan,
@@ -151,5 +162,6 @@ fn expand_derive_v2(
                 .map(interface_code_mapping_from_cairo)
                 .collect(),
         ),
+        fingerprint,
     })
 }

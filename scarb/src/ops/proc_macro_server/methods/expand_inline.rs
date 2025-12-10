@@ -7,9 +7,7 @@ use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandInli
 use super::{Handler, interface_code_mapping_from_cairo};
 use crate::compiler::plugin::proc_macro::ExpansionKind;
 use crate::compiler::plugin::proc_macro::v2::generate_code_mappings;
-use crate::compiler::plugin::proc_macro::{
-    DeclaredProcMacroInstances, ExpansionQuery, ProcMacroApiVersion, ProcMacroInstance,
-};
+use crate::compiler::plugin::proc_macro::{ExpansionQuery, ProcMacroApiVersion, ProcMacroInstance};
 use crate::core::Config;
 use crate::ops::store::ProcMacroStore;
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
@@ -29,27 +27,29 @@ impl Handler for ExpandInline {
         } = params;
 
         let expansion = ExpansionQuery::with_expansion_name(&name, ExpansionKind::Inline);
-        let plugins = proc_macros.lock().unwrap().get_plugins(&context);
-        let proc_macro_instance = plugins
-            .as_ref()
-            .and_then(|v| {
-                v.iter()
-                    .filter_map(|plugin| plugin.find_instance_with_expansion(&expansion))
-                    .next()
-            })
+        let (proc_macro_instance, hash) = proc_macros
+            .lock()
+            .unwrap()
+            .get_instance_and_hash(&context, &expansion)
             .with_context(|| format!("No \"{name}\" inline macros found in scope: {context:?}"))?;
 
         match proc_macro_instance.api_version() {
-            ProcMacroApiVersion::V1 => {
-                expand_inline_v1(proc_macro_instance, name, token_stream_v2_to_v1(&args))
+            ProcMacroApiVersion::V1 => expand_inline_v1(
+                &proc_macro_instance,
+                hash,
+                name,
+                token_stream_v2_to_v1(&args),
+            ),
+            ProcMacroApiVersion::V2 => {
+                expand_inline_v2(&proc_macro_instance, hash, name, call_site, args)
             }
-            ProcMacroApiVersion::V2 => expand_inline_v2(proc_macro_instance, name, call_site, args),
         }
     }
 }
 
 fn expand_inline_v1(
     proc_macro_instance: &Arc<ProcMacroInstance>,
+    fingerprint: u64,
     name: String,
     args: TokenStreamV1,
 ) -> Result<ProcMacroResult> {
@@ -63,11 +63,13 @@ fn expand_inline_v1(
         token_stream: result.token_stream,
         diagnostics: result.diagnostics.iter().map(diagnostic_v1_to_v2).collect(),
         code_mappings: None,
+        fingerprint,
     })
 }
 
 fn expand_inline_v2(
     proc_macro_instance: &Arc<ProcMacroInstance>,
+    fingerprint: u64,
     name: String,
     call_site: TextSpan,
     args: TokenStreamV2,
@@ -89,5 +91,6 @@ fn expand_inline_v2(
                 .map(interface_code_mapping_from_cairo)
                 .collect(),
         ),
+        fingerprint,
     })
 }
