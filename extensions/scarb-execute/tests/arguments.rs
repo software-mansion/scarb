@@ -49,7 +49,6 @@ fn can_take_big_number_as_arg(target: &str, output: &str) {
             [..]Executing hello
             Program output:
             {output}
-            Saving output to: target/execute/hello/execution1
         "#});
 }
 
@@ -100,6 +99,5 @@ fn can_read_arguments_from_file(target: &str, output: &str) {
             [..]Executing hello
             Program output:
             {output}
-            Saving output to: target/execute/hello/execution1
         "#});
 }

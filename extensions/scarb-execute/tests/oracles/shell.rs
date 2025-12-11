@@ -22,7 +22,6 @@ fn check(command: &str, expected_output: &str) {
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
             {expected_output}
-            Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
 }

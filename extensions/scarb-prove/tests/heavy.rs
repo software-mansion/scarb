@@ -60,6 +60,7 @@ fn sequential_prove_from_execution_output() {
     Scarb::quick_command()
         .arg("execute")
         .arg("--target=bootloader")
+        .arg("--output=standard")
         .current_dir(&t)
         .assert()
         .success();

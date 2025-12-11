@@ -410,8 +410,7 @@ fn can_remove_original_node() {
             [..]Executing hello
             Program output:
             34
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -466,8 +465,7 @@ fn can_replace_original_node() {
             [..]Executing hello
             Program output:
             34
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -688,8 +686,7 @@ fn can_define_multiple_macros() {
             [..]Executing hello
             Program output:
             121
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -960,8 +957,7 @@ fn can_implement_inline_macro() {
             [..]Executing hello
             Program output:
             34
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -1090,8 +1086,7 @@ fn can_implement_derive_macro() {
             [..]Executing hello
             Program output:
             32
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -1181,8 +1176,7 @@ fn can_use_both_derive_and_attr() {
             [..]Executing hello
             Program output:
             32
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]
@@ -1512,8 +1506,7 @@ fn can_expand_trait_inner_func_attrr() {
             [..]Executing hello
             Program output:
             34
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]

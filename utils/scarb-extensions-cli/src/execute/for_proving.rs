@@ -106,8 +106,8 @@ pub struct RunArgs {
     pub arguments: ProgramArguments,
 
     /// Desired execution output, either default Standard or CairoPie
-    #[arg(long)]
-    pub output: Option<OutputFormat>,
+    #[arg(long, default_value_t = OutputFormat::Standard)]
+    pub output: OutputFormat,
 
     /// Execution target.
     #[arg(long, default_value = "bootloader")]
@@ -124,6 +124,10 @@ pub struct RunArgs {
     /// Whether to save cairo-profiler trace data.
     #[arg(long, default_value_t = false)]
     pub save_profiler_trace_data: bool,
+
+    /// Override layout configuration.
+    #[arg(long, default_value = "all_cairo_stwo")]
+    pub layout: String,
 }
 
 impl ToArgs for RunArgs {
@@ -135,12 +139,11 @@ impl ToArgs for RunArgs {
             print_program_output,
             print_resource_usage,
             save_profiler_trace_data,
+            layout,
         } = self;
         let mut args = arguments.to_args();
-        if let Some(output) = output {
-            args.push("--output".to_string());
-            args.push(output.to_string());
-        }
+        args.push("--output".to_string());
+        args.push(output.to_string());
         args.push("--target".to_string());
         args.push(target.to_string());
         if *print_program_output {
@@ -152,6 +155,8 @@ impl ToArgs for RunArgs {
         if *save_profiler_trace_data {
             args.push("--save-profiler-trace-data".to_string());
         }
+        args.push("--layout".to_string());
+        args.push(layout.to_string());
         args
     }
 }

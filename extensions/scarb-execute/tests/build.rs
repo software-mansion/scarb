@@ -41,6 +41,7 @@ fn can_execute_default_main_function_from_executable(target: &str) {
     Scarb::quick_command()
         .arg("execute")
         .arg(format!("--target={target}"))
+        .arg("--output=standard")
         .current_dir(&t)
         .assert()
         .success()
@@ -63,6 +64,7 @@ fn can_execute_prebuilt_executable(target: &str) {
     Scarb::quick_command()
         .arg("execute")
         .arg(format!("--target={target}"))
+        .arg("--output=standard")
         .arg("--no-build")
         .current_dir(&t)
         .assert()
@@ -345,7 +347,6 @@ fn can_choose_build_target() {
             [..]Executing hello_world
             Program output:
             42
-            Saving output to: target/execute/hello_world/execution1
         "#});
 
     // Re-using the same build artifact
@@ -361,7 +362,6 @@ fn can_choose_build_target() {
             [..]Executing hello_world
             Program output:
             24
-            Saving output to: target/execute/hello_world/execution2
         "#});
 }
 
@@ -437,7 +437,6 @@ fn can_use_features() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/execute/hello/execution1
         "#});
 }
 
@@ -461,6 +460,7 @@ fn can_create_profiler_trace_file(target: &str) {
     Scarb::quick_command()
         .arg("execute")
         .arg(format!("--target={target}"))
+        .arg("--output=standard")
         .arg("--save-profiler-trace-data")
         .current_dir(&t)
         .assert()
@@ -503,7 +503,6 @@ fn no_required_sierra_for_profiler_trace_file() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/execute/hello/execution1
         error: Failed to write profiler trace data into a file — missing sierra code for target `hello`. Set `sierra = true` under your `[executable]` target in the config and try again.
         "#});
 }
@@ -540,7 +539,6 @@ fn no_build_artifact_for_profiler_trace_file() {
         .failure()
         .stdout_eq(indoc! {r#"
         [..]Executing hello
-        Saving output to: target/execute/hello/execution1
         error: Missing sierra code for executable `hello`, file [..]hello.executable.sierra.json does not exist. help: run `scarb build` to compile the package and try again.
         "#});
 }
@@ -573,7 +571,6 @@ fn invalid_tracked_resource_for_profiler_trace_file() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/execute/hello/execution1
         error: Invalid tracked resource set for profiler: whatever
         help: valid options are: `cairo-steps` or `sierra-gas`
         "#});
