@@ -87,7 +87,6 @@ fn wasip2() {
             Result::Ok(1)
             Result::Ok(Result::Ok("hello from the outside"))
             Result::Ok(Result::Ok("tcp connectivity works"))
-            Saving output to: target/execute/oracle_test/execution1
         "#})
         .stderr_contains("stderr is working as expected\n")
         .check();
@@ -173,7 +172,6 @@ fn naked() {
             note: possible matches are: naked:adder/add@0.1.0/f, naked:adder/ambiguous@0.1.0/f")
             Result::Ok(2)
             Result::Ok(1001)
-            Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
 }
@@ -204,7 +202,6 @@ fn trap() {
 
             Caused by:
                 wasm trap: wasm `unreachable` instruction executed")
-            Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
 }
@@ -229,7 +226,6 @@ fn out_of_tree_asset() {
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
             Result::Err("invalid asset path `foo/../../exploit.wasm`: parent reference `..` points outside of base directory")
-            Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
 }

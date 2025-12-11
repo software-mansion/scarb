@@ -4,7 +4,6 @@ use crate::compiler::incremental::fingerprint::{
 };
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
-use crate::internal::fsx;
 use crate::process::is_truthy_env;
 use anyhow::{Context, Result};
 use cairo_lang_filesystem::db::{CrateConfiguration, FilesGroup};
@@ -16,6 +15,7 @@ use cairo_lang_utils::Intern;
 use camino::Utf8PathBuf;
 use itertools::Itertools;
 use salsa::{Database, par_map};
+use scarb_fs_utils as fsx;
 use scarb_stable_hash::u64_hash;
 use std::io::{BufReader, Write};
 use std::mem;

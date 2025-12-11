@@ -12,9 +12,9 @@ use url::Url;
 use crate::core::Config;
 use crate::core::registry::DEFAULT_REGISTRY_INDEX;
 use crate::core::source::Source;
-use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::static_hash_cache::StaticHashCache;
 use crate::sources::canonical_url::CanonicalUrl;
+use scarb_fs_utils::PathBufUtf8Ext;
 use scarb_stable_hash::short_hash;
 
 /// Unique identifier for a source of packages.
@@ -404,7 +404,7 @@ impl SourceId {
     }
 
     pub(crate) fn mock_path() -> SourceId {
-        use crate::internal::fsx::PathUtf8Ext;
+        use scarb_fs_utils::PathUtf8Ext;
         let path = std::env::temp_dir();
         let path = path.try_as_utf8().unwrap();
         SourceId::for_path(path).unwrap()

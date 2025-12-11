@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 
 use crate::core::Config;
-use crate::internal::fsx;
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn cache_clean(config: &Config) -> Result<()> {
@@ -10,7 +9,7 @@ pub fn cache_clean(config: &Config) -> Result<()> {
         let _lock = config
             .tokio_handle()
             .block_on(config.package_cache_lock().acquire_async())?;
-        fsx::remove_dir_all(path).context("failed to clean cache")?;
+        scarb_fs_utils::remove_dir_all(path).context("failed to clean cache")?;
     }
     Ok(())
 }

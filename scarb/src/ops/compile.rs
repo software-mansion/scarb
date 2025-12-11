@@ -15,7 +15,6 @@ use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
 };
 use crate::flock::Filesystem;
-use crate::internal::fsx;
 use crate::internal::offloader::Offloader;
 use crate::ops;
 use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
@@ -25,6 +24,7 @@ use camino::Utf8PathBuf;
 use indoc::formatdoc;
 use itertools::Itertools;
 use salsa::Database;
+use scarb_fs_utils as fsx;
 use scarb_ui::HumanDuration;
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;

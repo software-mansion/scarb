@@ -90,8 +90,7 @@ fn can_use_both_v1_and_v2_proc_macros() {
             [..]Executing hello
             Program output:
             68
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]

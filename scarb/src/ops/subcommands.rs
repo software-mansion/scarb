@@ -11,11 +11,11 @@ use scarb_ui::args::{FeaturesSpec, ToEnvVars};
 use tracing::debug;
 
 use crate::core::{Config, Package, ScriptDefinition, Workspace};
-use crate::internal::fsx::is_executable;
 use crate::ops;
 use crate::process::exec_replace;
 use crate::subcommands::{EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV, get_env_vars};
 use itertools::Itertools;
+use scarb_fs_utils::is_executable;
 use scarb_ui::components::Status;
 
 #[derive(Debug)]

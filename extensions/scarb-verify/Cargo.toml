@@ -12,13 +12,14 @@ version.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+cairo-air.workspace = true
+camino.workspace = true
+clap.workspace = true
 indoc.workspace = true
 mimalloc.workspace = true
+scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["verify"] }
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
-scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["verify"] }
-clap.workspace = true
-camino.workspace = true
 serde_json.workspace = true
 stwo_cairo_prover.workspace = true
 

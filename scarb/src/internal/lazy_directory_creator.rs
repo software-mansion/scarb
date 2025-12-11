@@ -6,7 +6,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use once_cell::sync::OnceCell;
 use tracing::trace;
 
-use crate::internal::fsx;
+use scarb_fs_utils as fsx;
 
 pub struct LazyDirectoryCreator {
     path: Utf8PathBuf,

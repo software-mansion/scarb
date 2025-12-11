@@ -14,9 +14,9 @@ use crate::core::config::Config;
 use crate::core::package::Package;
 use crate::core::source::SourceId;
 use crate::core::workspace::Workspace;
-use crate::internal::fsx;
-use crate::internal::fsx::{PathBufUtf8Ext, is_hidden};
 use crate::ops::find_workspace_manifest_path;
+use scarb_fs_utils as fsx;
+use scarb_fs_utils::{PathBufUtf8Ext, is_hidden};
 
 #[tracing::instrument(level = "debug", skip(config))]
 pub fn read_workspace<'c>(manifest_path: &Utf8Path, config: &'c Config) -> Result<Workspace<'c>> {
