@@ -310,10 +310,6 @@ pub fn execute(
             .flatten(),
     });
 
-    if output.is_none() {
-        return Ok(());
-    }
-
     if output.is_cairo_pie() {
         let output_value = runner.get_cairo_pie()?;
         let output_file_path = execution_output_dir.join("cairo_pie.zip");
@@ -322,7 +318,7 @@ pub fn execute(
             &display_path(&scarb_target_dir, &output_file_path),
         ));
         output_value.write_zip_file(output_file_path.as_std_path(), true)?;
-    } else {
+    } else if output.is_standard() {
         ui.print(Status::new(
             "Saving output to:",
             &display_path(&scarb_target_dir, &execution_output_dir),
