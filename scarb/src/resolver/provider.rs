@@ -537,8 +537,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
             DependencyFilter::propagation(self.main_package_ids.contains(&summary.package_id));
         let deps = summary
             .filtered_full_dependencies(dep_filter)
-            .cloned()
-            .map(|dependency| self.patch_map.lookup(&dependency).clone())
+            .map(|dependency| self.patch_map.lookup(dependency).clone())
             .map(|dependency| {
                 let locked_dependency = self
                     .lockfile

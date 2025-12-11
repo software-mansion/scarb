@@ -2,7 +2,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Result, anyhow, ensure};
-use clap::{Parser, arg};
+use clap::Parser;
 use walkdir::WalkDir;
 use xshell::{Shell, cmd};
 
