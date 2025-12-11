@@ -4,6 +4,7 @@
 
 use anyhow::{Result, ensure};
 use cairo_vm::Felt252;
+use cairo_vm::types::layout_name::LayoutName;
 use camino::Utf8PathBuf;
 use clap::{Parser, ValueEnum};
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
@@ -125,6 +126,10 @@ pub struct RunArgs {
     /// Whether to save cairo-profiler trace data.
     #[arg(long, default_value_t = false)]
     pub save_profiler_trace_data: bool,
+
+    /// Override layout configuration.
+    #[arg(long, default_value_t = LayoutName::all_cairo_stwo)]
+    pub layout: LayoutName,
 }
 
 impl ToArgs for RunArgs {
@@ -136,6 +141,7 @@ impl ToArgs for RunArgs {
             print_program_output,
             print_resource_usage,
             save_profiler_trace_data,
+            layout,
         } = self;
         let mut args = arguments.to_args();
         if let Some(output) = output {
@@ -153,6 +159,8 @@ impl ToArgs for RunArgs {
         if *save_profiler_trace_data {
             args.push("--save-profiler-trace-data".to_string());
         }
+        args.push("--layout".to_string());
+        args.push(layout.to_string());
         args
     }
 }
@@ -194,11 +202,11 @@ impl ToArgs for ProgramArguments {
 #[derive(ValueEnum, Clone, Debug, Default)]
 pub enum OutputFormat {
     /// Output in standard format
-    #[default]
     Standard,
     /// Output in Cairo PIE (Program Independent Execution) format
     CairoPie,
     /// No output
+    #[default]
     None,
 }
 

@@ -302,8 +302,7 @@ fn can_define_multiple_macros() {
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello
-            Saving output to: target/execute/hello/execution1
-        "#});
+            "#});
 }
 
 #[test]

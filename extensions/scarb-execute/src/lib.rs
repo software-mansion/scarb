@@ -17,7 +17,6 @@ use cairo_vm::Felt252;
 use cairo_vm::cairo_run::cairo_run_program;
 use cairo_vm::cairo_run::{CairoRunConfig, cairo_run_program_with_initial_scope};
 use cairo_vm::types::exec_scope::ExecutionScopes;
-use cairo_vm::types::layout_name::LayoutName;
 use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::MaybeRelocatable;
 use cairo_vm::vm::runners::cairo_runner::CairoRunner;
@@ -214,7 +213,7 @@ fn build_cairo_run_config(
     if args.run.target.is_bootloader() {
         Ok(get_cairo_run_config(
             &None,
-            LayoutName::all_cairo_stwo,
+            args.run.layout,
             true,
             true,
             true,
@@ -223,7 +222,7 @@ fn build_cairo_run_config(
     } else {
         Ok(CairoRunConfig {
             allow_missing_builtins: Some(true),
-            layout: LayoutName::all_cairo_stwo,
+            layout: args.run.layout,
             proof_mode: true,
             disable_trace_padding: true,
             fill_holes: true,
