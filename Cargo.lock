@@ -6804,8 +6804,8 @@ dependencies = [
  "scarb-ui",
  "serde",
  "serde_json",
- "snapbox",
  "thiserror 2.0.17",
+ "walkdir",
 ]
 
 [[package]]

@@ -2,6 +2,7 @@ use crate::attributes::find_groups_from_attributes;
 use crate::db::ScarbDocDatabase;
 use crate::location_links::DocLocationLink;
 use crate::types::other_types::doc_full_path;
+use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleId, TopLevelLanguageElementId};
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
@@ -10,6 +11,16 @@ use cairo_lang_filesystem::ids::CrateId;
 use serde::Serialize;
 use serde::Serializer;
 use std::fmt::Debug;
+
+/// Start-offset and end-offset tuple of the link in the file.
+pub type FileLinkDataLocationOffset = Option<(usize, usize)>;
+
+/// Serves resolving the source code link for a documented item.
+#[derive(Debug, Clone)]
+pub struct FileLinkData {
+    pub file_path: String,
+    pub location: FileLinkDataLocationOffset,
+}
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ItemData<'db> {
@@ -25,6 +36,8 @@ pub struct ItemData<'db> {
     #[serde(skip_serializing)]
     pub doc_location_links: Vec<DocLocationLink>,
     pub group: Option<String>,
+    #[serde(skip_serializing)]
+    pub file_link_data: Option<FileLinkData>,
 }
 
 impl<'db> ItemData<'db> {
@@ -50,6 +63,7 @@ impl<'db> ItemData<'db> {
             parent_full_path: Some(parent_full_path),
             doc_location_links,
             group,
+            file_link_data: get_file_link_data(db, &id),
         }
     }
 
@@ -71,11 +85,19 @@ impl<'db> ItemData<'db> {
             parent_full_path: Some(doc_full_path(&id.parent_module(db), db)),
             doc_location_links: vec![],
             group: find_groups_from_attributes(db, &id),
+            file_link_data: get_file_link_data(db, &id),
         }
     }
 
     pub fn new_crate(db: &'db ScarbDocDatabase, id: CrateId<'db>) -> Self {
         let documentable_id = DocumentableItemId::Crate(id);
+
+        let module_id = ModuleId::CrateRoot(id);
+        let file_path = match db.module_main_file(module_id) {
+            Ok(main_file) => Some(main_file.full_path(db)),
+            _ => None,
+        };
+
         Self {
             id: documentable_id,
             name: id.long(db).name().to_string(db),
@@ -85,6 +107,10 @@ impl<'db> ItemData<'db> {
             parent_full_path: None,
             doc_location_links: vec![],
             group: None,
+            file_link_data: file_path.map(|fp| FileLinkData {
+                file_path: fp,
+                location: None,
+            }),
         }
     }
 }
@@ -105,6 +131,8 @@ pub struct SubItemData<'db> {
     pub doc_location_links: Vec<DocLocationLink>,
     #[serde(skip_serializing)]
     pub group: Option<String>,
+    #[serde(skip_serializing)]
+    pub file_link_data: Option<FileLinkData>,
 }
 
 impl<'db> From<SubItemData<'db>> for ItemData<'db> {
@@ -118,6 +146,7 @@ impl<'db> From<SubItemData<'db>> for ItemData<'db> {
             full_path: val.full_path,
             doc_location_links: val.doc_location_links,
             group: val.group,
+            file_link_data: val.file_link_data,
         }
     }
 }
@@ -133,6 +162,7 @@ impl<'db> From<ItemData<'db>> for SubItemData<'db> {
             full_path: val.full_path,
             doc_location_links: val.doc_location_links,
             group: val.group,
+            file_link_data: val.file_link_data,
         }
     }
 }
@@ -154,4 +184,34 @@ where
         }
         None => serializer.serialize_none(),
     }
+}
+
+fn get_file_link_data<'db>(
+    db: &'db ScarbDocDatabase,
+    id: &impl TopLevelLanguageElementId<'db>,
+) -> Option<FileLinkData> {
+    // TODO: check if file exists on disk (what about macro expansions?)
+    let span = id.stable_location(db).span_in_file(db);
+
+    let start_line = span
+        .span
+        .start
+        .position_in_file(db, span.file_id)
+        .map(|pos| pos.line);
+
+    let end_line = span
+        .span
+        .end
+        .position_in_file(db, span.file_id)
+        .map(|pos| pos.line);
+
+    let location = match (start_line, end_line) {
+        (Some(s), Some(e)) => Some((s, e)),
+        _ => None,
+    };
+
+    Some(FileLinkData {
+        file_path: span.file_id.full_path(db),
+        location,
+    })
 }
