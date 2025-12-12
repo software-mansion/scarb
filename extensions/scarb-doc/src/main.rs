@@ -15,6 +15,7 @@ use scarb_ui::Ui;
 use scarb_ui::args::ToEnvVars;
 use scarb_ui::components::Status;
 use serde_json::Value;
+use std::env;
 use std::process::ExitCode;
 
 #[global_allocator]
@@ -38,8 +39,15 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
     let workspace_root = metadata.workspace.root.clone();
 
+    let remote_base_url = env::var_os("REMOTE_BASE_URL").map(|s| s.to_string_lossy().to_string());
+
     if args.packages_filter.get_workspace() & !matches!(args.output_format, OutputFormat::Json) {
-        let mut builder = WorkspaceMarkdownBuilder::new(args.output_format.into());
+        let mut builder = WorkspaceMarkdownBuilder::new(
+            args.output_format.into(),
+            workspace_root.clone(),
+            remote_base_url,
+        );
+
         for pm in &metadata_for_packages {
             let ctx = generate_package_context(&metadata, pm, args.document_private_items)?;
             let package_info = generate_package_information(&ctx, ui.clone())?;
@@ -67,7 +75,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
             let ctx = generate_package_context(&metadata, pm, args.document_private_items)?;
             let info = generate_package_information(&ctx, ui.clone())?;
             print_diagnostics(&ui);
-            output.write(info)?;
+            output.write(info, remote_base_url.clone())?;
         }
         output.flush()?;
     }
@@ -125,7 +133,11 @@ impl OutputEmit {
         }
     }
 
-    pub fn write(&mut self, package: PackageInformation) -> Result<()> {
+    pub fn write(
+        &mut self,
+        package: PackageInformation,
+        base_repo_url: Option<String>,
+    ) -> Result<()> {
         match self {
             OutputEmit::Markdown {
                 output_dir,
@@ -134,7 +146,13 @@ impl OutputEmit {
                 ui,
                 files_extension,
             } => {
-                let content = MarkdownContent::from_crate(&package, *files_extension)?;
+                let content = MarkdownContent::from_crate(
+                    &package,
+                    *files_extension,
+                    base_repo_url,
+                    workspace_root.clone(),
+                )?;
+
                 output_markdown(
                     content,
                     Some(package.metadata.name),

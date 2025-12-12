@@ -2,9 +2,11 @@ use crate::attributes::find_groups_from_attributes;
 use crate::db::ScarbDocDatabase;
 use crate::location_links::DocLocationLink;
 use crate::types::other_types::doc_full_path;
-use cairo_lang_defs::ids::{ModuleId, TopLevelLanguageElementId};
+use cairo_lang_defs::db::DefsGroup;
+use cairo_lang_defs::ids::{LookupItemId, ModuleId, ModuleItemId, TopLevelLanguageElementId};
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
+use cairo_lang_doc::documentable_item::DocumentableItemId::LookupItem;
 use cairo_lang_doc::parser::DocumentationCommentToken;
 use cairo_lang_filesystem::ids::CrateId;
 use serde::Serialize;
@@ -25,6 +27,8 @@ pub struct ItemData<'db> {
     #[serde(skip_serializing)]
     pub doc_location_links: Vec<DocLocationLink>,
     pub group: Option<String>,
+    #[serde(skip_serializing)]
+    pub file_path: Option<String>,
 }
 
 impl<'db> ItemData<'db> {
@@ -50,6 +54,7 @@ impl<'db> ItemData<'db> {
             parent_full_path: Some(parent_full_path),
             doc_location_links,
             group,
+            file_path: get_file_path(db, &id),
         }
     }
 
@@ -58,6 +63,18 @@ impl<'db> ItemData<'db> {
         id: impl TopLevelLanguageElementId<'db>,
         documentable_item_id: DocumentableItemId<'db>,
     ) -> Self {
+        let file_path = match documentable_item_id {
+            LookupItem(LookupItemId::ModuleItem(ModuleItemId::Submodule(_id))) => {
+                let module_id = ModuleId::Submodule(_id);
+                let fp = db.module_main_file(module_id);
+                match fp {
+                    Ok(main_file) => Some(main_file.full_path(db)),
+                    _ => None,
+                }
+            }
+            _ => get_file_path(db, &id),
+        };
+
         Self {
             id: documentable_item_id,
             name: id.name(db).to_string(db),
@@ -71,11 +88,19 @@ impl<'db> ItemData<'db> {
             parent_full_path: Some(doc_full_path(&id.parent_module(db), db)),
             doc_location_links: vec![],
             group: find_groups_from_attributes(db, &id),
+            file_path,
         }
     }
 
     pub fn new_crate(db: &'db ScarbDocDatabase, id: CrateId<'db>) -> Self {
         let documentable_id = DocumentableItemId::Crate(id);
+
+        let module_id = ModuleId::CrateRoot(id);
+        let file_path = match db.module_main_file(module_id) {
+            Ok(main_file) => Some(main_file.full_path(db)),
+            _ => None,
+        };
+
         Self {
             id: documentable_id,
             name: id.long(db).name().to_string(db),
@@ -85,6 +110,7 @@ impl<'db> ItemData<'db> {
             parent_full_path: None,
             doc_location_links: vec![],
             group: None,
+            file_path,
         }
     }
 }
@@ -105,6 +131,8 @@ pub struct SubItemData<'db> {
     pub doc_location_links: Vec<DocLocationLink>,
     #[serde(skip_serializing)]
     pub group: Option<String>,
+    #[serde(skip_serializing)]
+    pub file_path: Option<String>,
 }
 
 impl<'db> From<SubItemData<'db>> for ItemData<'db> {
@@ -118,6 +146,7 @@ impl<'db> From<SubItemData<'db>> for ItemData<'db> {
             full_path: val.full_path,
             doc_location_links: val.doc_location_links,
             group: val.group,
+            file_path: None,
         }
     }
 }
@@ -133,6 +162,7 @@ impl<'db> From<ItemData<'db>> for SubItemData<'db> {
             full_path: val.full_path,
             doc_location_links: val.doc_location_links,
             group: val.group,
+            file_path: None,
         }
     }
 }
@@ -153,5 +183,20 @@ where
             serializer.serialize_str(&combined.join(""))
         }
         None => serializer.serialize_none(),
+    }
+}
+
+fn get_file_path<'db>(
+    db: &'db ScarbDocDatabase,
+    id: &impl TopLevelLanguageElementId<'db>,
+) -> Option<String> {
+    // TODO: check if file exists on disk (what about macro expansions?)
+    // TODO: match lines not only parent mods
+    let parent_module_id = id.parent_module(db);
+    let module_main_file = db.module_main_file(parent_module_id);
+
+    match module_main_file {
+        Ok(main_file) => Some(main_file.full_path(db)),
+        _ => None,
     }
 }
