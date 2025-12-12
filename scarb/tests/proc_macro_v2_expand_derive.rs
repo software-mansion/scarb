@@ -609,3 +609,52 @@ fn can_use_two_derive_macros() {
             Saving output to: target/execute/hello/execution1
         "#});
 }
+
+#[test]
+fn derive_cannot_have_module_path() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream};
+
+            #[derive_macro]
+            pub fn custom_derive_v2(_token_stream: TokenStream) -> ProcMacroResult {
+                ProcMacroResult::new(TokenStream::empty())
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            trait Hello<T> {
+                fn world(self: @T) -> u32;
+            }
+
+            #[derive(not::a::path::CustomDeriveV2, Drop)]
+            struct SomeType {}
+        "#})
+        .build(&project);
+
+    Scarb::quick_command()
+        .arg("check")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Checking hello v1.0.0 ([..]Scarb.toml)
+            error: Plugin diagnostic: Unknown derive `not::a::path::CustomDeriveV2` - a plugin might be missing.
+             --> [..]lib.cairo:5:10
+            #[derive(not::a::path::CustomDeriveV2, Drop)]
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+            error: could not check `hello` due to 1 previous error
+        "#});
+}
