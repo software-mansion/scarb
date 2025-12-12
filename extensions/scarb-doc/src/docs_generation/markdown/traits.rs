@@ -9,9 +9,10 @@ use crate::types::item_data::{ItemData, SubItemData};
 use crate::types::module_type::{Module, ModulePubUses};
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
-    ImplFunction, ImplType, MacroDeclaration, Member, Struct, Trait, TraitConstant, TraitFunction,
-    TraitType, TypeAlias, Variant,
+    ImplFunction, ImplType, MacroDeclaration, Trait, TraitConstant, TraitFunction, TraitType,
+    TypeAlias, Variant,
 };
+use crate::types::struct_types::{Member, Struct};
 use anyhow::Result;
 use cairo_lang_doc::parser::{CommentLinkToken, DocumentationCommentToken};
 use itertools::Itertools;

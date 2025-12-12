@@ -2,9 +2,10 @@ use crate::location_links::DocLocationLink;
 use crate::types::module_type::Module;
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
-    ImplFunction, ImplType, MacroDeclaration, Member, Struct, Trait, TraitConstant, TraitFunction,
-    TraitType, TypeAlias, Variant,
+    ImplFunction, ImplType, MacroDeclaration, Trait, TraitConstant, TraitFunction, TraitType,
+    TypeAlias, Variant,
 };
+use crate::types::struct_types::{Member, Struct};
 use cairo_lang_doc::parser::DocumentationCommentToken;
 
 pub mod common;
