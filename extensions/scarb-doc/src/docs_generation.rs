@@ -1,4 +1,5 @@
 use crate::location_links::DocLocationLink;
+use crate::types::item_data::FileLinkData;
 use crate::types::module_type::Module;
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
@@ -79,6 +80,7 @@ pub trait DocItem {
     fn doc_location_links(&self) -> &Vec<DocLocationLink>;
     fn markdown_formatted_path(&self) -> String;
     fn group_name(&self) -> &Option<String>;
+    fn file_link_data(&self) -> Option<FileLinkData>;
 }
 
 macro_rules! impl_doc_item {
@@ -112,6 +114,10 @@ macro_rules! impl_doc_item {
 
             fn group_name(&self) -> &Option<String> {
                 &self.item_data.group
+            }
+
+            fn file_link_data(&self) -> Option<FileLinkData> {
+                self.item_data.file_link_data.clone()
             }
         }
     };

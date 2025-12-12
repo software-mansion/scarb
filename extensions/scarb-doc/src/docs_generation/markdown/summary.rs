@@ -15,14 +15,18 @@ use crate::docs_generation::markdown::traits::{MarkdownDocItem, TopLevelMarkdown
 use crate::docs_generation::markdown::{BASE_HEADER_LEVEL, SummaryIndexMap};
 use crate::types::crate_type::Crate;
 use anyhow::Result;
+use camino::Utf8PathBuf;
 use group_files::generate_global_groups_summary_files;
 
 pub fn generate_summary_file_content(
     crate_: &Crate,
     output_format: OutputFilesExtension,
+    base_doc_url: Option<String>,
+    workspace_root: Utf8PathBuf,
 ) -> Result<(SummaryIndexMap, Vec<(String, String)>)> {
     let mut summary_index_map = SummaryIndexMap::new();
-    let context = MarkdownGenerationContext::from_crate(crate_, output_format);
+    let context =
+        MarkdownGenerationContext::from_crate(crate_, output_format, base_doc_url, workspace_root);
 
     generate_module_summary_content(
         &crate_.root_module,
