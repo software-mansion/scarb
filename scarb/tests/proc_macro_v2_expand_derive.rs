@@ -609,3 +609,97 @@ fn can_use_two_derive_macros() {
             Saving output to: target/execute/hello/execution1
         "#});
 }
+
+#[test]
+fn derive_cannot_have_module_path() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
+
+            #[derive_macro]
+            pub fn custom_derive_v2(token_stream: TokenStream) -> ProcMacroResult {
+                let name = token_stream
+                    .clone()
+                    .to_string()
+                    .lines()
+                    .find(|l| l.starts_with("struct"))
+                    .unwrap()
+                    .to_string()
+                    .replace("struct", "")
+                    .replace("}", "")
+                    .replace("{", "")
+                    .trim()
+                    .to_string();
+
+                let code = indoc::formatdoc!{r#"
+                    impl SomeImpl of Hello<{name}> {{
+                        fn world(self: @{name}) -> u32 {{
+                            32
+                        }}
+                    }}
+                "#};
+
+                let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                  code.clone(),
+                    TextSpan {
+                        start: 0,
+                        end: code.len() as u32,
+                    },
+                ))]);
+
+                ProcMacroResult::new(token_stream)
+            }
+        "##})
+        .add_dep(r#"indoc = "*""#)
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            trait Hello<T> {
+                fn world(self: @T) -> u32;
+            }
+
+            #[derive(not::a::path::CustomDeriveV2, Drop)]
+            struct SomeType {}
+
+            #[executable]
+            fn main() -> u32 {
+                let a = SomeType {};
+                a.world()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_command()
+        .arg("execute")
+        .arg("--print-program-output")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Plugin diagnostic: Unknown derive `not::a::path::CustomDeriveV2` - a plugin might be missing.
+             --> [..]lib.cairo:5:10
+            #[derive(not::a::path::CustomDeriveV2, Drop)]
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+            error: could not compile `hello` due to 1 previous error
+            error: `scarb` command exited with error
+        "#});
+}
