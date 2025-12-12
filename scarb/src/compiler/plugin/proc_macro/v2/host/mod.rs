@@ -214,6 +214,12 @@ impl MacroPlugin for ProcMacroHostPlugin {
 
         // Expand module-level inline macro.
         if let ast::ModuleItem::InlineMacro(inline_macro) = &item_ast
+            && inline_macro
+                .path(db)
+                .segments(db)
+                .elements(db)
+                .exactly_one()
+                .is_ok()
             && let Some(result) =
                 expand_module_level_inline_macro(self, db, inline_macro, &stream_metadata)
         {

@@ -825,3 +825,55 @@ fn module_level_inline_macro_multiple() {
             Saving output to: target/execute/hello/execution1
         "#});
 }
+
+#[test]
+fn top_level_inline_macro_cannot_have_module_path() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .name("some")
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan};
+
+        #[inline_macro]
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
+            assert_eq!(token_stream.to_string(), "()");
+            ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+              "mod some_mod {}".to_string(),
+              TextSpan {
+                  start: 0,
+                  end: 1,
+              },
+            ))]))
+        }
+        "##})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_cairo_execute()
+        .lib_cairo(indoc! {r#"
+            not::a::path::some!();
+        "#})
+        .build(&project);
+
+    Scarb::quick_command()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+        [..]Compiling some v1.0.0 ([..]Scarb.toml)
+        [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+        error[E0006]: Identifier not found.
+         --> [..]lib.cairo:1:1
+        not::a::path::some!();
+        ^^^
+
+        error: could not compile `hello` due to 1 previous error
+        "#});
+}
