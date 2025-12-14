@@ -140,6 +140,7 @@ where
         add_statements_code_locations: unit
             .compiler_config
             .unstable_add_statements_code_locations_debug_info,
+        add_functions_debug_info: unit.compiler_config.add_functions_debug_info,
     }
 }
 

@@ -461,7 +461,7 @@ incremental = true
 ### `unstable-add-statements-functions-debug-info`
 
 > [!WARNING]
-> This is highly experimental and unstable feature intended to be used by [cairo-profiler], [cairo-coverage]
+> This is a highly experimental and unstable feature intended to be used by [cairo-profiler], [cairo-coverage]
 > and [forge] backtraces.
 > It will slow down the compilation and cause it to use more system memory.
 > It will also make the compilation artifacts larger.
@@ -480,7 +480,7 @@ unstable-add-statements-functions-debug-info = false
 ### `unstable-add-statements-code-locations-debug-info`
 
 > [!WARNING]
-> This is highly experimental and unstable feature intended to be used by [cairo-profiler], [cairo-coverage]
+> This is a highly experimental and unstable feature intended to be used by [cairo-profiler], [cairo-coverage]
 > and [forge] backtraces.
 > It will slow down the compilation and cause it to use more system memory.
 > It will also make the compilation artifacts larger.
@@ -494,6 +494,23 @@ By default, this flag is set to `false`.
 ```toml
 [cairo]
 unstable-add-statements-code-locations-debug-info = false
+```
+
+### `add-functions-debug-info`
+
+> [!WARNING]
+> This is a highly experimental and unstable feature intended to be used by [cairo-debugger].
+> It will slow down the compilation and cause it to use more system memory.
+> It will also make the compilation artifacts larger.
+> It should not be used unless your tooling requires it.
+
+If enabled, during the project compilation, Scarb will add additional information about sierra functions
+to debug info.
+By default, this flag is set to `false`.
+
+```toml
+[cairo]
+add-functions-debug-info = false
 ```
 
 ## `[profile]`
@@ -571,4 +588,5 @@ See [Features](./conditional-compilation#features) page.
 
 [cairo-profiler]: https://github.com/software-mansion/cairo-profiler
 [cairo-coverage]: https://github.com/software-mansion/cairo-coverage
+[cairo-debugger]: https://github.com/software-mansion-labs/cairo-debugger
 [forge]: https://github.com/foundry-rs/starknet-foundry
