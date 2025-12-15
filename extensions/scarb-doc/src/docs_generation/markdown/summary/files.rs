@@ -11,8 +11,9 @@ use crate::docs_generation::{DocItem, TopLevelItems};
 use crate::types::module_type::Module;
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, MacroDeclaration,
-    Struct, Trait, TypeAlias,
+    Trait, TypeAlias,
 };
+use crate::types::struct_types::Struct;
 use anyhow::Result;
 use itertools::chain;
 
