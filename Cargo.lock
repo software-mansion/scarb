@@ -1268,7 +1268,7 @@ dependencies = [
  "anyhow",
  "cairo-lang-utils",
  "const-fnv1a-hash",
- "convert_case 0.10.0",
+ "convert_case",
  "derivative",
  "itertools 0.14.0",
  "lalrpop",
@@ -1408,7 +1408,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-sierra-type-size",
  "cairo-lang-utils",
- "convert_case 0.10.0",
+ "convert_case",
  "itertools 0.14.0",
  "num-bigint",
  "num-integer",
@@ -1578,7 +1578,7 @@ dependencies = [
  "cairo-language-common",
  "cairo-lint",
  "colored",
- "convert_case 0.10.0",
+ "convert_case",
  "crossbeam",
  "governor",
  "indoc",
@@ -1713,9 +1713,9 @@ dependencies = [
 
 [[package]]
 name = "camino"
-version = "1.2.1"
+version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "276a59bf2b2c967788139340c9f0c5b12d7fd6630315c15c217e559de85d2609"
+checksum = "e629a66d692cb9ff1a1c664e41771b3dcaf961985a9774c0eb0bd1b51cf60a48"
 dependencies = [
  "serde_core",
 ]
@@ -2021,15 +2021,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b7bda66e858c683005a53a9a60c69a4aca7eeaa45d124526e389f7aec8e62f38"
 dependencies = [
  "memchr",
-]
-
-[[package]]
-name = "convert_case"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db05ffb6856bf0ecdf6367558a76a0e8a77b1713044eb92845c692100ed50190"
-dependencies = [
- "unicode-segmentation",
 ]
 
 [[package]]
@@ -5330,9 +5321,9 @@ checksum = "5e0826a989adedc2a244799e823aece04662b66609d96af8dff7ac6df9a8925d"
 
 [[package]]
 name = "ntest"
-version = "0.9.3"
+version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb183f0a1da7a937f672e5ee7b7edb727bf52b8a52d531374ba8ebb9345c0330"
+checksum = "a499f28ca2619bb83b47de0c73fe7235468fb5891290cb7c9b8c44c58c4d23d0"
 dependencies = [
  "ntest_test_cases",
  "ntest_timeout",
@@ -5340,9 +5331,9 @@ dependencies = [
 
 [[package]]
 name = "ntest_test_cases"
-version = "0.9.3"
+version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16d0d3f2a488592e5368ebbe996e7f1d44aa13156efad201f5b4d84e150eaa93"
+checksum = "155af584f598124b815561b6ce238fb98a3f6328edc940c8ddc364ada8e26e15"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5351,9 +5342,9 @@ dependencies = [
 
 [[package]]
 name = "ntest_timeout"
-version = "0.9.3"
+version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcc7c92f190c97f79b4a332f5e81dcf68c8420af2045c936c9be0bc9de6f63b5"
+checksum = "898b8478cd6f0041c397230f66e0903f0e0182f69bf21b0e1055cece018a76d3"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -6137,9 +6128,9 @@ checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
 
 [[package]]
 name = "ra-ap-rustc_lexer"
-version = "0.141.0"
+version = "0.142.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f307b8c145685f538c2cd8073c5969dd3f072e2fc674f5bbdfed21349adfc01"
+checksum = "b95cc3d51f5e5d05740d58db42cd0e2e2c709639afd0cbc6000908c1d80b0df1"
 dependencies = [
  "memchr",
  "unicode-properties",
@@ -6148,9 +6139,9 @@ dependencies = [
 
 [[package]]
 name = "ra-ap-rustc_parse_format"
-version = "0.141.0"
+version = "0.142.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88775d1862fecd1345ddf08122f68c03d07884224256021e5b11a159f86ae7c3"
+checksum = "838a1608907b948c534c8e9e1033c72cbbba11d3488ad17b3dc1a94ef36f0a89"
 dependencies = [
  "ra-ap-rustc_lexer",
  "rustc-literal-escaper",
@@ -6158,9 +6149,9 @@ dependencies = [
 
 [[package]]
 name = "ra_ap_toolchain"
-version = "0.0.309"
+version = "0.0.310"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2c83c60cc1c45847de8fa120b3c99dca0dd58af355cc08d8297eea9a88886be"
+checksum = "6df0b0ba792f82925d779ef200b96ce25ba1bcf94d47a2eb5401eff82eed5113"
 dependencies = [
  "camino",
  "home",
@@ -6795,7 +6786,7 @@ dependencies = [
  "chrono",
  "clap",
  "clap_complete",
- "convert_case 0.9.0",
+ "convert_case",
  "create-output-dir",
  "crossbeam-channel",
  "data-encoding",
@@ -7538,9 +7529,9 @@ dependencies = [
 
 [[package]]
 name = "shell-words"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
+checksum = "dc6fe69c597f9c37bfeeeeeb33da3530379845f10be461a66d16d03eca2ded77"
 
 [[package]]
 name = "shlex"
