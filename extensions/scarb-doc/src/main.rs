@@ -15,7 +15,6 @@ use scarb_ui::Ui;
 use scarb_ui::args::ToEnvVars;
 use scarb_ui::components::Status;
 use serde_json::Value;
-use std::env;
 use std::process::ExitCode;
 
 #[global_allocator]
@@ -39,8 +38,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
     let workspace_root = metadata.workspace.root.clone();
 
-    let remote_base_url =
-        env::var_os("SCARB_DOC_REMOTE_BASE_URL").map(|s| s.to_string_lossy().to_string());
+    let remote_base_url = args.remote_base_url.clone();
 
     if args.packages_filter.get_workspace() & !matches!(args.output_format, OutputFormat::Json) {
         let mut builder = WorkspaceMarkdownBuilder::new(
