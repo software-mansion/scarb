@@ -284,7 +284,7 @@ impl PubGrubDependencyProvider {
     ///
     /// This is a shortcut to calling [`Self::request_dependency`] for each of the dependencies.
     fn request_dependencies(&self, summary: &Summary) -> Result<(), DependencyProviderError> {
-        for original_dependency in summary.dependencies.iter() {
+        for original_dependency in summary.full_dependencies() {
             let original_dependency = self.patch_map.lookup(original_dependency);
             self.save_most_restrictive_kind(&original_dependency);
             let dependency = lock_dependency(&self.lockfile, original_dependency.clone())?;
