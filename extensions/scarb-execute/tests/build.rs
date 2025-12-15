@@ -575,3 +575,31 @@ fn invalid_tracked_resource_for_profiler_trace_file() {
         help: valid options are: `cairo-steps` or `sierra-gas`
         "#});
 }
+
+#[test]
+fn allow_syscalls_triggers_layout_warning() {
+    let t = TempDir::new().unwrap();
+    executable_project_builder()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            allow-syscalls = true
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .build(&t);
+    Scarb::quick_command()
+        .arg("execute")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        warn: the executable target hello you are trying to execute has `allow-syscalls` set to `true`
+        if your executable uses syscalls, it cannot be run with `all_cairo_stwo` layout
+        please use `--layout` flag to specify a different layout, for example: `--layout=all_cairo`
+
+        [..]Executing hello
+        "#});
+}

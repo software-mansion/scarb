@@ -17,6 +17,7 @@ use cairo_vm::Felt252;
 use cairo_vm::cairo_run::cairo_run_program;
 use cairo_vm::cairo_run::{CairoRunConfig, cairo_run_program_with_initial_scope};
 use cairo_vm::types::exec_scope::ExecutionScopes;
+use cairo_vm::types::layout_name::LayoutName;
 use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::MaybeRelocatable;
 use cairo_vm::vm::runners::cairo_runner::CairoRunner;
@@ -262,6 +263,19 @@ pub fn execute(
         .join(env::var("SCARB_PROFILE").context("`SCARB_PROFILE` env var must be defined")?);
 
     let build_target = find_build_target(metadata, package, &args.build_target_args)?;
+
+    let syscalls_allowed = build_target
+        .params
+        .get("allow-syscalls")
+        .and_then(|v| v.as_bool())
+        .unwrap_or_default();
+    if syscalls_allowed && args.run.layout == LayoutName::all_cairo_stwo {
+        ui.warn(formatdoc!(r#"
+            the executable target {} you are trying to execute has `allow-syscalls` set to `true`
+            if your executable uses syscalls, it cannot be run with `all_cairo_stwo` layout
+            please use `--layout` flag to specify a different layout, for example: `--layout=all_cairo`
+        "#, build_target.name));
+    }
 
     ui.print(Status::new("Executing", &package.name));
     let executable_path = find_prebuilt_executable_path(
