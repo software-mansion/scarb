@@ -23,13 +23,13 @@ pub struct ManifestCompilerConfig {
     /// statement to be generated and all functions that were inlined or generated along the way.
     /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
     /// This feature is unstable and is subject to change.
-    pub unstable_add_statements_functions_debug_info: bool,
+    pub add_statements_functions_debug_info: bool,
     /// Add a mapping between sierra statement indexes and code location in cairo code
     /// to debug info. A statement index maps to a vector consisting of a code location which caused the
     /// statement to be generated and all code locations that were inlined or generated along the way.
     /// Used by [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
     /// This feature is unstable and is subject to change.
-    pub unstable_add_statements_code_locations_debug_info: bool,
+    pub add_statements_code_locations_debug_info: bool,
     /// Add additional information about sierra functions to debug info.
     /// Used by [cairo-debugger](https://github.com/software-mansion-labs/cairo-debugger).
     /// This feature is unstable and is subject to change.
@@ -133,8 +133,8 @@ impl Default for ManifestCompilerConfig {
             sierra_replace_ids: false,
             allow_warnings: true,
             enable_gas: true,
-            unstable_add_statements_functions_debug_info: false,
-            unstable_add_statements_code_locations_debug_info: false,
+            add_statements_functions_debug_info: false,
+            add_statements_code_locations_debug_info: false,
             add_functions_debug_info: false,
             panic_backtrace: false,
             unsafe_panic: false,

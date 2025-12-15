@@ -1253,7 +1253,7 @@ fn setup_scarb_project_for_debug_info(debug_info_toml_key: &str) -> TempDir {
 
 #[test]
 fn add_statements_functions_debug_info() {
-    let t = setup_scarb_project_for_debug_info("unstable-add-statements-functions-debug-info");
+    let t = setup_scarb_project_for_debug_info("add-statements-functions-debug-info");
     Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
@@ -1312,7 +1312,7 @@ struct SourceCodeSpan {
 
 #[test]
 fn add_statements_code_locations_debug_info() {
-    let t = setup_scarb_project_for_debug_info("unstable-add-statements-code-locations-debug-info");
+    let t = setup_scarb_project_for_debug_info("add-statements-code-locations-debug-info");
     Scarb::quick_command()
         .arg("build")
         .current_dir(&t)
@@ -1431,7 +1431,7 @@ fn add_functions_debug_info() {
 
 #[test]
 fn add_statements_functions_debug_info_to_tests() {
-    let t = setup_scarb_project_for_debug_info("unstable-add-statements-functions-debug-info");
+    let t = setup_scarb_project_for_debug_info("add-statements-functions-debug-info");
     Scarb::quick_command()
         .arg("build")
         .arg("--test")
@@ -1463,7 +1463,7 @@ fn add_statements_functions_debug_info_to_tests() {
 
 #[test]
 fn add_statements_code_locations_debug_info_to_tests() {
-    let t = setup_scarb_project_for_debug_info("unstable-add-statements-code-locations-debug-info");
+    let t = setup_scarb_project_for_debug_info("add-statements-code-locations-debug-info");
     Scarb::quick_command()
         .arg("build")
         .arg("--test")

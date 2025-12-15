@@ -458,7 +458,7 @@ This can also be disabled globally via `SCARB_INCREMENTAL` environment variable.
 incremental = true
 ```
 
-### `unstable-add-statements-functions-debug-info`
+### `add-statements-functions-debug-info`
 
 > [!WARNING]
 > This is a highly experimental and unstable feature intended to be used by [cairo-profiler], [cairo-coverage]
@@ -474,10 +474,10 @@ By default, this flag is set to `false`.
 
 ```toml
 [cairo]
-unstable-add-statements-functions-debug-info = false
+add-statements-functions-debug-info = false
 ```
 
-### `unstable-add-statements-code-locations-debug-info`
+### `add-statements-code-locations-debug-info`
 
 > [!WARNING]
 > This is a highly experimental and unstable feature intended to be used by [cairo-profiler], [cairo-coverage]
@@ -493,7 +493,7 @@ By default, this flag is set to `false`.
 
 ```toml
 [cairo]
-unstable-add-statements-code-locations-debug-info = false
+add-statements-code-locations-debug-info = false
 ```
 
 ### `add-functions-debug-info`
