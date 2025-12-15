@@ -1877,8 +1877,57 @@ fn compiler_config_collected_properly() {
             "allow_warnings": true,
             "enable_gas": true,
             "sierra_replace_ids": false,
-            "unstable_add_statements_code_locations_debug_info": false,
-            "unstable_add_statements_functions_debug_info": false,
+            "add_statements_code_locations_debug_info": false,
+            "add_statements_functions_debug_info": false,
+            "add_functions_debug_info": false,
+            "panic_backtrace": false,
+            "unsafe_panic": false,
+            "incremental": true,
+            "compiler_optimizations": {"Enabled": {"inlining_strategy": "avoid"}}
+        })
+    );
+}
+
+#[test]
+fn compiler_config_aliases_collected_properly() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+         [profile.dev.cairo]
+         sierra-replace-ids = false
+         unstable-add-statements-code-locations-debug-info = false
+         add-statements-code-locations-debug-info = true
+         unstable-add-statements-functions-debug-info = true
+
+         [cairo]
+         inlining-strategy = "avoid"
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let cu = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| &cu.target.kind == "lib")
+        .unwrap();
+
+    assert_eq!(
+        cu.compiler_config,
+        json!({
+            "allow_warnings": true,
+            "enable_gas": true,
+            "sierra_replace_ids": false,
+            "add_statements_code_locations_debug_info": true,
+            "add_statements_functions_debug_info": true,
             "add_functions_debug_info": false,
             "panic_backtrace": false,
             "unsafe_panic": false,
@@ -1936,8 +1985,8 @@ fn compiler_config_collected_properly_in_workspace() {
             "allow_warnings": true,
             "enable_gas": false,
             "sierra_replace_ids": true,
-            "unstable_add_statements_code_locations_debug_info": false,
-            "unstable_add_statements_functions_debug_info": false,
+            "add_statements_code_locations_debug_info": false,
+            "add_statements_functions_debug_info": false,
             "add_functions_debug_info": false,
             "panic_backtrace": false,
             "unsafe_panic": false,
@@ -1982,8 +2031,8 @@ fn profile_can_override_cairo_section() {
             "allow_warnings": true,
             "enable_gas": true,
             "sierra_replace_ids": true,
-            "unstable_add_statements_code_locations_debug_info": false,
-            "unstable_add_statements_functions_debug_info": false,
+            "add_statements_code_locations_debug_info": false,
+            "add_statements_functions_debug_info": false,
             "add_functions_debug_info": false,
             "panic_backtrace": false,
             "unsafe_panic": false,
@@ -2028,8 +2077,8 @@ fn cairo_section_overrides_profile_defaults() {
             "allow_warnings": true,
             "enable_gas": true,
             "sierra_replace_ids": true,
-            "unstable_add_statements_code_locations_debug_info": false,
-            "unstable_add_statements_functions_debug_info": false,
+            "add_statements_code_locations_debug_info": false,
+            "add_statements_functions_debug_info": false,
             "add_functions_debug_info": false,
             "panic_backtrace": false,
             "unsafe_panic": false,
@@ -2071,8 +2120,8 @@ fn can_specify_inlining_strategy_by_weight() {
             "allow_warnings": true,
             "enable_gas": true,
             "sierra_replace_ids": true,
-            "unstable_add_statements_code_locations_debug_info": false,
-            "unstable_add_statements_functions_debug_info": false,
+            "add_statements_code_locations_debug_info": false,
+            "add_statements_functions_debug_info": false,
             "add_functions_debug_info": false,
             "panic_backtrace": false,
             "unsafe_panic": false,

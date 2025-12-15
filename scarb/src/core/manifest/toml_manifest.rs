@@ -492,12 +492,18 @@ pub struct TomlCairo {
     /// statement to be generated and all functions that were inlined or generated along the way.
     /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
     /// This feature is unstable and is subject to change.
+    pub add_statements_functions_debug_info: Option<bool>,
+    /// Alias for `add_statements_functions_debug_info`.
+    /// If both defined, `add_statements_functions_debug_info` takes precedence.
     pub unstable_add_statements_functions_debug_info: Option<bool>,
     /// Add a mapping between sierra statement indexes and lines in cairo code
     /// to debug info. A statement index maps to a vector consisting of a line which caused the
     /// statement to be generated and all lines that were inlined or generated along the way.
     /// Used by [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
     /// This feature is unstable and is subject to change.
+    pub add_statements_code_locations_debug_info: Option<bool>,
+    /// Alias for `add_statements_code_locations_debug_info`.
+    /// If both defined, `add_statements_code_locations_debug_info` takes precedence.
     pub unstable_add_statements_code_locations_debug_info: Option<bool>,
     /// Add additional information about sierra functions to debug info.
     /// Used by [cairo-debugger](https://github.com/software-mansion-labs/cairo-debugger).
@@ -1346,18 +1352,33 @@ impl TomlManifest {
             if let Some(enable_gas) = cairo.enable_gas {
                 compiler_config.enable_gas = enable_gas;
             }
-            if let Some(unstable_add_statements_functions_debug_info) =
+
+            if let Some(add_statements_functions_debug_info) =
                 cairo.unstable_add_statements_functions_debug_info
             {
-                compiler_config.unstable_add_statements_functions_debug_info =
-                    unstable_add_statements_functions_debug_info;
+                compiler_config.add_statements_functions_debug_info =
+                    add_statements_functions_debug_info;
             }
-            if let Some(unstable_add_statements_code_locations_debug_info) =
+            if let Some(add_statements_functions_debug_info) =
+                cairo.add_statements_functions_debug_info
+            {
+                compiler_config.add_statements_functions_debug_info =
+                    add_statements_functions_debug_info;
+            }
+
+            if let Some(add_statements_code_locations_debug_info) =
                 cairo.unstable_add_statements_code_locations_debug_info
             {
-                compiler_config.unstable_add_statements_code_locations_debug_info =
-                    unstable_add_statements_code_locations_debug_info;
+                compiler_config.add_statements_code_locations_debug_info =
+                    add_statements_code_locations_debug_info;
             }
+            if let Some(add_statements_code_locations_debug_info) =
+                cairo.add_statements_code_locations_debug_info
+            {
+                compiler_config.add_statements_code_locations_debug_info =
+                    add_statements_code_locations_debug_info;
+            }
+
             if let Some(add_functions_debug_info) = cairo.add_functions_debug_info {
                 compiler_config.add_functions_debug_info = add_functions_debug_info;
             }
