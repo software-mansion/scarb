@@ -649,6 +649,6 @@ fn deps_only_cloned_to_checkouts_once() {
         .success()
         .stdout_eq(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
-        [..]Running git[EXE] fetch --verbose --force --update-head-ok [..]dep1 +HEAD:refs/remotes/origin/HEAD
+        [..]Running git[EXE] fetch --verbose --force --update-head-ok [..]dep1[..] +HEAD:refs/remotes/origin/HEAD
         "#});
 }
