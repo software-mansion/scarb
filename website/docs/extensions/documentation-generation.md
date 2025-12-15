@@ -34,6 +34,17 @@ Currently, we support only those types of links:
 
 - `[ItemName]` and ``[`ItemName`]`` (where `ItemName` is a valid path to an item).
 
+## Linking to the source code GitHub repository
+
+Use flag `--remote-base-url` or set `REMOTE_BASE_URL` environmental variable to link to the source code of the package in the GitHub repository. Each item subpage will be linked to the corresponding source code file.
+For example: 
+
+```shell
+scarb doc --remote-base-url=https://github.com/ExampleRepoOwner/ExampleRepoProject/blob/example_branch/
+```
+
+Scarb constructs urls combining: the remote base url, and the relative path to the file from the package root. It does not check whether the links are valid or if they lead to the relevant file. It is up to the user to provide a correct base url. 
+
 ## mdBook
 
 Generated Markdown can be used to build a [mdBook](https://rust-lang.github.io/mdBook) documentation.
