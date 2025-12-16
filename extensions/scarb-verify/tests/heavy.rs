@@ -27,6 +27,10 @@ fn build_executable_project() -> TempDir {
 
 // Disabled due to `scarb prove` not being supported on Windows
 #[cfg(not(windows))]
+#[cfg_attr(
+    not(feature = "heavy-tests"),
+    ignore = "heavy tests must be run with feature flag"
+)]
 #[test]
 fn sequential_verify_from_execution_output() {
     let t = build_executable_project();
@@ -52,6 +56,10 @@ fn sequential_verify_from_execution_output() {
 
 // Disabled due to `scarb prove` not being supported on Windows
 #[cfg(not(windows))]
+#[cfg_attr(
+    not(feature = "heavy-tests"),
+    ignore = "heavy tests must be run with feature flag"
+)]
 #[test]
 fn sequential_verify_from_path() {
     let t = build_executable_project();

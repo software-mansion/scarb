@@ -29,6 +29,10 @@ fn build_executable_project() -> TempDir {
 
 #[test]
 #[cfg(not(windows))]
+#[cfg_attr(
+    not(feature = "heavy-tests"),
+    ignore = "heavy tests must be run with feature flag"
+)]
 fn sequential_prove_with_execute() {
     let t = build_executable_project();
 
@@ -54,6 +58,10 @@ fn sequential_prove_with_execute() {
 
 #[test]
 #[cfg(not(windows))]
+#[cfg_attr(
+    not(feature = "heavy-tests"),
+    ignore = "heavy tests must be run with feature flag"
+)]
 fn sequential_prove_from_execution_output() {
     let t = build_executable_project();
 
