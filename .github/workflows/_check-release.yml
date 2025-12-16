@@ -47,7 +47,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test --profile=ci --no-fail-fast -p scarb-prove -p scarb-verify
+      - name: Run nightly light tests
+        run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test --profile=ci --no-fail-fast -p scarb-prove -p scarb-verify --no-default-features
+
+      - name: Run nightly heavy tests
+        run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test --profile=ci --no-fail-fast -p scarb-prove -p scarb-verify --test heavy -- --test-threads=1
 
   snforge-init:
     runs-on: ubuntu-latest
