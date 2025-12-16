@@ -10,6 +10,10 @@ readme.workspace = true
 repository.workspace = true
 version.workspace = true
 
+[features]
+default = ["heavy-tests"]
+heavy-tests = []
+
 [dependencies]
 anyhow.workspace = true
 cairo-air.workspace = true
