@@ -26,9 +26,8 @@ impl TryFrom<&str> for TrackedResource {
             "sierra-gas" => Ok(TrackedResource::SierraGas),
             "cairo-steps" => Ok(TrackedResource::CairoSteps),
             other => Err(anyhow!(
-                "Invalid tracked resource set for profiler: {}\
+                "Invalid tracked resource set for profiler: {other}\
             \nhelp: valid options are: `cairo-steps` or `sierra-gas`",
-                other
             )),
         }
     }
@@ -110,7 +109,7 @@ fn build_profiler_call_entry_point(
         entry_point_selector: EntryPointSelector::default(),
         contract_address: ContractAddress::default(),
         call_type: ProfilerCallType::Call,
-        contract_name: Some(format!("SCARB_EXECUTE\nTarget: {}", target)),
+        contract_name: Some(format!("SCARB_EXECUTE\nTarget: {target}")),
         function_name,
         calldata_len: None,
         events_summary: None,
