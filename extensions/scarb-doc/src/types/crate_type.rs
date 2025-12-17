@@ -1,7 +1,7 @@
 use crate::db::ScarbDocDatabase;
 use crate::types::groups::Group;
 use crate::types::module_type::{
-    Module, ModulePubUses, collect_pubuses, get_ancestors_vector, merge_modules,
+    FileLinkDataType, Module, ModulePubUses, collect_pubuses, get_ancestors_vector, merge_modules,
 };
 use cairo_lang_defs::ids::{LanguageElementId, ModuleId};
 use cairo_lang_diagnostics::Maybe;
@@ -51,7 +51,12 @@ impl<'db> Crate<'db> {
         include_private_items: bool,
     ) -> Maybe<Self> {
         let root_module_id = ModuleId::CrateRoot(crate_id);
-        let root_module = Module::new(db, root_module_id, include_private_items)?;
+        let root_module = Module::new(
+            db,
+            root_module_id,
+            include_private_items,
+            FileLinkDataType::ModuleItem,
+        )?;
         Ok(Self {
             root_module,
             foreign_crates: vec![],
