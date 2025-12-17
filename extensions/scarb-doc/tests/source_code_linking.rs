@@ -95,3 +95,123 @@ fn links_workspace() {
         assert!(content.contains(&expected_link));
     }
 }
+
+const MACROS_CODE: &str = include_str!("code/code_11.cairo");
+
+#[test]
+fn expanded_macros_links() {
+    let root_dir = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("hello_world")
+        .edition("2023_11")
+        .lib_cairo(MACROS_CODE)
+        .manifest_package_extra(r#"experimental-features = ["user_defined_inline_macros"]"#)
+        .build(&root_dir);
+
+    let root_dir_name = root_dir.path().file_name().unwrap().to_str().unwrap();
+    let remote_base_url = format!(
+        "https://github.com/ExampleRepoOwner/ExampleRepoProject/blob/master/{root_dir_name}/"
+    );
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args(["--remote-base-url", &remote_base_url])
+        .current_dir(&root_dir)
+        .assert()
+        .success();
+
+    let actual_files = root_dir.child("target/doc/hello_world/src").files();
+
+    // assert files exist
+    assert_eq!(
+        actual_files,
+        vec![
+            "SUMMARY.md".to_string(),
+            "exposed_can_be_a_part_of_a_group-traits.md".to_string(),
+            "exposed_can_be_a_part_of_a_group.md".to_string(),
+            "hello_world-OuterStruct.md".to_string(),
+            "hello_world-ShapeShifters.md".to_string(),
+            "hello_world-define_function.md".to_string(),
+            "hello_world-define_trait.md".to_string(),
+            "hello_world-free_functions.md".to_string(),
+            "hello_world-macro_declarations.md".to_string(),
+            "hello_world-modules.md".to_string(),
+            "hello_world-my_macro_defined_function.md".to_string(),
+            "hello_world-nested_module_macro.md".to_string(),
+            "hello_world-regina-VisibleStruct.md".to_string(),
+            "hello_world-regina-structs.md".to_string(),
+            "hello_world-regina.md".to_string(),
+            "hello_world-structs.md".to_string(),
+            "hello_world.md".to_string(),
+        ]
+    );
+
+    // assert links are correct
+    let pairs = vec![
+        ("hello_world.md", "src/lib.cairo"),
+        ("hello_world-define_function.md", "src/lib.cairo#L16-L22"),
+        ("hello_world-define_trait.md", "src/lib.cairo#L26-L35"),
+        (
+            "hello_world-my_macro_defined_function.md",
+            "src/lib.cairo#L24-L24",
+        ),
+        (
+            "hello_world-nested_module_macro.md",
+            "src/lib.cairo#L44-L70",
+        ),
+        ("hello_world-OuterStruct.md", "src/lib.cairo#L80-L83"),
+        ("hello_world-regina.md", "src/lib.cairo#L72-L72"),
+        (
+            "hello_world-regina-VisibleStruct.md",
+            "src/lib.cairo#L72-L72",
+        ),
+        ("hello_world-ShapeShifters.md", "src/lib.cairo#L36-L36"),
+    ];
+    for (doc_file, subpath) in pairs {
+        let content = std::fs::read_to_string(
+            root_dir
+                .path()
+                .join("target/doc/hello_world/src")
+                .join(doc_file),
+        )
+        .unwrap();
+        let expected_link = format_expected_url(&remote_base_url, subpath);
+        assert!(content.contains(&expected_link));
+    }
+}
+
+#[test]
+fn special_characters_in_base_url_are_not_malformed() {
+    let root_dir = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("sp_chars")
+        .edition("2024_07")
+        .lib_cairo(indoc! {r#"
+            pub fn main() {}
+        "#})
+        .build(&root_dir);
+
+    let root_dir_name = root_dir.path().file_name().unwrap().to_str().unwrap();
+    let remote_base_url = format!(
+        "https://git.example.com/acme%20space/repo/blob/feat/%23branch(plus+sign)/{}/",
+        root_dir_name
+    );
+
+    Scarb::quick_command()
+        .arg("doc")
+        .env("SCARB_DOC_REMOTE_BASE_URL", remote_base_url.clone())
+        .current_dir(&root_dir)
+        .assert()
+        .success();
+
+    let content = std::fs::read_to_string(
+        root_dir
+            .path()
+            .join("target/doc/sp_chars/src/sp_chars-main.md"),
+    )
+    .unwrap();
+    let expected_link = format_expected_url(&remote_base_url, "src/lib.cairo#L1-L1");
+    assert!(content.contains(&expected_link));
+}
