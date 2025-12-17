@@ -1,13 +1,14 @@
 use crate::attributes::find_groups_from_attributes;
 use crate::db::ScarbDocDatabase;
 use crate::location_links::DocLocationLink;
+use crate::types::module_type::FileLinkDataType;
 use crate::types::other_types::doc_full_path;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleId, TopLevelLanguageElementId};
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_doc::parser::DocumentationCommentToken;
-use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_filesystem::ids::{CrateId, SpanInFile};
 use serde::Serialize;
 use serde::Serializer;
 use std::fmt::Debug;
@@ -46,7 +47,13 @@ impl<'db> ItemData<'db> {
         id: impl TopLevelLanguageElementId<'db>,
         documentable_item_id: DocumentableItemId<'db>,
         parent_full_path: String,
+        file_link_data: FileLinkDataType,
     ) -> Self {
+        let file_link_data = match file_link_data {
+            FileLinkDataType::MacroCallExpansion(data) => data,
+            FileLinkDataType::ModuleItem => get_file_link_data(db, &id),
+            FileLinkDataType::Unlinkable => None,
+        };
         let (signature, doc_location_links) =
             db.get_item_signature_with_links(documentable_item_id);
         let doc_location_links = doc_location_links
@@ -63,7 +70,7 @@ impl<'db> ItemData<'db> {
             parent_full_path: Some(parent_full_path),
             doc_location_links,
             group,
-            file_link_data: get_file_link_data(db, &id),
+            file_link_data,
         }
     }
 
@@ -71,7 +78,14 @@ impl<'db> ItemData<'db> {
         db: &'db ScarbDocDatabase,
         id: impl TopLevelLanguageElementId<'db>,
         documentable_item_id: DocumentableItemId<'db>,
+        file_link_data: FileLinkDataType,
     ) -> Self {
+        let file_link_data = match file_link_data {
+            FileLinkDataType::MacroCallExpansion(data) => data,
+            FileLinkDataType::ModuleItem => get_file_link_data(db, &id),
+            FileLinkDataType::Unlinkable => None,
+        };
+
         Self {
             id: documentable_item_id,
             name: id.name(db).to_string(db),
@@ -85,7 +99,7 @@ impl<'db> ItemData<'db> {
             parent_full_path: Some(doc_full_path(&id.parent_module(db), db)),
             doc_location_links: vec![],
             group: find_groups_from_attributes(db, &id),
-            file_link_data: get_file_link_data(db, &id),
+            file_link_data,
         }
     }
 
@@ -190,9 +204,14 @@ fn get_file_link_data<'db>(
     db: &'db ScarbDocDatabase,
     id: &impl TopLevelLanguageElementId<'db>,
 ) -> Option<FileLinkData> {
-    // TODO: check if file exists on disk (what about macro expansions?)
     let span = id.stable_location(db).span_in_file(db);
+    get_file_link_data_from_span(db, span)
+}
 
+pub fn get_file_link_data_from_span(
+    db: &ScarbDocDatabase,
+    span: SpanInFile,
+) -> Option<FileLinkData> {
     let start_line = span
         .span
         .start
