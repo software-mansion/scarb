@@ -37,13 +37,13 @@ fn example() -> felt252 {
 }
 ```
 
-## Set configuration options
+### Set configuration options
 
 Which configuration options are set is determined statically during the compilation of the compilation unit of the
 compiled package.
 It is not possible to set a configuration option from within the source code of the package being compiled.
 
-### `target`
+#### `target`
 
 Key-value option set once with the current compilation unit's [target](./targets).
 
@@ -51,6 +51,20 @@ Example values:
 
 - `'lib'`
 - `'starknet-contract'`
+- `'test'`
+
+### Conditional compilation of tests
+
+You can use the `cfg` attribute to control which parts of your project are compiled when compiling tests.
+
+Two configuration options will be helpful for this:
+
+- `#[cfg(test)]` - items under this attribute will be compiled in test builds (i.e. `scarb build --test`), but only in the package that is tested, not in its dependencies.
+- `#[cfg(target: 'test')]` - items under this attribute will be compiled in test build, both in the tested package, in its dependents and dependencies.
+
+All tests of your package should be under `#[cfg(test)]`, while the `#[cfg(target: 'test')]` might be helpful, if you write libraries for testing other Cairo code.
+Be careful when using the `#[cfg(target: 'test')]` attribute!
+Exposing some Cairo code (like some functions tagged with `#[test]` attribute) under this attribute may cause the compilation of a dependant of the library to fail!
 
 ## Features
 
