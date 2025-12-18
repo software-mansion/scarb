@@ -60,7 +60,7 @@ pub fn main_inner(args: Args, ui: Ui) -> Result<()> {
     execute(&metadata, &package, &args.execution, &ui)
 }
 
-fn read_arguments_as_felt(arguments: ProgramArguments) -> Result<Vec<Arg>> {
+fn read_arguments_as_felts(arguments: ProgramArguments) -> Result<Vec<Arg>> {
     if let Some(path) = arguments.arguments_file {
         let file = fs::File::open(&path).with_context(|| "reading arguments file failed")?;
         let as_vec: Vec<BigUintAsHex> =
@@ -74,7 +74,7 @@ fn read_arguments_as_felt(arguments: ProgramArguments) -> Result<Vec<Arg>> {
     }
 }
 
-fn read_arguments_as_value(arguments: ProgramArguments) -> Result<Vec<Value>> {
+fn read_arguments_as_values(arguments: ProgramArguments) -> Result<Vec<Value>> {
     if let Some(path) = arguments.arguments_file {
         let file = fs::File::open(&path).with_context(|| "reading arguments file failed")?;
         let as_vec: Vec<BigUintAsHex> =
@@ -103,7 +103,7 @@ fn execute_bootloader(
     cairo_run_config: &CairoRunConfig,
     arguments: ProgramArguments,
 ) -> Result<(CairoRunner, Box<dyn ExecutionResourcesSource>)> {
-    let args = read_arguments_as_value(arguments)?;
+    let args = read_arguments_as_values(arguments)?;
 
     // Program input JSON for the bootloader.
     let program_input = json!({
@@ -178,7 +178,7 @@ fn execute_standalone(
 
     let cairo_hint_processor = CairoHintProcessor {
         runner: None,
-        user_args: vec![vec![Arg::Array(read_arguments_as_felt(arguments)?)]],
+        user_args: vec![vec![Arg::Array(read_arguments_as_felts(arguments)?)]],
         string_to_hint,
         starknet_state: Default::default(),
         run_resources: Default::default(),
@@ -283,13 +283,13 @@ pub fn execute(
         format!("{}.executable.json", build_target.name),
     )?;
 
-    let cairo_run_config = build_cairo_run_config(&output, args)?;
     let executable = load_prebuilt_executable(&executable_path)?;
 
     let output_dir = scarb_target_dir.join("execute").join(&package.name);
     create_output_dir(output_dir.as_std_path())?;
 
     let execution_output_dir = get_or_create_output_dir(&output_dir)?;
+    let cairo_run_config = build_cairo_run_config(&output, args)?;
 
     let (mut runner, hint_processor) = if args.run.target.is_bootloader() {
         execute_bootloader(
