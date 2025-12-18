@@ -6,7 +6,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[OuterStruct](./hello_wor
 
 <pre><code class="language-cairo">pub struct OuterStruct {
     pub work: felt252,
-    properly: felt252,
+    /* private fields */
 }</code></pre>
 
 ## Members

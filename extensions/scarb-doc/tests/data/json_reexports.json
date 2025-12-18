@@ -130,7 +130,7 @@
                   "item_data": {
                     "name": "TestStruct",
                     "doc": null,
-                    "signature": "pub struct TestStruct {\n    abc: u32,\n}",
+                    "signature": "pub struct TestStruct { /* private fields */ }",
                     "full_path": "sub_package::TestStruct",
                     "group": null
                   }
@@ -467,7 +467,7 @@
                     "item_data": {
                       "name": "TestStruct",
                       "doc": null,
-                      "signature": "pub struct TestStruct {\n    abc: u32,\n}",
+                      "signature": "pub struct TestStruct { /* private fields */ }",
                       "full_path": "sub_package::TestStruct",
                       "group": null
                     }

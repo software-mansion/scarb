@@ -9,6 +9,13 @@ Fully qualified path: [hello_world](./hello_world.md)::[inner_module](./hello_wo
 |:---|:---|
 | [visible_in_reeksports](./hello_world-inner_module-visible_in_reeksports.md) | — |
 
+## [Structs](./hello_world-inner_module-structs.md)
+
+| | |
+|:---|:---|
+| [LinkedStruct](./hello_world-inner_module-LinkedStruct.md) | — |
+| [TestMembersVisibility](./hello_world-inner_module-TestMembersVisibility.md) | — |
+
 
 ---
  
@@ -21,3 +28,9 @@ Fully qualified path: [hello_world](./hello_world.md)::[inner_module](./hello_wo
 | | |
 |:---|:---|
 | [inner_function_visible_in_group](./hello_world-inner_module-inner_function_visible_in_group.md) | — |
+
+- ### [Structs](./visible-structs.md)
+
+| | |
+|:---|:---|
+| [TestMembersVisibility2](./hello_world-inner_module-TestMembersVisibility2.md) | — |
