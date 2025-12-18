@@ -64,7 +64,7 @@ Two configuration options will be helpful for this:
 
 All tests of your package should be under `#[cfg(test)]`, while the `#[cfg(target: 'test')]` might be helpful, if you write libraries for testing other Cairo code.
 Be careful when using the `#[cfg(target: 'test')]` attribute!
-Exposing some Cairo code (like the `#[test]` attributes) under this attribute may cause the compilation of a dependant of the library to fail!
+Exposing some Cairo code (like some functions tagged with `#[test]` attribute) under this attribute may cause the compilation of a dependant of the library to fail!
 
 ## Features
 
