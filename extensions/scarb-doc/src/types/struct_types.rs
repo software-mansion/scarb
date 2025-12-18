@@ -2,7 +2,7 @@ use crate::db::ScarbDocDatabase;
 use crate::docs_generation::markdown::context::IncludedItems;
 use crate::docs_generation::markdown::traits::WithPath;
 use crate::types::item_data::{ItemData, SubItemData};
-use crate::types::module_type::is_doc_hidden_attr;
+use crate::types::module_type::{FileLinkDataType, is_doc_hidden_attr};
 use crate::types::other_types::doc_full_path;
 use cairo_lang_defs::ids::{
     LanguageElementId, LookupItemId, MemberId, ModuleItemId, NamedLanguageElementId, StructId,
@@ -29,6 +29,7 @@ impl<'db> Struct<'db> {
         db: &'db ScarbDocDatabase,
         id: StructId<'db>,
         include_private_items: bool,
+        file_link_data: FileLinkDataType,
     ) -> Maybe<Self> {
         let members = db.struct_members(id)?;
 
@@ -37,6 +38,7 @@ impl<'db> Struct<'db> {
             id,
             LookupItemId::ModuleItem(ModuleItemId::Struct(id)).into(),
             doc_full_path(&id.parent_module(db), db),
+            file_link_data,
         );
         let members = members
             .iter()
@@ -89,7 +91,14 @@ impl<'db> Member<'db> {
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Member(id), parent_path).into(),
+            item_data: ItemData::new(
+                db,
+                id,
+                DocumentableItemId::Member(id),
+                parent_path,
+                FileLinkDataType::Unlinkable,
+            )
+            .into(),
         }
     }
 }

@@ -2,6 +2,7 @@ use crate::db::ScarbDocDatabase;
 use crate::docs_generation::markdown::context::IncludedItems;
 use crate::docs_generation::markdown::traits::WithPath;
 use crate::types::item_data::{ItemData, SubItemData};
+use crate::types::module_type::FileLinkDataType;
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
@@ -46,7 +47,11 @@ pub struct Constant<'db> {
 }
 
 impl<'db> Constant<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: ConstantId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: ConstantId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -56,6 +61,7 @@ impl<'db> Constant<'db> {
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::Constant(id)).into(),
                 doc_full_path(&id.parent_module(db), db),
+                file_link_data,
             ),
         }
     }
@@ -72,13 +78,18 @@ pub struct FreeFunction<'db> {
 }
 
 impl<'db> FreeFunction<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: FreeFunctionId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: FreeFunctionId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         let item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::FreeFunction(id)).into(),
             doc_full_path(&id.parent_module(db), db),
+            file_link_data,
         );
 
         Self {
@@ -102,13 +113,18 @@ pub struct Enum<'db> {
 }
 
 impl<'db> Enum<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: EnumId<'db>) -> Maybe<Self> {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: EnumId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Maybe<Self> {
         let variants = db.enum_variants(id)?;
         let item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Enum(id)).into(),
             doc_full_path(&id.parent_module(db), db),
+            file_link_data,
         );
 
         let variants = variants
@@ -154,7 +170,14 @@ impl<'db> Variant<'db> {
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Variant(id), parent_path).into(),
+            item_data: ItemData::new(
+                db,
+                id,
+                DocumentableItemId::Variant(id),
+                parent_path,
+                FileLinkDataType::Unlinkable,
+            )
+            .into(),
         }
     }
 }
@@ -170,7 +193,11 @@ pub struct TypeAlias<'db> {
 }
 
 impl<'db> TypeAlias<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: ModuleTypeAliasId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: ModuleTypeAliasId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -180,6 +207,7 @@ impl<'db> TypeAlias<'db> {
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::TypeAlias(id)).into(),
                 doc_full_path(&id.parent_module(db), db),
+                file_link_data,
             ),
         }
     }
@@ -196,7 +224,11 @@ pub struct ImplAlias<'db> {
 }
 
 impl<'db> ImplAlias<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: ImplAliasId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: ImplAliasId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -206,6 +238,7 @@ impl<'db> ImplAlias<'db> {
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ImplAlias(id)).into(),
                 doc_full_path(&id.parent_module(db), db),
+                file_link_data,
             ),
         }
     }
@@ -226,30 +259,41 @@ pub struct Trait<'db> {
 }
 
 impl<'db> Trait<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: TraitId<'db>) -> Maybe<Self> {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: TraitId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Maybe<Self> {
         let item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Trait(id)).into(),
             doc_full_path(&id.parent_module(db), db),
+            file_link_data.clone(),
         );
 
         let trait_constants = db.trait_constants(id)?;
         let trait_constants = trait_constants
             .iter()
-            .map(|(_name, trait_constant_id)| TraitConstant::new(db, *trait_constant_id))
+            .map(|(_name, trait_constant_id)| {
+                TraitConstant::new(db, *trait_constant_id, file_link_data.clone())
+            })
             .collect::<Vec<_>>();
 
         let trait_types = db.trait_types(id)?;
         let trait_types = trait_types
             .iter()
-            .map(|(_name, trait_type_id)| TraitType::new(db, *trait_type_id))
+            .map(|(_name, trait_type_id)| {
+                TraitType::new(db, *trait_type_id, file_link_data.clone())
+            })
             .collect::<Vec<_>>();
 
         let trait_functions = db.trait_functions(id)?;
         let trait_functions = trait_functions
             .iter()
-            .map(|(_name, trait_function_id)| TraitFunction::new(db, *trait_function_id))
+            .map(|(_name, trait_function_id)| {
+                TraitFunction::new(db, *trait_function_id, file_link_data.clone())
+            })
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
@@ -289,7 +333,11 @@ pub struct TraitConstant<'db> {
 }
 
 impl<'db> TraitConstant<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: TraitConstantId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: TraitConstantId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         let parent_path = format!(
             "{}::{}",
@@ -304,6 +352,7 @@ impl<'db> TraitConstant<'db> {
                 id,
                 LookupItemId::TraitItem(TraitItemId::Constant(id)).into(),
                 parent_path,
+                file_link_data,
             ),
         }
     }
@@ -320,7 +369,11 @@ pub struct TraitType<'db> {
 }
 
 impl<'db> TraitType<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: TraitTypeId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: TraitTypeId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         let parent_path = format!(
             "{}::{}",
@@ -335,6 +388,7 @@ impl<'db> TraitType<'db> {
                 id,
                 LookupItemId::TraitItem(TraitItemId::Type(id)).into(),
                 parent_path,
+                file_link_data,
             ),
         }
     }
@@ -351,7 +405,11 @@ pub struct TraitFunction<'db> {
 }
 
 impl<'db> TraitFunction<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: TraitFunctionId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: TraitFunctionId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         let parent_path = format!(
             "{}::{}",
@@ -366,6 +424,7 @@ impl<'db> TraitFunction<'db> {
                 id,
                 LookupItemId::TraitItem(TraitItemId::Function(id)).into(),
                 parent_path,
+                file_link_data,
             ),
         }
     }
@@ -386,30 +445,35 @@ pub struct Impl<'db> {
 }
 
 impl<'db> Impl<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: ImplDefId<'db>) -> Maybe<Self> {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: ImplDefId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Maybe<Self> {
         let item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Impl(id)).into(),
             doc_full_path(&id.parent_module(db), db),
+            file_link_data.clone(),
         );
 
         let impl_types = db.impl_types(id)?;
         let impl_types = impl_types
             .iter()
-            .map(|(id, _)| ImplType::new(db, *id))
+            .map(|(id, _)| ImplType::new(db, *id, file_link_data.clone()))
             .collect::<Vec<_>>();
 
         let impl_constants = db.impl_constants(id)?;
         let impl_constants = impl_constants
             .iter()
-            .map(|(id, _)| ImplConstant::new(db, *id))
+            .map(|(id, _)| ImplConstant::new(db, *id, file_link_data.clone()))
             .collect::<Vec<_>>();
 
         let impl_functions = db.impl_functions(id)?;
         let impl_functions = impl_functions
             .iter()
-            .map(|(_name, id)| ImplFunction::new(db, *id))
+            .map(|(_name, id)| ImplFunction::new(db, *id, file_link_data.clone()))
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
@@ -449,7 +513,11 @@ pub struct ImplType<'db> {
 }
 
 impl<'db> ImplType<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: ImplTypeDefId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: ImplTypeDefId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         let parent_path = format!(
             "{}::{}",
@@ -464,6 +532,7 @@ impl<'db> ImplType<'db> {
                 id,
                 LookupItemId::ImplItem(ImplItemId::Type(id)).into(),
                 parent_path,
+                file_link_data,
             ),
         }
     }
@@ -480,7 +549,11 @@ pub struct ImplConstant<'db> {
 }
 
 impl<'db> ImplConstant<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: ImplConstantDefId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: ImplConstantDefId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         let parent_path = format!(
             "{}::{}",
@@ -495,6 +568,7 @@ impl<'db> ImplConstant<'db> {
                 id,
                 LookupItemId::ImplItem(ImplItemId::Constant(id)).into(),
                 parent_path,
+                file_link_data,
             ),
         }
     }
@@ -511,7 +585,11 @@ pub struct ImplFunction<'db> {
 }
 
 impl<'db> ImplFunction<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: ImplFunctionId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: ImplFunctionId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         let parent_path = format!(
             "{}::{}",
@@ -526,6 +604,7 @@ impl<'db> ImplFunction<'db> {
                 id,
                 LookupItemId::ImplItem(ImplItemId::Function(id)).into(),
                 parent_path,
+                file_link_data,
             ),
         }
     }
@@ -542,7 +621,11 @@ pub struct ExternType<'db> {
 }
 
 impl<'db> ExternType<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: ExternTypeId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: ExternTypeId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -552,6 +635,7 @@ impl<'db> ExternType<'db> {
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ExternType(id)).into(),
                 doc_full_path(&id.parent_module(db), db),
+                file_link_data,
             ),
         }
     }
@@ -568,7 +652,11 @@ pub struct ExternFunction<'db> {
 }
 
 impl<'db> ExternFunction<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: ExternFunctionId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: ExternFunctionId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -578,6 +666,7 @@ impl<'db> ExternFunction<'db> {
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ExternFunction(id)).into(),
                 doc_full_path(&id.parent_module(db), db),
+                file_link_data,
             ),
         }
     }
@@ -593,7 +682,11 @@ pub struct MacroDeclaration<'db> {
 }
 
 impl<'db> MacroDeclaration<'db> {
-    pub fn new(db: &'db ScarbDocDatabase, id: MacroDeclarationId<'db>) -> Self {
+    pub fn new(
+        db: &'db ScarbDocDatabase,
+        id: MacroDeclarationId<'db>,
+        file_link_data: FileLinkDataType,
+    ) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -603,6 +696,7 @@ impl<'db> MacroDeclaration<'db> {
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::MacroDeclaration(id)).into(),
                 doc_full_path(&id.parent_module(db), db),
+                file_link_data,
             ),
         }
     }

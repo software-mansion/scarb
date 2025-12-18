@@ -6,7 +6,7 @@ use crate::types::groups::{
     aggregate_impls_groups, aggregate_modules_groups, aggregate_pub_uses_groups,
     aggregate_structs_groups, aggregate_traits_groups, aggregate_type_aliases_groups,
 };
-use crate::types::item_data::ItemData;
+use crate::types::item_data::{FileLinkData, ItemData, get_file_link_data_from_span};
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, MacroDeclaration,
     Trait, TypeAlias,
@@ -18,6 +18,7 @@ use cairo_lang_defs::ids::{
     NamedLanguageElementLongId, TopLevelLanguageElementId,
 };
 use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
+use cairo_lang_filesystem::ids::FileLongId;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::items::imp::ImplSemantic;
@@ -123,55 +124,110 @@ impl<'db> ModulePubUses<'db> {
         for item in module_use_items {
             match item {
                 ResolvedGenericItem::GenericConstant(id) => {
-                    push_if_visible!(db, id, use_constants, Constant::new(db, id))
+                    push_if_visible!(
+                        db,
+                        id,
+                        use_constants,
+                        Constant::new(db, id, FileLinkDataType::ModuleItem)
+                    )
                 }
                 ResolvedGenericItem::GenericFunction(GenericFunctionId::Free(id)) => {
-                    push_if_visible!(db, id, use_free_functions, FreeFunction::new(db, id))
+                    push_if_visible!(
+                        db,
+                        id,
+                        use_free_functions,
+                        FreeFunction::new(db, id, FileLinkDataType::ModuleItem)
+                    )
                 }
                 ResolvedGenericItem::GenericType(GenericTypeId::Struct(id)) => {
                     push_try_if_visible!(
                         db,
                         id,
                         use_structs,
-                        Struct::new(db, id, include_private_items)
+                        Struct::new(db, id, include_private_items, FileLinkDataType::ModuleItem)
                     )
                 }
                 ResolvedGenericItem::GenericType(GenericTypeId::Enum(id)) => {
-                    push_try_if_visible!(db, id, use_enums, Enum::new(db, id))
+                    push_try_if_visible!(
+                        db,
+                        id,
+                        use_enums,
+                        Enum::new(db, id, FileLinkDataType::ModuleItem)
+                    )
                 }
                 ResolvedGenericItem::GenericTypeAlias(id) => {
-                    push_if_visible!(db, id, use_module_type_aliases, TypeAlias::new(db, id))
+                    push_if_visible!(
+                        db,
+                        id,
+                        use_module_type_aliases,
+                        TypeAlias::new(db, id, FileLinkDataType::ModuleItem)
+                    )
                 }
                 ResolvedGenericItem::GenericImplAlias(id) => {
-                    push_if_visible!(db, id, use_impl_aliases, ImplAlias::new(db, id))
+                    push_if_visible!(
+                        db,
+                        id,
+                        use_impl_aliases,
+                        ImplAlias::new(db, id, FileLinkDataType::ModuleItem)
+                    )
                 }
                 ResolvedGenericItem::Trait(id) => {
-                    push_try_if_visible!(db, id, use_traits, Trait::new(db, id))
+                    push_try_if_visible!(
+                        db,
+                        id,
+                        use_traits,
+                        Trait::new(db, id, FileLinkDataType::ModuleItem)
+                    )
                 }
                 ResolvedGenericItem::Impl(id) => {
-                    push_try_if_visible!(db, id, use_impl_defs, Impl::new(db, id))
+                    push_try_if_visible!(
+                        db,
+                        id,
+                        use_impl_defs,
+                        Impl::new(db, id, FileLinkDataType::ModuleItem)
+                    )
                 }
                 ResolvedGenericItem::GenericType(GenericTypeId::Extern(id)) => {
-                    push_if_visible!(db, id, use_extern_types, ExternType::new(db, id))
+                    push_if_visible!(
+                        db,
+                        id,
+                        use_extern_types,
+                        ExternType::new(db, id, FileLinkDataType::ModuleItem)
+                    )
                 }
                 ResolvedGenericItem::GenericFunction(GenericFunctionId::Extern(id)) => {
-                    push_if_visible!(db, id, use_extern_functions, ExternFunction::new(db, id))
+                    push_if_visible!(
+                        db,
+                        id,
+                        use_extern_functions,
+                        ExternFunction::new(db, id, FileLinkDataType::ModuleItem)
+                    )
                 }
                 ResolvedGenericItem::Module(ModuleId::Submodule(id)) => push_try_if_visible!(
                     db,
                     id,
                     use_submodules,
-                    Module::new(db, ModuleId::Submodule(id), include_private_items)
+                    Module::new(
+                        db,
+                        ModuleId::Submodule(id),
+                        include_private_items,
+                        FileLinkDataType::ModuleItem
+                    )
                 ),
                 ResolvedGenericItem::Macro(id) => push_if_visible!(
                     db,
                     id,
                     use_macro_declarations,
-                    MacroDeclaration::new(db, id)
+                    MacroDeclaration::new(db, id, FileLinkDataType::ModuleItem)
                 ),
-                ResolvedGenericItem::Module(ModuleId::CrateRoot(id)) => use_submodules.push(
-                    Module::new(db, ModuleId::CrateRoot(id), include_private_items)?,
-                ),
+                ResolvedGenericItem::Module(ModuleId::CrateRoot(id)) => {
+                    use_submodules.push(Module::new(
+                        db,
+                        ModuleId::CrateRoot(id),
+                        include_private_items,
+                        FileLinkDataType::ModuleItem,
+                    )?)
+                }
                 ResolvedGenericItem::Variant(..)
                 | ResolvedGenericItem::Variable(..)
                 | ResolvedGenericItem::TraitItem(..)
@@ -319,6 +375,7 @@ impl<'db> Module<'db> {
         db: &'db ScarbDocDatabase,
         module_id: ModuleId<'db>,
         include_private_items: bool,
+        file_link_data: FileLinkDataType,
     ) -> Maybe<Self> {
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData::new_crate(db, crate_id),
@@ -326,6 +383,7 @@ impl<'db> Module<'db> {
                 db,
                 submodule_id,
                 LookupItemId::ModuleItem(ModuleItemId::Submodule(submodule_id)).into(),
+                file_link_data.clone(),
             ),
             ModuleId::MacroCall { .. } => {
                 panic!("error: Module::new should not be called for MacroCall")
@@ -344,38 +402,38 @@ impl<'db> Module<'db> {
         let mut _constants = filter_map_item_id_to_item(
             module_data.constants(db).keys(),
             should_include_item,
-            |id| Ok(Constant::new(db, *id)),
+            |id| Ok(Constant::new(db, *id, file_link_data.clone())),
         )?;
         let mut _free_functions = filter_map_item_id_to_item(
             module_data.free_functions(db).keys(),
             should_include_item,
-            |id| Ok(FreeFunction::new(db, *id)),
+            |id| Ok(FreeFunction::new(db, *id, file_link_data.clone())),
         )?;
         let mut _structs = filter_map_item_id_to_item(
             module_data.structs(db).keys(),
             should_include_item,
-            |id| Struct::new(db, *id, include_private_items),
+            |id| Struct::new(db, *id, include_private_items, file_link_data.clone()),
         )?;
         let mut _enums =
             filter_map_item_id_to_item(module_data.enums(db).keys(), should_include_item, |id| {
-                Enum::new(db, *id)
+                Enum::new(db, *id, file_link_data.clone())
             })?;
 
         let mut _type_aliases = filter_map_item_id_to_item(
             module_data.type_aliases(db).keys(),
             should_include_item,
-            |id| Ok(TypeAlias::new(db, *id)),
+            |id| Ok(TypeAlias::new(db, *id, file_link_data.clone())),
         )?;
 
         let mut _impl_aliases = filter_map_item_id_to_item(
             module_data.impl_aliases(db).keys(),
             should_include_item,
-            |id| Ok(ImplAlias::new(db, *id)),
+            |id| Ok(ImplAlias::new(db, *id, file_link_data.clone())),
         )?;
 
         let mut _traits =
             filter_map_item_id_to_item(module_data.traits(db).keys(), should_include_item, |id| {
-                Trait::new(db, *id)
+                Trait::new(db, *id, file_link_data.clone())
             })?;
 
         let hide_impls_for_hidden_traits =
@@ -386,27 +444,34 @@ impl<'db> Module<'db> {
                 .keys()
                 .filter(hide_impls_for_hidden_traits),
             should_include_item,
-            |id| Impl::new(db, *id),
+            |id| Impl::new(db, *id, file_link_data.clone()),
         )?;
         let mut _extern_types = filter_map_item_id_to_item(
             module_data.extern_types(db).keys(),
             should_include_item,
-            |id| Ok(ExternType::new(db, *id)),
+            |id| Ok(ExternType::new(db, *id, file_link_data.clone())),
         )?;
         let mut _extern_functions = filter_map_item_id_to_item(
             module_data.extern_functions(db).keys(),
             should_include_item,
-            |id| Ok(ExternFunction::new(db, *id)),
+            |id| Ok(ExternFunction::new(db, *id, file_link_data.clone())),
         )?;
         let mut _submodules: Vec<Module> = filter_map_item_id_to_item(
             module_data.submodules(db).keys(),
             should_include_item,
-            |id| Module::new(db, ModuleId::Submodule(*id), include_private_items),
+            |id| {
+                Module::new(
+                    db,
+                    ModuleId::Submodule(*id),
+                    include_private_items,
+                    file_link_data.clone(),
+                )
+            },
         )?;
         let mut _macro_declarations: Vec<MacroDeclaration> = filter_map_item_id_to_item(
             module_data.macro_declarations(db).keys(),
             should_include_item,
-            |id| Ok(MacroDeclaration::new(db, *id)),
+            |id| Ok(MacroDeclaration::new(db, *id, file_link_data.clone())),
         )?;
 
         let mut _module_pubuses = ModulePubUses::new(db, module_id, include_private_items)?;
@@ -491,6 +556,7 @@ impl<'db> Module<'db> {
                 db,
                 submodule_id,
                 LookupItemId::ModuleItem(ModuleItemId::Submodule(submodule_id)).into(),
+                FileLinkDataType::ModuleItem,
             ),
             ModuleId::MacroCall { .. } => {
                 unreachable!("Module::new_virtual should not be called for ModuleId::MacroCall")
@@ -754,6 +820,17 @@ struct ModuleItems<'db> {
     pub_uses: ModulePubUses<'db>,
 }
 
+/// Represents possible types for `FileLinkData`.
+#[derive(Clone)]
+pub enum FileLinkDataType {
+    /// A result of a macro call expansion, in that case the data links should point to the macro call.
+    MacroCallExpansion(Option<FileLinkData>),
+    /// Every item type that is not a result of macro call expansion yet can be linked.
+    ModuleItem,
+    /// Item that never gets linked like struct `Member` or enum `Variant`
+    Unlinkable,
+}
+
 /// Used for collecting items declared within an exposed macro module.
 fn collect_module_items_recursive<'db>(
     db: &'db ScarbDocDatabase,
@@ -774,6 +851,24 @@ fn collect_module_items_recursive<'db>(
     let mut _submodules = Vec::new();
     let mut _module_pubuses = ModulePubUses::default();
 
+    let file_link_data = match module_id {
+        ModuleId::MacroCall { id, .. } => {
+            let macro_call_file_id = id.stable_location(db).file_id(db);
+
+            match macro_call_file_id.long(db) {
+                FileLongId::Virtual(vf) => {
+                    if let Some(span) = vf.parent {
+                        let file_link_data = get_file_link_data_from_span(db, span);
+                        FileLinkDataType::MacroCallExpansion(file_link_data)
+                    } else {
+                        FileLinkDataType::MacroCallExpansion(None)
+                    }
+                }
+                _ => unreachable!(),
+            }
+        }
+        _ => FileLinkDataType::ModuleItem,
+    };
     let hide_impls_for_hidden_traits =
         |impl_def_id: &&ImplDefId<'db>| is_impl_hidden(db, impl_def_id);
 
@@ -787,43 +882,43 @@ fn collect_module_items_recursive<'db>(
     _constants.extend(filter_map_item_id_to_item(
         module_data.constants(db).keys(),
         should_include_item,
-        |id| Ok(Constant::new(db, *id)),
+        |id| Ok(Constant::new(db, *id, file_link_data.clone())),
     )?);
 
     _free_functions.extend(filter_map_item_id_to_item(
         module_data.free_functions(db).keys(),
         should_include_item,
-        |id| Ok(FreeFunction::new(db, *id)),
+        |id| Ok(FreeFunction::new(db, *id, file_link_data.clone())),
     )?);
 
     _structs.extend(filter_map_item_id_to_item(
         module_data.structs(db).keys(),
         should_include_item,
-        |id| Struct::new(db, *id, include_private_items),
+        |id| Struct::new(db, *id, include_private_items, file_link_data.clone()),
     )?);
 
     _enums.extend(filter_map_item_id_to_item(
         module_data.enums(db).keys(),
         should_include_item,
-        |id| Enum::new(db, *id),
+        |id| Enum::new(db, *id, file_link_data.clone()),
     )?);
 
     _type_aliases.extend(filter_map_item_id_to_item(
         module_data.type_aliases(db).keys(),
         should_include_item,
-        |id| Ok(TypeAlias::new(db, *id)),
+        |id| Ok(TypeAlias::new(db, *id, file_link_data.clone())),
     )?);
 
     _impl_aliases.extend(filter_map_item_id_to_item(
         module_data.impl_aliases(db).keys(),
         should_include_item,
-        |id| Ok(ImplAlias::new(db, *id)),
+        |id| Ok(ImplAlias::new(db, *id, file_link_data.clone())),
     )?);
 
     _traits.extend(filter_map_item_id_to_item(
         module_data.traits(db).keys(),
         should_include_item,
-        |id| Trait::new(db, *id),
+        |id| Trait::new(db, *id, file_link_data.clone()),
     )?);
 
     _impls.extend(filter_map_item_id_to_item(
@@ -832,31 +927,38 @@ fn collect_module_items_recursive<'db>(
             .keys()
             .filter(hide_impls_for_hidden_traits),
         should_include_item,
-        |id| Impl::new(db, *id),
+        |id| Impl::new(db, *id, file_link_data.clone()),
     )?);
 
     _extern_types.extend(filter_map_item_id_to_item(
         module_data.extern_types(db).keys(),
         should_include_item,
-        |id| Ok(ExternType::new(db, *id)),
+        |id| Ok(ExternType::new(db, *id, file_link_data.clone())),
     )?);
 
     _extern_functions.extend(filter_map_item_id_to_item(
         module_data.extern_functions(db).keys(),
         should_include_item,
-        |id| Ok(ExternFunction::new(db, *id)),
+        |id| Ok(ExternFunction::new(db, *id, file_link_data.clone())),
     )?);
 
     _submodules.extend(filter_map_item_id_to_item(
         module_data.submodules(db).keys(),
         should_include_item,
-        |id| Module::new(db, ModuleId::Submodule(*id), include_private_items),
+        |id| {
+            Module::new(
+                db,
+                ModuleId::Submodule(*id),
+                include_private_items,
+                file_link_data.clone(),
+            )
+        },
     )?);
 
     _macro_declarations.extend(filter_map_item_id_to_item(
         module_data.macro_declarations(db).keys(),
         should_include_item,
-        |id| Ok(MacroDeclaration::new(db, *id)),
+        |id| Ok(MacroDeclaration::new(db, *id, file_link_data.clone())),
     )?);
 
     let module_pubuses = ModulePubUses::new(db, module_id, include_private_items)?;
