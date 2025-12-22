@@ -6963,8 +6963,8 @@ dependencies = [
  "indoc",
  "mimalloc",
  "predicates",
- "scarb-execute-utils",
  "scarb-extensions-cli",
+ "scarb-fs-utils",
  "scarb-metadata 1.15.1",
  "scarb-oracle-hint-service",
  "scarb-test-support",
@@ -6977,14 +6977,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scarb-execute-utils"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "camino",
-]
-
-[[package]]
 name = "scarb-extensions-cli"
 version = "2.14.0"
 dependencies = [
@@ -6993,6 +6985,14 @@ dependencies = [
  "camino",
  "clap",
  "scarb-ui",
+]
+
+[[package]]
+name = "scarb-fs-utils"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "camino",
 ]
 
 [[package]]
@@ -7089,8 +7089,8 @@ dependencies = [
  "indoc",
  "mimalloc",
  "predicates",
- "scarb-execute-utils",
  "scarb-extensions-cli",
+ "scarb-fs-utils",
  "scarb-metadata 1.15.1",
  "scarb-test-support",
  "scarb-ui",

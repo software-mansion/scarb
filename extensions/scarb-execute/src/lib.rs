@@ -19,12 +19,11 @@ use cairo_vm::{Felt252, cairo_run};
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
-use scarb_execute_utils::{
-    EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME,
-    incremental_create_execution_output_dir,
-};
 use scarb_extensions_cli::execute::{
     Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
+};
+use scarb_fs_utils::{
+    EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME, incremental_create_dir_unique,
 };
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
 use scarb_oracle_hint_service::OracleHintService;
@@ -475,7 +474,7 @@ fn get_or_create_output_dir(output_dir: &Utf8Path) -> Result<Utf8PathBuf> {
         );
         return Ok(execution_output_dir);
     }
-    incremental_create_execution_output_dir(output_dir).map(|(path, _execution_id)| path)
+    incremental_create_dir_unique(output_dir, "execution").map(|(path, _execution_id)| path)
 }
 
 /// Writer implementation for a file.

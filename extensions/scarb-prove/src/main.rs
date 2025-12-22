@@ -7,9 +7,9 @@ use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::{formatdoc, indoc};
 use mimalloc::MiMalloc;
-use scarb_execute_utils::incremental_create_execution_output_dir;
 use scarb_extensions_cli::execute::unchecked::ToArgs;
 use scarb_extensions_cli::prove::Args;
+use scarb_fs_utils::incremental_create_dir_unique;
 use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
 use scarb_ui::args::{PackagesFilter, ToEnvVars};
 use scarb_ui::components::Status;
@@ -65,7 +65,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
             let output_dir = scarb_target_dir.join("execute").join(&package.name);
             create_output_dir(output_dir.as_std_path())?;
             let (_execution_output_dir, execution_id) =
-                incremental_create_execution_output_dir(&output_dir)?;
+                incremental_create_dir_unique(&output_dir, "execution")?;
 
             let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
             ScarbCommand::new()

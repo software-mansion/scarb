@@ -1,5 +1,5 @@
 [package]
-name = "scarb-execute-utils"
+name = "scarb-fs-utils"
 version = "0.1.0"
 publish = false
 edition.workspace = true
