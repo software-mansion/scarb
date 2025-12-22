@@ -118,7 +118,7 @@ ra-ap-rustc_parse_format = "0"
 ra_ap_toolchain = "0"
 rayon = "1.11.0"
 redb = "2.6.3"
-salsa = "=0.24.0"
+salsa = "=0.25.2"
 semver = { version = "1", features = ["serde"] }
 semver-pubgrub = { git = "https://github.com/software-mansion-labs/semver-pubgrub.git" }
 serde = { version = "1", features = ["serde_derive"] }
