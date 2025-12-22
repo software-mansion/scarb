@@ -2,18 +2,21 @@ use crate::db::ScarbDocDatabase;
 use crate::docs_generation::markdown::context::IncludedItems;
 use crate::docs_generation::markdown::traits::WithItemDataCommon;
 use crate::types::item_data::{ItemData, SubItemData};
+use crate::types::module_type::is_doc_hidden_attr;
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LanguageElementId,
-    LookupItemId, MacroDeclarationId, ModuleId, ModuleItemId, ModuleTypeAliasId, TraitConstantId,
-    TraitFunctionId, TraitId, TraitItemId, TraitTypeId, VariantId,
+    LookupItemId, MacroDeclarationId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId,
+    StructId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId, VariantId,
 };
 use cairo_lang_diagnostics::Maybe;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_semantic::items::enm::EnumSemantic;
 use cairo_lang_semantic::items::imp::ImplSemantic;
+use cairo_lang_semantic::items::structure::StructSemantic;
 use cairo_lang_semantic::items::trt::TraitSemantic;
+use cairo_lang_semantic::items::visibility::Visibility;
 use cairo_lang_syntax::node::ast;
 use serde::Serialize;
 use std::collections::HashMap;

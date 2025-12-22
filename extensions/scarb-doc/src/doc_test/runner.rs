@@ -4,9 +4,8 @@ use crate::doc_test::ui::TestResult;
 use crate::doc_test::workspace::TestWorkspace;
 use anyhow::Result;
 use create_output_dir::create_output_dir;
-use scarb_execute_utils::{
-    EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME,
-    incremental_create_execution_output_dir,
+use scarb_fs_utils::{
+    EXECUTE_PRINT_OUTPUT_FILENAME, EXECUTE_PROGRAM_OUTPUT_FILENAME, incremental_create_dir_unique,
 };
 use scarb_metadata::ScarbCommand;
 use scarb_ui::Ui;
@@ -212,7 +211,7 @@ impl<'a> TestRunner<'a> {
 
         let output_dir = target_dir.join("execute").join(ws.package_name());
         create_output_dir(output_dir.as_std_path())?;
-        let (output_dir, execution_id) = incremental_create_execution_output_dir(&output_dir)?;
+        let (output_dir, execution_id) = incremental_create_dir_unique(&output_dir, "execution")?;
 
         let run_result = ScarbCommand::new()
             .arg("execute")
