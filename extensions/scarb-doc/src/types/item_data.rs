@@ -1,5 +1,6 @@
 use crate::attributes::find_groups_from_attributes;
 use crate::db::ScarbDocDatabase;
+use crate::doc_test::code_blocks::{CodeBlock, collect_code_blocks_from_tokens};
 use crate::location_links::DocLocationLink;
 use crate::types::other_types::doc_full_path;
 use cairo_lang_defs::ids::{ModuleId, TopLevelLanguageElementId};
@@ -23,6 +24,8 @@ pub struct ItemData<'db> {
     pub signature: Option<String>,
     pub full_path: String,
     #[serde(skip_serializing)]
+    pub code_blocks: Vec<CodeBlock>,
+    #[serde(skip_serializing)]
     pub doc_location_links: Vec<DocLocationLink>,
     pub group: Option<String>,
 }
@@ -41,13 +44,18 @@ impl<'db> ItemData<'db> {
             .map(|link| DocLocationLink::new(link.start, link.end, link.item_id, db))
             .collect::<Vec<_>>();
         let group = find_groups_from_attributes(db, &id);
+        let full_path = id.full_path(db);
+        let doc = db.get_item_documentation_as_tokens(documentable_item_id);
+        let code_blocks = collect_code_blocks_from_tokens(&doc, &full_path);
+
         Self {
             id: documentable_item_id,
             name: id.name(db).to_string(db),
-            doc: db.get_item_documentation_as_tokens(documentable_item_id),
+            doc,
             signature,
             full_path: format!("{}::{}", parent_full_path, id.name(db).long(db)),
             parent_full_path: Some(parent_full_path),
+            code_blocks,
             doc_location_links,
             group,
         }
@@ -58,17 +66,22 @@ impl<'db> ItemData<'db> {
         id: impl TopLevelLanguageElementId<'db>,
         documentable_item_id: DocumentableItemId<'db>,
     ) -> Self {
+        let full_path = format!(
+            "{}::{}",
+            doc_full_path(&id.parent_module(db), db),
+            id.name(db).long(db)
+        );
+        let doc = db.get_item_documentation_as_tokens(documentable_item_id);
+        let code_blocks = collect_code_blocks_from_tokens(&doc, &full_path);
+
         Self {
             id: documentable_item_id,
             name: id.name(db).to_string(db),
-            doc: db.get_item_documentation_as_tokens(documentable_item_id),
+            doc,
             signature: None,
-            full_path: format!(
-                "{}::{}",
-                doc_full_path(&id.parent_module(db), db),
-                id.name(db).long(db)
-            ),
-            parent_full_path: Some(doc_full_path(&id.parent_module(db), db)),
+            full_path,
+            parent_full_path: Some(id.parent_module(db).full_path(db)),
+            code_blocks,
             doc_location_links: vec![],
             group: find_groups_from_attributes(db, &id),
         }
@@ -76,13 +89,18 @@ impl<'db> ItemData<'db> {
 
     pub fn new_crate(db: &'db ScarbDocDatabase, id: CrateId<'db>) -> Self {
         let documentable_id = DocumentableItemId::Crate(id);
+        let full_path = ModuleId::CrateRoot(id).full_path(db);
+        let doc = db.get_item_documentation_as_tokens(documentable_id);
+        let code_blocks = collect_code_blocks_from_tokens(&doc, &full_path);
+
         Self {
             id: documentable_id,
             name: id.long(db).name().to_string(db),
-            doc: db.get_item_documentation_as_tokens(documentable_id),
+            doc,
             signature: None,
-            full_path: ModuleId::CrateRoot(id).full_path(db),
+            full_path,
             parent_full_path: None,
+            code_blocks,
             doc_location_links: vec![],
             group: None,
         }
@@ -102,6 +120,8 @@ pub struct SubItemData<'db> {
     pub signature: Option<String>,
     pub full_path: String,
     #[serde(skip_serializing)]
+    pub code_blocks: Vec<CodeBlock>,
+    #[serde(skip_serializing)]
     pub doc_location_links: Vec<DocLocationLink>,
     #[serde(skip_serializing)]
     pub group: Option<String>,
@@ -116,6 +136,7 @@ impl<'db> From<SubItemData<'db>> for ItemData<'db> {
             doc: val.doc,
             signature: val.signature,
             full_path: val.full_path,
+            code_blocks: val.code_blocks,
             doc_location_links: val.doc_location_links,
             group: val.group,
         }
@@ -132,6 +153,7 @@ impl<'db> From<ItemData<'db>> for SubItemData<'db> {
             signature: val.signature,
             full_path: val.full_path,
             doc_location_links: val.doc_location_links,
+            code_blocks: val.code_blocks,
             group: val.group,
         }
     }
@@ -140,7 +162,7 @@ impl<'db> From<ItemData<'db>> for SubItemData<'db> {
 fn documentation_serializer<S>(
     docs: &Option<Vec<DocumentationCommentToken>>,
     serializer: S,
-) -> anyhow::Result<S::Ok, S::Error>
+) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
