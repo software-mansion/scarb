@@ -190,7 +190,7 @@ impl PubGrubDependencyProvider {
         {
             self.request_sink
                 .blocking_send(Request::Package(dependency.clone()))
-                .unwrap();
+                .expect("failed to request dependency download");
         }
     }
 
@@ -206,7 +206,12 @@ impl PubGrubDependencyProvider {
         &self,
         package_id: PackageId,
     ) -> Result<Summary, DependencyProviderError> {
-        let summary = self.packages.read().unwrap().get(&package_id).cloned();
+        let summary = self
+            .packages
+            .read()
+            .expect("locking resolver state for read failed")
+            .get(&package_id)
+            .cloned();
         let summary = summary.map(Ok).unwrap_or_else(|| {
             let dependency = ManifestDependency::builder()
                 .name(package_id.name.clone())
@@ -218,7 +223,10 @@ impl PubGrubDependencyProvider {
                 .into_iter()
                 .find_or_first(|summary| summary.package_id == package_id);
             if let Some(summary) = summary.as_ref() {
-                let mut write_lock = self.packages.write().unwrap();
+                let mut write_lock = self
+                    .packages
+                    .write()
+                    .expect("locking resolver state for write failed");
                 write_lock.insert(summary.package_id, summary.clone());
                 write_lock.insert(package_id, summary.clone());
             }
@@ -248,11 +256,14 @@ impl PubGrubDependencyProvider {
             .index
             .packages()
             .wait_blocking(&dependency.into())
-            .unwrap();
+            .expect("dependency download must start before waiting for it");
         let VersionsResponse::Found(summaries) = summaries.as_ref();
 
         {
-            let mut write_lock = self.packages.write().unwrap();
+            let mut write_lock = self
+                .packages
+                .write()
+                .expect("locking resolver state for write failed");
             for summary in summaries.iter() {
                 write_lock.insert(summary.package_id, summary.clone());
             }
@@ -295,7 +306,10 @@ impl PubGrubDependencyProvider {
     /// than test when filtering is applied in [`PubGrubDependencyProvider::choose_version`].
     fn save_most_restrictive_kind(&self, dep: &ManifestDependency) {
         let package = PubGrubPackage::from(dep);
-        let mut write_lock = self.kinds.write().unwrap();
+        let mut write_lock = self
+            .kinds
+            .write()
+            .expect("locking resolver state for write failed");
         if let Some(kind) = write_lock.get(&package) {
             if !dep.kind.is_test() && kind.is_test() {
                 write_lock.insert(package, DepKind::Normal);
@@ -336,7 +350,12 @@ impl DependencyProvider for PubGrubDependencyProvider {
         self.request_dependency(dependency);
 
         // Prioritize by ordering from the root.
-        let priority = self.priority.read().unwrap().get(package).copied();
+        let priority = self
+            .priority
+            .read()
+            .expect("locking resolver state for read failed")
+            .get(package)
+            .copied();
         if let Some(priority) = priority {
             return Some(PubGrubPriority::Unspecified(Reverse(priority)));
         }
@@ -369,7 +388,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
         let kind = self
             .kinds
             .read()
-            .unwrap()
+            .expect("locking resolver state for read failed")
             .get(package)
             .cloned()
             .unwrap_or_default();
@@ -438,7 +457,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
         if let Some(summary) = summary.as_ref() {
             self.packages
                 .write()
-                .unwrap()
+                .expect("locking resolver state for write failed")
                 .insert(summary.package_id, summary.clone());
         }
 
@@ -467,7 +486,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
         let self_priority = self
             .priority
             .read()
-            .unwrap()
+            .expect("locking resolver state for read failed")
             .get(&PubGrubPackage {
                 name: package_id.name.clone(),
                 source_id: package_id.source_id,
@@ -484,7 +503,10 @@ impl DependencyProvider for PubGrubDependencyProvider {
                 .collect_vec();
 
             if let Some(priority) = self_priority {
-                let mut write_lock = self.priority.write().unwrap();
+                let mut write_lock = self
+                    .priority
+                    .write()
+                    .expect("locking resolver state for write failed");
                 for dependency in deps.iter() {
                     if let Some(source_id) = dependency.source {
                         let package: PubGrubPackage = PubGrubPackage {
@@ -525,7 +547,10 @@ impl DependencyProvider for PubGrubDependencyProvider {
         self.request_dependencies(&summary)?;
         // Set priority for dependencies.
         if let Some(priority) = self_priority {
-            let mut write_lock = self.priority.write().unwrap();
+            let mut write_lock = self
+                .priority
+                .write()
+                .expect("locking resolver state for write failed");
             for dependency in summary.full_dependencies() {
                 let package: PubGrubPackage = dependency.into();
                 write_lock.insert(package, priority + 1);
