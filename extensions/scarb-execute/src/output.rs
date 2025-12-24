@@ -227,6 +227,8 @@ impl ExecutionResourcesSource for BootloaderHintProcessor<'_> {
             .context("failed to get execution resources, but the run was successful")?;
         all_used_resources.basic_resources += &used_resources;
 
+        // The bootloader will spawn multiple hint processors during the execution.
+        // We want to get resource usage for all of them.
         while !self.subtask_cairo1_hint_processor_stack.is_empty() {
             let Some(cairo_hint_processor) =
                 self.subtask_cairo1_hint_processor_stack.pop().flatten()
