@@ -14,7 +14,7 @@ impl ToVersion for Version {
 impl ToVersion for &str {
     fn to_version(self) -> Result<Version> {
         Version::parse(self.trim())
-            .map_err(|_| anyhow::format_err!("cannot parse '{}' as a semver", self))
+            .map_err(|_| anyhow::format_err!("cannot parse '{self}' as a semver",))
     }
 }
 

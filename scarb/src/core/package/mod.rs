@@ -14,8 +14,8 @@ use scarb_ui::args::WithManifestPath;
 
 use crate::core::manifest::Manifest;
 use crate::core::{Target, TargetKind, TomlToolScarbMetadata};
-use crate::internal::fsx;
 use crate::internal::serdex::toml_merge;
+use scarb_fs_utils as fsx;
 
 mod id;
 mod name;

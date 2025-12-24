@@ -2,7 +2,7 @@ use anyhow::{Result, anyhow};
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 
-use crate::internal::fsx;
+use scarb_fs_utils as fsx;
 
 const MERGE_STRATEGY_KEY: &str = "merge-strategy";
 

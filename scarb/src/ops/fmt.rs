@@ -14,7 +14,7 @@ use tracing::{info, warn};
 
 use crate::core::workspace::Workspace;
 use crate::core::{Package, PackageId};
-use crate::internal::fsx::canonicalize;
+use scarb_fs_utils::canonicalize;
 
 #[derive(Debug, Clone)]
 pub enum FmtEmitTarget {

@@ -7,12 +7,12 @@ use std::collections::HashMap;
 use which::which;
 
 use crate::core::{Config, PackageName, edition_variant};
-use crate::internal::fsx;
 use crate::internal::restricted_names;
 use crate::process::is_truthy_env;
 use crate::subcommands::get_env_vars;
 use crate::{DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME, ops};
 use scarb_build_metadata::CAIRO_VERSION;
+use scarb_fs_utils as fsx;
 use std::process::{Command, Stdio};
 
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -1,7 +1,5 @@
 use crate::MANIFEST_FILE_NAME;
 use crate::compiler::incremental::fingerprint::LocalFingerprint;
-use crate::internal::fsx;
-use crate::internal::fsx::PathUtf8Ext;
 use cairo_lang_filesystem::ids::CAIRO_FILE_EXTENSION;
 use camino::Utf8PathBuf;
 use ignore::WalkState::Continue;
@@ -9,6 +7,8 @@ use ignore::types::TypesBuilder;
 use ignore::{DirEntry, WalkBuilder};
 use indoc::formatdoc;
 use itertools::Itertools;
+use scarb_fs_utils as fsx;
+use scarb_fs_utils::PathUtf8Ext;
 use scarb_stable_hash::u64_hash;
 use scarb_ui::Ui;
 use smol_str::SmolStr;

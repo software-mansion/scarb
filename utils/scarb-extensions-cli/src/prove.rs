@@ -2,7 +2,7 @@
 
 //! Extension CLI arguments datastructures.
 
-use crate::execute::unchecked::ExecutionArgs;
+use crate::execute::ExecutionArgs;
 use clap::Parser;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 
@@ -47,23 +47,7 @@ pub struct Args {
     #[command(flatten)]
     pub execute_args: ExecutionArgs,
 
-    /// Specify prover arguments.
-    #[command(flatten)]
-    pub prover: ProverArgs,
-
     /// Logging verbosity.
     #[command(flatten)]
     pub verbose: VerbositySpec,
-}
-
-/// Prover arguments.
-#[derive(Parser, Clone, Debug)]
-pub struct ProverArgs {
-    /// Track relations during proving.
-    #[arg(long, default_value = "false")]
-    pub track_relations: bool,
-
-    /// Display components during proving.
-    #[arg(long, default_value = "false")]
-    pub display_components: bool,
 }

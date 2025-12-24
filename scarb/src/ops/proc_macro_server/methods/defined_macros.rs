@@ -13,12 +13,13 @@ use crate::{
         plugin::{collection::WorkspaceProcMacros, proc_macro::DeclaredProcMacroInstances},
     },
     core::Config,
-    internal::fsx::PathUtf8Ext,
     ops::{
         self, CompilationUnitsOpts, FeaturesOpts, FeaturesSelector,
         proc_macro_server::methods::Handler, store::ProcMacroStore,
     },
 };
+
+use scarb_fs_utils::PathUtf8Ext;
 
 impl Handler for DefinedMacros {
     fn handle(

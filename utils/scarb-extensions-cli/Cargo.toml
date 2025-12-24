@@ -16,20 +16,15 @@ scarb-ui = { path = "../scarb-ui", optional = true }
 cairo-language-server = []
 cairo-test = ["dep:scarb-ui"]
 doc = ["dep:scarb-ui"]
-execute_unchecked = [
-    "dep:anyhow",
-    "dep:camino",
-    "dep:scarb-ui"
-]
 execute = [
-    "execute_unchecked",
     "dep:anyhow",
     "dep:camino",
     "dep:cairo-vm",
-    "dep:scarb-ui"
+    "dep:scarb-ui",
+    "cairo-vm/clap"
 ]
 mdbook = ["dep:camino", "dep:scarb-ui"]
-prove = ["execute_unchecked", "dep:scarb-ui"]
+prove = ["execute", "dep:scarb-ui"]
 verify = ["dep:camino", "dep:scarb-ui"]
 default = [
     "cairo-language-server",

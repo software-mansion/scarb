@@ -23,7 +23,7 @@ members = [
     "utils/test-for-each-example",
     "utils/scarb-extensions-cli",
     "utils/scarb-oracle-hint-service",
-    "xtask",
+    "xtask", "utils/scarb-fs-utils",
 ]
 "resolver" = "2"
 
@@ -44,6 +44,7 @@ async-trait = "0.1"
 axum = { version = "0.8.6", default-features = false, features = ["http1", "tokio", "tracing"] }
 bincode = "2.0.1"
 bumpalo = "=3.17.0"
+cairo-air = { git = "https://github.com/software-mansion-labs/stwo-cairo.git", rev = "686748b695a298cf2dc7b4004c8556b9f73bf8f1" }
 cairo-annotations = "0.7.0"
 cairo-lang-casm = "*"
 cairo-lang-compiler = "*"
@@ -73,7 +74,8 @@ cairo-lang-test-runner = "*"
 cairo-lang-utils = { version = "*", features = ["tracing"] }
 cairo-language-server = "*"
 cairo-lint = "*"
-cairo-vm = "3.0.0"
+cairo-program-runner-lib = { git = "https://github.com/software-mansion-labs/proving-utils.git", rev = "d496eda1ec5e92526148ff5d5600b546f214fe5d" }
+cairo-vm = { version= "3.0.0", features = ["std"] }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 chrono = "0.4"
@@ -128,14 +130,14 @@ serde_json = { version = "1", features = ["raw_value"] }
 serde_repr = "0.1"
 serde_test = "1"
 sha2 = "0.10"
-shell-words = "1.1.1"
+shell-words = "1"
 similar-asserts = { version = "1", features = ["serde"] }
 smallvec = "1"
 smol_str = { version = "=0.3.2", features = ["serde"] }
 snapbox = { version = "0.6", features = ["cmd", "path", "diff"] }
 starknet-core = "0.16.0"
-stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd", features = ["std"] }
-stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
+stwo-cairo-adapter = { git = "https://github.com/software-mansion-labs/stwo-cairo.git", rev = "686748b695a298cf2dc7b4004c8556b9f73bf8f1" }
+stwo_cairo_prover = { git = "https://github.com/software-mansion-labs/stwo-cairo.git", rev = "686748b695a298cf2dc7b4004c8556b9f73bf8f1" }
 syn = { version = "2", default-features = false }
 tar = "0.4"
 target-triple = "1.0"
@@ -192,6 +194,7 @@ cairo-lang-doc = { git = "https://github.com/starkware-libs/cairo", rev = "1c409
 cairo-lang-eq-solver = { git = "https://github.com/starkware-libs/cairo", rev = "1c409283b8714115363ac1a59dcb26cc3eda6c12" }
 cairo-lang-executable = { git = "https://github.com/starkware-libs/cairo", rev = "1c409283b8714115363ac1a59dcb26cc3eda6c12" }
 cairo-lang-executable-plugin = { git = "https://github.com/starkware-libs/cairo", rev = "1c409283b8714115363ac1a59dcb26cc3eda6c12" }
+cairo-lang-execute-utils = { git = "https://github.com/starkware-libs/cairo", rev = "1c409283b8714115363ac1a59dcb26cc3eda6c12" }
 cairo-lang-filesystem = { git = "https://github.com/starkware-libs/cairo", rev = "1c409283b8714115363ac1a59dcb26cc3eda6c12" }
 cairo-lang-formatter = { git = "https://github.com/starkware-libs/cairo", rev = "1c409283b8714115363ac1a59dcb26cc3eda6c12" }
 cairo-lang-lowering = { git = "https://github.com/starkware-libs/cairo", rev = "1c409283b8714115363ac1a59dcb26cc3eda6c12" }
@@ -216,6 +219,6 @@ cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo", rev 
 cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev = "1c409283b8714115363ac1a59dcb26cc3eda6c12" }
 cairo-lang-test-utils = { git = "https://github.com/starkware-libs/cairo", rev = "1c409283b8714115363ac1a59dcb26cc3eda6c12" }
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "1c409283b8714115363ac1a59dcb26cc3eda6c12" }
-cairo-language-common = { git = "https://github.com/software-mansion/cairo-language-common", rev = "efd67382996783c67d7466536641cdee939326ae" }
+cairo-language-common = { git = "https://github.com/software-mansion/cairo-language-common", rev = "efd67382996783c67d7466536641cdee939326ae"}
 cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "2b25464d6984b95b6cabb4b1f866790ecc2f1310" }
 cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "61a9910da272204059aabf8c59d897c846340656" }

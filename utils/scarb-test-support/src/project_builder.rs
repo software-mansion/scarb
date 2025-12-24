@@ -11,8 +11,9 @@ use toml_edit::{DocumentMut, Item, Value};
 use scarb_build_metadata::CAIRO_VERSION;
 use to_version::ToVersion;
 
-use crate::fsx::{PathUtf8Ext, make_executable};
+use crate::fsx::make_executable;
 use crate::gitx::GitProject;
+use scarb_fs_utils::PathUtf8Ext;
 
 #[path = "../../../scarb/src/internal/to_version.rs"]
 mod to_version;

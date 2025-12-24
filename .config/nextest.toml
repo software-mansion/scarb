@@ -1,0 +1,9 @@
+[test-groups]
+sequential = { max-threads = 1 }
+
+[[profile.default.overrides]]
+# Tests starting with `sequential_` will be run sequentially, i.e., one after another.
+# This may be useful when your tests use a lot of resources, like RAM (e.g., for proving with stwo prover).
+# You can list matched test cases with `cargo nextest show-config test-groups`.
+filter = 'test(sequential_)'
+test-group = 'sequential'

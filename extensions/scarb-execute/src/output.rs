@@ -1,10 +1,12 @@
+use crate::hint_processor::ExecuteHintProcessor;
 use anyhow::Context;
 use anyhow::Result;
 use cairo_annotations::trace_data::{
     DeprecatedSyscallSelector, ExecutionResources as ProfilerExecutionResources, SyscallUsage,
     VmExecutionResources,
 };
-use cairo_lang_runner::CairoHintProcessor;
+use cairo_lang_runner::{CairoHintProcessor, StarknetExecutionResources};
+use cairo_program_runner_lib::BootloaderHintProcessor;
 use cairo_vm::vm::errors::trace_errors::TraceError;
 use cairo_vm::vm::runners::cairo_runner::CairoRunner;
 use console::Style;
@@ -111,14 +113,17 @@ impl TryFrom<ExecutionResources> for ProfilerExecutionResources {
 }
 
 impl ExecutionResources {
-    pub fn try_new(runner: &CairoRunner, hint_processor: CairoHintProcessor) -> Result<Self> {
-        let used_resources = runner
-            .get_execution_resources()
-            .context("failed to get execution resources, but the run was successful")?;
+    pub fn try_new(
+        runner: &CairoRunner,
+        mut hint_processor: Box<dyn ExecutionResourcesSource>,
+    ) -> Result<Self> {
+        hint_processor.execution_resources(runner)
+    }
 
-        let mut all_used_resources = hint_processor.syscalls_used_resources;
-        all_used_resources.basic_resources += &used_resources;
-
+    pub fn from_starknet_resources(
+        runner: &CairoRunner,
+        all_used_resources: StarknetExecutionResources,
+    ) -> Result<Self> {
         let resources = all_used_resources.basic_resources;
         let builtin_instance_counter = sort_by_value(&resources.builtin_instance_counter)
             .into_iter()
@@ -152,7 +157,7 @@ impl ExecutionResources {
             .collect();
         memory_segment_sizes.sort_by(|(_, a), (_, b)| b.cmp(a));
 
-        Ok(Self {
+        Ok(ExecutionResources {
             n_steps: resources.n_steps,
             n_memory_holes: resources.n_memory_holes,
             builtin_instance_counter,
@@ -193,6 +198,53 @@ impl Message for ExecutionResources {
         Self: Sized,
     {
         self.serialize(ser)
+    }
+}
+
+pub trait ExecutionResourcesSource {
+    fn execution_resources(&mut self, runner: &CairoRunner) -> Result<ExecutionResources>;
+}
+
+impl ExecutionResourcesSource for CairoHintProcessor<'_> {
+    fn execution_resources(&mut self, runner: &CairoRunner) -> Result<ExecutionResources> {
+        let mut all_used_resources = self.syscalls_used_resources.clone();
+
+        let used_resources = runner
+            .get_execution_resources()
+            .context("failed to get execution resources, but the run was successful")?;
+        all_used_resources.basic_resources += &used_resources;
+
+        ExecutionResources::from_starknet_resources(runner, all_used_resources)
+    }
+}
+
+impl ExecutionResourcesSource for BootloaderHintProcessor<'_> {
+    fn execution_resources(&mut self, runner: &CairoRunner) -> Result<ExecutionResources> {
+        let mut all_used_resources = StarknetExecutionResources::default();
+
+        let used_resources = runner
+            .get_execution_resources()
+            .context("failed to get execution resources, but the run was successful")?;
+        all_used_resources.basic_resources += &used_resources;
+
+        // The bootloader will spawn multiple hint processors during the execution.
+        // We want to get resource usage for all of them.
+        while !self.subtask_cairo1_hint_processor_stack.is_empty() {
+            let Some(cairo_hint_processor) =
+                self.subtask_cairo1_hint_processor_stack.pop().flatten()
+            else {
+                continue;
+            };
+            all_used_resources += cairo_hint_processor.syscalls_used_resources;
+        }
+
+        ExecutionResources::from_starknet_resources(runner, all_used_resources)
+    }
+}
+
+impl ExecutionResourcesSource for ExecuteHintProcessor<'_> {
+    fn execution_resources(&mut self, runner: &CairoRunner) -> Result<ExecutionResources> {
+        self.cairo_hint_processor.execution_resources(runner)
     }
 }
 

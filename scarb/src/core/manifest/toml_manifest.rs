@@ -15,8 +15,6 @@ use crate::core::{
     TestTargetType,
 };
 
-use crate::internal::fsx;
-use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::serdex::{RelativeUtf8PathBuf, toml_merge, toml_merge_apply_strategy};
 use crate::internal::to_version::ToVersion;
 use crate::sources::canonical_url::CanonicalUrl;
@@ -30,6 +28,8 @@ use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
 use pathdiff::diff_utf8_paths;
+use scarb_fs_utils as fsx;
+use scarb_fs_utils::PathBufUtf8Ext;
 use scarb_ui::Ui;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize, de};

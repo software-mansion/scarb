@@ -9,11 +9,7 @@ use camino::Utf8Path;
 use itertools::Itertools;
 use serde::de::DeserializeOwned;
 
-pub use internal_fsx::{PathBufUtf8Ext, PathUtf8Ext, canonicalize, canonicalize_utf8};
-
-#[allow(unused)]
-#[path = "../../../scarb/src/internal/fsx.rs"]
-mod internal_fsx;
+pub use scarb_fs_utils::{PathBufUtf8Ext, PathUtf8Ext, canonicalize, canonicalize_utf8};
 
 #[cfg(unix)]
 pub fn make_executable(path: &Path) {

@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 
 use crate::core::Config;
-use crate::internal::fsx;
 use crate::ops;
+use scarb_fs_utils as fsx;
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn clean(config: &Config) -> Result<()> {
