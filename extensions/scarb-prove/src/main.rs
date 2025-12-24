@@ -8,12 +8,12 @@ use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::{formatdoc, indoc};
 use mimalloc::MiMalloc;
-use scarb_extensions_cli::execute::for_proving::ToArgs;
+use scarb_extensions_cli::execute::{ExecutionTarget, OutputFormat, ToArgs};
 use scarb_extensions_cli::prove::Args;
 use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
+use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars};
 use scarb_ui::components::Status;
-use scarb_ui::{OutputFormat, Ui};
 use std::fs;
 use std::process::ExitCode;
 use std::{env, io};
@@ -27,7 +27,7 @@ const MAX_ITERATION_COUNT: usize = 10000;
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
+    let ui = Ui::new(args.verbose.clone().into(), scarb_ui::OutputFormat::Text);
 
     match main_inner(args, ui.clone()) {
         Ok(()) => ExitCode::SUCCESS,
@@ -72,18 +72,28 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
             let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
             ensure!(
-                args.execute_args.run.target.is_bootloader(),
+                args.execute_args
+                    .run
+                    .target
+                    .as_ref()
+                    .map(|t| t.is_bootloader())
+                    .unwrap_or(true),
                 "only bootloader execution can be proven with `scarb prove` command"
             );
-            ScarbCommand::new()
-                .arg("execute")
+            let mut cmd = ScarbCommand::new();
+            cmd.arg("execute")
                 .args(args.execute_args.to_args())
                 .env("SCARB_EXECUTION_ID", execution_id.to_string())
                 .env("SCARB_PACKAGES_FILTER", filter.to_env())
                 .env("SCARB_UI_VERBOSITY", ui.verbosity().to_string())
-                .envs(args.execute_args.features.clone().to_env_vars())
-                .run()
-                .with_context(|| "execution failed")?;
+                .envs(args.execute_args.features.clone().to_env_vars());
+            if args.execute_args.run.target.is_none() {
+                cmd.arg(format!("--target={}", ExecutionTarget::Bootloader));
+            }
+            if args.execute_args.run.output.is_none() {
+                cmd.arg(format!("--output={}", OutputFormat::Standard));
+            }
+            cmd.run().with_context(|| "execution failed")?;
 
             execution_id
         }

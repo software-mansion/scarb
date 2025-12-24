@@ -26,7 +26,7 @@ use create_output_dir::create_output_dir;
 use indoc::formatdoc;
 use num_bigint::BigInt;
 use scarb_extensions_cli::execute::{
-    Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
+    Args, BuildTargetSpecifier, ExecutionArgs, ExecutionTarget, OutputFormat, ProgramArguments,
 };
 use scarb_fs_utils::canonicalize_utf8;
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
@@ -207,11 +207,12 @@ fn execute_standalone(
 
 fn build_cairo_run_config(
     output: &OutputFormat,
+    target: &ExecutionTarget,
     args: &ExecutionArgs,
 ) -> Result<CairoRunConfig<'static>> {
     let relocate_mem =
         output.is_standard() || args.run.print_resource_usage || args.run.save_profiler_trace_data;
-    if args.run.target.is_bootloader() {
+    if target.is_bootloader() {
         Ok(get_cairo_run_config(
             &None,
             args.run.layout,
@@ -243,8 +244,18 @@ pub fn execute(
     args: &ExecutionArgs,
     ui: &Ui,
 ) -> Result<()> {
-    let output = args.run.output.as_ref().cloned().unwrap_or_default();
-    output.validate(&args.run.target)?;
+    let output = args
+        .run
+        .output
+        .as_ref()
+        .cloned()
+        .unwrap_or(OutputFormat::None);
+    let target = args
+        .run
+        .target
+        .clone()
+        .unwrap_or(ExecutionTarget::Standalone);
+    output.validate(&target)?;
 
     if !args.no_build {
         let filter = PackagesFilter::generate_for::<Metadata>([package.clone()].iter());
@@ -289,9 +300,9 @@ pub fn execute(
     create_output_dir(output_dir.as_std_path())?;
 
     let execution_output_dir = get_or_create_output_dir(&output_dir)?;
-    let cairo_run_config = build_cairo_run_config(&output, args)?;
+    let cairo_run_config = build_cairo_run_config(&output, &target, args)?;
 
-    let (mut runner, hint_processor) = if args.run.target.is_bootloader() {
+    let (mut runner, hint_processor) = if target.is_bootloader() {
         execute_bootloader(
             executable_path,
             &cairo_run_config,
@@ -376,7 +387,7 @@ pub fn execute(
             .expect("Missing or invalid program_offset in debug info")
             as usize;
         let call_trace = build_profiler_call_trace(
-            &args.run.target,
+            &target,
             runner.relocated_trace.clone(),
             execution_resources.expect("Failed to obtain execution resources"),
             &tracked_resource,

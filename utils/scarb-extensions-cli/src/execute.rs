@@ -3,6 +3,8 @@
 //! Extension CLI arguments datastructures.
 
 use anyhow::{Result, ensure};
+use cairo_vm::Felt252;
+use cairo_vm::types::layout_name::LayoutName;
 use camino::Utf8PathBuf;
 use clap::{Parser, ValueEnum};
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
@@ -106,12 +108,12 @@ pub struct RunArgs {
     pub arguments: ProgramArguments,
 
     /// Desired execution output, either default Standard or CairoPie
-    #[arg(long, default_value_t = OutputFormat::Standard)]
-    pub output: OutputFormat,
+    #[arg(long)]
+    pub output: Option<OutputFormat>,
 
     /// Execution target.
-    #[arg(long, default_value = "bootloader")]
-    pub target: ExecutionTarget,
+    #[arg(long)]
+    pub target: Option<ExecutionTarget>,
 
     /// Whether to print the program outputs.
     #[arg(long, default_value_t = false)]
@@ -126,8 +128,8 @@ pub struct RunArgs {
     pub save_profiler_trace_data: bool,
 
     /// Override layout configuration.
-    #[arg(long, default_value = "all_cairo_stwo")]
-    pub layout: String,
+    #[arg(long, default_value_t = LayoutName::all_cairo_stwo)]
+    pub layout: LayoutName,
 }
 
 impl ToArgs for RunArgs {
@@ -142,10 +144,14 @@ impl ToArgs for RunArgs {
             layout,
         } = self;
         let mut args = arguments.to_args();
-        args.push("--output".to_string());
-        args.push(output.to_string());
-        args.push("--target".to_string());
-        args.push(target.to_string());
+        if let Some(output) = output {
+            args.push("--output".to_string());
+            args.push(output.to_string());
+        }
+        if let Some(target) = target {
+            args.push("--target".to_string());
+            args.push(target.to_string());
+        }
         if *print_program_output {
             args.push("--print-program-output".to_string());
         }
@@ -166,7 +172,7 @@ impl ToArgs for RunArgs {
 pub struct ProgramArguments {
     /// Serialized arguments to the executable function.
     #[arg(long, value_delimiter = ',')]
-    pub arguments: Vec<String>,
+    pub arguments: Vec<Felt252>,
 
     /// Serialized arguments to the executable function from a file.
     #[arg(long, conflicts_with = "arguments")]
@@ -195,10 +201,9 @@ impl ToArgs for ProgramArguments {
 }
 
 /// Output format for the execution
-#[derive(ValueEnum, Clone, Debug, Default)]
+#[derive(ValueEnum, Clone, Debug)]
 pub enum OutputFormat {
     /// Output in standard format
-    #[default]
     Standard,
     /// Output in Cairo PIE (Program Independent Execution) format
     CairoPie,
@@ -208,20 +213,10 @@ pub enum OutputFormat {
 
 #[doc(hidden)]
 impl OutputFormat {
-    pub fn default_for_target(target: ExecutionTarget) -> OutputFormat {
-        match target {
-            ExecutionTarget::Bootloader => OutputFormat::CairoPie,
-            ExecutionTarget::Standalone => OutputFormat::Standard,
-        }
-    }
     pub fn validate(&self, target: &ExecutionTarget) -> Result<()> {
         ensure!(
             !(self.is_cairo_pie() && target.is_standalone()),
             "Cairo pie output format is not supported for standalone execution target"
-        );
-        ensure!(
-            !(self.is_standard() && target.is_bootloader()),
-            "Standard output format is not supported for bootloader execution target"
         );
         Ok(())
     }
