@@ -923,7 +923,7 @@ dependencies = [
  "cairo-lang-sierra-generator",
  "cairo-lang-sierra-to-casm",
  "cairo-lang-utils",
- "cairo-vm 3.0.0",
+ "cairo-vm 3.0.1",
  "itertools 0.14.0",
  "salsa",
  "serde",
@@ -1196,7 +1196,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-sierra-type-size",
  "cairo-lang-utils",
- "cairo-vm 3.0.0",
+ "cairo-vm 3.0.1",
  "itertools 0.14.0",
  "thiserror 2.0.17",
 ]
@@ -1217,7 +1217,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-starknet",
  "cairo-lang-utils",
- "cairo-vm 3.0.0",
+ "cairo-vm 3.0.1",
  "clap",
  "itertools 0.14.0",
  "keccak",
@@ -1682,9 +1682,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-vm"
-version = "3.0.0"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5c515ffc04405f009bc7a9110122f08046d5d1ceab20d2b4bf424ab85841169"
+checksum = "93802c2d382cec1e5f50caec5db81f2a9ac8fe928d55b942e2d1cd395baa9e85"
 dependencies = [
  "anyhow",
  "bincode",
@@ -6895,7 +6895,7 @@ dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-test-plugin",
  "cairo-lang-test-runner",
- "cairo-vm 3.0.0",
+ "cairo-vm 3.0.1",
  "camino",
  "clap",
  "indoc",
@@ -6954,7 +6954,7 @@ dependencies = [
  "cairo-lang-executable",
  "cairo-lang-runner",
  "cairo-lang-utils",
- "cairo-vm 3.0.0",
+ "cairo-vm 3.0.1",
  "camino",
  "clap",
  "console 0.16.2",
@@ -6980,7 +6980,7 @@ name = "scarb-extensions-cli"
 version = "2.14.0"
 dependencies = [
  "anyhow",
- "cairo-vm 3.0.0",
+ "cairo-vm 3.0.1",
  "camino",
  "clap",
  "scarb-ui",
