@@ -3,7 +3,7 @@
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use mdbook::MDBook;
+use mdbook_driver::MDBook;
 use mimalloc::MiMalloc;
 use scarb_extensions_cli::mdbook::Args;
 use scarb_ui::Ui;
