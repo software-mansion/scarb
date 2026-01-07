@@ -25,6 +25,7 @@ updates:
           - "semver"
           - "salsa"
           - "cairo-vm"
+          - "bincode"
 
   - package-ecosystem: "github-actions"
     directory: "/"
