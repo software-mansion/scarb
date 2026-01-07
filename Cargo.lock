@@ -587,6 +587,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bincode"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd6a120d2e16b3e1b4a24bd70f23b12d3e16b81f113364a26935f8db7245452d"
+
+[[package]]
 name = "bincode_derive"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -830,7 +836,7 @@ name = "cairo-lang-defs"
 version = "2.14.0"
 source = "git+https://github.com/starkware-libs/cairo?rev=1c409283b8714115363ac1a59dcb26cc3eda6c12#1c409283b8714115363ac1a59dcb26cc3eda6c12"
 dependencies = [
- "bincode",
+ "bincode 2.0.1",
  "cairo-lang-debug",
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
@@ -966,7 +972,7 @@ version = "2.14.0"
 source = "git+https://github.com/starkware-libs/cairo?rev=1c409283b8714115363ac1a59dcb26cc3eda6c12#1c409283b8714115363ac1a59dcb26cc3eda6c12"
 dependencies = [
  "assert_matches",
- "bincode",
+ "bincode 2.0.1",
  "cairo-lang-debug",
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -1217,7 +1223,7 @@ name = "cairo-lang-semantic"
 version = "2.14.0"
 source = "git+https://github.com/starkware-libs/cairo?rev=1c409283b8714115363ac1a59dcb26cc3eda6c12#1c409283b8714115363ac1a59dcb26cc3eda6c12"
 dependencies = [
- "bincode",
+ "bincode 2.0.1",
  "cairo-lang-debug",
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -1535,7 +1541,7 @@ version = "2.14.0"
 source = "git+https://github.com/software-mansion/cairols?rev=2b25464d6984b95b6cabb4b1f866790ecc2f1310#2b25464d6984b95b6cabb4b1f866790ecc2f1310"
 dependencies = [
  "anyhow",
- "bincode",
+ "bincode 2.0.1",
  "cairo-lang-compiler",
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -1634,7 +1640,7 @@ version = "2.0.0-rc4"
 source = "git+https://github.com/lambdaclass/cairo-vm?rev=153d3a88#153d3a88b579a85de42bc14b7f0d06e7e9597fd4"
 dependencies = [
  "anyhow",
- "bincode",
+ "bincode 2.0.1",
  "bitvec",
  "generic-array",
  "hashbrown 0.15.5",
@@ -1667,7 +1673,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5c515ffc04405f009bc7a9110122f08046d5d1ceab20d2b4bf424ab85841169"
 dependencies = [
  "anyhow",
- "bincode",
+ "bincode 2.0.1",
  "bitvec",
  "generic-array",
  "hashbrown 0.15.5",
@@ -6621,7 +6627,7 @@ dependencies = [
  "anyhow",
  "assert_fs",
  "async-trait",
- "bincode",
+ "bincode 3.0.0",
  "cairo-lang-compiler",
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -6814,7 +6820,7 @@ version = "2.14.0"
 dependencies = [
  "anyhow",
  "assert_fs",
- "bincode",
+ "bincode 3.0.0",
  "cairo-annotations",
  "cairo-lang-casm",
  "cairo-lang-executable",
