@@ -245,6 +245,7 @@ fn get_linting_diagnostics<'db>(
                     SemanticDiagnostic::new(
                         StableLocation::new(diag.stable_ptr),
                         SemanticDiagnosticKind::PluginDiagnostic(diag.clone()),
+                        *module_id,
                     )
                 });
 

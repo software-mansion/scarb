@@ -45,7 +45,7 @@ fn can_emit_plugin_warning() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            warn: Plugin diagnostic: Some warning from macro.
+            warn[E2200]: Plugin diagnostic: Some warning from macro.
              --> [..]lib.cairo:1:1
             #[some]
             ^^^^^^^
@@ -94,7 +94,7 @@ fn diags_from_generated_code_mapped_correctly() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Some error from macro.
+            error[E2200]: Plugin diagnostic: Some error from macro.
              --> [..]lib.cairo:2:1
             #[some]
             ^^^^^^^
@@ -487,7 +487,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Cannot assign to an immutable variable.
+            error[E2083]: Cannot assign to an immutable variable.
              --> [..]lib.cairo:5:9
                     x = 2;
                     ^^^^^
@@ -569,7 +569,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations_with_parser()
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Cannot assign to an immutable variable.
+            error[E2083]: Cannot assign to an immutable variable.
              --> [..]lib.cairo:6:9
                     x = 2;
                     ^^^^^
@@ -688,7 +688,7 @@ fn can_emit_plugin_error() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Some error from macro.
+            error[E2200]: Plugin diagnostic: Some error from macro.
              --> [..]lib.cairo:1:1
             #[some]
             ^^^^^^^
@@ -738,7 +738,7 @@ fn code_mappings_preserve_attribute_error_locations() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Cannot assign to an immutable variable.
+            error[E2083]: Cannot assign to an immutable variable.
              --> [..]lib.cairo:4:5
                 x = 2;
                 ^^^^^
@@ -810,7 +810,7 @@ fn can_emit_diagnostic_with_custom_location() {
         .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Unsupported tuple type
+            error[E2200]: Plugin diagnostic: Unsupported tuple type
              --> [..]lib.cairo:4:8
                 y: (u32, u64),
                    ^^^^^^^^^^
@@ -883,7 +883,7 @@ fn can_emit_diagnostic_with_custom_location_on_node_with_trivia() {
         .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Unsupported tuple type
+            error[E2200]: Plugin diagnostic: Unsupported tuple type
              --> [..]lib.cairo:6:9
                     (u32, u64),
                     ^^^^^^^^^^
@@ -954,7 +954,7 @@ fn can_emit_diagnostic_with_inversed_span() {
         .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Unsupported tuple type
+            error[E2200]: Plugin diagnostic: Unsupported tuple type
              --> [..]lib.cairo:4:8
                 y: (u32, u64),
                    ^^^^^^^^^^
@@ -998,7 +998,7 @@ fn can_emit_diagnostic_with_out_of_bounds_span() {
         .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            warn: Plugin diagnostic: Hello world!
+            warn[E2200]: Plugin diagnostic: Hello world!
              --> [..]lib.cairo:1:1
             #[some]
             ^^^^^^^
@@ -1105,12 +1105,12 @@ fn can_emit_diagnostic_with_custom_location_with_parser() {
         .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Unsupported tuple type
+            error[E2200]: Plugin diagnostic: Unsupported tuple type
              --> [..]lib.cairo:5:8
                 y: (u32, u64),
                    ^^^^^^^^^^
 
-            warn: Plugin diagnostic: This is a warning from the macro.
+            warn[E2200]: Plugin diagnostic: This is a warning from the macro.
              --> [..]lib.cairo:1:1
             #[doc(hidden)]
             ^^^^^^^^^^^^^^
@@ -1169,7 +1169,7 @@ fn attribute_diags_mapped_correctly_to_call_site() {
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
             note: this error originates in the attribute macro: `improper_attribute_macro_v2`
             
-            error: Invalid left-hand side of assignment.
+            error[E2084]: Invalid left-hand side of assignment.
              --> [..]lib.cairo:1:1
             #[improper_attribute_macro_v2]
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1232,7 +1232,7 @@ fn call_site_mapped_correctly_after_expansion_by_two_macros() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: The name `generated_function_v2` is defined multiple times.
+            error[E2118]: The name `generated_function_v2` is defined multiple times.
              --> [..]lib.cairo:1:1
             #[complex_attribute_macro_v2]
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1301,7 +1301,7 @@ fn span_offsets_calculated_correctly_for_function_with_non_macro_attrs() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Missing semicolon
+            error[E2133]: Missing semicolon
              --> [..]lib.cairo:4:31
                 assert(1 + 1 == 2, 'fail')
                                           ^

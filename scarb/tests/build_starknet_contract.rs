@@ -380,22 +380,22 @@ fn compile_starknet_contract_without_starknet_dep() {
             [dependencies]
             starknet = ">=[..]"
 
-        error: Plugin diagnostic: Unsupported attribute.
+        error[E2200]: Plugin diagnostic: Unsupported attribute.
          --> [..]src/lib.cairo:9:1
         #[starknet::contract]
         ^^^^^^^^^^^^^^^^^^^^^
 
-        error: Plugin diagnostic: Unsupported attribute.
+        error[E2200]: Plugin diagnostic: Unsupported attribute.
          --> [..]src/lib.cairo:13:5
             #[storage]
             ^^^^^^^^^^
 
-        error: Plugin diagnostic: Unsupported attribute.
+        error[E2200]: Plugin diagnostic: Unsupported attribute.
          --> [..]src/lib.cairo:18:5
             #[constructor]
             ^^^^^^^^^^^^^^
 
-        error: Plugin diagnostic: Unsupported attribute.
+        error[E2200]: Plugin diagnostic: Unsupported attribute.
          --> [..]src/lib.cairo:23:5
             #[abi(embed_v0)]
             ^^^^^^^^^^^^^^^^
@@ -405,7 +405,7 @@ fn compile_starknet_contract_without_starknet_dep() {
             fn constructor(ref self: ContractState, value_: u128) {
                                      ^^^^^^^^^^^^^
 
-        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapWriteAccess::write and core::starknet::storage::StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
+        error[E2046]: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapWriteAccess::write and StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:20:20
                 self.value.write(value_);
                            ^^^^^
@@ -420,7 +420,7 @@ fn compile_starknet_contract_without_starknet_dep() {
                 fn get(self: @ContractState) -> u128 {
                               ^^^^^^^^^^^^^
 
-        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapReadAccess::read and core::starknet::storage::StoragePointerReadAccess::read. Consider adding type annotations or explicitly refer to the impl function.
+        error[E2046]: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapReadAccess::read and StoragePointerReadAccess::read. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:26:24
                     self.value.read()
                                ^^^^
@@ -430,12 +430,12 @@ fn compile_starknet_contract_without_starknet_dep() {
                 fn increase(ref self: ContractState, a: u128)  {
                                       ^^^^^^^^^^^^^
 
-        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapWriteAccess::write and core::starknet::storage::StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
+        error[E2046]: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapWriteAccess::write and StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:29:24
                     self.value.write( self.value.read() + a );
                                ^^^^^
 
-        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapReadAccess::read and core::starknet::storage::StoragePointerReadAccess::read. Consider adding type annotations or explicitly refer to the impl function.
+        error[E2046]: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapReadAccess::read and StoragePointerReadAccess::read. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]lib.cairo:29:42
                     self.value.write( self.value.read() + a );
                                                  ^^^^

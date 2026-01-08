@@ -9,7 +9,7 @@ Example output for compilation:
 ```shell
 $ scarb --json build
 {"status":"compiling","message":"hello v0.1.0 ([..]Scarb.toml)"}
-{"type":"diagnostic","message":"error: Skipped tokens. Expected: Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum or an attribute./n --> lib.cairo:1:1/nnot_a_keyword/n^***********^/n/n"}
+{"type":"diagnostic","message":"error: Skipped tokens. Expected: Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum or an attribute./n --> lib.cairo:1:1/nnot_a_keyword/n^***********^/n/n","code":"E1000"}
 {"type":"error","message":"could not compile `hello` due to previous error"}
 ```
 

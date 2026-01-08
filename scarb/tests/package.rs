@@ -1562,7 +1562,7 @@ fn error_on_verification() {
         [..] Packaging foo v1.0.0 [..]
         [..] Verifying foo-1.0.0.tar.zst
         [..] Compiling foo v1.0.0 ([..])
-        error: Skipped tokens. Expected: [..]
+        error[E1000]: Skipped tokens. Expected: [..]
          --> [..]
         .
         ^

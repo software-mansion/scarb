@@ -423,7 +423,7 @@ fn integration_tests_do_not_enable_cfg_in_main_package() {
                 use hello::f;
                            ^
 
-            error: Type annotations needed. Failed to infer ?0.
+            error[E2314]: Type annotations needed. Failed to infer ?0.
              --> [..]test1.cairo:6:16
                     assert(f() == 42, 'it works!');
                            ^^^^^^^^^
@@ -482,7 +482,7 @@ fn integration_tests_cannot_use_itself_by_target_name() {
                 use hello_tests::test1::beautiful;
                     ^^^^^^^^^^^
 
-            error: Type annotations needed. Failed to infer ?0.
+            error[E2314]: Type annotations needed. Failed to infer ?0.
              --> [..]test1.cairo:12:16
                     assert(world() == 12, '');
                            ^^^^^^^^^^^^^
@@ -540,7 +540,7 @@ fn features_enabled_in_integration_tests() {
                 use hello::f;
                            ^
 
-            error: Type annotations needed. Failed to infer ?0.
+            error[E2314]: Type annotations needed. Failed to infer ?0.
              --> [..]test1.cairo:7:16
                     assert(f() == 42, 'it works!');
                            ^^^^^^^^^
@@ -1252,7 +1252,7 @@ fn compile_executable_with_missing_plugin() {
             [dependencies]
             cairo_execute = "[..]"
         
-        error: Plugin diagnostic: Unsupported attribute.
+        error[E2200]: Plugin diagnostic: Unsupported attribute.
          --> [..]lib.cairo:1:1
         #[executable]
         ^^^^^^^^^^^^^
@@ -1477,7 +1477,7 @@ fn test_target_builds_contracts_with_warning() {
         .success()
         .stdout_eq(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v0.1.0 ([..]Scarb.toml)
-            warn: Unused import: `hello::hello::fib`
+            warn[E2100]: Unused import: `hello::hello::fib`
              --> [..]hello.cairo:1:20
             use hello::fibmod::fib;
                                ^^^

@@ -3,298 +3,298 @@
   "packages_information": [
     {
       "crate_": {
-        "root_module": {
-          "item_data": {
-            "name": "hello_world",
-            "doc": null,
-            "signature": null,
-            "full_path": "hello_world",
-            "group": null
-          },
-          "submodules": [
-            {
-              "item_data": {
-                "name": "inner_module",
-                "doc": null,
-                "signature": null,
-                "full_path": "hello_world::inner_module",
-                "group": null
-              },
-              "submodules": [],
-              "constants": [],
-              "free_functions": [
-                {
-                  "item_data": {
-                    "name": "visible_in_reeksports",
-                    "doc": null,
-                    "signature": "pub fn visible_in_reeksports()",
-                    "full_path": "hello_world::inner_module::visible_in_reeksports",
-                    "group": null
-                  }
-                }
-              ],
-              "structs": [
-                {
-                  "members": [],
-                  "item_data": {
-                    "name": "LinkedStruct",
-                    "doc": null,
-                    "signature": "pub struct LinkedStruct {}",
-                    "full_path": "hello_world::inner_module::LinkedStruct",
-                    "group": null
-                  }
-                },
-                {
-                  "members": [
-                    {
-                      "item_data": {
-                        "name": "visible_field",
-                        "doc": null,
-                        "signature": "pub visible_field: LinkedStruct",
-                        "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field"
-                      }
-                    },
-                    {
-                      "item_data": {
-                        "name": "visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one",
-                        "doc": null,
-                        "signature": "pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct",
-                        "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one"
-                      }
-                    }
-                  ],
-                  "item_data": {
-                    "name": "TestMembersVisibility",
-                    "doc": null,
-                    "signature": "pub struct TestMembersVisibility {\n    pub visible_field: LinkedStruct,\n    pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct,\n    /* private fields */\n}",
-                    "full_path": "hello_world::inner_module::TestMembersVisibility",
-                    "group": null
-                  }
-                }
-              ],
-              "enums": [],
-              "type_aliases": [],
-              "impl_aliases": [],
-              "traits": [],
-              "impls": [],
-              "extern_types": [],
-              "extern_functions": [],
-              "pub_uses": {
-                "use_constants": [],
-                "use_free_functions": [],
-                "use_structs": [],
-                "use_enums": [],
-                "use_module_type_aliases": [],
-                "use_impl_aliases": [],
-                "use_traits": [],
-                "use_impl_defs": [],
-                "use_extern_types": [],
-                "use_extern_functions": [],
-                "use_submodules": [],
-                "use_macro_declarations": []
-              },
-              "macro_declarations": []
-            },
-            {
-              "item_data": {
-                "name": "macro_module",
-                "doc": null,
-                "signature": null,
-                "full_path": "hello_world::macro_module",
-                "group": null
-              },
-              "submodules": [],
-              "constants": [],
-              "free_functions": [],
-              "structs": [],
-              "enums": [],
-              "type_aliases": [],
-              "impl_aliases": [],
-              "traits": [],
-              "impls": [],
-              "extern_types": [],
-              "extern_functions": [],
-              "pub_uses": {
-                "use_constants": [],
-                "use_free_functions": [],
-                "use_structs": [],
-                "use_enums": [],
-                "use_module_type_aliases": [],
-                "use_impl_aliases": [],
-                "use_traits": [],
-                "use_impl_defs": [],
-                "use_extern_types": [],
-                "use_extern_functions": [],
-                "use_submodules": [],
-                "use_macro_declarations": []
-              },
-              "macro_declarations": [
-                {
-                  "item_data": {
-                    "name": "macro_definition",
-                    "doc": null,
-                    "signature": "macro macro_definition {\n    ($name:ident) => { ... };\n}",
-                    "full_path": "hello_world::macro_module::macro_definition",
-                    "group": null
-                  }
-                }
-              ]
-            }
-          ],
-          "constants": [],
-          "free_functions": [],
-          "structs": [],
-          "enums": [],
-          "type_aliases": [],
-          "impl_aliases": [],
-          "traits": [],
-          "impls": [],
-          "extern_types": [],
-          "extern_functions": [],
-          "pub_uses": {
-            "use_constants": [],
-            "use_free_functions": [
+        "groups": [
+          {
+            "constants": [],
+            "enums": [],
+            "extern_functions": [],
+            "extern_types": [],
+            "free_functions": [
               {
                 "item_data": {
-                  "name": "visible_in_reeksports",
                   "doc": null,
-                  "signature": "pub fn visible_in_reeksports()",
-                  "full_path": "hello_world::inner_module::visible_in_reeksports",
-                  "group": null
+                  "full_path": "hello_world::top_level_fn_visible_in_group",
+                  "group": "visible",
+                  "name": "top_level_fn_visible_in_group",
+                  "signature": "pub fn top_level_fn_visible_in_group()"
                 }
               },
               {
                 "item_data": {
-                  "name": "inner_function_visible_in_group",
                   "doc": null,
-                  "signature": "pub fn inner_function_visible_in_group()",
                   "full_path": "hello_world::inner_module::inner_function_visible_in_group",
-                  "group": "visible"
+                  "group": "visible",
+                  "name": "inner_function_visible_in_group",
+                  "signature": "pub fn inner_function_visible_in_group()"
                 }
               }
             ],
-            "use_structs": [
+            "impl_aliases": [],
+            "impls": [],
+            "macro_declarations": [],
+            "name": "visible",
+            "structs": [
               {
-                "members": [],
                 "item_data": {
-                  "name": "LinkedStruct",
                   "doc": null,
-                  "signature": "pub struct LinkedStruct {}",
-                  "full_path": "hello_world::inner_module::LinkedStruct",
-                  "group": null
+                  "full_path": "hello_world::inner_module::TestMembersVisibility2",
+                  "group": "visible",
+                  "name": "TestMembersVisibility2",
+                  "signature": "    #[doc(group: \"visible\")]\npub struct TestMembersVisibility2 { /* private fields */ }"
+                },
+                "members": []
+              }
+            ],
+            "submodules": [],
+            "traits": [],
+            "type_aliases": []
+          }
+        ],
+        "root_module": {
+          "constants": [],
+          "enums": [],
+          "extern_functions": [],
+          "extern_types": [],
+          "free_functions": [],
+          "impl_aliases": [],
+          "impls": [],
+          "item_data": {
+            "doc": null,
+            "full_path": "hello_world",
+            "group": null,
+            "name": "hello_world",
+            "signature": null
+          },
+          "macro_declarations": [],
+          "pub_uses": {
+            "use_constants": [],
+            "use_enums": [],
+            "use_extern_functions": [],
+            "use_extern_types": [],
+            "use_free_functions": [
+              {
+                "item_data": {
+                  "doc": null,
+                  "full_path": "hello_world::inner_module::visible_in_reeksports",
+                  "group": null,
+                  "name": "visible_in_reeksports",
+                  "signature": "pub fn visible_in_reeksports()"
                 }
               },
               {
+                "item_data": {
+                  "doc": null,
+                  "full_path": "hello_world::inner_module::inner_function_visible_in_group",
+                  "group": "visible",
+                  "name": "inner_function_visible_in_group",
+                  "signature": "pub fn inner_function_visible_in_group()"
+                }
+              }
+            ],
+            "use_impl_aliases": [],
+            "use_impl_defs": [],
+            "use_macro_declarations": [
+              {
+                "item_data": {
+                  "doc": null,
+                  "full_path": "hello_world::macro_module::macro_definition",
+                  "group": null,
+                  "name": "macro_definition",
+                  "signature": "macro macro_definition {\n    ($name:ident) => { ... };\n}"
+                }
+              }
+            ],
+            "use_module_type_aliases": [],
+            "use_structs": [
+              {
+                "item_data": {
+                  "doc": null,
+                  "full_path": "hello_world::inner_module::LinkedStruct",
+                  "group": null,
+                  "name": "LinkedStruct",
+                  "signature": "pub struct LinkedStruct {}"
+                },
+                "members": []
+              },
+              {
+                "item_data": {
+                  "doc": null,
+                  "full_path": "hello_world::inner_module::TestMembersVisibility",
+                  "group": null,
+                  "name": "TestMembersVisibility",
+                  "signature": "pub struct TestMembersVisibility {\n    pub visible_field: LinkedStruct,\n    pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct,\n    /* private fields */\n}"
+                },
                 "members": [
                   {
                     "item_data": {
-                      "name": "visible_field",
                       "doc": null,
-                      "signature": "pub visible_field: LinkedStruct",
-                      "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field"
+                      "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field",
+                      "name": "visible_field",
+                      "signature": "pub visible_field: LinkedStruct"
                     }
                   },
                   {
                     "item_data": {
-                      "name": "visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one",
                       "doc": null,
-                      "signature": "pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct",
-                      "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one"
+                      "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one",
+                      "name": "visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one",
+                      "signature": "pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct"
                     }
                   }
-                ],
-                "item_data": {
-                  "name": "TestMembersVisibility",
-                  "doc": null,
-                  "signature": "pub struct TestMembersVisibility {\n    pub visible_field: LinkedStruct,\n    pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct,\n    /* private fields */\n}",
-                  "full_path": "hello_world::inner_module::TestMembersVisibility",
-                  "group": null
-                }
+                ]
               },
               {
-                "members": [],
                 "item_data": {
-                  "name": "TestMembersVisibility2",
                   "doc": null,
-                  "signature": "    #[doc(group: \"visible\")]\npub struct TestMembersVisibility2 { /* private fields */ }",
                   "full_path": "hello_world::inner_module::TestMembersVisibility2",
-                  "group": "visible"
-                }
+                  "group": "visible",
+                  "name": "TestMembersVisibility2",
+                  "signature": "    #[doc(group: \"visible\")]\npub struct TestMembersVisibility2 { /* private fields */ }"
+                },
+                "members": []
               }
             ],
-            "use_enums": [],
-            "use_module_type_aliases": [],
-            "use_impl_aliases": [],
-            "use_traits": [],
-            "use_impl_defs": [],
-            "use_extern_types": [],
-            "use_extern_functions": [],
             "use_submodules": [],
-            "use_macro_declarations": [
-              {
-                "item_data": {
-                  "name": "macro_definition",
-                  "doc": null,
-                  "signature": "macro macro_definition {\n    ($name:ident) => { ... };\n}",
-                  "full_path": "hello_world::macro_module::macro_definition",
-                  "group": null
-                }
-              }
-            ]
+            "use_traits": []
           },
-          "macro_declarations": []
-        },
-        "groups": [
-          {
-            "name": "visible",
-            "submodules": [],
-            "constants": [],
-            "free_functions": [
-              {
-                "item_data": {
-                  "name": "top_level_fn_visible_in_group",
-                  "doc": null,
-                  "signature": "pub fn top_level_fn_visible_in_group()",
-                  "full_path": "hello_world::top_level_fn_visible_in_group",
-                  "group": "visible"
+          "structs": [],
+          "submodules": [
+            {
+              "constants": [],
+              "enums": [],
+              "extern_functions": [],
+              "extern_types": [],
+              "free_functions": [
+                {
+                  "item_data": {
+                    "doc": null,
+                    "full_path": "hello_world::inner_module::visible_in_reeksports",
+                    "group": null,
+                    "name": "visible_in_reeksports",
+                    "signature": "pub fn visible_in_reeksports()"
+                  }
                 }
+              ],
+              "impl_aliases": [],
+              "impls": [],
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::inner_module",
+                "group": null,
+                "name": "inner_module",
+                "signature": null
               },
-              {
-                "item_data": {
-                  "name": "inner_function_visible_in_group",
-                  "doc": null,
-                  "signature": "pub fn inner_function_visible_in_group()",
-                  "full_path": "hello_world::inner_module::inner_function_visible_in_group",
-                  "group": "visible"
+              "macro_declarations": [],
+              "pub_uses": {
+                "use_constants": [],
+                "use_enums": [],
+                "use_extern_functions": [],
+                "use_extern_types": [],
+                "use_free_functions": [],
+                "use_impl_aliases": [],
+                "use_impl_defs": [],
+                "use_macro_declarations": [],
+                "use_module_type_aliases": [],
+                "use_structs": [],
+                "use_submodules": [],
+                "use_traits": []
+              },
+              "structs": [
+                {
+                  "item_data": {
+                    "doc": null,
+                    "full_path": "hello_world::inner_module::LinkedStruct",
+                    "group": null,
+                    "name": "LinkedStruct",
+                    "signature": "pub struct LinkedStruct {}"
+                  },
+                  "members": []
+                },
+                {
+                  "item_data": {
+                    "doc": null,
+                    "full_path": "hello_world::inner_module::TestMembersVisibility",
+                    "group": null,
+                    "name": "TestMembersVisibility",
+                    "signature": "pub struct TestMembersVisibility {\n    pub visible_field: LinkedStruct,\n    pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct,\n    /* private fields */\n}"
+                  },
+                  "members": [
+                    {
+                      "item_data": {
+                        "doc": null,
+                        "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field",
+                        "name": "visible_field",
+                        "signature": "pub visible_field: LinkedStruct"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "doc": null,
+                        "full_path": "hello_world::inner_module::TestMembersVisibility::visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one",
+                        "name": "visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one",
+                        "signature": "pub visible_field2_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_one: LinkedStruct"
+                      }
+                    }
+                  ]
                 }
-              }
-            ],
-            "structs": [
-              {
-                "members": [],
-                "item_data": {
-                  "name": "TestMembersVisibility2",
-                  "doc": null,
-                  "signature": "    #[doc(group: \"visible\")]\npub struct TestMembersVisibility2 { /* private fields */ }",
-                  "full_path": "hello_world::inner_module::TestMembersVisibility2",
-                  "group": "visible"
+              ],
+              "submodules": [],
+              "traits": [],
+              "type_aliases": []
+            },
+            {
+              "constants": [],
+              "enums": [],
+              "extern_functions": [],
+              "extern_types": [],
+              "free_functions": [],
+              "impl_aliases": [],
+              "impls": [],
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::macro_module",
+                "group": null,
+                "name": "macro_module",
+                "signature": null
+              },
+              "macro_declarations": [
+                {
+                  "item_data": {
+                    "doc": null,
+                    "full_path": "hello_world::macro_module::macro_definition",
+                    "group": null,
+                    "name": "macro_definition",
+                    "signature": "macro macro_definition {\n    ($name:ident) => { ... };\n}"
+                  }
                 }
-              }
-            ],
-            "enums": [],
-            "type_aliases": [],
-            "impl_aliases": [],
-            "traits": [],
-            "impls": [],
-            "extern_types": [],
-            "extern_functions": [],
-            "macro_declarations": []
-          }
-        ]
+              ],
+              "pub_uses": {
+                "use_constants": [],
+                "use_enums": [],
+                "use_extern_functions": [],
+                "use_extern_types": [],
+                "use_free_functions": [],
+                "use_impl_aliases": [],
+                "use_impl_defs": [],
+                "use_macro_declarations": [],
+                "use_module_type_aliases": [],
+                "use_structs": [],
+                "use_submodules": [],
+                "use_traits": []
+              },
+              "structs": [],
+              "submodules": [],
+              "traits": [],
+              "type_aliases": []
+            }
+          ],
+          "traits": [],
+          "type_aliases": []
+        }
       },
       "metadata": {
-        "name": "hello_world",
-        "authors": null
+        "authors": null,
+        "name": "hello_world"
       }
     }
   ]

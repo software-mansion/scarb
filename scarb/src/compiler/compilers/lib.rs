@@ -6,6 +6,7 @@ use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
 use cairo_lang_sierra_type_size::ProgramRegistryInfo;
+use cairo_lang_utils::CloneableDatabase;
 use indoc::formatdoc;
 use salsa::Database;
 use serde::{Deserialize, Serialize};
@@ -50,7 +51,7 @@ impl Compiler for LibCompiler {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn Database,
+        db: &dyn CloneableDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;

@@ -18,6 +18,7 @@ use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_lowering::ids::ConcreteFunctionWithBodyId;
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_generator::executables::find_executable_function_ids;
+use cairo_lang_utils::CloneableDatabase;
 use camino::Utf8Path;
 use indoc::formatdoc;
 use itertools::Itertools;
@@ -46,7 +47,7 @@ impl Compiler for ExecutableCompiler {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn Database,
+        db: &dyn CloneableDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         ensure!(
@@ -108,7 +109,7 @@ impl Compiler for ExecutableCompiler {
 #[allow(clippy::too_many_arguments)]
 fn compile_executable<'db>(
     unit: &CairoCompilationUnit,
-    db: &'db dyn Database,
+    db: &'db dyn CloneableDatabase,
     ctx: Arc<IncrementalContext>,
     ws: &Workspace<'_>,
     offloader: &Offloader<'_>,

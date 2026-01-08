@@ -448,7 +448,7 @@ fn cannot_use_undefined_macro() {
         .stdout_eq(indoc! {r#"
         [..]Compiling some v1.0.0 ([..]Scarb.toml)
         [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-        error: Plugin diagnostic: Unsupported attribute.
+        error[E2200]: Plugin diagnostic: Unsupported attribute.
          --> [..]lib.cairo:1:1
         #[world]
         ^^^^^^^^

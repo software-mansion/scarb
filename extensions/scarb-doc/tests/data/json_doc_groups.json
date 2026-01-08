@@ -3,107 +3,107 @@
   "packages_information": [
     {
       "crate_": {
-        "root_module": {
-          "item_data": {
-            "name": "hello_world",
-            "doc": null,
-            "signature": null,
-            "full_path": "hello_world",
-            "group": null
+        "groups": [
+          {
+            "constants": [],
+            "enums": [],
+            "extern_functions": [],
+            "extern_types": [],
+            "free_functions": [
+              {
+                "item_data": {
+                  "doc": null,
+                  "full_path": "hello_world::test_2",
+                  "group": "test",
+                  "name": "test_2",
+                  "signature": "fn test_2()"
+                }
+              }
+            ],
+            "impl_aliases": [],
+            "impls": [],
+            "macro_declarations": [],
+            "name": "test",
+            "structs": [],
+            "submodules": [],
+            "traits": [],
+            "type_aliases": []
           },
-          "submodules": [],
+          {
+            "constants": [],
+            "enums": [],
+            "extern_functions": [],
+            "extern_types": [],
+            "free_functions": [
+              {
+                "item_data": {
+                  "doc": null,
+                  "full_path": "hello_world::test_1",
+                  "group": "test2",
+                  "name": "test_1",
+                  "signature": "fn test_1()"
+                }
+              }
+            ],
+            "impl_aliases": [],
+            "impls": [],
+            "macro_declarations": [],
+            "name": "test2",
+            "structs": [],
+            "submodules": [],
+            "traits": [],
+            "type_aliases": []
+          }
+        ],
+        "root_module": {
           "constants": [],
+          "enums": [],
+          "extern_functions": [],
+          "extern_types": [],
           "free_functions": [
             {
               "item_data": {
-                "name": "main",
                 "doc": null,
-                "signature": "fn main()",
                 "full_path": "hello_world::main",
-                "group": null
+                "group": null,
+                "name": "main",
+                "signature": "fn main()"
               }
             }
           ],
-          "structs": [],
-          "enums": [],
-          "type_aliases": [],
           "impl_aliases": [],
-          "traits": [],
           "impls": [],
-          "extern_types": [],
-          "extern_functions": [],
+          "item_data": {
+            "doc": null,
+            "full_path": "hello_world",
+            "group": null,
+            "name": "hello_world",
+            "signature": null
+          },
+          "macro_declarations": [],
           "pub_uses": {
             "use_constants": [],
-            "use_free_functions": [],
-            "use_structs": [],
             "use_enums": [],
-            "use_module_type_aliases": [],
-            "use_impl_aliases": [],
-            "use_traits": [],
-            "use_impl_defs": [],
-            "use_extern_types": [],
             "use_extern_functions": [],
+            "use_extern_types": [],
+            "use_free_functions": [],
+            "use_impl_aliases": [],
+            "use_impl_defs": [],
+            "use_macro_declarations": [],
+            "use_module_type_aliases": [],
+            "use_structs": [],
             "use_submodules": [],
-            "use_macro_declarations": []
+            "use_traits": []
           },
-          "macro_declarations": []
-        },
-        "groups": [
-          {
-            "name": "test",
-            "submodules": [],
-            "constants": [],
-            "free_functions": [
-              {
-                "item_data": {
-                  "name": "test_2",
-                  "doc": null,
-                  "signature": "fn test_2()",
-                  "full_path": "hello_world::test_2",
-                  "group": "test"
-                }
-              }
-            ],
-            "structs": [],
-            "enums": [],
-            "type_aliases": [],
-            "impl_aliases": [],
-            "traits": [],
-            "impls": [],
-            "extern_types": [],
-            "extern_functions": [],
-            "macro_declarations": []
-          },
-          {
-            "name": "test2",
-            "submodules": [],
-            "constants": [],
-            "free_functions": [
-              {
-                "item_data": {
-                  "name": "test_1",
-                  "doc": null,
-                  "signature": "fn test_1()",
-                  "full_path": "hello_world::test_1",
-                  "group": "test2"
-                }
-              }
-            ],
-            "structs": [],
-            "enums": [],
-            "type_aliases": [],
-            "impl_aliases": [],
-            "traits": [],
-            "impls": [],
-            "extern_types": [],
-            "extern_functions": [],
-            "macro_declarations": []
-          }
-        ]
+          "structs": [],
+          "submodules": [],
+          "traits": [],
+          "type_aliases": []
+        }
       },
       "metadata": {
-        "name": "hello_world",
-        "authors": null
+        "authors": null,
+        "name": "hello_world"
       }
     }
   ]

@@ -3,107 +3,107 @@
   "packages_information": [
     {
       "crate_": {
+        "groups": [],
         "root_module": {
-          "item_data": {
-            "name": "hello_world",
-            "doc": null,
-            "signature": null,
-            "full_path": "hello_world",
-            "group": null
-          },
-          "submodules": [],
           "constants": [],
-          "free_functions": [],
-          "structs": [
-            {
-              "members": [],
-              "item_data": {
-                "name": "VisibleStruct",
-                "doc": null,
-                "signature": "struct VisibleStruct {}",
-                "full_path": "hello_world::VisibleStruct",
-                "group": null
-              }
-            }
-          ],
           "enums": [],
-          "type_aliases": [],
+          "extern_functions": [],
+          "extern_types": [],
+          "free_functions": [],
           "impl_aliases": [],
-          "traits": [
-            {
-              "trait_constants": [],
-              "trait_types": [],
-              "trait_functions": [],
-              "item_data": {
-                "name": "VisibleTrait",
-                "doc": null,
-                "signature": "trait VisibleTrait<T>",
-                "full_path": "hello_world::VisibleTrait",
-                "group": null
-              }
-            },
-            {
-              "trait_constants": [],
-              "trait_types": [],
-              "trait_functions": [],
-              "item_data": {
-                "name": "SecondVisibleTrait",
-                "doc": null,
-                "signature": "trait SecondVisibleTrait<T, Y>",
-                "full_path": "hello_world::SecondVisibleTrait",
-                "group": null
-              }
-            }
-          ],
           "impls": [
             {
-              "impl_types": [],
               "impl_constants": [],
               "impl_functions": [],
+              "impl_types": [],
               "item_data": {
-                "name": "VisibleImpl",
                 "doc": null,
-                "signature": "impl VisibleImpl of VisibleTrait<VisibleStruct>;",
                 "full_path": "hello_world::VisibleImpl",
-                "group": null
+                "group": null,
+                "name": "VisibleImpl",
+                "signature": "impl VisibleImpl of VisibleTrait<VisibleStruct>;"
               }
             },
             {
-              "impl_types": [],
               "impl_constants": [],
               "impl_functions": [],
+              "impl_types": [],
               "item_data": {
-                "name": "SecondVisibleImpl",
                 "doc": null,
-                "signature": "impl SecondVisibleImpl of SecondVisibleTrait<HiddenStruct, VisibleStruct>;",
                 "full_path": "hello_world::SecondVisibleImpl",
-                "group": null
+                "group": null,
+                "name": "SecondVisibleImpl",
+                "signature": "impl SecondVisibleImpl of SecondVisibleTrait<HiddenStruct, VisibleStruct>;"
               }
             }
           ],
-          "extern_types": [],
-          "extern_functions": [],
+          "item_data": {
+            "doc": null,
+            "full_path": "hello_world",
+            "group": null,
+            "name": "hello_world",
+            "signature": null
+          },
+          "macro_declarations": [],
           "pub_uses": {
             "use_constants": [],
-            "use_free_functions": [],
-            "use_structs": [],
             "use_enums": [],
-            "use_module_type_aliases": [],
-            "use_impl_aliases": [],
-            "use_traits": [],
-            "use_impl_defs": [],
-            "use_extern_types": [],
             "use_extern_functions": [],
+            "use_extern_types": [],
+            "use_free_functions": [],
+            "use_impl_aliases": [],
+            "use_impl_defs": [],
+            "use_macro_declarations": [],
+            "use_module_type_aliases": [],
+            "use_structs": [],
             "use_submodules": [],
-            "use_macro_declarations": []
+            "use_traits": []
           },
-          "macro_declarations": []
-        },
-        "groups": []
+          "structs": [
+            {
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::VisibleStruct",
+                "group": null,
+                "name": "VisibleStruct",
+                "signature": "struct VisibleStruct {}"
+              },
+              "members": []
+            }
+          ],
+          "submodules": [],
+          "traits": [
+            {
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::VisibleTrait",
+                "group": null,
+                "name": "VisibleTrait",
+                "signature": "trait VisibleTrait<T>"
+              },
+              "trait_constants": [],
+              "trait_functions": [],
+              "trait_types": []
+            },
+            {
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::SecondVisibleTrait",
+                "group": null,
+                "name": "SecondVisibleTrait",
+                "signature": "trait SecondVisibleTrait<T, Y>"
+              },
+              "trait_constants": [],
+              "trait_functions": [],
+              "trait_types": []
+            }
+          ],
+          "type_aliases": []
+        }
       },
       "metadata": {
-        "name": "hello_world",
-        "authors": null
+        "authors": null,
+        "name": "hello_world"
       }
     }
   ]

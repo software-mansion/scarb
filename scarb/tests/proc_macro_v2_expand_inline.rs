@@ -102,7 +102,7 @@ fn empty_inline_macro_result() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Inline macro `some` not found.
+            error[E2156]: Inline macro `some` not found.
              --> [..]lib.cairo:2:14
                 let _x = some!();
                          ^^^^^^^
@@ -308,7 +308,7 @@ fn inline_macro_can_emit_diagnostic_with_custom_location() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Error from inline.
+            error[E2200]: Plugin diagnostic: Error from inline.
              --> [..]lib.cairo:2:19
                 let _x = some!("abcdefghi");
                               ^^^^^^^^
@@ -667,7 +667,7 @@ fn module_level_inline_macro_can_emit_diagnostics() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Some error from macro.
+            error[E2200]: Plugin diagnostic: Some error from macro.
              --> [..]lib.cairo:2:5
                 some!();
                 ^^^^^^^^

@@ -52,7 +52,7 @@ fn check_fail_with_syntax_error() {
         .code(1)
         .stdout_eq(indoc! {r#"
                 Checking hello v0.1.0 ([..]Scarb.toml)
-            error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
+            error[E1000]: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
              --> [..]/lib.cairo:1:14
             not_a_keyword
                          ^

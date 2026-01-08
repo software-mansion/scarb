@@ -247,7 +247,7 @@ fn can_emit_plugin_warning() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            warn: Plugin diagnostic: Some warning from macro.
+            warn[E2200]: Plugin diagnostic: Some warning from macro.
              --> [..]lib.cairo:1:1
             #[some]
             ^^^^^^^
@@ -293,7 +293,7 @@ fn can_emit_plugin_error() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Some error from macro.
+            error[E2200]: Plugin diagnostic: Some error from macro.
              --> [..]lib.cairo:1:1
             #[some]
             ^^^^^^^
@@ -342,7 +342,7 @@ fn diags_from_generated_code_mapped_correctly() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Some error from macro.
+            error[E2200]: Plugin diagnostic: Some error from macro.
              --> [..]lib.cairo:2:1
             #[some]
             ^^^^^^^
@@ -842,7 +842,7 @@ fn cannot_use_undefined_macro() {
         .stdout_eq(indoc! {r#"
         [..]Compiling some v1.0.0 ([..]Scarb.toml)
         [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-        error: Plugin diagnostic: Unsupported attribute.
+        error[E2200]: Plugin diagnostic: Unsupported attribute.
          --> [..]lib.cairo:1:1
         #[world]
         ^^^^^^^^
@@ -997,7 +997,7 @@ fn empty_inline_macro_result() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Inline macro `some` not found.
+            error[E2156]: Inline macro `some` not found.
              --> [..]lib.cairo:2:14
                 let _x = some!();
                          ^^^^^^^

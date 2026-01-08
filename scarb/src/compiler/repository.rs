@@ -6,8 +6,8 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler}
 use crate::core::Workspace;
 use crate::internal::offloader::Offloader;
 use anyhow::{Result, bail};
+use cairo_lang_utils::CloneableDatabase;
 use itertools::Itertools;
-use salsa::{Database, join};
 use smol_str::SmolStr;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
@@ -50,7 +50,7 @@ impl CompilerRepository {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &mut dyn Database,
+        db: &mut dyn CloneableDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let target_kind = &unit.main_component().target_kind();
@@ -60,10 +60,11 @@ impl CompilerRepository {
         let cached_crates = ctx.cached_crates().to_vec();
         // We run incremental cache warmup in parallel with the compilation.
         // We do not want to block on cache warmup.
-        join(
-            db,
-            |db| warmup_incremental_cache(db, cached_crates),
-            |db| compiler.compile(unit, ctx, offloader, db, ws),
+        let warmup_db = db.dyn_clone();
+        let compile_db = db.dyn_clone();
+        rayon::join(
+            move || warmup_incremental_cache(warmup_db.as_ref(), cached_crates),
+            move || compiler.compile(unit, ctx, offloader, compile_db.as_ref(), ws),
         )
         .1?;
         Ok(())

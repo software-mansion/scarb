@@ -2,10 +2,10 @@ use crate::compiler::incremental::IncrementalContext;
 use crate::core::{TargetKind, Workspace};
 use crate::internal::offloader::Offloader;
 use anyhow::Result;
+use cairo_lang_utils::CloneableDatabase;
 pub use compilation_unit::*;
 pub use profile::*;
 pub use repository::*;
-use salsa::Database;
 use std::sync::Arc;
 
 mod compilation_unit;
@@ -26,7 +26,7 @@ pub trait Compiler: Sync {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn Database,
+        db: &dyn CloneableDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()>;
 }
