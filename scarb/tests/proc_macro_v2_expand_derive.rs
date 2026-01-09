@@ -400,13 +400,13 @@ fn code_mappings_preserve_derive_error_locations() {
         .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: The value does not fit within the range of type core::integer::u8.
+            error[E3009]: The value does not fit within the range of type core::integer::u8.
              --> [..]lib.cairo:5:1
             #[derive(CustomDerive, Drop)]
             ^
             note: this error originates in the derive macro: `CustomDerive`
 
-            error: The value does not fit within the range of type core::integer::u8.
+            error[E3009]: The value does not fit within the range of type core::integer::u8.
              --> [..]lib.cairo:8:1
             #[derive(CustomDerive, Drop)]
             ^
@@ -456,13 +456,13 @@ fn diags_can_be_mapped_to_call_site_correctly() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Missing tokens. Expected a path segment.
+            error[E1003]: Missing tokens. Expected a path segment.
              --> [..]lib.cairo:1:10
             #[derive(ImproperDeriveMacroV2)]
                      ^^^^^^^^^^^^^^^^^^^^^
             note: this error originates in the derive macro: `ImproperDeriveMacroV2`
 
-            error: Consecutive comparison operators are not allowed: '<' followed by '>'
+            error[E1028]: Consecutive comparison operators are not allowed: '<' followed by '>'
              --> [..]lib.cairo:1:10
             #[derive(ImproperDeriveMacroV2)]
                      ^^^^^^^^^^^^^^^^^^^^^
@@ -474,7 +474,7 @@ fn diags_can_be_mapped_to_call_site_correctly() {
                      ^^^^^^^^^^^^^^^^^^^^^
             note: this error originates in the derive macro: `ImproperDeriveMacroV2`
 
-            error: Are you missing a `::`?.
+            error[E2183]: Are you missing a `::`?.
              --> [..]lib.cairo:1:10
             #[derive(ImproperDeriveMacroV2)]
                      ^^^^^^^^^^^^^^^^^^^^^
@@ -647,7 +647,7 @@ fn derive_cannot_have_module_path() {
         .stdout_eq(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Checking hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Unknown derive `not::a::path::CustomDeriveV2` - a plugin might be missing.
+            error[E2200]: Plugin diagnostic: Unknown derive `not::a::path::CustomDeriveV2` - a plugin might be missing.
              --> [..]lib.cairo:5:10
             #[derive(not::a::path::CustomDeriveV2, Drop)]
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -700,7 +700,7 @@ pub fn some(_args: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
 The error will be displayed to the user as follows:
 
 ```
-error: Plugin diagnostic: Some error from macro.
+error[E2200]: Plugin diagnostic: Some error from macro.
  --> (..)/lib.cairo:3:1
 #[some]
 ^^^^^^^
@@ -802,12 +802,12 @@ fn main() -> u32 {
 We will see the following diagnostics:
 
 ```
-error: Plugin diagnostic: argument mut be a single value
+error[E2200]: Plugin diagnostic: argument mut be a single value
  --> (..)/lib.cairo:2:9
     fib!(12,16);
         ^^^^^^^
 
-error: Plugin diagnostic: argument mut be u32 value
+error[E2200]: Plugin diagnostic: argument mut be u32 value
  --> (..)/lib.cairo:3:10
     fib!("abcd");
          ^^^^^^

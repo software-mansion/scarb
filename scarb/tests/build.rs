@@ -88,7 +88,7 @@ fn compile_with_syntax_error() {
         .code(1)
         .stdout_eq(indoc! {r#"
                 Checking hello v0.1.0 ([..]Scarb.toml)
-            error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
+            error[E1000]: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
              --> [..]/lib.cairo:1:14
             not_a_keyword
                          ^
@@ -114,7 +114,7 @@ fn compile_with_syntax_error_json() {
         .code(1)
         .stdout_eq(indoc! {r#"
             {"status":"checking","message":"hello v0.1.0 ([..]Scarb.toml)"}
-            {"type":"error","message":"Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute./n --> [..]/lib.cairo:1:14/nnot_a_keyword/n             ^/n"}
+            {"type":"error","message":"Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute./n --> [..]/lib.cairo:1:14/nnot_a_keyword/n             ^/n","code":"E1000"}
             {"type":"error","message":"could not check `hello` due to [..] previous error"}
         "#});
 }
@@ -973,7 +973,7 @@ fn does_show_errors_from_deps() {
         .failure()
         .stdout_eq(indoc! {r#"
             [..]Compiling second v1.0.0 ([..]Scarb.toml)
-            error: Skipped tokens. Expected: statement.
+            error[E1000]: Skipped tokens. Expected: statement.
              --> [..]lib.cairo:2:5
                 ;
                 ^
@@ -1601,7 +1601,7 @@ fn invalid_lint_allows_generate_only_warnings() {
         .assert()
         .stdout_eq(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            warn: `allow` attribute argument not supported.
+            warn[E2153]: `allow` attribute argument not supported.
              --> [..]src/lib.cairo:1:8
             #[allow(invalid_lint)]
                    ^^^^^^^^^^^^^^

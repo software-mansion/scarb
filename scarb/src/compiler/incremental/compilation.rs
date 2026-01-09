@@ -11,10 +11,11 @@ use cairo_lang_filesystem::ids::{BlobLongId, CrateInput};
 use cairo_lang_filesystem::set_crate_config;
 use cairo_lang_lowering::cache::generate_crate_cache;
 use cairo_lang_lowering::db::LoweringGroup;
-use cairo_lang_utils::Intern;
+use cairo_lang_utils::{CloneableDatabase, Intern};
 use camino::Utf8PathBuf;
 use itertools::Itertools;
-use salsa::{Database, par_map};
+use rayon::prelude::*;
+use salsa::Database;
 use scarb_fs_utils as fsx;
 use scarb_stable_hash::u64_hash;
 use std::io::{BufReader, Write};
@@ -275,7 +276,7 @@ enum CrateCache {
 #[tracing::instrument(skip_all, level = "info")]
 pub fn save_incremental_artifacts(
     unit: &CairoCompilationUnit,
-    db: &dyn Database,
+    db: &dyn CloneableDatabase,
     ctx: Arc<IncrementalContext>,
     ws: &Workspace<'_>,
 ) -> Result<()> {
@@ -295,22 +296,31 @@ pub fn save_incremental_artifacts(
         })
         .collect_vec();
 
-    let results: Vec<Result<()>> =
-        par_map(db, components, move |group, (component, fingerprint)| {
+    let results: Vec<Result<()>> = components
+        .par_iter()
+        .map_with(db.dyn_clone(), move |group, (component, fingerprint)| {
             let fingerprint = match fingerprint.deref() {
                 ComponentFingerprint::Library(lib) => lib,
                 ComponentFingerprint::Plugin(_plugin) => {
                     unreachable!("we iterate through components not plugins");
                 }
             };
-            save_component_cache(fingerprint, group, unit, component, warnings_found, ws)
-                .with_context(|| {
-                    format!(
-                        "failed to save cache for `{}` component",
-                        component.target_name()
-                    )
-                })
-        });
+            save_component_cache(
+                fingerprint,
+                group.as_ref(),
+                unit,
+                component,
+                warnings_found,
+                ws,
+            )
+            .with_context(|| {
+                format!(
+                    "failed to save cache for `{}` component",
+                    component.target_name()
+                )
+            })
+        })
+        .collect();
     results.into_iter().collect::<Result<Vec<_>>>()?;
 
     Ok(())
@@ -319,7 +329,7 @@ pub fn save_incremental_artifacts(
 #[tracing::instrument(skip_all, level = "trace", fields(target_name = component.target_name().to_string()))]
 fn save_component_cache(
     fingerprint: &Fingerprint,
-    db: &dyn Database,
+    db: &dyn CloneableDatabase,
     unit: &CairoCompilationUnit,
     component: &CompilationUnitComponent,
     warnings_found: bool,
@@ -413,14 +423,13 @@ pub fn incremental_allowed(unit: &CairoCompilationUnit) -> bool {
 }
 
 /// Warmup loaded crates cache in parallel.
-pub fn warmup_incremental_cache(db: &dyn Database, cached_crates: Vec<CrateInput>) {
-    let _: Vec<()> = par_map(
-        db,
-        CrateInput::into_crate_ids(db, cached_crates),
-        |db, crate_id| {
+pub fn warmup_incremental_cache(db: &dyn CloneableDatabase, cached_crates: Vec<CrateInput>) {
+    let _: Vec<()> = CrateInput::into_crate_ids(db, cached_crates)
+        .par_iter()
+        .map_with(db.dyn_clone(), |db, crate_id| {
             let span = trace_span!("cached_multi_lowerings");
             let _guard = span.enter();
-            db.cached_multi_lowerings(crate_id);
-        },
-    );
+            db.cached_multi_lowerings(*crate_id);
+        })
+        .collect();
 }

@@ -49,7 +49,7 @@ fn lint_main_package() {
         .success()
         .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
-          warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+          warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/lib.cairo:3:8
               if x == false {
                  ^^^^^^^^^^
@@ -103,7 +103,7 @@ fn lint_warnings_disallowed_manifest() {
         .failure()
         .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
-          warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+          warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/lib.cairo:3:8
               if x == false {
                  ^^^^^^^^^^
@@ -155,7 +155,7 @@ fn lint_warnings_disallowed_cli() {
         .failure()
         .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
-          warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+          warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/lib.cairo:3:8
               if x == false {
                  ^^^^^^^^^^
@@ -211,7 +211,7 @@ fn lint_warnings_disallowed_cli_and_manifest() {
         .failure()
         .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
-          warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+          warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/lib.cairo:3:8
               if x == false {
                  ^^^^^^^^^^
@@ -267,19 +267,19 @@ fn lint_workspace() {
         .success()
         .stdout_eq(indoc! {r#"
            Linting first v1.0.0 ([..]/first/Scarb.toml)
-      warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+      warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
        --> [..]/lib.cairo:3:8
           if first == false {
              ^^^^^^^^^^^^^^
 
            Linting main v1.0.0 ([..]/Scarb.toml)
-      warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+      warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
        --> [..]/lib.cairo:3:8
           if _main == false {
              ^^^^^^^^^^^^^^
 
            Linting second v1.0.0 ([..]/second/Scarb.toml)
-      warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+      warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
        --> [..]/lib.cairo:3:8
           if second == false {
              ^^^^^^^^^^^^^^^
@@ -327,7 +327,7 @@ fn lint_integration_tests() {
                Linting hello v1.0.0 ([..]/Scarb.toml)
                Linting test(hello_unittest) hello v1.0.0 ([..]/Scarb.toml)
                Linting test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]/Scarb.toml)
-          warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+          warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/tests/test1.cairo:5:8
               if false == x {
                  ^^^^^^^^^^
@@ -381,7 +381,7 @@ fn lint_unit_test() {
         .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
                Linting test(hello) hello v1.0.0 ([..]/Scarb.toml)
-          warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+          warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/lib.cairo:15:12
                   if false == x {
                      ^^^^^^^^^^
@@ -432,7 +432,7 @@ fn lint_panics() {
         .success()
         .stdout_eq(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
-          warn: Plugin diagnostic: Leaving `panic` in the code is discouraged.
+          warn[E2200]: Plugin diagnostic: Leaving `panic` in the code is discouraged.
            --> [..]/lib.cairo:2:5
               panic!("This should not be linted.");
               ^^^^^
@@ -488,7 +488,7 @@ fn lint_selected_features() {
         .success()
         .stdout_eq(indoc! { r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
-          warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+          warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
            --> [..]/lib.cairo:9:8
               if second == false {
                  ^^^^^^^^^^^^^^^
@@ -569,13 +569,13 @@ fn lint_selected_targets() {
         .success()
         .stdout_eq(indoc! {r#"
            Linting first v1.0.0 ([..]/first/Scarb.toml)
-      warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+      warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
        --> [..]/lib.cairo:3:8
           if first == false {
              ^^^^^^^^^^^^^^
 
            Linting second v1.0.0 ([..]/second/Scarb.toml)
-      warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+      warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
        --> [..]/lib.cairo:3:8
           if second == false {
              ^^^^^^^^^^^^^^^
@@ -617,7 +617,7 @@ fn lint_specific_file() {
         .success()
         .stdout_eq(indoc! {r#"
              Linting hello v1.0.0 ([..]/Scarb.toml)
-        warn: Plugin diagnostic: unnecessary double parentheses found after break. Consider removing them.
+        warn[E2200]: Plugin diagnostic: unnecessary double parentheses found after break. Consider removing them.
          --> [..]/src/other.cairo:3:9
                 break ();
                 ^^^^^^^^^
@@ -693,17 +693,17 @@ fn lint_specific_directory() {
         .success()
         .stdout_eq(indoc! {r#"
               Linting hello v1.0.0 ([..]/Scarb.toml)
-         warn: Plugin diagnostic: unnecessary double parentheses found after break. Consider removing them.
+         warn[E2200]: Plugin diagnostic: unnecessary double parentheses found after break. Consider removing them.
           --> [..]/src/my_module/a.cairo:3:9
                  break ();
                  ^^^^^^^^^
          
-         warn: Plugin diagnostic: using `clone` on type which implements `Copy` trait
+         warn[E2200]: Plugin diagnostic: using `clone` on type which implements `Copy` trait
           --> [..]/src/my_module/b.cairo:3:14
              let _b = a.clone();
                       ^^^^^^^^^
 
-         warn: Plugin diagnostic: This operation doesn't change the value and can be simplified.
+         warn[E2200]: Plugin diagnostic: This operation doesn't change the value and can be simplified.
           --> [..]/src/my_module/c.cairo:3:14
              let _y = x * 1;
                       ^^^^^
@@ -777,12 +777,12 @@ fn test_fixer_formatting() {
         .success()
         .stdout_eq(indoc! {r#"
                  Linting hello v1.0.0 ([..]/Scarb.toml)
-            warn: Plugin diagnostic: consider using `unwrap_syscall` instead of `unwrap`
+            warn[E2200]: Plugin diagnostic: consider using `unwrap_syscall` instead of `unwrap`
              --> [..]/src/lib.cairo:8:3
               result.unwrap();
               ^^^^^^^^^^^^^^^
 
-            warn: Unused import: `hello::SyscallResultTrait`
+            warn[E2100]: Unused import: `hello::SyscallResultTrait`
              --> [..]/src/lib.cairo:1:15
             use starknet::SyscallResultTrait;
                           ^^^^^^^^^^^^^^^^^^
@@ -860,7 +860,7 @@ fn test_linter_with_attribute_macros() {
         .stdout_eq(indoc! {r#"
            Compiling some v1.0.0 ([..]/Scarb.toml)
              Linting hello v1.0.0 ([..]/Scarb.toml)
-        warn: Plugin diagnostic: Each `if`-statement adds one level of nesting, which makes code look more complex than it really is.
+        warn[E2200]: Plugin diagnostic: Each `if`-statement adds one level of nesting, which makes code look more complex than it really is.
          --> [..]/src/lib.cairo:5:5-9:5
               if a == 1 {
          _____^
@@ -868,7 +868,7 @@ fn test_linter_with_attribute_macros() {
         |     }
         |_____^
 
-        warn: Plugin diagnostic: Comparison with identical operands, this operation always results in true and may indicate a logic error
+        warn[E2200]: Plugin diagnostic: Comparison with identical operands, this operation always results in true and may indicate a logic error
          --> [..]/src/lib.cairo:11:25
             let _should_lint = (1 == 1);
                                 ^^^^^^
@@ -877,7 +877,6 @@ fn test_linter_with_attribute_macros() {
 }
 
 #[test]
-#[ignore = "TODO(#cairo-lint/489"]
 fn test_linter_with_attribute_macros_complex() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -946,7 +945,7 @@ fn test_linter_with_attribute_macros_complex() {
         .stdout_eq(indoc! {r#"
            Compiling some v1.0.0 ([..]/Scarb.toml)
              Linting hello v1.0.0 ([..]/Scarb.toml)
-        warn: Plugin diagnostic: Each `if`-statement adds one level of nesting, which makes code look more complex than it really is.
+        warn[E2200]: Plugin diagnostic: Each `if`-statement adds one level of nesting, which makes code look more complex than it really is.
          --> [..]/src/lib.cairo:6:5-10:5
               if a == 1 {
          _____^
@@ -954,7 +953,7 @@ fn test_linter_with_attribute_macros_complex() {
         |     }
         |_____^
 
-        warn: Plugin diagnostic: Comparison with identical operands, this operation always results in true and may indicate a logic error
+        warn[E2200]: Plugin diagnostic: Comparison with identical operands, this operation always results in true and may indicate a logic error
          --> [..]/src/lib.cairo:12:25
             let _should_lint = (1 == 1);
                                 ^^^^^^
@@ -987,7 +986,7 @@ fn test_with_derive_macro() {
         .success()
         .stdout_eq(indoc! {r#"
              Linting hello v1.0.0 ([..]/Scarb.toml)
-        warn: Plugin diagnostic: redundant parentheses in enum variant definition
+        warn[E2200]: Plugin diagnostic: redundant parentheses in enum variant definition
          --> [..]/src/lib.cairo:4:5
             Empty: () // Comment
             ^^^^^^^^^
@@ -1043,19 +1042,19 @@ fn lint_workspace_with_deny_warnings() {
         .failure()
         .stdout_eq(indoc! {r#"
            Linting first v1.0.0 ([..]/first/Scarb.toml)
-      warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+      warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
        --> [..]/lib.cairo:3:8
           if first == false {
              ^^^^^^^^^^^^^^
 
            Linting main v1.0.0 ([..]/Scarb.toml)
-      warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+      warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
        --> [..]/lib.cairo:3:8
           if _main == false {
              ^^^^^^^^^^^^^^
 
            Linting second v1.0.0 ([..]/second/Scarb.toml)
-      warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+      warn[E2200]: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
        --> [..]/lib.cairo:3:8
           if second == false {
              ^^^^^^^^^^^^^^^

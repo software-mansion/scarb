@@ -6,7 +6,7 @@ use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_test_plugin::{TestsCompilationConfig, compile_test_prepared_db};
-use cairo_lang_utils::Intern;
+use cairo_lang_utils::{CloneableDatabase, Intern};
 use itertools::Itertools;
 use salsa::Database;
 use std::sync::Arc;
@@ -35,7 +35,7 @@ impl Compiler for TestCompiler {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn Database,
+        db: &dyn CloneableDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let target_dir = unit.target_dir(ws);
@@ -156,7 +156,7 @@ fn compile_contracts<'db>(
     unit: &CairoCompilationUnit,
     offloader: &Offloader<'_>,
     ctx: Arc<IncrementalContext>,
-    db: &'db dyn Database,
+    db: &'db dyn CloneableDatabase,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let ContractsCompilationArgs {

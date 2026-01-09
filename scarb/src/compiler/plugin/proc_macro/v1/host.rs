@@ -1276,6 +1276,7 @@ fn into_cairo_diagnostics<'db>(
                 Severity::Warning => cairo_lang_diagnostics::Severity::Warning,
             },
             inner_span: None,
+            error_code: None,
         })
         .collect_vec()
 }

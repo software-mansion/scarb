@@ -60,7 +60,7 @@ fn can_expand_to_stdout() {
         .assert()
         .success()
         .stdout_eq(indoc! {r#"
-            error: Missing token '}'.
+            error[E1001]: Missing token '}'.
              --> [..]lib.cairo:2:6
                 0
                  ^
@@ -94,7 +94,7 @@ fn can_expand_to_stdout_json() {
         .assert()
         .success()
         .stdout_eq(indoc! {r#"
-            {"type":"error","message":"Missing token '}'./n --> [..]lib.cairo:2:6/n    0/n     ^/n"}
+            {"type":"error","message":"Missing token '}'./n --> [..]lib.cairo:2:6/n    0/n     ^/n","code":"E1001"}
             {"expanded":"/nmod hello {/nfn hello() -> felt252 {/n    0/n}/n","package_id":"hello v1.0.0 ([..]Scarb.toml)","target_name":"hello"}
         "#});
     assert!(!t.child("target").exists());
@@ -467,7 +467,7 @@ fn can_expand_erroneous_code() {
         .assert()
         .success()
         .stdout_eq(indoc! {r#"
-            error: Missing token '}'.
+            error[E1001]: Missing token '}'.
              --> [..]lib.cairo:2:6
                 0
                  ^

@@ -115,17 +115,17 @@ fn test_diagnostics_error() {
         .assert()
         .failure()
         .stdout_eq(indoc! {r#"
-            error: Expected either ';' or '{' after module name. Use ';' for an external module declaration or '{' for a module with a body.
+            error[E1029]: Expected either ';' or '{' after module name. Use ';' for an external module declaration or '{' for a module with a body.
              --> [..]lib.cairo:2:33
             pub(crate) mod DualCaseERC20Mock 
                                             ^
             
-            error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
+            error[E1000]: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
              --> [..]lib.cairo:3:1
             }
             ^
             
-            error: Plugin diagnostic: Contracts without body are not supported.
+            error[E2200]: Plugin diagnostic: Contracts without body are not supported.
              --> [..]lib.cairo:1:1-2:32
               #[starknet::contract]
              _^

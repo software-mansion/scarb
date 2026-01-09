@@ -3,100 +3,100 @@
   "packages_information": [
     {
       "crate_": {
+        "groups": [],
         "root_module": {
-          "item_data": {
-            "name": "first",
-            "doc": null,
-            "signature": null,
-            "full_path": "first",
-            "group": null
-          },
-          "submodules": [],
           "constants": [],
+          "enums": [],
+          "extern_functions": [],
+          "extern_types": [],
           "free_functions": [
             {
               "item_data": {
-                "name": "main",
                 "doc": null,
-                "signature": "pub fn main()",
                 "full_path": "first::main",
-                "group": null
+                "group": null,
+                "name": "main",
+                "signature": "pub fn main()"
               }
             }
           ],
-          "structs": [],
-          "enums": [],
-          "type_aliases": [],
           "impl_aliases": [],
-          "traits": [],
           "impls": [],
-          "extern_types": [],
-          "extern_functions": [],
+          "item_data": {
+            "doc": null,
+            "full_path": "first",
+            "group": null,
+            "name": "first",
+            "signature": null
+          },
+          "macro_declarations": [],
           "pub_uses": {
             "use_constants": [],
-            "use_free_functions": [],
-            "use_structs": [],
             "use_enums": [],
-            "use_module_type_aliases": [],
-            "use_impl_aliases": [],
-            "use_traits": [],
-            "use_impl_defs": [],
-            "use_extern_types": [],
             "use_extern_functions": [],
+            "use_extern_types": [],
+            "use_free_functions": [],
+            "use_impl_aliases": [],
+            "use_impl_defs": [],
+            "use_macro_declarations": [],
+            "use_module_type_aliases": [],
+            "use_structs": [],
             "use_submodules": [],
-            "use_macro_declarations": []
+            "use_traits": []
           },
-          "macro_declarations": []
-        },
-        "groups": []
+          "structs": [],
+          "submodules": [],
+          "traits": [],
+          "type_aliases": []
+        }
       },
       "metadata": {
-        "name": "first",
-        "authors": null
+        "authors": null,
+        "name": "first"
       }
     },
     {
       "crate_": {
+        "groups": [],
         "root_module": {
-          "item_data": {
-            "name": "root",
-            "doc": null,
-            "signature": null,
-            "full_path": "root",
-            "group": null
-          },
-          "submodules": [],
           "constants": [],
-          "free_functions": [],
-          "structs": [],
           "enums": [],
-          "type_aliases": [],
-          "impl_aliases": [],
-          "traits": [],
-          "impls": [],
-          "extern_types": [],
           "extern_functions": [],
+          "extern_types": [],
+          "free_functions": [],
+          "impl_aliases": [],
+          "impls": [],
+          "item_data": {
+            "doc": null,
+            "full_path": "root",
+            "group": null,
+            "name": "root",
+            "signature": null
+          },
+          "macro_declarations": [],
           "pub_uses": {
             "use_constants": [],
-            "use_free_functions": [],
-            "use_structs": [],
             "use_enums": [],
-            "use_module_type_aliases": [],
-            "use_impl_aliases": [],
-            "use_traits": [],
-            "use_impl_defs": [],
-            "use_extern_types": [],
             "use_extern_functions": [],
+            "use_extern_types": [],
+            "use_free_functions": [],
+            "use_impl_aliases": [],
+            "use_impl_defs": [],
+            "use_macro_declarations": [],
+            "use_module_type_aliases": [],
+            "use_structs": [],
             "use_submodules": [],
-            "use_macro_declarations": []
+            "use_traits": []
           },
-          "macro_declarations": []
-        },
-        "groups": []
+          "structs": [],
+          "submodules": [],
+          "traits": [],
+          "type_aliases": []
+        }
       },
       "metadata": {
-        "name": "root",
-        "authors": null
+        "authors": null,
+        "name": "root"
       }
     }
   ]

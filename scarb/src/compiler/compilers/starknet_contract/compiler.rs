@@ -11,7 +11,7 @@ use cairo_lang_starknet::contract::{ContractDeclaration, find_contracts, module_
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_syntax::node::TypedSyntaxNode;
 use cairo_lang_syntax::node::ast::OptionAliasClause;
-use cairo_lang_utils::Intern;
+use cairo_lang_utils::{CloneableDatabase, Intern};
 use itertools::Itertools;
 use rayon::prelude::*;
 use salsa::Database;
@@ -82,7 +82,7 @@ impl Compiler for StarknetContractCompiler {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn Database,
+        db: &dyn CloneableDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;
@@ -258,7 +258,8 @@ pub fn find_project_contracts<'db>(
                                 alias_clause
                                     .alias(db)
                                     .as_syntax_node()
-                                    .get_text_without_trivia(db),
+                                    .get_text_without_trivia(db)
+                                    .to_string(db),
                             ),
                         };
                         let visibility = db
@@ -280,9 +281,8 @@ pub fn find_project_contracts<'db>(
                     })
                     .flat_map(|(module_id, use_alias)| {
                         let exported_module_path = module_id.full_path(db);
-                        let exported_module_name = use_alias
-                            .unwrap_or_else(|| module_id.name(db))
-                            .to_string(db);
+                        let exported_module_name =
+                            use_alias.unwrap_or_else(|| module_id.name(db).to_string(db));
                         let mut submodules = Vec::new();
                         collect_modules_under(db, &mut submodules, module_id);
                         submodules

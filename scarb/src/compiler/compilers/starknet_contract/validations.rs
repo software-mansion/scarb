@@ -6,8 +6,7 @@ use crate::core::{
 };
 use anyhow::{Context, Result, bail, ensure};
 use cairo_lang_defs::ids::NamedLanguageElementId;
-use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::flag::Flag;
+use cairo_lang_filesystem::flag::{Flag, FlagsGroup};
 use cairo_lang_filesystem::ids::{FlagId, FlagLongId};
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::allowed_libfuncs::{
@@ -26,7 +25,7 @@ pub fn ensure_gas_enabled(db: &dyn Database) -> anyhow::Result<()> {
     let flag = FlagId::new(db, FlagLongId(AUTO_WITHDRAW_GAS_FLAG.into()));
     let flag = db.get_flag(flag);
     ensure!(
-        flag.map(|f| matches!(*f, Flag::AddWithdrawGas(true)))
+        flag.map(|f| matches!(f, Flag::AddWithdrawGas(true)))
             .unwrap_or(false),
         "the target starknet contract compilation requires gas to be enabled"
     );

@@ -165,7 +165,7 @@ fn features_fail_both_features_enabled() {
         .assert()
         .stdout_eq(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..])
-            error: The name `f` is defined multiple times.
+            error[E2118]: The name `f` is defined multiple times.
              --> [..]/src/lib.cairo[..]
             fn f() -> felt252 { 59 }
                ^

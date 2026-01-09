@@ -632,7 +632,7 @@ fn quote_macro_parse_incoming_token_stream() {
         .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
-            error: Unexpected return type. Expected: "core::integer::u32", found: "core::bool".
+            error[E2042]: Unexpected return type. Expected: "core::integer::u32", found: "core::bool".
              --> [..]lib.cairo:2:14
             fn main() -> u32 {
                          ^^^
@@ -1083,7 +1083,7 @@ fn quote_format_macro_fails_on_invalid_syntax() {
         .stdout_eq(indoc! {r#"
         [..]Compiling some v1.0.0 [..]
         [..]Compiling hello v1.0.0 [..]
-        error: Parser error in macro-expanded code: Missing token ')'.
+        error[E2117]: Parser error in macro-expanded code: Missing token ')'.
          --> [..]src/lib.cairo:2:24
         fn main() -> felt252 { some!() }
                                ^^^^^^^
