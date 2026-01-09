@@ -1,31 +1,8 @@
-use assert_fs::TempDir;
 use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
 use indoc::indoc;
 use scarb_test_support::command::Scarb;
-use scarb_test_support::project_builder::ProjectBuilder;
-
-fn build_executable_project() -> TempDir {
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .version("0.1.0")
-        .dep_cairo_execute()
-        .manifest_extra(indoc! {r#"
-                [executable]
-
-                [cairo]
-                enable-gas = false
-            "#})
-        .lib_cairo(indoc! {r#"
-            #[executable]
-            fn main() -> felt252 {
-                42
-            }
-        "#})
-        .build(&t);
-    t
-}
+use scarb_test_support::fixtures::build_executable_project;
 
 #[test]
 #[cfg(not(windows))]

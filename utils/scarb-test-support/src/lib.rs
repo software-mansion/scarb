@@ -4,6 +4,7 @@ pub mod command;
 pub mod contracts;
 pub mod expect_dir;
 pub mod filesystem;
+pub mod fixtures;
 pub mod fsx;
 pub mod gitx;
 pub mod manifest_edit;

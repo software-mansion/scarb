@@ -4,35 +4,11 @@ use assert_fs::prelude::PathAssert;
 use indoc::{formatdoc, indoc};
 use predicates::prelude::predicate;
 use scarb_test_support::command::Scarb;
+use scarb_test_support::fixtures::{build_executable_project, executable_project_builder};
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
 use snapbox::{Assert, Data, Redactions};
 use test_case::test_case;
-
-fn executable_project_builder() -> ProjectBuilder {
-    ProjectBuilder::start()
-        .name("hello")
-        .version("0.1.0")
-        .dep_cairo_execute()
-        .manifest_extra(indoc! {r#"
-            [executable]
-
-            [cairo]
-            enable-gas = false
-        "#})
-        .lib_cairo(indoc! {r#"
-            #[executable]
-            fn main() -> felt252 {
-                42
-            }
-        "#})
-}
-
-fn build_executable_project() -> TempDir {
-    let t = TempDir::new().unwrap();
-    executable_project_builder().build(&t);
-    t
-}
 
 #[test_case("standalone")]
 #[test_case("bootloader")]
