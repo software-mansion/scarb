@@ -12,12 +12,12 @@ version.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-bincode.workspace = true
 cairo-annotations.workspace = true
 cairo-lang-casm.workspace = true
 cairo-lang-executable.workspace = true
 cairo-lang-runner.workspace = true
-cairo-lang-utils.workspace = true
+cairo-lang-utils = { workspace = true, features = ["serde"]}
+cairo-program-runner-lib.workspace = true
 cairo-vm.workspace = true
 camino.workspace = true
 clap.workspace = true
@@ -25,15 +25,19 @@ console.workspace = true
 create-output-dir = { path = "../../utils/create-output-dir" }
 indoc.workspace = true
 mimalloc = { workspace = true, features = ["secure"] }
+num-bigint = { version = "0.4", features = ["serde"] }
 predicates.workspace = true
 scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["execute"] }
+scarb-fs-utils = { path = "../../utils/scarb-fs-utils" }
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-oracle-hint-service = { path = "../../utils/scarb-oracle-hint-service" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 serde.workspace = true
 serde_json.workspace = true
-tracing-subscriber.workspace = true
+stwo-cairo-adapter.workspace = true
+test-case.workspace = true
 thousands.workspace = true
+tracing-subscriber.workspace = true
 
 [dev-dependencies]
 assert_fs.workspace = true

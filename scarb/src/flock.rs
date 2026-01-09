@@ -11,9 +11,9 @@ use std::mem;
 use tokio::sync::Mutex;
 
 use crate::core::Config;
-use crate::internal::fsx;
-use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::lazy_directory_creator::LazyDirectoryCreator;
+use scarb_fs_utils as fsx;
+use scarb_fs_utils::PathUtf8Ext;
 
 pub const OK_FILE: &str = ".scarb-ok";
 
