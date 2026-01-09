@@ -19,6 +19,7 @@ use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::option::Option;
+use std::path::Path;
 
 const RE_EXPORTS_CHAPTER: &str = "\n\n---\n \n# Re-exports: \n";
 const GROUPS_CHAPTER: &str = "\n\n---\n \n# Groups: \n";
@@ -208,6 +209,30 @@ pub trait MarkdownDocItem: DocItem {
 
     fn get_full_path(&self, _item_suffix: Option<usize>, files_extension: &str) -> String {
         get_linked_path(self.full_path(), files_extension)
+    }
+
+    fn get_source_code_link(&self, context: &MarkdownGenerationContext) -> Option<String> {
+        let base_url = context.remote_base_url.clone()?;
+        let file_link_data = self.file_link_data()?;
+
+        let full_path = Path::new(file_link_data.file_path.as_str());
+        let root_ws = context.workspace_root.clone();
+
+        match full_path.strip_prefix(root_ws) {
+            Ok(relative_path) => {
+                let relative_path_str = relative_path.to_str().unwrap_or("");
+                let postfix = if let Some((start, end)) = file_link_data.location {
+                    format!("#L{}-L{}", start + 1, end + 1) // +1 because of the indexing difference between compiler and GitHub url resolving
+                } else {
+                    "".to_string()
+                };
+
+                Some(format!(
+                    "<a href='{base_url}{relative_path_str}{postfix}'> [source code] </a>"
+                ))
+            }
+            Err(_) => None,
+        }
     }
 }
 
@@ -799,6 +824,10 @@ fn generate_markdown_from_item_data(
     let header = context.get_header(header_level, doc_item.name(), doc_item.full_path());
     writeln!(&mut markdown, "{}\n", header)?;
 
+    if let Some(source_code_link) = doc_item.get_source_code_link(context) {
+        writeln!(&mut markdown, "{source_code_link}\n")?;
+    }
+
     if let Some(doc) = doc_item.get_documentation(context) {
         writeln!(&mut markdown, "{doc}\n")?;
     }
@@ -806,7 +835,7 @@ fn generate_markdown_from_item_data(
     if let Some(fully_qualified_path) = context
         .get_fully_qualified_path(doc_item.get_full_path(item_suffix, context.files_extension))
     {
-        writeln!(&mut markdown, "{}\n", fully_qualified_path)?;
+        writeln!(&mut markdown, "{fully_qualified_path}\n")?;
     }
 
     if let Some(group_name) = doc_item.group_name() {
@@ -820,6 +849,7 @@ fn generate_markdown_from_item_data(
             context.get_signature(sig, doc_item.doc_location_links(), summary_index_map);
         writeln!(&mut markdown, "{signature}")?;
     }
+
     Ok(markdown)
 }
 
