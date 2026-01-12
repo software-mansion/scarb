@@ -406,6 +406,50 @@ fn caching() {
     expected.assert_eq(&registry.logs());
 }
 
+#[test]
+fn transitive_dev_dependency_not_pulled() {
+    let mut registry = HttpRegistry::serve(None);
+
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("package_c")
+            .version("1.0.0")
+            .lib_cairo("fn c() -> felt252 { 3 }")
+            .build(t);
+    });
+
+    let registry_url = registry.to_string();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("package_b")
+            .version("1.0.0")
+            .dev_dep("package_c", Dep.version("1.0.0").registry(&registry_url))
+            .lib_cairo("fn b() -> felt252 { 2 }")
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("package_a")
+        .version("1.0.0")
+        .dep("package_b", Dep.version("1.0.0").registry(&registry))
+        .lib_cairo("fn a() -> felt252 { package_b::b() }")
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    // Verify Scarb.lock
+    let lock = t.child("Scarb.lock");
+    let lock_content = fs::read_to_string(lock.path()).unwrap();
+
+    assert!(lock_content.contains("package_b"));
+    assert!(!lock_content.contains("package_c"));
+}
+
 // TODO(mkaput): Test errors properly when package is in index, but tarball is missing.
 // TODO(mkaput): Test interdependencies.
 // TODO(mkaput): Test offline mode, including with some cache prepopulated.
