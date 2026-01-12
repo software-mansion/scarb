@@ -19,10 +19,9 @@ pub struct ManifestDependency(Arc<ManifestDependencyInner>);
 pub struct ManifestDependencyInner {
     pub name: PackageName,
     pub version_req: DependencyVersionReq,
+    pub kind: DepKind,
     #[builder(default)]
     pub source_id: SourceId,
-    #[builder(default)]
-    pub kind: DepKind,
     #[builder(default)]
     pub features: Vec<FeatureName>,
     #[builder(default = true)]
@@ -102,11 +101,12 @@ impl ManifestDependency {
         ManifestDependencyInner::builder()
     }
 
-    pub fn exact_for_package(package_id: PackageId) -> Self {
+    pub fn exact_for_package_id(package_id: PackageId, kind: DepKind) -> Self {
         Self::builder()
             .name(package_id.name.clone())
             .version_req(DependencyVersionReq::exact(&package_id.version))
             .source_id(package_id.source_id)
+            .kind(kind)
             .build()
     }
 

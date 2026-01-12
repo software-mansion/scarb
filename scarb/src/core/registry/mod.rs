@@ -192,6 +192,7 @@ pub(crate) mod mock {
                 .name($crate::core::PackageName::new($n))
                 .version_req(::semver::VersionReq::parse($v).unwrap().into())
                 .source_id($crate::core::SourceId::default_registry())
+                .kind($crate::core::DepKind::Normal)
                 .build()
         };
 
@@ -200,6 +201,7 @@ pub(crate) mod mock {
                 .name($crate::core::PackageName::new($n))
                 .version_req(::semver::VersionReq::parse($v).unwrap().into())
                 .source_id($crate::core::SourceId::from_display_str($s).unwrap())
+                .kind($crate::core::DepKind::Normal)
                 .build()
         };
 

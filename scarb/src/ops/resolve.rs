@@ -273,16 +273,19 @@ pub fn resolve_workspace_with_opts(
                         .name(PackageName::CORE)
                         .source_id(SourceId::for_std())
                         .version_req(version_req.clone())
+                        .kind(DepKind::Normal)
                         .build(),
                     ManifestDependency::builder()
                         .name(PackageName::STARKNET)
                         .version_req(version_req.clone())
                         .source_id(SourceId::for_std())
+                        .kind(DepKind::Normal)
                         .build(),
                     ManifestDependency::builder()
                         .name(PackageName::EXECUTABLE)
                         .version_req(version_req.clone())
                         .source_id(SourceId::for_std())
+                        .kind(DepKind::Normal)
                         .build(),
                     ManifestDependency::builder()
                         .kind(DepKind::Target(TargetKind::TEST))

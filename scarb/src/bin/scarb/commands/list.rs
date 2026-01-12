@@ -3,12 +3,12 @@ use anyhow::{Context, Result};
 use dialoguer::console::Style;
 use indoc::formatdoc;
 use itertools::Itertools;
-use scarb::core::ManifestDependency;
 use scarb::core::registry::DEFAULT_REGISTRY_INDEX;
 use scarb::core::registry::client::cache::RegistryClientCache;
 use scarb::core::registry::index::IndexRecords;
 use scarb::core::source::Source;
 use scarb::core::{Config, DependencyVersionReq, SourceId};
+use scarb::core::{DepKind, ManifestDependency};
 use scarb::sources::{RegistrySource, StandardLibSource};
 use scarb_ui::Message;
 use serde::{Serialize, Serializer};
@@ -27,6 +27,7 @@ fn list_versions(args: ListCommandArgs, config: &Config) -> Result<VersionsList>
     let package_as_dep = ManifestDependency::builder()
         .name(package_name)
         .version_req(DependencyVersionReq::Any)
+        .kind(DepKind::Normal)
         .build();
 
     let std_source = StandardLibSource::new(config);
