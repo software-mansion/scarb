@@ -5,9 +5,7 @@ use typed_builder::TypedBuilder;
 
 #[cfg(doc)]
 use crate::core::Manifest;
-use crate::core::{
-    Checksum, DepKind, DependencyVersionReq, ManifestDependency, PackageId, PackageName,
-};
+use crate::core::{Checksum, DependencyVersionReq, ManifestDependency, PackageId, PackageName};
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
 /// See [`SummaryInner`] for public fields reference.
@@ -91,9 +89,7 @@ impl Summary {
     /// Returns an iterator over dependencies that should be included in registry index record
     /// for this package.
     pub fn publish_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
-        self.dependencies
-            .iter()
-            .filter(|dep| dep.kind == DepKind::Normal)
+        self.dependencies.iter()
     }
 }
 
