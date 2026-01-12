@@ -96,6 +96,7 @@ impl Source for RegistrySource<'_> {
                         .name(index_dep.name.clone())
                         .version_req(DependencyVersionReq::from(index_dep.req.clone()))
                         .source_id(self.source_id)
+                        .kind(index_dep.kind.clone())
                         .build()
                 })
                 .collect();
