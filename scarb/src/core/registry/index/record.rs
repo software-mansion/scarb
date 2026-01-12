@@ -1,4 +1,4 @@
-use crate::core::{Checksum, PackageName};
+use crate::core::{Checksum, DepKind, PackageName};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
@@ -26,6 +26,7 @@ pub type IndexDependencies = Vec<IndexDependency>;
 pub struct IndexDependency {
     pub name: PackageName,
     pub req: VersionReq,
+    pub kind: DepKind,
 }
 
 fn default_false() -> bool {

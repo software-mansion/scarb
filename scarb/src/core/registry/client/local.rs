@@ -199,6 +199,7 @@ fn build_record(summary: Summary, checksum: Checksum) -> IndexRecord {
             .map(|dep| IndexDependency {
                 name: dep.name.clone(),
                 req: dep.version_req.clone().into(),
+                kind: dep.kind.clone(),
             })
             .collect(),
         checksum,
