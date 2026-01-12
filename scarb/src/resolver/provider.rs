@@ -41,6 +41,7 @@ impl PubGrubPackage {
             .name(self.name.clone())
             .source_id(self.source_id)
             .version_req(range.into())
+            .kind(DepKind::Normal)
             .build()
     }
 }
@@ -213,11 +214,8 @@ impl PubGrubDependencyProvider {
             .get(&package_id)
             .cloned();
         let summary = summary.map(Ok).unwrap_or_else(|| {
-            let dependency = ManifestDependency::builder()
-                .name(package_id.name.clone())
-                .source_id(package_id.source_id)
-                .version_req(DependencyVersionReq::exact(&package_id.version))
-                .build();
+            // We do not care about the DepKind here.
+            let dependency = ManifestDependency::exact_for_package_id(package_id, DepKind::Normal);
             let summary = self
                 .blocking_fetch_summaries_by_dependency(dependency.clone())?
                 .into_iter()

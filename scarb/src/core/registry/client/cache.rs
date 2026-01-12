@@ -16,7 +16,7 @@ use crate::core::registry::client::{
     CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource,
 };
 use crate::core::registry::index::{IndexRecord, IndexRecords};
-use crate::core::{Checksum, Config, ManifestDependency, PackageId, SourceId};
+use crate::core::{Checksum, Config, DepKind, ManifestDependency, PackageId, SourceId};
 use crate::flock::{AdvisoryLockGuard, Filesystem, LockedFile};
 use scarb_fs_utils as fsx;
 
@@ -250,7 +250,12 @@ impl<'c> RegistryClientCache<'c> {
             //   `get_records_with_cache` in `RegistrySource` before, which puts checksums
             //   into the cache.
             let records = self
-                .get_records_with_cache(&ManifestDependency::exact_for_package(package))
+                .get_records_with_cache(&ManifestDependency::exact_for_package_id(
+                    package,
+                    // We do not care about the dependency kind here,
+                    // as we already know that the package needs to be downloaded.
+                    DepKind::Normal,
+                ))
                 .await?;
             records
                 .into_iter()
