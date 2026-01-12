@@ -1,12 +1,12 @@
+use crate::core::{
+    DependencyVersionReq, FeatureName, PackageId, PackageName, SourceId, Summary, TargetKind,
+};
 use semver::Version;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
 use typed_builder::TypedBuilder;
-
-use crate::core::{
-    DependencyVersionReq, FeatureName, PackageId, PackageName, SourceId, Summary, TargetKind,
-};
 
 /// See [`ManifestDependencyInner`] for public fields reference.
 #[derive(Clone, Eq, PartialEq, Hash)]
@@ -29,7 +29,8 @@ pub struct ManifestDependencyInner {
     pub default_features: bool,
 }
 
-#[derive(Clone, Default, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[serde(try_from = "serdex::DepKind", into = "serdex::DepKind")]
 pub enum DepKind {
     #[default]
     Normal,
@@ -45,6 +46,38 @@ impl DepKind {
         match self {
             DepKind::Target(kind) => kind.is_test(),
             _ => false,
+        }
+    }
+}
+
+mod serdex {
+    use crate::core::TargetKind;
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Debug, Deserialize, Serialize)]
+    pub struct DepKind(String);
+
+    impl TryFrom<DepKind> for super::DepKind {
+        type Error = serde::de::value::Error;
+
+        fn try_from(value: DepKind) -> Result<Self, Self::Error> {
+            if value.0 == "normal" {
+                Ok(super::DepKind::Normal)
+            } else {
+                Ok(super::DepKind::Target(
+                    TargetKind::try_new(value.0.as_str())
+                        .map_err(|e| serde::de::Error::custom(e.to_string()))?,
+                ))
+            }
+        }
+    }
+
+    impl From<super::DepKind> for DepKind {
+        fn from(value: super::DepKind) -> Self {
+            match value {
+                super::DepKind::Target(t) => DepKind(t.to_string()),
+                super::DepKind::Normal => DepKind("normal".to_string()),
+            }
         }
     }
 }
