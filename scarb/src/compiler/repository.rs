@@ -59,14 +59,12 @@ impl CompilerRepository {
         };
         let cached_crates = ctx.cached_crates().to_vec();
         // We run incremental cache warmup in parallel with the compilation.
-        // We do not want to block on cache warmup.
+        // This operation is "fire and forget".
+        // We do not want to block waiting for warmup to finish, as the compiler itself will
+        // block if needed.
         let warmup_db = db.dyn_clone();
-        let compile_db = db.dyn_clone();
-        rayon::join(
-            move || warmup_incremental_cache(warmup_db.as_ref(), cached_crates),
-            move || compiler.compile(unit, ctx, offloader, compile_db.as_ref(), ws),
-        )
-        .1?;
+        rayon::spawn(move || warmup_incremental_cache(warmup_db.as_ref(), cached_crates));
+        compiler.compile(unit, ctx, offloader, db, ws)?;
         Ok(())
     }
 }
