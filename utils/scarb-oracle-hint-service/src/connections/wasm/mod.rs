@@ -69,14 +69,14 @@ impl Connection for Wasm {
     fn call(&mut self, selector: &str, calldata: &[Felt]) -> Result<Vec<Felt>> {
         let func = self.search_component_func(selector)?;
 
-        let func_params: Vec<codec::Ty> = func
-            .params(&self.store)
-            .into_iter()
+        let func_ty = func.ty(&self.store);
+        let func_params: Vec<codec::Ty> = func_ty
+            .params()
             .map(|(_, ty)| ty.try_into())
             .collect::<Result<_>>()?;
 
         let params = decode_from_cairo(&func_params, calldata)?;
-        let mut results = vec![Val::U8(0); func.results(&self.store).len()];
+        let mut results = vec![Val::U8(0); func_ty.results().len()];
         func.call(&mut self.store, &params, &mut results)?;
         let results = encode_to_cairo(&results);
         func.post_return(&mut self.store)?;
