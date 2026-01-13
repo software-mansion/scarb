@@ -4,6 +4,7 @@ use indoc::indoc;
 use scarb_test_support::{command::Scarb, project_builder::ProjectBuilder};
 
 use scarb_test_support::fsx::ChildPathEx;
+use scarb_test_support::gitx;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 fn format_expected_url(remote_base_url: &str, subpath: &str) -> String {
@@ -213,5 +214,130 @@ fn special_characters_in_base_url_are_not_malformed() {
     )
     .unwrap();
     let expected_link = format_expected_url(&remote_base_url, "src/lib.cairo#L1-L1");
+    assert!(content.contains(&expected_link));
+}
+
+#[test]
+fn uses_manifest_repository() {
+    let root_dir = TempDir::new().unwrap();
+    root_dir.child(".gitignore");
+
+    gitx::init(&root_dir);
+
+    let child_dir = root_dir.child("hello_world");
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+              pub fn main() {
+                println!("hellow")
+              }
+        "#})
+        .manifest_package_extra(indoc! {r#"
+            repository ="https://github.com/ExampleRepoOwner/ExampleRepoProject"
+        "#})
+        .build(&child_dir);
+
+    gitx::commit(&root_dir);
+    let repo = gix::discover(root_dir.path()).unwrap();
+    let commit_hash = repo.rev_parse_single("HEAD").unwrap().to_string();
+
+    Scarb::quick_command()
+        .arg("doc")
+        .current_dir(&child_dir)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            Saving output to: target/doc/hello_world
+
+            Run the following to see the results: 
+            `mdbook serve target/doc/hello_world`
+            (you will need to have mdbook installed)
+
+            Or build html docs by running `scarb doc --build`
+        "#});
+
+    let actual_files = child_dir.child("target/doc/hello_world/src").files();
+
+    // assert files exist
+    assert_eq!(
+        actual_files,
+        vec![
+            "SUMMARY.md".to_string(),
+            "hello_world-free_functions.md".to_string(),
+            "hello_world-main.md".to_string(),
+            "hello_world.md".to_string(),
+        ]
+    );
+
+    // assert links are correct
+    let pairs = vec![
+        ("hello_world.md", "hello_world/src/lib.cairo"),
+        ("hello_world-main.md", "hello_world/src/lib.cairo#L1-L3"),
+    ];
+
+    let expected_base_url =
+        format!("https://github.com/ExampleRepoOwner/ExampleRepoProject/blob/{commit_hash}/");
+
+    for (doc_file, subpath) in pairs {
+        let content = std::fs::read_to_string(
+            child_dir
+                .path()
+                .join("target/doc/hello_world/src/")
+                .join(doc_file),
+        )
+        .unwrap();
+        let expected_link = format_expected_url(&expected_base_url, subpath);
+        assert!(content.contains(&expected_link));
+    }
+}
+
+#[test]
+fn prioritizes_flag_over_manifest_repository() {
+    let root_dir = TempDir::new().unwrap();
+    root_dir.child(".gitignore");
+    gitx::init(&root_dir);
+
+    let child_dir = root_dir.child("hello_world");
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+              pub fn main() {
+                println!("hellow")
+              }
+        "#})
+        .manifest_package_extra(indoc! {r#"
+            repository ="https://github.com/manifestRepoUrl"
+        "#})
+        .build(&child_dir);
+
+    gitx::commit(&root_dir);
+    gix::discover(root_dir.path()).unwrap();
+
+    let remote_base_url = "https://github.com/flagRepoUrl/hello_world/";
+    Scarb::quick_command()
+        .arg("doc")
+        .args(["--remote-base-url", remote_base_url])
+        .current_dir(&child_dir)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        warn: both `--remote-base-url` and manifest repository URL provided, using the `--remote-base-url` URL for remote linking
+        Saving output to: target/doc/hello_world
+
+        Run the following to see the results: 
+        `mdbook serve target/doc/hello_world`
+        (you will need to have mdbook installed)
+
+        Or build html docs by running `scarb doc --build`
+        "#});
+
+    let content = std::fs::read_to_string(
+        child_dir
+            .path()
+            .join("target/doc/hello_world/src/hello_world.md"),
+    )
+    .unwrap();
+
+    let expected_link = format_expected_url(remote_base_url, "src/lib.cairo");
     assert!(content.contains(&expected_link));
 }

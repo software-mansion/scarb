@@ -3,7 +3,7 @@ use crate::docs_generation::markdown::book_toml::generate_book_toml_content;
 use crate::docs_generation::markdown::summary::generate_summary_file_content;
 use crate::errors::{IODirectoryCreationError, IOWriteError};
 use anyhow::Result;
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8Path;
 use std::collections::HashMap;
 use std::fs;
 
@@ -40,14 +40,11 @@ impl MarkdownContent {
     pub fn from_crate(
         package_information: &PackageInformation,
         format: OutputFilesExtension,
-        remote_base_url: Option<String>,
-        workspace_root: Utf8PathBuf,
     ) -> Result<Self> {
         let (summary, doc_files) = generate_summary_file_content(
             &package_information.crate_,
             format,
-            remote_base_url.clone(),
-            workspace_root.clone(),
+            &package_information.remote_linking_data,
         )?;
 
         Ok(Self {
@@ -66,25 +63,15 @@ pub struct WorkspaceMarkdownBuilder {
     summary: SummaryIndexMap,
     doc_files: Vec<GeneratedFile>,
     output_format: OutputFilesExtension,
-    /// Used for resolving links to the source code.
-    pub workspace_root: Utf8PathBuf,
-    /// Base url for the documentation repository. Used in links to the source code.
-    pub remote_base_url: Option<String>,
 }
 
 impl WorkspaceMarkdownBuilder {
-    pub fn new(
-        output_format: OutputFilesExtension,
-        workspace_root: Utf8PathBuf,
-        remote_base_url: Option<String>,
-    ) -> Self {
+    pub fn new(output_format: OutputFilesExtension) -> Self {
         Self {
             book_toml: None,
             summary: SummaryIndexMap::new(),
             doc_files: Vec::new(),
             output_format,
-            remote_base_url,
-            workspace_root,
         }
     }
 
@@ -92,11 +79,11 @@ impl WorkspaceMarkdownBuilder {
         if self.book_toml.is_none() {
             self.book_toml = Some(generate_book_toml_content(&package_information.metadata));
         }
+
         let (summary, files) = generate_summary_file_content(
             &package_information.crate_,
             self.output_format,
-            self.remote_base_url.clone(),
-            self.workspace_root.clone(),
+            &package_information.remote_linking_data,
         )?;
         let current = std::mem::replace(&mut self.summary, SummaryIndexMap::new());
         self.summary = current.add(summary);
@@ -122,6 +109,7 @@ fn package_information_placeholder() -> crate::AdditionalMetadata {
     crate::AdditionalMetadata {
         name: "workspace".to_string(),
         authors: None,
+        repository: None,
     }
 }
 

@@ -5,9 +5,11 @@ use crate::db::ScarbDocDatabase;
 use crate::metadata::compilation::{
     crates_with_starknet, get_project_config, get_relevant_compilation_unit,
 };
+use std::path::PathBuf;
 
 use crate::types::crate_type::Crate;
 
+use crate::linking::{RemoteDocLinkingData, resolve_remote_linking_data};
 use anyhow::Result;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
@@ -17,6 +19,7 @@ use cairo_lang_filesystem::{
     ids::{CrateId, CrateLongId},
 };
 use cairo_lang_utils::Intern;
+use camino::Utf8PathBuf;
 use errors::DiagnosticError;
 use itertools::Itertools;
 use scarb_metadata::{
@@ -30,6 +33,7 @@ pub mod db;
 pub mod diagnostics;
 pub mod docs_generation;
 pub mod errors;
+pub mod linking;
 pub mod location_links;
 pub mod metadata;
 pub mod types;
@@ -39,12 +43,16 @@ pub mod versioned_json_output;
 pub struct PackageInformation<'db> {
     pub crate_: Crate<'db>,
     pub metadata: AdditionalMetadata,
+    #[serde(skip)]
+    pub remote_linking_data: RemoteDocLinkingData,
 }
 
 #[derive(Serialize, Clone)]
 pub struct AdditionalMetadata {
     pub name: String,
     pub authors: Option<Vec<String>>,
+    #[serde(skip)]
+    pub repository: Option<String>,
 }
 
 pub struct PackageContext {
@@ -101,14 +109,19 @@ pub fn generate_package_context(
         metadata: AdditionalMetadata {
             name: package_metadata.name.clone(),
             authors,
+            repository: package_metadata.manifest_metadata.repository.clone(),
         },
     })
 }
 
-pub fn generate_package_information(
-    context: &'_ PackageContext,
-    ui: Ui,
-) -> Result<PackageInformation<'_>> {
+pub fn generate_package_information<'a>(
+    context: &'a PackageContext,
+    ui: &Ui,
+    workspace_root: &Utf8PathBuf,
+    repo_root: &Option<PathBuf>,
+    commit_hash: &Option<String>,
+    remote_base_url: &Option<String>,
+) -> Result<PackageInformation<'a>> {
     let db = &context.db;
 
     let main_crate_id = CrateLongId::Real {
@@ -122,7 +135,7 @@ pub fn generate_package_information(
     .intern(db);
 
     let mut diagnostics_reporter =
-        setup_diagnostics_reporter(db, main_crate_id, &context.package_compilation_unit, &ui)
+        setup_diagnostics_reporter(db, main_crate_id, &context.package_compilation_unit, ui)
             .skip_lowering_diagnostics();
 
     let crate_ = Crate::new_with_virtual_modules_and_groups(
@@ -138,9 +151,19 @@ pub fn generate_package_information(
 
     let crate_ = crate_?;
 
+    let remote_linking_data = resolve_remote_linking_data(
+        ui,
+        workspace_root,
+        repo_root,
+        commit_hash,
+        remote_base_url,
+        &context.metadata.repository,
+    )?;
+
     Ok(PackageInformation {
         crate_,
         metadata: context.metadata.clone(),
+        remote_linking_data,
     })
 }
 
