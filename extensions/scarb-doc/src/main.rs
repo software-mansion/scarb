@@ -6,6 +6,7 @@ use scarb_doc::diagnostics::print_diagnostics;
 use scarb_doc::docs_generation::common::OutputFilesExtension;
 use scarb_doc::docs_generation::markdown::{MarkdownContent, WorkspaceMarkdownBuilder};
 use scarb_doc::errors::{MetadataCommandError, PackagesSerializationError};
+use scarb_doc::linking::discover_repo_ctx;
 use scarb_doc::metadata::get_target_dir;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 use scarb_doc::{PackageInformation, generate_package_context, generate_package_information};
@@ -41,15 +42,18 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let remote_base_url = args.remote_base_url.clone();
 
     if args.packages_filter.get_workspace() & !matches!(args.output_format, OutputFormat::Json) {
-        let mut builder = WorkspaceMarkdownBuilder::new(
-            args.output_format.into(),
-            workspace_root.clone(),
-            remote_base_url,
-        );
-
+        let mut builder = WorkspaceMarkdownBuilder::new(args.output_format.into());
         for pm in &metadata_for_packages {
             let ctx = generate_package_context(&metadata, pm, args.document_private_items)?;
-            let package_info = generate_package_information(&ctx, ui.clone())?;
+            let (repo_root, commit_hash) = discover_repo_ctx(&workspace_root);
+            let package_info = generate_package_information(
+                &ctx,
+                &ui,
+                &workspace_root,
+                &repo_root,
+                &commit_hash,
+                &remote_base_url,
+            )?;
             print_diagnostics(&ui);
             builder.add_package(&package_info)?;
         }
@@ -67,25 +71,35 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         let mut output = match args.output_format {
             OutputFormat::Json => {
                 ensure!(
-                    args.remote_base_url.is_none(),
-                    "`--remote-base-url` is only supported for Markdown output format"
+                    remote_base_url.is_none(),
+                    "remote url linking is only supported for Markdown output format"
                 );
-                OutputEmit::for_json(output_dir, workspace_root, ui.clone())
+                OutputEmit::for_json(output_dir, workspace_root.clone(), ui.clone())
             }
             OutputFormat::Markdown => OutputEmit::for_markdown(
                 output_dir,
-                workspace_root,
+                workspace_root.clone(),
                 args.open || args.build,
                 args.open,
                 ui.clone(),
             ),
-            OutputFormat::Mdx => OutputEmit::for_mdx(output_dir, workspace_root, ui.clone()),
+            OutputFormat::Mdx => {
+                OutputEmit::for_mdx(output_dir, workspace_root.clone(), ui.clone())
+            }
         };
         for pm in &metadata_for_packages {
             let ctx = generate_package_context(&metadata, pm, args.document_private_items)?;
-            let info = generate_package_information(&ctx, ui.clone())?;
+            let (repo_root, commit_hash) = discover_repo_ctx(&workspace_root);
+            let info = generate_package_information(
+                &ctx,
+                &ui,
+                &workspace_root,
+                &repo_root,
+                &commit_hash,
+                &remote_base_url,
+            )?;
             print_diagnostics(&ui);
-            output.write(info, remote_base_url.clone())?;
+            output.write(info)?;
         }
         output.flush()?;
     }
@@ -147,11 +161,7 @@ impl OutputEmit {
         }
     }
 
-    pub fn write(
-        &mut self,
-        package: PackageInformation,
-        base_repo_url: Option<String>,
-    ) -> Result<()> {
+    pub fn write(&mut self, package: PackageInformation) -> Result<()> {
         match self {
             OutputEmit::Markdown {
                 output_dir,
@@ -161,12 +171,7 @@ impl OutputEmit {
                 ui,
                 files_extension,
             } => {
-                let content = MarkdownContent::from_crate(
-                    &package,
-                    *files_extension,
-                    base_repo_url,
-                    workspace_root.clone(),
-                )?;
+                let content = MarkdownContent::from_crate(&package, *files_extension)?;
 
                 output_markdown(
                     content,

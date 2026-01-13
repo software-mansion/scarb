@@ -11,15 +11,14 @@ use cairo_lang_filesystem::ids::{CrateId, FileLongId, SpanInFile};
 use serde::Serialize;
 use serde::Serializer;
 use std::fmt::Debug;
-
-/// Start-offset and end-offset tuple of the link in the file.
-pub type FileLinkDataLocationOffset = Option<(usize, usize)>;
+use std::ops::Range;
 
 /// Serves resolving the source code link for a documented item.
 #[derive(Debug, Clone)]
 pub struct FileLinkData {
     pub file_path: String,
-    pub location: FileLinkDataLocationOffset,
+    /// Start-offset and end-offset of the link in the file.
+    pub location: Option<Range<usize>>,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -213,7 +212,7 @@ pub fn get_file_link_data_from_span(
                 .map(|pos| pos.line);
 
             let location = match (start_line, end_line) {
-                (Some(s), Some(e)) => Some((s, e)),
+                (Some(start), Some(end)) => Some(Range { start, end }),
                 _ => None,
             };
 
