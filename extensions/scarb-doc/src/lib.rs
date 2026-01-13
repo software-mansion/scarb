@@ -30,6 +30,7 @@ pub mod db;
 pub mod diagnostics;
 pub mod docs_generation;
 pub mod errors;
+pub mod linking;
 pub mod location_links;
 pub mod metadata;
 pub mod types;
@@ -45,6 +46,8 @@ pub struct PackageInformation<'db> {
 pub struct AdditionalMetadata {
     pub name: String,
     pub authors: Option<Vec<String>>,
+    #[serde(skip)]
+    pub repository: Option<String>,
 }
 
 pub struct PackageContext {
@@ -101,6 +104,7 @@ pub fn generate_package_context(
         metadata: AdditionalMetadata {
             name: package_metadata.name.clone(),
             authors,
+            repository: package_metadata.manifest_metadata.repository.clone(),
         },
     })
 }
