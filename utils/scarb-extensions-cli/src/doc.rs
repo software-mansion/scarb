@@ -4,6 +4,7 @@
 
 use clap::Parser;
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
+use std::str::FromStr;
 
 /// CLI command name.
 pub const COMMAND_NAME: &str = "doc";
@@ -23,6 +24,27 @@ pub enum OutputFormat {
     /// Generates documentation alike Markdown format with `.mdx` extension instead.
     #[value(hide = true)] // do not advertise in --help but accept from CLI
     Mdx,
+}
+
+/// Documentation linking to remote repo base URL data.
+#[derive(Debug, Clone)]
+pub enum RemoteBaseUrl {
+    /// Enable linking documentation to source code.
+    Enabled(Option<String>),
+    /// Disable linking documentation to source code.
+    Disabled,
+}
+
+impl FromStr for RemoteBaseUrl {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "disable" | "disabled" | "false" => Ok(RemoteBaseUrl::Disabled),
+            "enable" | "enabled" | "true" => Ok(RemoteBaseUrl::Enabled(None)),
+            url => Ok(RemoteBaseUrl::Enabled(Some(url.to_string()))),
+        }
+    }
 }
 
 /// Generate documentation based on code comments
@@ -59,7 +81,12 @@ pub struct Args {
     #[command(flatten)]
     pub verbose: VerbositySpec,
 
-    /// Base URL of a remote repository. Used for generating links to source code.
-    #[arg(long, env = "SCARB_DOC_REMOTE_BASE_URL")]
-    pub remote_base_url: Option<String>,
+    /// Provide a URL, leave empty to use manifest package repository url, or set to 'disable'
+    #[arg(
+        long,
+        env = "SCARB_DOC_REMOTE_BASE_URL",
+        default_value = "enable",
+        default_missing_value = "enable"
+    )]
+    pub remote_base_url: RemoteBaseUrl,
 }
