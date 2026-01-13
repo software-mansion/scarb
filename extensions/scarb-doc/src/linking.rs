@@ -11,13 +11,13 @@ pub enum RemoteDocLinkingData {
         workspace_root: Utf8PathBuf,
         remote_base_url: String,
     },
-    /// Created based on manifest given package repository.
+    /// Created based on the manifest-given package repository.
     Manifest {
         repo_root: PathBuf,
         commit_hash: String,
         repository_url: String,
     },
-    /// Result of a lacking, faulty specification or (not yet implemented) explicitly disabled.
+    /// Result of a lacking, faulty specification or explicitly disabled.
     Disabled,
 }
 

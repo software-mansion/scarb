@@ -34,23 +34,40 @@ Currently, we support only those types of links:
 
 - `[ItemName]` and ``[`ItemName`]`` (where `ItemName` is a valid path to an item).
 
-## Linking to the source code GitHub repository
+## Linking to Source Code (GitHub)
 
-Use flag `--remote-base-url` or set `SCARB_DOC_REMOTE_BASE_URL` environmental variable to link to the source code of the package in the GitHub repository. Each item subpage will be linked to the corresponding source code file.
-For example:
+`scarb doc` can automatically link documented items to their source code on GitHub. This feature is **enabled if base url is provided** and is supported for **Markdown output only**.
+
+### Configuration
+
+Scarb determines the base url for links in the following order of priority:
+
+1. Flag: `--remote-base-url <URL>`
+2. Environment Variable: `SCARB_DOC_REMOTE_BASE_URL`
+3. Manifest: The [`repository`](../reference/manifest.md#repository) field in your `Scarb.toml`.
+
+### Usage Example
+
+If you provide a base url like this:
 
 ```shell
-scarb doc --remote-base-url=https://github.com/ExampleRepoOwner/ExampleRepoProject/blob/example_branch/
+scarb doc --remote-base-url https://github.com/Owner/Project/blob/main/
 ```
 
-Scarb constructs urls combining: the remote base url, the relative path to the file from the package root, and line anchors when relevant. It does not check whether the links are valid or if they were resolved correctly. It is up to the user to provide a correct base url and verify the results.
-Example url for an item in a workspace package named `hello_world` with a relative path `src/lib.cairo`, line anchor start `10`, end `15`, and `SCARB_DOC_REMOTE_BASE_URL` like above, will be:
+Scarb constructs the final link by appending the relative path from the workspace root and line anchors. For a file in a package named `hello_world` at `src/lib.cairo`, the generated link would be:
 
 ```
-https://github.com/ExampleRepoOwner/ExampleRepoProject/blob/example_branch/hello_world/src/lib.cairo#L10-L15
+https://github.com/Owner/Project/blob/main/hello_world/src/lib.cairo#L10-L15
 ```
 
-Note, it's relevant for Markdown output only.
+### Disabling Linking
+
+If you wish to opt out of source code linking, you can explicitly disable it:
+
+- Flag: `--remote-base-url disable`
+- Environment Variable: `SCARB_DOC_REMOTE_BASE_URL=false`
+
+Note: Scarb does not verify if the resulting urls are valid. Ensure your base url includes the `/blob/<branch_or_commit>/` segment to match GitHub's url structure.
 
 ## mdBook
 
