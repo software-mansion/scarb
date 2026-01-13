@@ -110,6 +110,7 @@ mdbook-driver = "0.5"
 mimalloc = "0.1.48"
 ntest = "0.9"
 once_cell = "1"
+opener = "0.8.3"
 pathdiff = { version = "0.2", features = ["camino"] }
 petgraph = "0.8"
 predicates = "3"
