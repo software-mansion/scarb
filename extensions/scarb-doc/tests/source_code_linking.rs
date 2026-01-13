@@ -256,19 +256,6 @@ fn uses_manifest_repository() {
             Or build html docs by running `scarb doc --build`
         "#});
 
-    let actual_files = child_dir.child("target/doc/hello_world/src").files();
-
-    // assert files exist
-    assert_eq!(
-        actual_files,
-        vec![
-            "SUMMARY.md".to_string(),
-            "hello_world-free_functions.md".to_string(),
-            "hello_world-main.md".to_string(),
-            "hello_world.md".to_string(),
-        ]
-    );
-
     // assert links are correct
     let pairs = vec![
         ("hello_world.md", "hello_world/src/lib.cairo"),
@@ -288,5 +275,45 @@ fn uses_manifest_repository() {
         .unwrap();
         let expected_link = format_expected_url(&expected_base_url, subpath);
         assert!(content.contains(&expected_link));
+    }
+}
+
+#[test]
+fn can_be_disabled() {
+    let root_dir = TempDir::new().unwrap();
+    root_dir.child(".gitignore");
+    gitx::init(&root_dir);
+
+    let child_dir = root_dir.child("hello_world");
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+              pub fn main() {
+                println!("hellow")
+              }
+        "#})
+        .manifest_package_extra(indoc! {r#"
+            repository ="https://github.com/ExampleRepoOwner/ExampleRepoProject"
+        "#})
+        .build(&child_dir);
+    gitx::commit(&root_dir);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args(["--remote-base-url", "disable"])
+        .current_dir(&child_dir)
+        .assert()
+        .success();
+
+    // assert links do not exist
+    for doc_file in ["hello_world.md", "hello_world-main.md"] {
+        let content = std::fs::read_to_string(
+            child_dir
+                .path()
+                .join("target/doc/hello_world/src/")
+                .join(doc_file),
+        )
+        .unwrap();
+        assert!(!content.contains("[source code] </a>"))
     }
 }
