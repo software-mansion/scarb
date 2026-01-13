@@ -22,6 +22,7 @@ cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
 cairo-lang-utils.workspace = true
 expect-test.workspace = true
+gix.workspace = true
 indoc.workspace = true
 itertools.workspace = true
 mimalloc.workspace = true

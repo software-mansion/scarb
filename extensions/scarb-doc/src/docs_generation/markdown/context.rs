@@ -1,12 +1,12 @@
 use crate::docs_generation::common::{OutputFilesExtension, SummaryIndexMap};
 use crate::docs_generation::markdown::SUMMARY_FILENAME;
 use crate::docs_generation::markdown::traits::WithPath;
+use crate::linking::RemoteDocLinkingData;
 use crate::location_links::DocLocationLink;
 use crate::types::crate_type::Crate;
 use cairo_lang_defs::ids::{ImplItemId, LookupItemId, TraitItemId};
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_doc::parser::CommentLinkToken;
-use camino::Utf8PathBuf;
 use itertools::Itertools;
 use std::collections::HashMap;
 
@@ -16,10 +16,8 @@ pub struct MarkdownGenerationContext<'a, 'db> {
     included_items: IncludedItems<'a, 'db>,
     formatting: Box<dyn Formatting>,
     pub(crate) files_extension: &'static str,
-    /// Used for resolving links to the source code.
-    pub workspace_root: Utf8PathBuf,
-    /// Base url for the documentation repository. Used in links to the source code.
-    pub remote_base_url: Option<String>,
+    /// Data necessary for linking to the remote repository.
+    pub remote_linking_data: RemoteDocLinkingData,
 }
 
 pub trait Formatting {
@@ -111,8 +109,7 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
     pub fn from_crate(
         crate_: &'a Crate<'db>,
         format: OutputFilesExtension,
-        remote_base_url: Option<String>,
-        workspace_root: Utf8PathBuf,
+        remote_linking_data: RemoteDocLinkingData,
     ) -> Self
     where
         'a: 'db,
@@ -128,8 +125,7 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
             included_items,
             formatting,
             files_extension: format.get_string(),
-            workspace_root,
-            remote_base_url,
+            remote_linking_data,
         }
     }
 

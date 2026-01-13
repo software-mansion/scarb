@@ -212,30 +212,11 @@ pub trait MarkdownDocItem: DocItem {
     }
 
     fn get_source_code_link(&self, context: &MarkdownGenerationContext) -> Option<String> {
-        let base_url = context.remote_base_url.clone()?;
         let file_link_data = self.file_link_data()?;
-
         let full_path = Path::new(file_link_data.file_path.as_str());
-        let root_ws = context.workspace_root.clone();
-
-        match full_path.strip_prefix(root_ws) {
-            Ok(relative_path) => {
-                let relative_path = relative_path
-                    .components()
-                    .filter_map(|c| c.as_os_str().to_str())
-                    .join("/");
-                let postfix = if let Some((start, end)) = file_link_data.location {
-                    format!("#L{}-L{}", start + 1, end + 1) // +1 because of the indexing difference between compiler and GitHub url resolving
-                } else {
-                    "".to_string()
-                };
-
-                Some(format!(
-                    "<a href='{base_url}{relative_path}{postfix}'> [source code] </a>"
-                ))
-            }
-            Err(_) => None,
-        }
+        context
+            .remote_linking_data
+            .get_formatted_url(file_link_data.location, full_path)
     }
 }
 
