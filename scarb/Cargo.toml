@@ -16,7 +16,7 @@ repository.workspace = true
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
-bincode.workspace = true
+postcard.workspace = true
 cairo-lang-compiler.workspace = true
 cairo-lang-defs.workspace = true
 cairo-lang-diagnostics.workspace = true

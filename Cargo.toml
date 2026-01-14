@@ -42,7 +42,7 @@ anyhow = "1"
 assert_fs = "1"
 async-trait = "0.1"
 axum = { version = "0.8.6", default-features = false, features = ["http1", "tokio", "tracing"] }
-bincode = "2.0.1"
+postcard = { version = "1", features = ["alloc", "use-std"] }
 bumpalo = "=3.17.0"
 cairo-air = { git = "https://github.com/software-mansion-labs/stwo-cairo.git", rev = "686748b695a298cf2dc7b4004c8556b9f73bf8f1" }
 cairo-annotations = "0.7.0"
