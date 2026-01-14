@@ -67,9 +67,8 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         let mut output = match args.output_format {
             OutputFormat::Json => {
                 ensure!(
-                    !(matches!(args.output_format, OutputFormat::Json)
-                        && args.remote_base_url.is_some()),
-                    "`--remote-base-url`  is only supported for Json output format"
+                    args.remote_base_url.is_none(),
+                    "`--remote-base-url` is only supported for Markdown output format"
                 );
                 OutputEmit::for_json(output_dir, workspace_root, ui.clone())
             }
