@@ -565,3 +565,22 @@ fn allow_syscalls_triggers_layout_warning() {
         [..]Executing hello
         "#});
 }
+
+#[test]
+fn can_output_json_format() {
+    let t = build_executable_project();
+    Scarb::quick_command().arg("build").current_dir(&t).assert();
+    Scarb::quick_command()
+        .arg("execute")
+        .arg("--json")
+        .arg("--no-build")
+        .arg("--output=none")
+        .arg("--print-program-output")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        {"status":"executing","message":"hello"}
+        {"program_output":"42","resources":null}
+        "#});
+}
