@@ -45,6 +45,12 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub build: bool,
 
+    /// Open the generated documentation in a browser.
+    ///
+    /// Implies `--build`.
+    #[arg(long, default_value_t = false)]
+    pub open: bool,
+
     /// Specifies features to enable.
     #[command(flatten)]
     pub features: FeaturesSpec,

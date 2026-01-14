@@ -58,7 +58,8 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
             content,
             None,
             &output_dir,
-            args.build,
+            args.open || args.build,
+            args.open,
             &workspace_root,
             ui.clone(),
         )?;
@@ -72,9 +73,13 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
                 );
                 OutputEmit::for_json(output_dir, workspace_root, ui.clone())
             }
-            OutputFormat::Markdown => {
-                OutputEmit::for_markdown(output_dir, workspace_root, args.build, ui.clone())
-            }
+            OutputFormat::Markdown => OutputEmit::for_markdown(
+                output_dir,
+                workspace_root,
+                args.open || args.build,
+                args.open,
+                ui.clone(),
+            ),
             OutputFormat::Mdx => OutputEmit::for_mdx(output_dir, workspace_root, ui.clone()),
         };
         for pm in &metadata_for_packages {
@@ -93,6 +98,7 @@ pub enum OutputEmit {
         output_dir: Utf8PathBuf,
         ui: Ui,
         build: bool,
+        open: bool,
         workspace_root: Utf8PathBuf,
         files_extension: OutputFilesExtension,
     },
@@ -109,12 +115,14 @@ impl OutputEmit {
         output_dir: Utf8PathBuf,
         workspace_root: Utf8PathBuf,
         build: bool,
+        open: bool,
         ui: Ui,
     ) -> Self {
         OutputEmit::Markdown {
             output_dir,
             ui,
             build,
+            open,
             workspace_root,
             files_extension: OutputFilesExtension::Md,
         }
@@ -125,6 +133,7 @@ impl OutputEmit {
             output_dir,
             ui,
             build: false,
+            open: false,
             workspace_root,
             files_extension: OutputFilesExtension::Mdx,
         }
@@ -148,6 +157,7 @@ impl OutputEmit {
             OutputEmit::Markdown {
                 output_dir,
                 build,
+                open,
                 workspace_root,
                 ui,
                 files_extension,
@@ -164,6 +174,7 @@ impl OutputEmit {
                     Some(package.metadata.name),
                     output_dir,
                     *build,
+                    *open,
                     workspace_root,
                     ui.clone(),
                 )?;
@@ -208,6 +219,7 @@ pub fn output_markdown(
     package_name: Option<String>,
     output_dir: &Utf8PathBuf,
     build: bool,
+    open: bool,
     workspace_root: &Utf8PathBuf,
     ui: Ui,
 ) -> Result<()> {
@@ -239,6 +251,12 @@ pub fn output_markdown(
             .unwrap_or(&build_output_dir)
             .to_string();
         ui.print(Status::new("Saving build output to:", &build_output_path));
+
+        let index_path = build_output_dir.join("index.html");
+        if open && let Err(e) = opener::open(&index_path) {
+            ui.warn(format!("failed to open documentation: {}", e));
+        }
+
         ui.print(format!(
             "\nRun the following to see the results: \n`mdbook serve {output_path}`\
                          \n\nOr open the following in your browser: \n`{workspace_root}/{output_path}/book/index.html`",
