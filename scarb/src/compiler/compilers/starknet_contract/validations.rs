@@ -57,7 +57,8 @@ pub fn check_allowed_libfuncs<'db>(
 
     let mut found_disallowed = false;
     for (decl, class) in zip(contracts, classes) {
-        match class.validate_version_compatible(list_selector.clone()) {
+        let extraced = class.extract_sierra_program(false)?;
+        match extraced.validate_version_compatible(list_selector.clone()) {
             Ok(()) => {}
 
             Err(AllowedLibfuncsError::UnsupportedLibfunc {
