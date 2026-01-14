@@ -1735,8 +1735,8 @@ fn add_trace_libfunc() {
     assert_for_trace_libfunc(&program);
 
     let contract_sierra = serde_json::from_str::<ContractClass>(&contract_sierra_string).unwrap();
-    let program = contract_sierra.extract_sierra_program().unwrap();
-    assert_for_trace_libfunc(&program);
+    let program = contract_sierra.extract_sierra_program(true).unwrap();
+    assert_for_trace_libfunc(&program.program);
 }
 
 #[test]

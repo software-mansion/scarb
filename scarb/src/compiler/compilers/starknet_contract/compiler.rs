@@ -146,8 +146,10 @@ impl Compiler for StarknetContractCompiler {
                 .par_iter()
                 .zip(classes.par_iter())
                 .map(|(contract_name, class)| -> Result<_> {
+                    let extracted = class.extract_sierra_program(false)?;
                     let casm_class = CasmContractClass::from_contract_class(
                         class.clone(),
+                        extracted,
                         props.casm_add_pythonic_hints,
                         usize::MAX,
                     )
