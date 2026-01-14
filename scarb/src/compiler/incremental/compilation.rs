@@ -111,7 +111,7 @@ impl IncrementalContext {
     }
 }
 
-#[derive(bincode::Encode, bincode::Decode)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct ScarbComponentCache {
     pub has_warnings: bool,
     pub blob: Vec<u8>,
@@ -251,9 +251,10 @@ fn load_component_cache(
             &component.cache_filename(fingerprint),
             ws.config(),
         )?;
-        let reader = BufReader::new(file.deref());
-        let decoded: ScarbComponentCache =
-            bincode::decode_from_reader(reader, bincode::config::standard())?;
+        let mut reader = BufReader::new(file.deref());
+        let mut bytes = Vec::new();
+        std::io::Read::read_to_end(&mut reader, &mut bytes)?;
+        let decoded: ScarbComponentCache = postcard::from_bytes(&bytes)?;
         Ok(CrateCache::Loaded {
             component,
             has_warnings: decoded.has_warnings,
@@ -370,7 +371,7 @@ fn save_component_cache(
             has_warnings: warnings_found,
             blob: cache_blob,
         };
-        let cache_blob = bincode::encode_to_vec(component_cache, bincode::config::standard())?;
+        let cache_blob = postcard::to_allocvec(&component_cache)?;
         let fingerprint_dir = unit.fingerprint_dir(ws);
         let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(fingerprint));
         let fingerprint_file = fingerprint_dir.create_rw(
