@@ -220,7 +220,10 @@ pub trait MarkdownDocItem: DocItem {
 
         match full_path.strip_prefix(root_ws) {
             Ok(relative_path) => {
-                let relative_path_str = relative_path.to_str().unwrap_or("");
+                let relative_path = relative_path
+                    .components()
+                    .filter_map(|c| c.as_os_str().to_str())
+                    .join("/");
                 let postfix = if let Some((start, end)) = file_link_data.location {
                     format!("#L{}-L{}", start + 1, end + 1) // +1 because of the indexing difference between compiler and GitHub url resolving
                 } else {
@@ -228,7 +231,7 @@ pub trait MarkdownDocItem: DocItem {
                 };
 
                 Some(format!(
-                    "<a href='{base_url}{relative_path_str}{postfix}'> [source code] </a>"
+                    "<a href='{base_url}{relative_path}{postfix}'> [source code] </a>"
                 ))
             }
             Err(_) => None,
@@ -870,7 +873,7 @@ fn get_linked_path(full_path: &str, files_extension: &str) -> String {
 
 /// Formats markdown path to a relevant chapter within the item parent page.
 /// Differs from parent path by appended suffix that consist of child item name
-/// and number of previous name occurrences within the parent page chapters.       
+/// and number of previous name occurrences within the parent page chapters.
 fn get_full_subitem_path<T: MarkdownDocItem + SubPathDocItem>(
     item: &T,
     item_suffix: Option<usize>,
