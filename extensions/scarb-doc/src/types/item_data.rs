@@ -7,7 +7,7 @@ use cairo_lang_defs::ids::{ModuleId, TopLevelLanguageElementId};
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_doc::parser::DocumentationCommentToken;
-use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_filesystem::ids::{CrateId, FileLongId, SpanInFile};
 use serde::Serialize;
 use serde::Serializer;
 use std::fmt::Debug;
@@ -190,28 +190,43 @@ fn get_file_link_data<'db>(
     db: &'db ScarbDocDatabase,
     id: &impl TopLevelLanguageElementId<'db>,
 ) -> Option<FileLinkData> {
-    // TODO: check if file exists on disk (what about macro expansions?)
     let span = id.stable_location(db).span_in_file(db);
+    get_file_link_data_from_span(db, span)
+}
 
-    let start_line = span
-        .span
-        .start
-        .position_in_file(db, span.file_id)
-        .map(|pos| pos.line);
+pub fn get_file_link_data_from_span(
+    db: &ScarbDocDatabase,
+    span: SpanInFile,
+) -> Option<FileLinkData> {
+    match span.file_id.long(db) {
+        FileLongId::OnDisk(_) => {
+            let start_line = span
+                .span
+                .start
+                .position_in_file(db, span.file_id)
+                .map(|pos| pos.line);
 
-    let end_line = span
-        .span
-        .end
-        .position_in_file(db, span.file_id)
-        .map(|pos| pos.line);
+            let end_line = span
+                .span
+                .end
+                .position_in_file(db, span.file_id)
+                .map(|pos| pos.line);
 
-    let location = match (start_line, end_line) {
-        (Some(s), Some(e)) => Some((s, e)),
-        _ => None,
-    };
+            let location = match (start_line, end_line) {
+                (Some(s), Some(e)) => Some((s, e)),
+                _ => None,
+            };
 
-    Some(FileLinkData {
-        file_path: span.file_id.full_path(db),
-        location,
-    })
+            Some(FileLinkData {
+                file_path: span.file_id.full_path(db),
+                location,
+            })
+        }
+
+        FileLongId::External(_) => None,
+        FileLongId::Virtual(vf) => {
+            let vfp = vf.parent?;
+            get_file_link_data_from_span(db, vfp)
+        }
+    }
 }
