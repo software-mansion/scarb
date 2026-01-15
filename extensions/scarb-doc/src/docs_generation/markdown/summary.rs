@@ -13,20 +13,18 @@ use crate::docs_generation::markdown::summary::files::{
 };
 use crate::docs_generation::markdown::traits::{MarkdownDocItem, TopLevelMarkdownDocItem};
 use crate::docs_generation::markdown::{BASE_HEADER_LEVEL, SummaryIndexMap};
+use crate::linking::RemoteDocLinkingData;
 use crate::types::crate_type::Crate;
 use anyhow::Result;
-use camino::Utf8PathBuf;
 use group_files::generate_global_groups_summary_files;
 
 pub fn generate_summary_file_content(
     crate_: &Crate,
     output_format: OutputFilesExtension,
-    base_doc_url: Option<String>,
-    workspace_root: Utf8PathBuf,
+    remote_linking_data: RemoteDocLinkingData,
 ) -> Result<(SummaryIndexMap, Vec<(String, String)>)> {
     let mut summary_index_map = SummaryIndexMap::new();
-    let context =
-        MarkdownGenerationContext::from_crate(crate_, output_format, base_doc_url, workspace_root);
+    let context = MarkdownGenerationContext::from_crate(crate_, output_format, remote_linking_data);
 
     generate_module_summary_content(
         &crate_.root_module,

@@ -7002,6 +7002,7 @@ dependencies = [
  "camino",
  "clap",
  "expect-test",
+ "gix",
  "indoc",
  "itertools 0.14.0",
  "mimalloc",
