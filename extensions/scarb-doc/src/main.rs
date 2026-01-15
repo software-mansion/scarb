@@ -10,7 +10,7 @@ use scarb_doc::linking::RemoteDocLinkingData;
 use scarb_doc::metadata::get_target_dir;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 use scarb_doc::{PackageInformation, generate_package_context, generate_package_information};
-use scarb_extensions_cli::doc::{Args, OutputFormat};
+use scarb_extensions_cli::doc::{Args, OutputFormat, RemoteBaseUrl};
 use scarb_metadata::{MetadataCommand, ScarbCommand};
 use scarb_ui::Ui;
 use scarb_ui::args::ToEnvVars;
@@ -39,19 +39,27 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
     let workspace_root = metadata.workspace.root.clone();
 
-    let remote_base_url = args.remote_base_url.clone();
-    let (repo_root, commit_hash) = match gix::discover(&workspace_root) {
-        Ok(repo) => {
-            let repo_root = repo
-                .workdir()
-                .expect("workdir must always exist")
-                .to_str()
-                .map(str::to_owned);
+    let (remote_base_url, repo_root, commit_hash) = match &args.remote_base_url {
+        RemoteBaseUrl::Enabled(url) => {
+            let (repo_root, commit_hash) = match gix::discover(&workspace_root) {
+                Ok(repo) => {
+                    let repo_root = repo
+                        .workdir()
+                        .expect("workdir must always exist")
+                        .to_str()
+                        .map(str::to_owned);
 
-            let commit_hash = repo.rev_parse_single("HEAD")?.to_string();
-            (repo_root, Some(commit_hash))
+                    let commit_hash = repo
+                        .rev_parse_single("HEAD")
+                        .ok()
+                        .map(|rev| rev.to_string());
+                    (repo_root, commit_hash)
+                }
+                Err(_) => (None, None),
+            };
+            (url.clone(), repo_root, commit_hash)
         }
-        Err(_) => (None, None),
+        RemoteBaseUrl::Disabled => (None, None, None),
     };
 
     if args.packages_filter.get_workspace() & !matches!(args.output_format, OutputFormat::Json) {
