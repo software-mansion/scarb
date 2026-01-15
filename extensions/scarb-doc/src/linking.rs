@@ -10,13 +10,13 @@ pub enum RemoteDocLinkingData {
         workspace_root: String,
         remote_base_url: String,
     },
-    /// Created based on manifest given package repository.
+    /// Created based on the manifest-given package repository.
     Manifest {
         repo_root: String,
         commit_hash: String,
         repository_url: String,
     },
-    /// Result of a lacking, faulty specification or (not yet implemented) explicitly disabled.
+    /// Result of a lacking, faulty specification or explicitly disabled.
     Disabled,
 }
 
@@ -88,7 +88,7 @@ impl RemoteDocLinkingData {
                     "<a href='{repository_url}/blob/{commit_hash}/{relative_path}{postfix}'> [source code] </a>"
                 ))
             }
-            RemoteDocLinkingData::Disabled => None, // TODO: add option to disable explicitly
+            RemoteDocLinkingData::Disabled => None,
         }
     }
 }
