@@ -22,7 +22,7 @@ fn test_markdown_linked_items() {
 
     Scarb::quick_command()
         .arg("doc")
-        .arg("--document-private-items")
+        .args(["--document-private-items", "--disable-remote-linking"])
         .current_dir(&root_dir)
         .assert()
         .success();

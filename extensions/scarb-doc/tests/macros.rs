@@ -47,6 +47,7 @@ fn markdown_output() {
 
     Scarb::quick_command()
         .arg("doc")
+        .args(["--disable-remote-linking"])
         .current_dir(&t)
         .assert()
         .success();

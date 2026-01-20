@@ -62,4 +62,8 @@ pub struct Args {
     /// Base URL of a remote repository. Used for generating links to source code.
     #[arg(long, env = "SCARB_DOC_REMOTE_BASE_URL")]
     pub remote_base_url: Option<String>,
+
+    /// Enables/disables linking documentation items to the source code repository.
+    #[arg(long, default_value_t = false)]
+    pub disable_remote_linking: bool,
 }

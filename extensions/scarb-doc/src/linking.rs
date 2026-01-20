@@ -1,4 +1,6 @@
+use anyhow::{bail, ensure};
 use camino::Utf8PathBuf;
+use indoc::formatdoc;
 use itertools::Itertools;
 use scarb_ui::Ui;
 use std::ops::Range;
@@ -103,9 +105,22 @@ pub fn resolve_remote_linking_data(
     workspace_root: &Utf8PathBuf,
     repo_root: &Option<PathBuf>,
     commit_hash: &Option<String>,
+    disable_linking: bool,
     remote_base_url: &Option<String>,
     manifest_repo_url: &Option<String>,
 ) -> anyhow::Result<RemoteDocLinkingData> {
+    if disable_linking {
+        return Ok(RemoteDocLinkingData::new_disabled());
+    }
+    ensure!(
+        remote_base_url.is_some() || manifest_repo_url.is_some(),
+        formatdoc! {r#"
+            remote source linking is enabled, but no repository URL is configured,
+            provide `--remote-base-url` or pass `--disable-remote-linking`,
+            see https://docs.swmansion.com/scarb/docs/extensions/documentation-generation.html#linking-to-the-source-code-repository for details
+        "#}
+    );
+
     if manifest_repo_url.is_some() && remote_base_url.is_some() {
         ui.warn("both `--remote-base-url` and manifest repository URL provided, using the `--remote-base-url` URL for remote linking");
     }
@@ -122,6 +137,6 @@ pub fn resolve_remote_linking_data(
                 repo_url.clone(),
             ))
         }
-        _ => Ok(RemoteDocLinkingData::new_disabled()),
+        _ => bail!("could not discover a Git repository, remote linking disabled"),
     }
 }

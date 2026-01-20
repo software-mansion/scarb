@@ -341,3 +341,164 @@ fn prioritizes_flag_over_manifest_repository() {
     let expected_link = format_expected_url(remote_base_url, "src/lib.cairo");
     assert!(content.contains(&expected_link));
 }
+
+#[test]
+fn can_be_disabled() {
+    let root_dir = TempDir::new().unwrap();
+    root_dir.child(".gitignore");
+    gitx::init(&root_dir);
+
+    let child_dir = root_dir.child("hello_world");
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+              pub fn main() {
+                println!("hellow")
+              }
+        "#})
+        .manifest_package_extra(indoc! {r#"
+            repository ="https://github.com/ExampleRepoOwner/ExampleRepoProject"
+        "#})
+        .build(&child_dir);
+    gitx::commit(&root_dir);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args(["--disable-remote-linking"])
+        .current_dir(&child_dir)
+        .assert()
+        .success();
+
+    // assert links do not exist
+    for doc_file in ["hello_world.md", "hello_world-main.md"] {
+        let content = std::fs::read_to_string(
+            child_dir
+                .path()
+                .join("target/doc/hello_world/src/")
+                .join(doc_file),
+        )
+        .unwrap();
+        assert!(!content.contains("[source code] </a>"))
+    }
+}
+
+#[test]
+fn linking_enabled_no_url_provided() {
+    let root_dir = TempDir::new().unwrap();
+    root_dir.child(".gitignore");
+    gitx::init(&root_dir);
+
+    let child_dir = root_dir.child("hello_world");
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+              pub fn main() {
+                println!("hellow")
+              }
+        "#})
+        .build(&child_dir);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .current_dir(&child_dir)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: remote source linking is enabled, but no repository URL is configured,
+            provide `--remote-base-url` or pass `--disable-remote-linking`,
+            see https://docs.swmansion.com/scarb/docs/extensions/documentation-generation.html#linking-to-the-source-code-repository for details
+
+        "#});
+}
+
+#[test]
+fn json_output_forbids_remote_linking() {
+    let root_dir = TempDir::new().unwrap();
+    root_dir.child(".gitignore");
+    gitx::init(&root_dir);
+
+    let child_dir = root_dir.child("hello_world");
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+              pub fn main() {
+                println!("hellow")
+              }
+        "#})
+        .build(&child_dir);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args([
+            "--output-format",
+            "json",
+            "--remote-base-url",
+            "https://github.com/ExampleRepoOwner/ExampleRepoProject",
+        ])
+        .current_dir(&child_dir)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: remote url linking is only supported for Markdown output format
+            "#});
+}
+
+#[test]
+fn warn_when_both_manifest_and_explicit_provided() {
+    let root_dir = TempDir::new().unwrap();
+    root_dir.child(".gitignore");
+    gitx::init(&root_dir);
+
+    let child_dir = root_dir.child("hello_world");
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+              pub fn main() {
+                println!("hellow")
+              }
+        "#})
+        .build(&child_dir);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args([
+            "--output-format",
+            "json",
+            "--remote-base-url",
+            "https://github.com/ExampleRepoOwner/ExampleRepoProject",
+        ])
+        .current_dir(&child_dir)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: remote url linking is only supported for Markdown output format
+            "#});
+}
+
+#[test]
+fn git_discovery_failed() {
+    let root_dir = TempDir::new().unwrap();
+    root_dir.child(".gitignore");
+
+    let child_dir = root_dir.child("hello_world");
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+              pub fn main() {
+                println!("hellow")
+              }
+        "#})
+        .manifest_package_extra(indoc! {r#"
+            repository ="https://github.com/ExampleRepoOwner/ExampleRepoProject"
+        "#})
+        .build(&child_dir);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .current_dir(&child_dir)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+        error: could not discover a Git repository, remote linking disabled
+        "#});
+}

@@ -42,7 +42,7 @@ fn doc_groups_reeksports_markdown() {
     WorkspaceBuilder::start().package(root).build(&root_dir);
 
     Scarb::quick_command()
-        .arg("doc")
+        .args(["doc", "--disable-remote-linking"])
         .current_dir(&root_dir)
         .assert()
         .success();
@@ -71,7 +71,11 @@ fn doc_groups_reeksports_markdown_doesnt_duplicate_groups() {
 
     Scarb::quick_command()
         .arg("doc")
-        .args(["--document-private-items", "--build"])
+        .args([
+            "--document-private-items",
+            "--build",
+            "--disable-remote-linking",
+        ])
         .current_dir(&root_dir)
         .assert()
         .success();

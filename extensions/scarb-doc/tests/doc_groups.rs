@@ -57,7 +57,7 @@ fn doc_groups_markdown() {
 
     Scarb::quick_command()
         .arg("doc")
-        .args(["--document-private-items"])
+        .args(["--document-private-items", "--disable-remote-linking"])
         .current_dir(&root_dir)
         .assert()
         .success();

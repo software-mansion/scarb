@@ -55,7 +55,7 @@ fn test_duplicated_items_names() {
 
     Scarb::quick_command()
         .arg("doc")
-        .args(["--document-private-items"])
+        .args(["--document-private-items", "--disable-remote-linking"])
         .current_dir(&root_dir)
         .assert()
         .success();
