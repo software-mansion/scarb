@@ -16,7 +16,7 @@ fn test_diagnostics_success() {
         .build(&t);
 
     Scarb::quick_command()
-        .arg("doc")
+        .args(["doc", "--disable-remote-linking"])
         .current_dir(&t)
         .assert()
         .success();
@@ -37,7 +37,7 @@ fn test_diagnostics_with_error_code() {
         .build(&t);
 
     Scarb::quick_command()
-        .arg("doc")
+        .args(["doc", "--disable-remote-linking"])
         .current_dir(&t)
         .assert()
         .success();
@@ -62,7 +62,7 @@ fn test_diagnostics_allowed_warnings() {
         .build(&t);
 
     Scarb::quick_command()
-        .arg("doc")
+        .args(["doc", "--disable-remote-linking"])
         .current_dir(&t)
         .assert()
         .success();
@@ -87,7 +87,7 @@ fn test_diagnostics_not_allowed_warnings() {
         .build(&t);
 
     Scarb::quick_command()
-        .arg("doc")
+        .args(["doc", "--disable-remote-linking"])
         .current_dir(&t)
         .assert()
         .success();
@@ -110,7 +110,7 @@ fn test_diagnostics_error() {
         .build(&t);
 
     Scarb::quick_command()
-        .arg("doc")
+        .args(["doc", "--disable-remote-linking",])
         .current_dir(&t)
         .assert()
         .failure()

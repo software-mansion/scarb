@@ -120,6 +120,7 @@ pub fn generate_package_information<'a>(
     workspace_root: &Utf8PathBuf,
     repo_root: &Option<PathBuf>,
     commit_hash: &Option<String>,
+    disable_linking: bool,
     remote_base_url: &Option<String>,
 ) -> Result<PackageInformation<'a>> {
     let db = &context.db;
@@ -156,6 +157,7 @@ pub fn generate_package_information<'a>(
         workspace_root,
         repo_root,
         commit_hash,
+        disable_linking,
         remote_base_url,
         &context.metadata.repository,
     )?;

@@ -39,20 +39,23 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
     let workspace_root = metadata.workspace.root.clone();
 
-    let remote_base_url = args.remote_base_url.clone();
+    let remote_base_url_flag = args.remote_base_url.clone();
 
     if args.packages_filter.get_workspace() & !matches!(args.output_format, OutputFormat::Json) {
         let mut builder = WorkspaceMarkdownBuilder::new(args.output_format.into());
+
         for pm in &metadata_for_packages {
             let ctx = generate_package_context(&metadata, pm, args.document_private_items)?;
             let (repo_root, commit_hash) = discover_repo_ctx(&workspace_root);
+
             let package_info = generate_package_information(
                 &ctx,
                 &ui,
                 &workspace_root,
                 &repo_root,
                 &commit_hash,
-                &remote_base_url,
+                args.disable_remote_linking,
+                &remote_base_url_flag,
             )?;
             print_diagnostics(&ui);
             builder.add_package(&package_info)?;
@@ -68,24 +71,31 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
             ui.clone(),
         )?;
     } else {
-        let mut output = match args.output_format {
+        let (mut output, disable_remote_linking) = match args.output_format {
             OutputFormat::Json => {
                 ensure!(
-                    remote_base_url.is_none(),
+                    remote_base_url_flag.is_none() && !args.disable_remote_linking,
                     "remote url linking is only supported for Markdown output format"
                 );
-                OutputEmit::for_json(output_dir, workspace_root.clone(), ui.clone())
+                (
+                    OutputEmit::for_json(output_dir, workspace_root.clone(), ui.clone()),
+                    true,
+                )
             }
-            OutputFormat::Markdown => OutputEmit::for_markdown(
-                output_dir,
-                workspace_root.clone(),
-                args.open || args.build,
-                args.open,
-                ui.clone(),
+            OutputFormat::Markdown => (
+                OutputEmit::for_markdown(
+                    output_dir,
+                    workspace_root.clone(),
+                    args.open || args.build,
+                    args.open,
+                    ui.clone(),
+                ),
+                args.disable_remote_linking,
             ),
-            OutputFormat::Mdx => {
-                OutputEmit::for_mdx(output_dir, workspace_root.clone(), ui.clone())
-            }
+            OutputFormat::Mdx => (
+                OutputEmit::for_mdx(output_dir, workspace_root.clone(), ui.clone()),
+                args.disable_remote_linking,
+            ),
         };
         for pm in &metadata_for_packages {
             let ctx = generate_package_context(&metadata, pm, args.document_private_items)?;
@@ -96,7 +106,8 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
                 &workspace_root,
                 &repo_root,
                 &commit_hash,
-                &remote_base_url,
+                disable_remote_linking,
+                &remote_base_url_flag,
             )?;
             print_diagnostics(&ui);
             output.write(info)?;

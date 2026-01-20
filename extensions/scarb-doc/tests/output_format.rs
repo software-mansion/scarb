@@ -49,7 +49,7 @@ fn markdown_output() {
 
     Scarb::quick_command()
         .arg("doc")
-        .args(["--output-format", "markdown"])
+        .args(["--output-format", "markdown", "--disable-remote-linking"])
         .current_dir(&t)
         .assert()
         .success();
@@ -71,7 +71,7 @@ fn mdx_output() {
 
     Scarb::quick_command()
         .arg("doc")
-        .args(["--output-format", "mdx"])
+        .args(["--output-format", "mdx", "--disable-remote-linking"])
         .current_dir(&t)
         .assert()
         .success();

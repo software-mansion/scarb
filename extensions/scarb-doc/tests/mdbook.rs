@@ -15,7 +15,7 @@ fn can_build_mdbook_with_build_arg() {
 
     Scarb::quick_command()
         .arg("doc")
-        .arg("--build")
+        .args(["--build", "--disable-remote-linking"])
         .current_dir(&t)
         .assert()
         .success();

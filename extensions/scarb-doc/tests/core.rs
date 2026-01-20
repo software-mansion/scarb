@@ -23,7 +23,7 @@ fn can_doc_corelib() {
     // Doc corelib.
     Scarb::quick_command()
         .arg("doc")
-        .arg("--build")
+        .args(["--build", "--disable-remote-linking"])
         .current_dir(core)
         .assert()
         .success();
@@ -36,6 +36,7 @@ fn stdout_output_info() {
 
     Scarb::quick_command()
         .arg("doc")
+        .args(["--disable-remote-linking"])
         .current_dir(&t)
         .assert()
         .success()
@@ -63,7 +64,7 @@ fn stdout_output_info() {
 
     Scarb::quick_command()
         .arg("doc")
-        .args(["--build"])
+        .args(["--build", "--disable-remote-linking"])
         .current_dir(&t)
         .assert()
         .success()

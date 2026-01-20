@@ -42,7 +42,7 @@ fn test_reeksports_in_multiple_workspaces() {
 
     Scarb::quick_command()
         .arg("doc")
-        .args(["-p", "target_package"])
+        .args(["-p", "target_package", "--disable-remote-linking"])
         .current_dir(&root_dir)
         .assert()
         .success();

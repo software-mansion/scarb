@@ -46,7 +46,7 @@ fn test_workspace_no_features() {
 
     Scarb::quick_command()
         .arg("doc")
-        .args(["--workspace"])
+        .args(["--workspace", "--disable-remote-linking"])
         .current_dir(&root_dir)
         .assert()
         .success();
@@ -83,6 +83,7 @@ fn test_workspace_without_features_in_manifest() {
             "--output-format",
             "markdown",
             "--workspace",
+            "--disable-remote-linking",
             "--features",
             FEATURE_NAME,
         ])
@@ -138,6 +139,7 @@ fn test_workspace_with_working_feature_in_root_and_sub_package() {
         .arg("doc")
         .args([
             "--workspace",
+            "--disable-remote-linking",
             "--features",
             FEATURE_NAME,
             "--output-format",
@@ -183,6 +185,7 @@ fn test_workspace_with_working_feature_in_root_only() {
         .arg("doc")
         .args([
             "--workspace",
+            "--disable-remote-linking",
             "--features",
             FEATURE_NAME,
             "--output-format",
@@ -223,6 +226,7 @@ fn test_workspace_with_working_feature_in_sub_package_only() {
         .arg("doc")
         .args([
             "--workspace",
+            "--disable-remote-linking",
             "--features",
             FEATURE_NAME,
             "--output-format",
@@ -258,6 +262,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code()
         .args([
             "--output-format",
             "markdown",
+            "--disable-remote-linking",
             "--workspace",
             "--features",
             FEATURE_NAME,
@@ -302,6 +307,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_root_package_code(
         .args([
             "--output-format",
             "markdown",
+            "--disable-remote-linking",
             "--workspace",
             "--features",
             FEATURE_NAME,
