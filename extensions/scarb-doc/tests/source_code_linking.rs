@@ -406,7 +406,7 @@ fn linking_enabled_no_url_provided() {
         .stdout_eq(indoc! {r#"
             error: remote source linking is enabled, but no repository URL is configured,
             provide `--remote-base-url` or pass `--disable-remote-linking`,
-            see https://docs.swmansion.com/scarb/docs/extensions/documentation-generation.html#linking-to-the-source-code-repository for details
+            see https://docs.swmansion.com/scarb/docs/extensions/documentation-generation.html#linking-to-the-source-code-vcs-repository for details
 
         "#});
 }

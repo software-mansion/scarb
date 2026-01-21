@@ -25,7 +25,7 @@ As for now, we support those types of comments:
 - `///` documentation for the following item.
 - `//!` documentation for enclosing item (also works with file modules).
 
-the `///` and `//!` comment prefixes are supported.
+The `///` and `//!` comment prefixes are supported.
 
 ## Item linkage
 
@@ -34,23 +34,53 @@ Currently, we support only those types of links:
 
 - `[ItemName]` and ``[`ItemName`]`` (where `ItemName` is a valid path to an item).
 
-## Linking to the source code GitHub repository
+## Linking to the source code VCS repository
 
-Use flag `--remote-base-url` or set `SCARB_DOC_REMOTE_BASE_URL` environmental variable to link to the source code of the package in the GitHub repository. Each item subpage will be linked to the corresponding source code file.
-For example:
+You can add "View source" links in generated docs that point to your VCS repository. There are two ways to enable linking:
+
+#### 1. Use the package manifest [`repository`](../reference/manifest.md#repository) field
+
+If your package manifest `Scarb.toml` specifies a [`repository`](../reference/manifest.md#repository) that points to a VCS project website, Scarb can compose links automatically. This requires running `scarb doc` command in a VCS repository that Scarb can discover. If Git repository discovery fails, remote linking is disabled for this package.
+
+#### 2. Explicit base URL (CLI/env)
+
+Provide a VCS project website via flag `--remote-base-url` or `SCARB_DOC_REMOTE_BASE_URL` environmental variable. Scarb will append the file path (relative to the workspace root) and, when available, a VCS line range anchor.
+
+Example:
 
 ```shell
 scarb doc --remote-base-url=https://github.com/ExampleRepoOwner/ExampleRepoProject/blob/example_branch/
 ```
 
-Scarb constructs urls combining: the remote base url, the relative path to the file from the package root, and line anchors when relevant. It does not check whether the links are valid or if they were resolved correctly. It is up to the user to provide a correct base url and verify the results.
-Example url for an item in a workspace package named `hello_world` with a relative path `src/lib.cairo`, line anchor start `10`, end `15`, and `SCARB_DOC_REMOTE_BASE_URL` like above, will be:
+If a workspace package named `hello_world` contains `src/lib.cairo` and an item spans lines 10–15, the link will look like:
 
 ```
 https://github.com/ExampleRepoOwner/ExampleRepoProject/blob/example_branch/hello_world/src/lib.cairo#L10-L15
 ```
 
-Note, it's relevant for Markdown output only.
+Note that Scarb does not validate that the link targets exist. You must provide a correct base URL and verify the results yourself.
+
+Precedence and disabling:
+
+- If both a manifest `repository` and `--remote-base-url` are provided, the `--remote-base-url` flag takes precedence for link generation.
+- To turn off link generation, use `--disable-remote-linking`.
+
+Output format constraints:
+
+- Remote linking is supported for Markdown output only.
+
+Requirements:
+
+- Linking requires either a manifest `repository` or an explicit `--remote-base-url`. If neither is configured and linking is not disabled, Scarb will error.
+
+Officially supported VCS providers:
+
+- GitHub
+- GitLab
+
+Scarb does not automatically detect your repository host. Instead, it assumes a standard URL structure common to the providers listed above.
+
+While other VCS hosts are not officially supported, they may still work if they follow the same URL formatting for file browsing and line anchors (e.g., using `/blob/` for file paths and `#L` for line ranges). We may add official support or configuration options for other providers in the future based on community demand.
 
 ## mdBook
 
@@ -124,9 +154,9 @@ pub fn main() {
 }
 ````
 
-After running `scarb doc`, inside the target directory, you will see the generated documentation in `mdBook` format which consists of:
+After running `scarb doc` you will see the generated documentation in `mdBook` format inside the target directory. It consists of:
 
-- The `src` directory, which contains the contents of your book in files with Markdown format.
-- The `book.toml` which contains settings for describing how to build your book.
+- The `src` directory, which contains the contents of your book in Markdown format.
+- The `book.toml` file, which contains settings describing how to build your book.
 
-Running `scarb doc --output-format json` will result in a single JSON file inside the target directory with collected documentation inside.
+Running `scarb doc --output-format json` will result in a single JSON file inside the target directory containing the collected documentation.
