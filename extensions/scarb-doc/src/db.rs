@@ -24,11 +24,14 @@ pub struct ScarbDocDatabase {
     storage: salsa::Storage<Self>,
 }
 
+impl Default for ScarbDocDatabase {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ScarbDocDatabase {
-    pub fn new(
-        project_config: ProjectConfig,
-        crates_with_starknet: Vec<&CompilationUnitComponentMetadata>,
-    ) -> Self {
+    pub fn new() -> Self {
         let mut db = Self {
             storage: Default::default(),
         };
@@ -40,8 +43,6 @@ impl ScarbDocDatabase {
 
         db.use_cfg(&Self::initial_cfg_set());
         db.set_default_plugins_from_suite(get_default_plugin_suite());
-        db.apply_project_config(project_config);
-        db.apply_starknet_plugin(crates_with_starknet);
 
         db
     }
@@ -50,11 +51,11 @@ impl ScarbDocDatabase {
         CfgSet::from_iter([Cfg::name("doc")])
     }
 
-    fn apply_project_config(&mut self, config: ProjectConfig) {
+    pub fn apply_project_config(&mut self, config: ProjectConfig) {
         update_crate_roots_from_project_config(self, &config);
     }
 
-    fn apply_starknet_plugin(&mut self, components: Vec<&CompilationUnitComponentMetadata>) {
+    pub fn apply_starknet_plugin(&mut self, components: Vec<&CompilationUnitComponentMetadata>) {
         for component in components {
             let plugin_suite = [get_default_plugin_suite(), starknet_plugin_suite()]
                 .into_iter()

@@ -2,11 +2,12 @@ use anyhow::{Result, ensure};
 use camino::Utf8PathBuf;
 use clap::Parser;
 use mimalloc::MiMalloc;
+use scarb_doc::db::ScarbDocDatabase;
 use scarb_doc::diagnostics::print_diagnostics;
 use scarb_doc::docs_generation::common::OutputFilesExtension;
 use scarb_doc::docs_generation::markdown::{MarkdownContent, WorkspaceMarkdownBuilder};
 use scarb_doc::errors::{MetadataCommandError, PackagesSerializationError};
-use scarb_doc::linking::discover_repo_ctx;
+use scarb_doc::linking::{RemoteDocLinkingParams, discover_repo_ctx};
 use scarb_doc::metadata::get_target_dir;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 use scarb_doc::{PackageInformation, generate_package_context, generate_package_information};
@@ -41,21 +42,27 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
     let remote_base_url_flag = args.remote_base_url.clone();
 
+    let mut db = ScarbDocDatabase::new();
+
     if args.packages_filter.get_workspace() & !matches!(args.output_format, OutputFormat::Json) {
         let mut builder = WorkspaceMarkdownBuilder::new(args.output_format.into());
 
         for pm in &metadata_for_packages {
-            let ctx = generate_package_context(&metadata, pm, args.document_private_items)?;
+            let ctx =
+                generate_package_context(&mut db, &metadata, pm, args.document_private_items)?;
             let (repo_root, commit_hash) = discover_repo_ctx(&workspace_root);
 
             let package_info = generate_package_information(
+                &db,
                 &ctx,
                 &ui,
-                &workspace_root,
-                &repo_root,
-                &commit_hash,
-                args.disable_remote_linking,
-                &remote_base_url_flag,
+                RemoteDocLinkingParams {
+                    workspace_root: &workspace_root,
+                    repo_root: &repo_root,
+                    commit_hash: &commit_hash,
+                    disable_linking: args.disable_remote_linking,
+                    remote_base_url: &remote_base_url_flag,
+                },
             )?;
             print_diagnostics(&ui);
             builder.add_package(&package_info)?;
@@ -98,16 +105,20 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
             ),
         };
         for pm in &metadata_for_packages {
-            let ctx = generate_package_context(&metadata, pm, args.document_private_items)?;
+            let ctx =
+                generate_package_context(&mut db, &metadata, pm, args.document_private_items)?;
             let (repo_root, commit_hash) = discover_repo_ctx(&workspace_root);
             let info = generate_package_information(
+                &db,
                 &ctx,
                 &ui,
-                &workspace_root,
-                &repo_root,
-                &commit_hash,
-                disable_remote_linking,
-                &remote_base_url_flag,
+                RemoteDocLinkingParams {
+                    workspace_root: &workspace_root,
+                    repo_root: &repo_root,
+                    commit_hash: &commit_hash,
+                    disable_linking: disable_remote_linking,
+                    remote_base_url: &remote_base_url_flag,
+                },
             )?;
             print_diagnostics(&ui);
             output.write(info)?;
