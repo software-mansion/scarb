@@ -6,6 +6,14 @@ use scarb_ui::Ui;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
 
+pub struct RemoteDocLinkingParams<'a> {
+    pub workspace_root: &'a Utf8PathBuf,
+    pub repo_root: &'a Option<PathBuf>,
+    pub commit_hash: &'a Option<String>,
+    pub disable_linking: bool,
+    pub remote_base_url: &'a Option<String>,
+}
+
 /// A data holder necessary for creating documentation links to a remote repository.
 #[derive(Clone)]
 pub enum RemoteDocLinkingData {

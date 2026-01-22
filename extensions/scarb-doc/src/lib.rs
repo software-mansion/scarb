@@ -5,11 +5,10 @@ use crate::db::ScarbDocDatabase;
 use crate::metadata::compilation::{
     crates_with_starknet, get_project_config, get_relevant_compilation_unit,
 };
-use std::path::PathBuf;
 
 use crate::types::crate_type::Crate;
 
-use crate::linking::{RemoteDocLinkingData, resolve_remote_linking_data};
+use crate::linking::{RemoteDocLinkingData, RemoteDocLinkingParams, resolve_remote_linking_data};
 use anyhow::Result;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
@@ -19,7 +18,6 @@ use cairo_lang_filesystem::{
     ids::{CrateId, CrateLongId},
 };
 use cairo_lang_utils::Intern;
-use camino::Utf8PathBuf;
 use errors::DiagnosticError;
 use itertools::Itertools;
 use scarb_metadata::{
@@ -56,7 +54,6 @@ pub struct AdditionalMetadata {
 }
 
 pub struct PackageContext {
-    pub db: ScarbDocDatabase,
     pub should_document_private_items: bool,
     pub metadata: AdditionalMetadata,
     package_compilation_unit: Option<CompilationUnitMetadata>,
@@ -64,6 +61,7 @@ pub struct PackageContext {
 }
 
 pub fn generate_package_context(
+    db: &mut ScarbDocDatabase,
     metadata: &Metadata,
     package_metadata: &PackageMetadata,
     document_private_items: bool,
@@ -84,10 +82,11 @@ pub fn generate_package_context(
 
     let compilation_unit_metadata =
         get_relevant_compilation_unit(metadata, package_metadata.id.clone())?;
+
     let project_config = get_project_config(metadata, package_metadata, compilation_unit_metadata)?;
     let crates_with_starknet = crates_with_starknet(metadata, compilation_unit_metadata);
-
-    let db = ScarbDocDatabase::new(project_config, crates_with_starknet);
+    db.apply_project_config(project_config);
+    db.apply_starknet_plugin(crates_with_starknet);
 
     let main_component = compilation_unit_metadata
         .components
@@ -102,7 +101,6 @@ pub fn generate_package_context(
         .cloned();
 
     Ok(PackageContext {
-        db,
         should_document_private_items,
         package_compilation_unit,
         main_component: main_component.clone(),
@@ -115,16 +113,11 @@ pub fn generate_package_context(
 }
 
 pub fn generate_package_information<'a>(
+    db: &'a ScarbDocDatabase,
     context: &'a PackageContext,
     ui: &Ui,
-    workspace_root: &Utf8PathBuf,
-    repo_root: &Option<PathBuf>,
-    commit_hash: &Option<String>,
-    disable_linking: bool,
-    remote_base_url: &Option<String>,
+    remote_doc_linking_params: RemoteDocLinkingParams,
 ) -> Result<PackageInformation<'a>> {
-    let db = &context.db;
-
     let main_crate_id = CrateLongId::Real {
         name: SmolStrId::from(db, context.main_component.name.as_str()),
         discriminator: context
@@ -151,6 +144,14 @@ pub fn generate_package_information<'a>(
     }
 
     let crate_ = crate_?;
+
+    let RemoteDocLinkingParams {
+        workspace_root,
+        repo_root,
+        commit_hash,
+        disable_linking,
+        remote_base_url,
+    } = remote_doc_linking_params;
 
     let remote_linking_data = resolve_remote_linking_data(
         ui,
