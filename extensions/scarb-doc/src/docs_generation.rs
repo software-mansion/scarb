@@ -1,5 +1,4 @@
 use crate::location_links::DocLocationLink;
-use crate::types::item_data::FileLinkData;
 use crate::types::module_type::Module;
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
@@ -8,6 +7,7 @@ use crate::types::other_types::{
 };
 use crate::types::struct_types::{Member, Struct};
 use cairo_lang_doc::parser::DocumentationCommentToken;
+use std::ops::Range;
 
 pub mod common;
 pub mod markdown;
@@ -80,7 +80,8 @@ pub trait DocItem {
     fn doc_location_links(&self) -> &Vec<DocLocationLink>;
     fn markdown_formatted_path(&self) -> String;
     fn group_name(&self) -> &Option<String>;
-    fn file_link_data(&self) -> Option<FileLinkData>;
+    fn file_path(&self) -> &String;
+    fn location_in_file(&self) -> &Option<Range<usize>>;
 }
 
 macro_rules! impl_doc_item {
@@ -116,8 +117,12 @@ macro_rules! impl_doc_item {
                 &self.item_data.group
             }
 
-            fn file_link_data(&self) -> Option<FileLinkData> {
-                self.item_data.file_link_data.clone()
+            fn file_path(&self) -> &String {
+                &self.item_data.file_path
+            }
+
+            fn location_in_file(&self) -> &Option<Range<usize>> {
+                &self.item_data.location_in_file
             }
         }
     };

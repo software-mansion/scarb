@@ -212,11 +212,10 @@ pub trait MarkdownDocItem: DocItem {
     }
 
     fn get_source_code_link(&self, context: &MarkdownGenerationContext) -> Option<String> {
-        let file_link_data = self.file_link_data()?;
-        let full_path = Path::new(file_link_data.file_path.as_str());
+        let full_path = Path::new(self.file_path());
         context
             .remote_linking_data
-            .get_formatted_url(file_link_data.location, full_path)
+            .get_formatted_url(self.location_in_file(), full_path)
     }
 }
 

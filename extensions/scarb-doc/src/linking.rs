@@ -35,7 +35,7 @@ pub enum RemoteDocLinkingData {
 impl RemoteDocLinkingData {
     pub fn get_formatted_url(
         &self,
-        offset: Option<Range<usize>>,
+        offset: &Option<Range<usize>>,
         file_path: &Path,
     ) -> Option<String> {
         let postfix = if let Some(Range { start, end }) = offset {
