@@ -2,24 +2,17 @@ use crate::attributes::find_groups_from_attributes;
 use crate::db::ScarbDocDatabase;
 use crate::location_links::DocLocationLink;
 use crate::types::other_types::doc_full_path;
-use cairo_lang_defs::db::{DefsGroup, ext_as_virtual_impl};
+use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleId, TopLevelLanguageElementId};
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_doc::parser::DocumentationCommentToken;
-use cairo_lang_filesystem::ids::{CrateId, FileLongId, SpanInFile};
+use cairo_lang_filesystem::db::get_originating_location;
+use cairo_lang_filesystem::ids::CrateId;
 use serde::Serialize;
 use serde::Serializer;
 use std::fmt::Debug;
 use std::ops::Range;
-
-/// Serves resolving the source code link for a documented item.
-#[derive(Debug, Clone)]
-pub struct FileLinkData {
-    pub file_path: String,
-    /// Start-offset and end-offset of the link in the file.
-    pub location: Option<Range<usize>>,
-}
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ItemData<'db> {
@@ -35,8 +28,12 @@ pub struct ItemData<'db> {
     #[serde(skip_serializing)]
     pub doc_location_links: Vec<DocLocationLink>,
     pub group: Option<String>,
+    /// Path to the closest `FileLongId::OnDisk` file containing the item.
     #[serde(skip_serializing)]
-    pub file_link_data: Option<FileLinkData>,
+    pub file_path: String,
+    /// Start-offset and end-offset of the link in the file.
+    #[serde(skip_serializing)]
+    pub location_in_file: Option<Range<usize>>,
 }
 
 impl<'db> ItemData<'db> {
@@ -53,6 +50,7 @@ impl<'db> ItemData<'db> {
             .map(|link| DocLocationLink::new(link.start, link.end, link.item_id, db))
             .collect::<Vec<_>>();
         let group = find_groups_from_attributes(db, &id);
+        let (file_path, span_in_file) = get_file_and_location_in_file_data(db, &id);
         Self {
             id: documentable_item_id,
             name: id.name(db).to_string(db),
@@ -62,7 +60,8 @@ impl<'db> ItemData<'db> {
             parent_full_path: Some(parent_full_path),
             doc_location_links,
             group,
-            file_link_data: get_file_link_data(db, &id),
+            file_path,
+            location_in_file: span_in_file,
         }
     }
 
@@ -71,6 +70,7 @@ impl<'db> ItemData<'db> {
         id: impl TopLevelLanguageElementId<'db>,
         documentable_item_id: DocumentableItemId<'db>,
     ) -> Self {
+        let (file_path, span_in_file) = get_file_and_location_in_file_data(db, &id);
         Self {
             id: documentable_item_id,
             name: id.name(db).to_string(db),
@@ -84,7 +84,8 @@ impl<'db> ItemData<'db> {
             parent_full_path: Some(doc_full_path(&id.parent_module(db), db)),
             doc_location_links: vec![],
             group: find_groups_from_attributes(db, &id),
-            file_link_data: get_file_link_data(db, &id),
+            file_path,
+            location_in_file: span_in_file,
         }
     }
 
@@ -92,10 +93,10 @@ impl<'db> ItemData<'db> {
         let documentable_id = DocumentableItemId::Crate(id);
 
         let module_id = ModuleId::CrateRoot(id);
-        let file_path = match db.module_main_file(module_id) {
-            Ok(main_file) => Some(main_file.full_path(db)),
-            _ => None,
-        };
+        let file_path = db
+            .module_main_file(module_id)
+            .expect("Crate main file should always exist.")
+            .full_path(db);
 
         Self {
             id: documentable_id,
@@ -106,10 +107,8 @@ impl<'db> ItemData<'db> {
             parent_full_path: None,
             doc_location_links: vec![],
             group: None,
-            file_link_data: file_path.map(|fp| FileLinkData {
-                file_path: fp,
-                location: None,
-            }),
+            file_path,
+            location_in_file: None,
         }
     }
 }
@@ -131,7 +130,9 @@ pub struct SubItemData<'db> {
     #[serde(skip_serializing)]
     pub group: Option<String>,
     #[serde(skip_serializing)]
-    pub file_link_data: Option<FileLinkData>,
+    pub file_path: String,
+    #[serde(skip_serializing)]
+    pub location_in_file: Option<Range<usize>>,
 }
 
 impl<'db> From<SubItemData<'db>> for ItemData<'db> {
@@ -145,7 +146,8 @@ impl<'db> From<SubItemData<'db>> for ItemData<'db> {
             full_path: val.full_path,
             doc_location_links: val.doc_location_links,
             group: val.group,
-            file_link_data: val.file_link_data,
+            file_path: val.file_path,
+            location_in_file: val.location_in_file,
         }
     }
 }
@@ -161,7 +163,8 @@ impl<'db> From<ItemData<'db>> for SubItemData<'db> {
             full_path: val.full_path,
             doc_location_links: val.doc_location_links,
             group: val.group,
-            file_link_data: val.file_link_data,
+            file_path: val.file_path,
+            location_in_file: val.location_in_file,
         }
     }
 }
@@ -185,50 +188,28 @@ where
     }
 }
 
-fn get_file_link_data<'db>(
+pub fn get_file_and_location_in_file_data<'db>(
     db: &'db ScarbDocDatabase,
     id: &impl TopLevelLanguageElementId<'db>,
-) -> Option<FileLinkData> {
-    let span = id.stable_location(db).span_in_file(db);
-    get_file_link_data_from_span(db, span)
-}
+) -> (String, Option<Range<usize>>) {
+    let originating_location =
+        get_originating_location(db, id.stable_location(db).span_in_file(db), None);
+    let start_line = originating_location
+        .span
+        .start
+        .position_in_file(db, originating_location.file_id)
+        .map(|pos| pos.line);
 
-pub fn get_file_link_data_from_span(
-    db: &ScarbDocDatabase,
-    span: SpanInFile,
-) -> Option<FileLinkData> {
-    match span.file_id.long(db) {
-        FileLongId::OnDisk(_) => {
-            let start_line = span
-                .span
-                .start
-                .position_in_file(db, span.file_id)
-                .map(|pos| pos.line);
+    let end_line = originating_location
+        .span
+        .end
+        .position_in_file(db, originating_location.file_id)
+        .map(|pos| pos.line);
 
-            let end_line = span
-                .span
-                .end
-                .position_in_file(db, span.file_id)
-                .map(|pos| pos.line);
+    let location = match (start_line, end_line) {
+        (Some(start), Some(end)) => Some(Range { start, end }),
+        _ => None,
+    };
 
-            let location = match (start_line, end_line) {
-                (Some(start), Some(end)) => Some(Range { start, end }),
-                _ => None,
-            };
-
-            Some(FileLinkData {
-                file_path: span.file_id.full_path(db),
-                location,
-            })
-        }
-        FileLongId::External(external_id) => {
-            let virtual_file = ext_as_virtual_impl(db, *external_id);
-            let parent = virtual_file.parent?;
-            get_file_link_data_from_span(db, parent)
-        }
-        FileLongId::Virtual(virtual_file) => {
-            let parent = virtual_file.parent?;
-            get_file_link_data_from_span(db, parent)
-        }
-    }
+    (originating_location.file_id.full_path(db), location)
 }
