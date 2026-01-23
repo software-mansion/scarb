@@ -11,6 +11,7 @@ mod book_toml;
 pub mod context;
 mod summary;
 pub mod traits;
+use crate::db::ScarbDocDatabase;
 use crate::docs_generation::common::{
     GeneratedFile, OutputFilesExtension, SummaryIndexMap, SummaryListItem,
 };
@@ -38,10 +39,12 @@ pub struct MarkdownContent {
 
 impl MarkdownContent {
     pub fn from_crate(
+        db: &ScarbDocDatabase,
         package_information: &PackageInformation,
         format: OutputFilesExtension,
     ) -> Result<Self> {
         let (summary, doc_files) = generate_summary_file_content(
+            db,
             &package_information.crate_,
             format,
             &package_information.remote_linking_data,
@@ -75,12 +78,17 @@ impl WorkspaceMarkdownBuilder {
         }
     }
 
-    pub fn add_package(&mut self, package_information: &PackageInformation) -> Result<()> {
+    pub fn add_package(
+        &mut self,
+        db: &ScarbDocDatabase,
+        package_information: &PackageInformation,
+    ) -> Result<()> {
         if self.book_toml.is_none() {
             self.book_toml = Some(generate_book_toml_content(&package_information.metadata));
         }
 
         let (summary, files) = generate_summary_file_content(
+            db,
             &package_information.crate_,
             self.output_format,
             &package_information.remote_linking_data,

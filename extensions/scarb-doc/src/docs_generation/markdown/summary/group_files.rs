@@ -1,3 +1,4 @@
+use crate::db::ScarbDocDatabase;
 use crate::docs_generation::TopLevelItems;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::summary::files::{
@@ -23,6 +24,7 @@ macro_rules! generate_group_markdown {
 }
 
 pub fn generate_global_groups_summary_files(
+    db: &ScarbDocDatabase,
     groups: &[Group],
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
@@ -66,8 +68,13 @@ pub fn generate_global_groups_summary_files(
             )?);
 
             doc_files.extend(
-                generate_doc_files_for_module_items(&top_level_items, context, summary_index_map)?
-                    .to_owned(),
+                generate_doc_files_for_module_items(
+                    db,
+                    &top_level_items,
+                    context,
+                    summary_index_map,
+                )?
+                .to_owned(),
             );
 
             doc_files.push((
@@ -78,7 +85,7 @@ pub fn generate_global_groups_summary_files(
             if !top_level_items.modules.is_empty() {
                 for submodule in group.submodules.iter() {
                     let sub_summaries =
-                        &generate_modules_summary_files(submodule, context, summary_index_map)?;
+                        &generate_modules_summary_files(db, submodule, context, summary_index_map)?;
                     doc_files.extend::<Vec<(String, String)>>(sub_summaries.to_owned());
                 }
             };

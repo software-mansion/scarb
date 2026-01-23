@@ -1,4 +1,5 @@
 use super::context::MarkdownGenerationContext;
+use crate::db::ScarbDocDatabase;
 use crate::docs_generation::markdown::{
     BASE_MODULE_CHAPTER_PREFIX, GROUP_CHAPTER_PREFIX, SHORT_DOCUMENTATION_AVOID_PREFIXES,
     SHORT_DOCUMENTATION_LEN, SummaryIndexMap,
@@ -14,10 +15,14 @@ use crate::types::other_types::{
 };
 use crate::types::struct_types::{Member, Struct};
 use anyhow::Result;
+use cairo_lang_defs::db::DefsGroup;
+use cairo_lang_defs::ids::ModuleId;
+use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_doc::parser::{CommentLinkToken, DocumentationCommentToken};
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt::Write;
+use std::ops::Range;
 use std::option::Option;
 use std::path::Path;
 
@@ -79,6 +84,7 @@ macro_rules! impl_markdown_doc_item {
         impl MarkdownDocItem for $ty {
             fn generate_markdown(
                 &self,
+                _db: &ScarbDocDatabase,
                 context: &MarkdownGenerationContext,
                 header_level: usize,
                 item_suffix: Option<usize>,
@@ -132,6 +138,7 @@ impl_markdown_doc_item!(TraitType<'_>);
 pub trait MarkdownDocItem: DocItem {
     fn generate_markdown(
         &self,
+        db: &ScarbDocDatabase,
         context: &MarkdownGenerationContext,
         header_level: usize,
         item_suffix: Option<usize>,
@@ -211,11 +218,45 @@ pub trait MarkdownDocItem: DocItem {
         get_linked_path(self.full_path(), files_extension)
     }
 
-    fn get_source_code_link(&self, context: &MarkdownGenerationContext) -> Option<String> {
-        let full_path = Path::new(self.file_path());
-        context
-            .remote_linking_data
-            .get_formatted_url(self.location_in_file(), full_path)
+    fn get_source_code_link(
+        &self,
+        db: &ScarbDocDatabase,
+        context: &MarkdownGenerationContext,
+    ) -> Option<String> {
+        if let Some(span) = self.span_in_file() {
+            let start_line = span
+                .span
+                .start
+                .position_in_file(db, span.file_id)
+                .map(|pos| pos.line);
+
+            let end_line = span
+                .span
+                .end
+                .position_in_file(db, span.file_id)
+                .map(|pos| pos.line);
+
+            let file_path = span.file_id.full_path(db);
+            let location = match (start_line, end_line) {
+                (Some(start), Some(end)) => Some(Range { start, end }),
+                _ => None,
+            };
+            context
+                .remote_linking_data
+                .get_formatted_url(&location, Path::new(&file_path))
+        } else if let DocumentableItemId::Crate(id) = self.documentable_id() {
+            let module_id = ModuleId::CrateRoot(*id);
+            let file_path = db
+                .module_main_file(module_id)
+                .expect("Crate main file should always exist.")
+                .full_path(db);
+
+            context
+                .remote_linking_data
+                .get_formatted_url(&None, Path::new(&file_path))
+        } else {
+            None
+        }
     }
 }
 
@@ -225,28 +266,37 @@ where
 {
     fn generate_markdown(
         &self,
+        db: &ScarbDocDatabase,
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)
+        generate_markdown_from_item_data(db, self, context, header_level, None, summary_index_map)
     }
 }
 
 impl<'db> MarkdownDocItem for Enum<'db> {
     fn generate_markdown(
         &self,
+        db: &ScarbDocDatabase,
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown =
-            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
+        let mut markdown = generate_markdown_from_item_data(
+            db,
+            self,
+            context,
+            header_level,
+            None,
+            summary_index_map,
+        )?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
         markdown += &generate_markdown_for_subitems(
             &self.variants,
+            db,
             context,
             header_level,
             &mut suffix_calculator,
@@ -260,17 +310,25 @@ impl<'db> MarkdownDocItem for Enum<'db> {
 impl<'db> MarkdownDocItem for Impl<'db> {
     fn generate_markdown(
         &self,
+        db: &ScarbDocDatabase,
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown =
-            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
+        let mut markdown = generate_markdown_from_item_data(
+            db,
+            self,
+            context,
+            header_level,
+            None,
+            summary_index_map,
+        )?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
         markdown += &generate_markdown_for_subitems(
             &self.impl_constants,
+            db,
             context,
             header_level,
             &mut suffix_calculator,
@@ -279,6 +337,7 @@ impl<'db> MarkdownDocItem for Impl<'db> {
 
         markdown += &generate_markdown_for_subitems(
             &self.impl_functions,
+            db,
             context,
             header_level,
             &mut suffix_calculator,
@@ -287,6 +346,7 @@ impl<'db> MarkdownDocItem for Impl<'db> {
 
         markdown += &generate_markdown_for_subitems(
             &self.impl_types,
+            db,
             context,
             header_level,
             &mut suffix_calculator,
@@ -384,13 +444,20 @@ fn generate_pub_use_item_markdown(
 impl<'db> MarkdownDocItem for Module<'db> {
     fn generate_markdown(
         &self,
+        db: &ScarbDocDatabase,
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown =
-            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
+        let mut markdown = generate_markdown_from_item_data(
+            db,
+            self,
+            context,
+            header_level,
+            None,
+            summary_index_map,
+        )?;
 
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.submodules.iter().collect_vec(),
@@ -480,17 +547,25 @@ impl<'db> MarkdownDocItem for Module<'db> {
 impl<'db> MarkdownDocItem for Struct<'db> {
     fn generate_markdown(
         &self,
+        db: &ScarbDocDatabase,
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown =
-            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
+        let mut markdown = generate_markdown_from_item_data(
+            db,
+            self,
+            context,
+            header_level,
+            None,
+            summary_index_map,
+        )?;
 
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
         markdown += &generate_markdown_for_subitems(
             &self.members,
+            db,
             context,
             header_level,
             &mut suffix_calculator,
@@ -504,17 +579,25 @@ impl<'db> MarkdownDocItem for Struct<'db> {
 impl<'db> MarkdownDocItem for Trait<'db> {
     fn generate_markdown(
         &self,
+        db: &ScarbDocDatabase,
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
         summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown =
-            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
+        let mut markdown = generate_markdown_from_item_data(
+            db,
+            self,
+            context,
+            header_level,
+            None,
+            summary_index_map,
+        )?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
         markdown += &generate_markdown_for_subitems(
             &self.trait_constants,
+            db,
             context,
             header_level,
             &mut suffix_calculator,
@@ -522,6 +605,7 @@ impl<'db> MarkdownDocItem for Trait<'db> {
         )?;
         markdown += &generate_markdown_for_subitems(
             &self.trait_functions,
+            db,
             context,
             header_level,
             &mut suffix_calculator,
@@ -529,6 +613,7 @@ impl<'db> MarkdownDocItem for Trait<'db> {
         )?;
         markdown += &generate_markdown_for_subitems(
             &self.trait_types,
+            db,
             context,
             header_level,
             &mut suffix_calculator,
@@ -770,6 +855,7 @@ pub fn generate_markdown_table_summary_for_reexported_subitems<T: TopLevelMarkdo
 
 fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
     subitems: &[T],
+    db: &ScarbDocDatabase,
     context: &MarkdownGenerationContext,
     header_level: usize,
     suffix_calculator: &mut ItemSuffixCalculator,
@@ -787,7 +873,7 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
             writeln!(
                 &mut markdown,
                 "{}",
-                item.generate_markdown(context, header_level + 2, postfix, summary_index_map)?
+                item.generate_markdown(db, context, header_level + 2, postfix, summary_index_map)?
             )?;
         }
     }
@@ -796,6 +882,7 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
 }
 
 fn generate_markdown_from_item_data(
+    db: &ScarbDocDatabase,
     doc_item: &impl MarkdownDocItem,
     context: &MarkdownGenerationContext,
     header_level: usize,
@@ -807,7 +894,7 @@ fn generate_markdown_from_item_data(
     let header = context.get_header(header_level, doc_item.name(), doc_item.full_path());
     writeln!(&mut markdown, "{}\n", header)?;
 
-    if let Some(source_code_link) = doc_item.get_source_code_link(context) {
+    if let Some(source_code_link) = doc_item.get_source_code_link(db, context) {
         writeln!(&mut markdown, "{source_code_link}\n")?;
     }
 

@@ -1,3 +1,4 @@
+use crate::db::ScarbDocDatabase;
 use crate::docs_generation::common::Filename;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::traits::{
@@ -36,6 +37,7 @@ macro_rules! module_summary {
 }
 
 pub fn generate_modules_summary_files(
+    db: &ScarbDocDatabase,
     module: &Module,
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
@@ -79,14 +81,14 @@ pub fn generate_modules_summary_files(
     )?;
 
     doc_files.extend::<Vec<(String, String)>>(
-        generate_doc_files_for_module_items(&top_level_items, context, summary_index_map)?
+        generate_doc_files_for_module_items(db, &top_level_items, context, summary_index_map)?
             .to_owned(),
     );
 
     if !top_level_items.modules.is_empty() {
         for submodule in module.submodules.iter() {
             let sub_summaries =
-                &generate_modules_summary_files(submodule, context, summary_index_map)?;
+                &generate_modules_summary_files(db, submodule, context, summary_index_map)?;
             doc_files.extend::<Vec<(String, String)>>(sub_summaries.to_owned());
         }
     }
@@ -94,6 +96,7 @@ pub fn generate_modules_summary_files(
 }
 
 pub fn generate_foreign_crates_summary_files(
+    db: &ScarbDocDatabase,
     foreign_modules: &Vec<Module>,
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
@@ -103,10 +106,10 @@ pub fn generate_foreign_crates_summary_files(
     for module in foreign_modules {
         summary_files.extend(vec![(
             module.filename(context.files_extension),
-            module.generate_markdown(context, BASE_HEADER_LEVEL, None, summary_index_map)?,
+            module.generate_markdown(db, context, BASE_HEADER_LEVEL, None, summary_index_map)?,
         )]);
         let module_item_summaries =
-            &generate_modules_summary_files(module, context, summary_index_map)?;
+            &generate_modules_summary_files(db, module, context, summary_index_map)?;
         summary_files.extend(module_item_summaries.to_owned());
     }
     Ok(summary_files)
@@ -143,43 +146,55 @@ pub fn generate_summary_files_for_module_items(
 }
 
 pub fn generate_doc_files_for_module_items(
+    db: &ScarbDocDatabase,
     top_level_items: &TopLevelItems,
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
 ) -> Result<Vec<(String, String)>> {
     Ok(chain!(
-        generate_top_level_docs_contents(&top_level_items.modules, context, summary_index_map)?,
-        generate_top_level_docs_contents(&top_level_items.constants, context, summary_index_map)?,
+        generate_top_level_docs_contents(db, &top_level_items.modules, context, summary_index_map)?,
         generate_top_level_docs_contents(
+            db,
+            &top_level_items.constants,
+            context,
+            summary_index_map
+        )?,
+        generate_top_level_docs_contents(
+            db,
             &top_level_items.free_functions,
             context,
             summary_index_map
         )?,
-        generate_top_level_docs_contents(&top_level_items.structs, context, summary_index_map)?,
-        generate_top_level_docs_contents(&top_level_items.enums, context, summary_index_map)?,
+        generate_top_level_docs_contents(db, &top_level_items.structs, context, summary_index_map)?,
+        generate_top_level_docs_contents(db, &top_level_items.enums, context, summary_index_map)?,
         generate_top_level_docs_contents(
+            db,
             &top_level_items.type_aliases,
             context,
             summary_index_map
         )?,
         generate_top_level_docs_contents(
+            db,
             &top_level_items.impl_aliases,
             context,
             summary_index_map,
         )?,
-        generate_top_level_docs_contents(&top_level_items.traits, context, summary_index_map,)?,
-        generate_top_level_docs_contents(&top_level_items.impls, context, summary_index_map,)?,
+        generate_top_level_docs_contents(db, &top_level_items.traits, context, summary_index_map,)?,
+        generate_top_level_docs_contents(db, &top_level_items.impls, context, summary_index_map,)?,
         generate_top_level_docs_contents(
+            db,
             &top_level_items.extern_types,
             context,
             summary_index_map,
         )?,
         generate_top_level_docs_contents(
+            db,
             &top_level_items.extern_functions,
             context,
             summary_index_map,
         )?,
         generate_top_level_docs_contents(
+            db,
             &top_level_items.macro_declarations,
             context,
             summary_index_map,
@@ -189,6 +204,7 @@ pub fn generate_doc_files_for_module_items(
 }
 
 fn generate_top_level_docs_contents(
+    db: &ScarbDocDatabase,
     items: &[&impl TopLevelMarkdownDocItem],
     context: &MarkdownGenerationContext,
     summary_index_map: &SummaryIndexMap,
@@ -196,7 +212,7 @@ fn generate_top_level_docs_contents(
     items
         .iter()
         .map(|item| {
-            item.generate_markdown(context, BASE_HEADER_LEVEL, None, summary_index_map)
+            item.generate_markdown(db, context, BASE_HEADER_LEVEL, None, summary_index_map)
                 .map(|markdown| (item.filename(context.files_extension), markdown))
         })
         .collect()

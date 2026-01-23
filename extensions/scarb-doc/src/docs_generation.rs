@@ -6,8 +6,9 @@ use crate::types::other_types::{
     TypeAlias, Variant,
 };
 use crate::types::struct_types::{Member, Struct};
+use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_doc::parser::DocumentationCommentToken;
-use std::ops::Range;
+use cairo_lang_filesystem::ids::SpanInFile;
 
 pub mod common;
 pub mod markdown;
@@ -73,6 +74,7 @@ impl TopLevelDocItem for MacroDeclaration<'_> {}
 pub trait DocItem {
     const HEADER: &'static str;
 
+    fn documentable_id(&self) -> &DocumentableItemId<'_>;
     fn name(&self) -> &str;
     fn doc(&self) -> &Option<Vec<DocumentationCommentToken<'_>>>;
     fn signature(&self) -> &Option<String>;
@@ -80,14 +82,17 @@ pub trait DocItem {
     fn doc_location_links(&self) -> &Vec<DocLocationLink>;
     fn markdown_formatted_path(&self) -> String;
     fn group_name(&self) -> &Option<String>;
-    fn file_path(&self) -> &String;
-    fn location_in_file(&self) -> &Option<Range<usize>>;
+    fn span_in_file(&self) -> &Option<SpanInFile<'_>>;
 }
 
 macro_rules! impl_doc_item {
     ($t:ty, $name:expr) => {
         impl DocItem for $t {
             const HEADER: &'static str = $name;
+
+            fn documentable_id(&self) -> &DocumentableItemId<'_> {
+                &self.item_data.id
+            }
 
             fn name(&self) -> &str {
                 &self.item_data.name
@@ -117,12 +122,8 @@ macro_rules! impl_doc_item {
                 &self.item_data.group
             }
 
-            fn file_path(&self) -> &String {
-                &self.item_data.file_path
-            }
-
-            fn location_in_file(&self) -> &Option<Range<usize>> {
-                &self.item_data.location_in_file
+            fn span_in_file(&self) -> &Option<SpanInFile<'_>> {
+                &self.item_data.span_in_file
             }
         }
     };

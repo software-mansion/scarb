@@ -2,6 +2,7 @@ pub mod content;
 pub mod files;
 pub mod group_files;
 
+use crate::db::ScarbDocDatabase;
 use crate::docs_generation::common::OutputFilesExtension;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::summary::content::{
@@ -19,6 +20,7 @@ use anyhow::Result;
 use group_files::generate_global_groups_summary_files;
 
 pub fn generate_summary_file_content(
+    db: &ScarbDocDatabase,
     crate_: &Crate,
     output_format: OutputFilesExtension,
     remote_linking_data: &RemoteDocLinkingData,
@@ -47,6 +49,7 @@ pub fn generate_summary_file_content(
     let mut summary_files = vec![(
         crate_.root_module.filename(context.files_extension),
         crate_.root_module.generate_markdown(
+            db,
             &context,
             BASE_HEADER_LEVEL,
             None,
@@ -55,10 +58,11 @@ pub fn generate_summary_file_content(
     )];
 
     let module_item_summaries =
-        &generate_modules_summary_files(&crate_.root_module, &context, &summary_index_map)?;
+        &generate_modules_summary_files(db, &crate_.root_module, &context, &summary_index_map)?;
     summary_files.extend(module_item_summaries.to_owned());
 
     let foreign_modules_files = generate_foreign_crates_summary_files(
+        db,
         &crate_.foreign_crates,
         &context,
         &summary_index_map,
@@ -67,7 +71,7 @@ pub fn generate_summary_file_content(
     summary_files.extend(foreign_modules_files);
 
     let groups_files =
-        generate_global_groups_summary_files(&crate_.groups, &context, &summary_index_map)?;
+        generate_global_groups_summary_files(db, &crate_.groups, &context, &summary_index_map)?;
     summary_files.extend(groups_files.to_owned());
     Ok((summary_index_map, summary_files))
 }

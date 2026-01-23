@@ -65,7 +65,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
                 },
             )?;
             print_diagnostics(&ui);
-            builder.add_package(&package_info)?;
+            builder.add_package(&db, &package_info)?;
         }
         let content = builder.build()?;
         output_markdown(
@@ -121,7 +121,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
                 },
             )?;
             print_diagnostics(&ui);
-            output.write(info)?;
+            output.write(&db, info)?;
         }
         output.flush()?;
     }
@@ -183,7 +183,7 @@ impl OutputEmit {
         }
     }
 
-    pub fn write(&mut self, package: PackageInformation) -> Result<()> {
+    pub fn write(&mut self, db: &ScarbDocDatabase, package: PackageInformation) -> Result<()> {
         match self {
             OutputEmit::Markdown {
                 output_dir,
@@ -193,7 +193,7 @@ impl OutputEmit {
                 ui,
                 files_extension,
             } => {
-                let content = MarkdownContent::from_crate(&package, *files_extension)?;
+                let content = MarkdownContent::from_crate(db, &package, *files_extension)?;
 
                 output_markdown(
                     content,
