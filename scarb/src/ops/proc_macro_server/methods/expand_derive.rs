@@ -84,8 +84,8 @@ impl Handler for ExpandDerive {
 
             current_width = current_width + TextWidth::from_str(&result.token_stream.to_string());
 
-            if result.code_mappings.is_some() {
-                code_mappings.extend(result.code_mappings.unwrap());
+            if let Some(mappings) = result.code_mappings {
+                code_mappings.extend(mappings);
             }
 
             // Register diagnostics.
