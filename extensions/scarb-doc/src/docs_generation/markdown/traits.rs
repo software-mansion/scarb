@@ -200,7 +200,9 @@ pub trait MarkdownDocItem: DocItem {
         link: &CommentLinkToken,
         context: &MarkdownGenerationContext,
     ) -> String {
-        if let Some(file_path) = context.resolve_markdown_file_path_from_link(link) {
+        if let Some(resolved_id) = self.resolve_doc_link(link)
+            && let Some(file_path) = context.resolve_markdown_file_path_from_item(resolved_id)
+        {
             format!("[{}]({file_path})", link.label.clone(),)
         } else {
             link.label.clone()
