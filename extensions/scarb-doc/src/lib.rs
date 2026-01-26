@@ -29,6 +29,7 @@ use serde::Serialize;
 pub mod attributes;
 pub mod db;
 pub mod diagnostics;
+pub mod doc_link_resolver;
 pub mod docs_generation;
 pub mod errors;
 pub mod linking;

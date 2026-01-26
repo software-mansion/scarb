@@ -6,7 +6,8 @@ use crate::types::other_types::{
     TypeAlias, Variant,
 };
 use crate::types::struct_types::{Member, Struct};
-use cairo_lang_doc::parser::DocumentationCommentToken;
+use cairo_lang_doc::documentable_item::DocumentableItemId;
+use cairo_lang_doc::parser::{CommentLinkToken, DocumentationCommentToken};
 use std::ops::Range;
 
 pub mod common;
@@ -73,11 +74,13 @@ impl TopLevelDocItem for MacroDeclaration<'_> {}
 pub trait DocItem {
     const HEADER: &'static str;
 
+    fn id(&self) -> DocumentableItemId<'_>;
     fn name(&self) -> &str;
-    fn doc(&self) -> &Option<Vec<DocumentationCommentToken<'_>>>;
+    fn doc(&self) -> &Option<Vec<DocumentationCommentToken>>;
     fn signature(&self) -> &Option<String>;
     fn full_path(&self) -> &str;
     fn doc_location_links(&self) -> &Vec<DocLocationLink>;
+    fn resolve_doc_link(&self, link: &CommentLinkToken) -> Option<DocumentableItemId<'_>>;
     fn markdown_formatted_path(&self) -> String;
     fn group_name(&self) -> &Option<String>;
     fn file_path(&self) -> &String;
@@ -89,11 +92,15 @@ macro_rules! impl_doc_item {
         impl DocItem for $t {
             const HEADER: &'static str = $name;
 
+            fn id(&self) -> DocumentableItemId<'_> {
+                self.item_data.id
+            }
+
             fn name(&self) -> &str {
                 &self.item_data.name
             }
 
-            fn doc(&self) -> &Option<Vec<DocumentationCommentToken<'_>>> {
+            fn doc(&self) -> &Option<Vec<DocumentationCommentToken>> {
                 &self.item_data.doc
             }
 
@@ -107,6 +114,11 @@ macro_rules! impl_doc_item {
 
             fn doc_location_links(&self) -> &Vec<DocLocationLink> {
                 &self.item_data.doc_location_links
+            }
+
+            fn resolve_doc_link(&self, link: &CommentLinkToken) -> Option<DocumentableItemId<'_>> {
+                let key = link.md_link.dest_text.as_ref()?;
+                self.item_data.doc_link_targets.get(key.as_str()).copied()
             }
 
             fn markdown_formatted_path(&self) -> String {

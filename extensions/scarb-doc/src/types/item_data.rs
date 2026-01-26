@@ -1,5 +1,6 @@
 use crate::attributes::find_groups_from_attributes;
 use crate::db::ScarbDocDatabase;
+use crate::doc_link_resolver::resolve_linked_item;
 use crate::location_links::DocLocationLink;
 use crate::types::other_types::doc_full_path;
 use cairo_lang_defs::db::DefsGroup;
@@ -11,6 +12,7 @@ use cairo_lang_filesystem::db::get_originating_location;
 use cairo_lang_filesystem::ids::CrateId;
 use serde::Serialize;
 use serde::Serializer;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::ops::Range;
 
@@ -22,11 +24,13 @@ pub struct ItemData<'db> {
     pub parent_full_path: Option<String>,
     pub name: String,
     #[serde(serialize_with = "documentation_serializer")]
-    pub doc: Option<Vec<DocumentationCommentToken<'db>>>,
+    pub doc: Option<Vec<DocumentationCommentToken>>,
     pub signature: Option<String>,
     pub full_path: String,
     #[serde(skip_serializing)]
     pub doc_location_links: Vec<DocLocationLink>,
+    #[serde(skip_serializing)]
+    pub doc_link_targets: HashMap<String, DocumentableItemId<'db>>,
     pub group: Option<String>,
     /// Path to the closest `FileLongId::OnDisk` file containing the item.
     #[serde(skip_serializing)]
@@ -43,6 +47,7 @@ impl<'db> ItemData<'db> {
         documentable_item_id: DocumentableItemId<'db>,
         parent_full_path: String,
     ) -> Self {
+        let doc = db.get_item_documentation_as_tokens(documentable_item_id);
         let (signature, doc_location_links) =
             db.get_item_signature_with_links(documentable_item_id);
         let doc_location_links = doc_location_links
@@ -54,11 +59,12 @@ impl<'db> ItemData<'db> {
         Self {
             id: documentable_item_id,
             name: id.name(db).to_string(db),
-            doc: db.get_item_documentation_as_tokens(documentable_item_id),
+            doc: doc.clone(),
             signature,
             full_path: format!("{}::{}", parent_full_path, id.name(db).long(db)),
             parent_full_path: Some(parent_full_path),
             doc_location_links,
+            doc_link_targets: resolve_doc_link_targets(db, documentable_item_id, &doc),
             group,
             file_path,
             location_in_file: span_in_file,
@@ -70,11 +76,12 @@ impl<'db> ItemData<'db> {
         id: impl TopLevelLanguageElementId<'db>,
         documentable_item_id: DocumentableItemId<'db>,
     ) -> Self {
+        let doc = db.get_item_documentation_as_tokens(documentable_item_id);
         let (file_path, span_in_file) = get_file_and_location(db, &id);
         Self {
             id: documentable_item_id,
             name: id.name(db).to_string(db),
-            doc: db.get_item_documentation_as_tokens(documentable_item_id),
+            doc: doc.clone(),
             signature: None,
             full_path: format!(
                 "{}::{}",
@@ -83,6 +90,7 @@ impl<'db> ItemData<'db> {
             ),
             parent_full_path: Some(doc_full_path(&id.parent_module(db), db)),
             doc_location_links: vec![],
+            doc_link_targets: resolve_doc_link_targets(db, documentable_item_id, &doc),
             group: find_groups_from_attributes(db, &id),
             file_path,
             location_in_file: span_in_file,
@@ -91,6 +99,7 @@ impl<'db> ItemData<'db> {
 
     pub fn new_crate(db: &'db ScarbDocDatabase, id: CrateId<'db>) -> Self {
         let documentable_id = DocumentableItemId::Crate(id);
+        let doc = db.get_item_documentation_as_tokens(documentable_id);
 
         let module_id = ModuleId::CrateRoot(id);
         let file_path = db
@@ -101,11 +110,12 @@ impl<'db> ItemData<'db> {
         Self {
             id: documentable_id,
             name: id.long(db).name().to_string(db),
-            doc: db.get_item_documentation_as_tokens(documentable_id),
+            doc: doc.clone(),
             signature: None,
             full_path: ModuleId::CrateRoot(id).full_path(db),
             parent_full_path: None,
             doc_location_links: vec![],
+            doc_link_targets: resolve_doc_link_targets(db, documentable_id, &doc),
             group: None,
             file_path,
             location_in_file: None,
@@ -122,11 +132,13 @@ pub struct SubItemData<'db> {
     pub parent_full_path: Option<String>,
     pub name: String,
     #[serde(serialize_with = "documentation_serializer")]
-    pub doc: Option<Vec<DocumentationCommentToken<'db>>>,
+    pub doc: Option<Vec<DocumentationCommentToken>>,
     pub signature: Option<String>,
     pub full_path: String,
     #[serde(skip_serializing)]
     pub doc_location_links: Vec<DocLocationLink>,
+    #[serde(skip_serializing)]
+    pub doc_link_targets: HashMap<String, DocumentableItemId<'db>>,
     #[serde(skip_serializing)]
     pub group: Option<String>,
     #[serde(skip_serializing)]
@@ -145,6 +157,7 @@ impl<'db> From<SubItemData<'db>> for ItemData<'db> {
             signature: val.signature,
             full_path: val.full_path,
             doc_location_links: val.doc_location_links,
+            doc_link_targets: val.doc_link_targets,
             group: val.group,
             file_path: val.file_path,
             location_in_file: val.location_in_file,
@@ -162,11 +175,34 @@ impl<'db> From<ItemData<'db>> for SubItemData<'db> {
             signature: val.signature,
             full_path: val.full_path,
             doc_location_links: val.doc_location_links,
+            doc_link_targets: val.doc_link_targets,
             group: val.group,
             file_path: val.file_path,
             location_in_file: val.location_in_file,
         }
     }
+}
+
+fn resolve_doc_link_targets<'db>(
+    db: &'db ScarbDocDatabase,
+    item_id: DocumentableItemId<'db>,
+    doc: &Option<Vec<DocumentationCommentToken>>,
+) -> HashMap<String, DocumentableItemId<'db>> {
+    let mut targets = HashMap::new();
+    let Some(tokens) = doc else {
+        return targets;
+    };
+
+    for token in tokens {
+        if let DocumentationCommentToken::Link(link) = token
+            && let Some(resolved) = resolve_linked_item(db, item_id, link)
+            && let Some(key) = link.md_link.dest_text.clone()
+        {
+            targets.entry(key.clone()).or_insert(resolved);
+        }
+    }
+
+    targets
 }
 
 fn documentation_serializer<S>(
