@@ -12,7 +12,7 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let ui = Ui::new(args.verbose.clone().into(), scarb_ui::OutputFormat::Text);
+    let ui = Ui::new(args.verbose.clone().into(), args.output_format());
 
     init_logging(args.verbose.clone(), &ui);
 
