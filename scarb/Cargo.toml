@@ -16,7 +16,6 @@ repository.workspace = true
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
-postcard.workspace = true
 cairo-lang-compiler.workspace = true
 cairo-lang-defs.workspace = true
 cairo-lang-diagnostics.workspace = true
@@ -67,9 +66,9 @@ itertools.workspace = true
 libloading.workspace = true
 mimalloc.workspace = true
 once_cell.workspace = true
-once_map = { path = "../utils/once-map" }
 pathdiff.workspace = true
 petgraph.workspace = true
+postcard.workspace = true
 pubgrub.workspace = true
 ra_ap_toolchain.workspace = true
 rayon.workspace = true
@@ -78,6 +77,7 @@ reqwest.workspace = true
 salsa.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 scarb-extensions-cli = { path = "../utils/scarb-extensions-cli" }
+scarb-fs-utils = { path = "../utils/scarb-fs-utils" }
 scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }
 scarb-proc-macro-server-types = { path = "../utils/scarb-proc-macro-server-types" }
 scarb-stable-hash = { path = "../utils/scarb-stable-hash" }
@@ -106,11 +106,11 @@ tracing.workspace = true
 typed-builder.workspace = true
 typetag.workspace = true
 url.workspace = true
+uv-once-map.workspace = true
 walkdir.workspace = true
 which.workspace = true
 windows-sys.workspace = true
 zstd.workspace = true
-scarb-fs-utils = { path = "../utils/scarb-fs-utils" }
 
 # Configure an SSL backend used on each supported target. On Windows and macOS we want to use native SSL backends,
 # enabled by the `native-tls` feature which is the default one in reqwest. On Linux, though, `native-tls` would attempt
