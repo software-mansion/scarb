@@ -10,8 +10,8 @@ use indoc::formatdoc;
 use mimalloc::MiMalloc;
 use scarb_extensions_cli::verify::Args;
 use scarb_metadata::{MetadataCommand, PackageMetadata};
+use scarb_ui::Ui;
 use scarb_ui::components::Status;
-use scarb_ui::{OutputFormat, Ui};
 use std::env;
 use std::fs;
 use std::process::ExitCode;
@@ -24,7 +24,7 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
+    let ui = Ui::new(args.verbose.clone().into(), args.output_format());
 
     match main_inner(args, ui.clone()) {
         Ok(()) => ExitCode::SUCCESS,

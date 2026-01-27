@@ -27,7 +27,7 @@ const MAX_ITERATION_COUNT: usize = 10000;
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let ui = Ui::new(args.verbose.clone().into(), scarb_ui::OutputFormat::Text);
+    let ui = Ui::new(args.verbose.clone().into(), args.output_format());
 
     match main_inner(args, ui.clone()) {
         Ok(()) => ExitCode::SUCCESS,

@@ -55,6 +55,10 @@ pub struct Args {
     #[command(flatten)]
     pub features: FeaturesSpec,
 
+    /// Print machine-readable output in NDJSON format.
+    #[arg(long, env = "SCARB_OUTPUT_JSON")]
+    pub json: bool,
+
     /// Logging verbosity.
     #[command(flatten)]
     pub verbose: VerbositySpec,
@@ -66,4 +70,15 @@ pub struct Args {
     /// Enables/disables linking documentation items to the source code repository.
     #[arg(long, default_value_t = false)]
     pub disable_remote_linking: bool,
+}
+
+impl Args {
+    /// Construct [`scarb_ui::OutputFormat`] value from these arguments.
+    pub fn ui_output_format(&self) -> scarb_ui::OutputFormat {
+        if self.json {
+            scarb_ui::OutputFormat::Json
+        } else {
+            scarb_ui::OutputFormat::default()
+        }
+    }
 }
