@@ -6,7 +6,6 @@ use crate::location_links::DocLocationLink;
 use crate::types::crate_type::Crate;
 use cairo_lang_defs::ids::{ImplItemId, LookupItemId, TraitItemId};
 use cairo_lang_doc::documentable_item::DocumentableItemId;
-use cairo_lang_doc::parser::CommentLinkToken;
 use itertools::Itertools;
 use std::collections::HashMap;
 
@@ -129,46 +128,34 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
         }
     }
 
-    pub fn resolve_markdown_file_path_from_link(&self, link: &CommentLinkToken) -> Option<String> {
-        match link.resolved_item {
-            Some(resolved_item_id) => match self.included_items.get(&resolved_item_id) {
-                Some(resolved_item) => match resolved_item_id {
-                    DocumentableItemId::Member(_)
-                    | DocumentableItemId::Variant(_)
-                    | DocumentableItemId::LookupItem(LookupItemId::TraitItem(TraitItemId::Type(
-                        _,
-                    )))
-                    | DocumentableItemId::LookupItem(LookupItemId::TraitItem(
-                        TraitItemId::Function(_),
-                    ))
-                    | DocumentableItemId::LookupItem(LookupItemId::TraitItem(
-                        TraitItemId::Constant(_),
-                    ))
-                    | DocumentableItemId::LookupItem(LookupItemId::ImplItem(ImplItemId::Type(_)))
-                    | DocumentableItemId::LookupItem(LookupItemId::ImplItem(
-                        ImplItemId::Function(_),
-                    ))
-                    | DocumentableItemId::LookupItem(LookupItemId::ImplItem(
-                        ImplItemId::Constant(_),
-                    )) => {
-                        match resolved_item.parent_full_path() {
-                            Some(parent_path) => Some(format!(
-                                "{}#{}",
-                                path_to_file_link(&parent_path, self.files_extension),
-                                resolved_item.name().to_lowercase()
-                            )),
-                            // Only root_module / crate doesn't have the parent.
-                            _ => Some(format!("{SUMMARY_FILENAME}{}", self.files_extension)),
-                        }
-                    }
-                    _ => Some(path_to_file_link(
-                        &resolved_item.full_path(),
-                        self.files_extension,
+    pub fn resolve_markdown_file_path_from_item(
+        &self,
+        resolved_item_id: DocumentableItemId<'db>,
+    ) -> Option<String> {
+        let resolved_item = self.included_items.get(&resolved_item_id)?;
+        match resolved_item_id {
+            DocumentableItemId::Member(_)
+            | DocumentableItemId::Variant(_)
+            | DocumentableItemId::LookupItem(LookupItemId::TraitItem(TraitItemId::Type(_)))
+            | DocumentableItemId::LookupItem(LookupItemId::TraitItem(TraitItemId::Function(_)))
+            | DocumentableItemId::LookupItem(LookupItemId::TraitItem(TraitItemId::Constant(_)))
+            | DocumentableItemId::LookupItem(LookupItemId::ImplItem(ImplItemId::Type(_)))
+            | DocumentableItemId::LookupItem(LookupItemId::ImplItem(ImplItemId::Function(_)))
+            | DocumentableItemId::LookupItem(LookupItemId::ImplItem(ImplItemId::Constant(_))) => {
+                match resolved_item.parent_full_path() {
+                    Some(parent_path) => Some(format!(
+                        "{}#{}",
+                        path_to_file_link(&parent_path, self.files_extension),
+                        resolved_item.name().to_lowercase()
                     )),
-                },
-                None => None,
-            },
-            None => None,
+                    // Only root_module / crate doesn't have the parent.
+                    _ => Some(format!("{SUMMARY_FILENAME}{}", self.files_extension)),
+                }
+            }
+            _ => Some(path_to_file_link(
+                &resolved_item.full_path(),
+                self.files_extension,
+            )),
         }
     }
 
