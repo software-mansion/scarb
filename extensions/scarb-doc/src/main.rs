@@ -299,7 +299,7 @@ pub fn output_markdown(
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let ui = Ui::new(args.verbose.clone().into(), scarb_ui::OutputFormat::Text);
+    let ui = Ui::new(args.verbose.clone().into(), args.ui_output_format());
     match main_inner(args, ui.clone()) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
