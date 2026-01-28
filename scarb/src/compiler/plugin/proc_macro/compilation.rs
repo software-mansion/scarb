@@ -8,7 +8,6 @@ use anyhow::{Context, Result, anyhow, bail};
 use camino::Utf8PathBuf;
 use cargo_metadata::{Metadata, MetadataCommand};
 use flate2::read::GzDecoder;
-use once_map::OnceMap;
 use ra_ap_toolchain::Tool;
 use scarb_fs_utils as fsx;
 use scarb_ui::{Message, OutputFormat};
@@ -22,6 +21,7 @@ use std::process::Command;
 use std::sync::OnceLock;
 use tar::Archive;
 use tracing::trace_span;
+use uv_once_map::OnceMap;
 
 pub const PROC_MACRO_BUILD_PROFILE: &str = "release";
 

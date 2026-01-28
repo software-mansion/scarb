@@ -14,7 +14,6 @@ members = [
     "plugins/cairo-lang-macro-stable",
     "plugins/cairo-lang-quote",
     "utils/create-output-dir",
-    "utils/once-map",
     "utils/scarb-build-metadata",
     "utils/scarb-proc-macro-server-types",
     "utils/scarb-stable-hash",
@@ -160,6 +159,7 @@ trybuild = "1"
 typed-builder = ">=0.17"
 typetag = "0.2"
 url = { version = "2", features = ["serde"] }
+uv-once-map = "0"
 walkdir = "2"
 wasmtime = "39"
 wasmtime-wasi = "39"

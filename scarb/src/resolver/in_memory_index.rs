@@ -1,7 +1,7 @@
 use crate::core::{ManifestDependency, Summary};
-use once_map::OnceMap;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
+use uv_once_map::OnceMap;
 
 /// In-memory index of package metadata.
 #[derive(Default, Clone)]
