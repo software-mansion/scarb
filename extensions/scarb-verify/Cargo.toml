@@ -25,7 +25,7 @@ scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-feat
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 serde_json.workspace = true
-stwo_cairo_prover.workspace = true
+stwo-cairo-prover.workspace = true
 
 [dev-dependencies]
 assert_fs.workspace = true
