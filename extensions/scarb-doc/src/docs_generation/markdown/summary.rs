@@ -2,6 +2,7 @@ pub mod content;
 pub mod files;
 pub mod group_files;
 
+use crate::doc_test::runner::ExecutionResults;
 use crate::docs_generation::common::OutputFilesExtension;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::summary::content::{
@@ -22,10 +23,15 @@ pub fn generate_summary_file_content(
     crate_: &Crate,
     output_format: OutputFilesExtension,
     remote_linking_data: &RemoteDocLinkingData,
+    execution_results: Option<ExecutionResults>,
 ) -> Result<(SummaryIndexMap, Vec<(String, String)>)> {
     let mut summary_index_map = SummaryIndexMap::new();
-    let context =
-        MarkdownGenerationContext::from_crate(crate_, output_format, remote_linking_data.clone());
+    let context = MarkdownGenerationContext::from_crate(
+        crate_,
+        output_format,
+        remote_linking_data.clone(),
+        execution_results,
+    );
 
     generate_module_summary_content(
         &crate_.root_module,

@@ -45,6 +45,10 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub build: bool,
 
+    /// Do not run doc tests.
+    #[arg(long, default_value_t = false)]
+    pub no_run: bool,
+
     /// Open the generated documentation in a browser.
     ///
     /// Implies `--build`.
