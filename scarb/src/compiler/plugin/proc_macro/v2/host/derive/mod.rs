@@ -27,7 +27,7 @@ impl ProcMacroHostPlugin {
     /// Handle `#[derive(...)]` attribute.
     ///
     /// Returns a list of expansions that this plugin should apply.
-    fn parse_derive<'db>(
+    pub fn parse_derive<'db>(
         &self,
         db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
@@ -78,6 +78,7 @@ impl ProcMacroHostPlugin {
         &self,
         db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
+        derives: Vec<DeriveFound<'db>>,
         stream_metadata: TokenStreamMetadata,
     ) -> Option<PluginResult<'db>> {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
@@ -85,9 +86,6 @@ impl ProcMacroHostPlugin {
         token_stream_builder.with_metadata(stream_metadata.clone());
         let mut aux_data = EmittedAuxData::default();
         let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
-
-        // All derives to be applied.
-        let derives = self.parse_derive(db, item_ast.clone());
 
         if derives.is_empty() {
             // No derives found - returning early.
@@ -184,7 +182,7 @@ impl ProcMacroHostPlugin {
     }
 }
 
-struct DeriveFound<'db> {
+pub struct DeriveFound<'db> {
     id: ProcMacroId,
     call_site: CallSiteLocation<'db>,
 }
