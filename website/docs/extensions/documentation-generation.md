@@ -82,6 +82,145 @@ Scarb does not automatically detect your repository host. Instead, it assumes a 
 
 While other VCS hosts are not officially supported, they may still work if they follow the same URL formatting for file browsing and line anchors (e.g., using `/blob/` for file paths and `#L` for line ranges). We may add official support or configuration options for other providers in the future based on community demand.
 
+## Doc tests
+
+`scarb doc` can extract and run code examples embedded in documentation comments, verifying that they compile and execute correctly. This helps ensure that code examples in your documentation stay up to date.
+
+### Writing runnable examples
+
+To make a code block runnable, add the `cairo` and `runnable` attributes to the code fence:
+
+````cairo
+/// Adds two numbers together.
+/// ```cairo,runnable
+/// let result = add(2, 3);
+/// assert(result == 5, 'should be 5');
+/// ```
+pub fn add(a: u32, b: u32) -> u32 {
+    a + b
+}
+````
+
+Code blocks marked only with `cairo` (without `runnable`) are not executed and will be ignored during testing.
+
+### Function body vs full Cairo snippet
+
+Scarb detects whether a code block contains a **function body** (expressions and statements) or a **full Cairo snippet** (with top-level items like functions) and handles each differently.
+
+#### Function body
+
+If the code block contains only expressions and statements, Scarb automatically wraps it in a `fn main() { ... }` and adds `use package_name::*;` so you can call items from the documented package directly:
+
+````cairo
+/// ```cairo,runnable
+/// let result = add(2, 3);
+/// println!("{}", result);
+/// ```
+pub fn add(a: u32, b: u32) -> u32 {
+    a + b
+}
+````
+
+Under the hood this becomes:
+
+```cairo
+use hello_world::*;
+
+#[executable]
+fn main() {
+    let result = add(2, 3);
+    println!("{}", result);
+}
+```
+
+#### Full Cairo snippet
+
+If the code block contains top-level items (e.g. its own `fn main()`), Scarb uses it as-is without wrapping. You must define the entry point yourself:
+
+````cairo
+/// ```cairo,runnable
+/// #[executable]
+/// fn main() -> i32 {
+///     add(-1, 1)
+/// }
+/// ```
+pub fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+````
+
+This form is useful when you need to return a value from `main`, define helper functions, or have full control over the example structure. The documented package is still imported with `use package_name::*;`.
+
+### Code block attributes
+
+Attributes are specified as a comma-separated list after the opening code fence:
+
+| Attribute      | Description                                                                       |
+| -------------- | --------------------------------------------------------------------------------- |
+| `cairo`        | Marks the block as Cairo code.                                                    |
+| `runnable`     | Marks the block for execution. Must be combined with `cairo`.                     |
+| `ignore`       | Skips the block entirely (not compiled, not run).                                 |
+| `no_run`       | Compiles the block but does not execute it.                                       |
+| `compile_fail` | Asserts that the block **fails to compile**. The test passes on a compile error.  |
+| `should_panic` | Asserts that the block **panics at runtime**. The test passes on a runtime error. |
+
+Example using `should_panic`:
+
+````cairo
+/// ```cairo,runnable,should_panic
+/// assert(is_odd(2), '2 is not odd');
+/// ```
+pub fn is_odd(n: i32) -> bool {
+    n % 2 != 0
+}
+````
+
+Example using `compile_fail`:
+
+````cairo
+/// ```cairo,runnable,compile_fail
+/// is_odd(true);
+/// ```
+pub fn is_odd(n: i32) -> bool {
+    n % 2 != 0
+}
+````
+
+### Package import
+
+The package import will only be added if the package declares a `[lib]` target.
+Otherwise, it's not possible to import the package's code.
+In such case, a warning will be shown and you need to provide all imports for your code manually.
+
+### Running doc tests
+
+Doc tests run automatically as part of `scarb doc`. When code blocks are found, each runnable block is compiled and executed in an isolated temporary workspace that depends on the documented package.
+
+To skip running doc tests, use the `--no-run` flag:
+
+```shell
+scarb doc --no-run
+```
+
+The output shows the result for each code block:
+
+```
+   Running 3 doc examples for `hello_world`
+test hello_world::bar ... ignored
+test hello_world::foo ... ok
+test hello_world::foo_bar ... ok
+
+test result: ok. 2 passed; 0 failed; 1 ignored
+```
+
+When a code block has multiple examples, they are distinguished by index (e.g., `hello_world::add (example 0)`, `hello_world::add (example 1)`).
+
+If any runnable example fails unexpectedly, `scarb doc` exits with a non-zero status.
+
+### Embedding execution results
+
+For Markdown output format, execution results of runnable examples are embedded directly into the generated documentation pages. Each successfully executed code block includes the captured output and return value below it.
+
 ## mdBook
 
 Generated Markdown can be used to build a [mdBook](https://rust-lang.github.io/mdBook) documentation.

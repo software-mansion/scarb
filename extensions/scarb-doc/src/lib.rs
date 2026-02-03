@@ -18,6 +18,7 @@ use cairo_lang_filesystem::{
     ids::{CrateId, CrateLongId},
 };
 use cairo_lang_utils::Intern;
+use camino::Utf8PathBuf;
 use errors::DiagnosticError;
 use itertools::Itertools;
 use scarb_metadata::{
@@ -30,6 +31,7 @@ pub mod attributes;
 pub mod db;
 pub mod diagnostics;
 pub mod doc_link_resolver;
+pub mod doc_test;
 pub mod docs_generation;
 pub mod errors;
 pub mod linking;
@@ -52,6 +54,8 @@ pub struct AdditionalMetadata {
     pub authors: Option<Vec<String>>,
     #[serde(skip)]
     pub repository: Option<String>,
+    #[serde(skip)]
+    pub manifest_path: Utf8PathBuf,
 }
 
 pub struct PackageContext {
@@ -109,6 +113,7 @@ pub fn generate_package_context(
             name: package_metadata.name.clone(),
             authors,
             repository: package_metadata.manifest_metadata.repository.clone(),
+            manifest_path: package_metadata.manifest_path.clone(),
         },
     })
 }
