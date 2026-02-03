@@ -1,6 +1,6 @@
 use crate::db::ScarbDocDatabase;
 use crate::docs_generation::markdown::context::IncludedItems;
-use crate::docs_generation::markdown::traits::WithPath;
+use crate::docs_generation::markdown::traits::WithItemDataCommon;
 use crate::location_links::DocLocationLink;
 use crate::types::item_data::{ItemData, SubItemData};
 use crate::types::module_type::is_doc_hidden_attr;
@@ -61,7 +61,12 @@ impl<'db> Struct<'db> {
     pub fn get_all_item_ids<'a>(&'a self) -> IncludedItems<'a, 'db> {
         self.members
             .iter()
-            .map(|item| (item.item_data.id, &item.item_data as &dyn WithPath))
+            .map(|item| {
+                (
+                    item.item_data.id,
+                    &item.item_data as &dyn WithItemDataCommon,
+                )
+            })
             .collect()
     }
 }
