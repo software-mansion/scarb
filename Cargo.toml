@@ -91,7 +91,7 @@ dialoguer = "0.12.0"
 directories = "6"
 dunce = "1"
 expect-test = "1.5"
-flate2 = { version = "1.1.8", default-features = false, features = ["zlib"] }
+flate2 = { version = "1.1.9", default-features = false, features = ["zlib"] }
 fs_extra = "1"
 futures = { version = "0.3", default-features = false, features = ["std", "async-await", "executor"] }
 gix = { version = ">=0.73", default-features = false, features = ["revision"] }
