@@ -99,7 +99,6 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         }
     };
     ui.print(Status::new("Proving", &package.name));
-    ui.warn("soundness of proof is not yet guaranteed by Stwo, use at your own risk");
 
     let (prover_input_path, proof_path) =
         resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?;

@@ -17,7 +17,6 @@ fn prove_fails_when_execution_output_not_found() {
         .failure()
         .stdout_eq(indoc! {r#"
             [..]Proving hello
-            warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
             error: execution directory not found: [..]/target/execute/hello/execution1
             help: make sure to run `scarb execute` first
             and then run `scarb prove` with correct execution ID
@@ -51,7 +50,6 @@ fn prove_fails_when_cairo_pie_output() {
         .failure()
         .stdout_eq(indoc! {r#"
             [..]Proving hello
-            warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
             error: proving cairo pie output is not supported: [..]/target/execute/hello/execution1/cairo_pie.zip
             help: run `scarb execute --output=standard` first
             and then run `scarb prove` with correct execution ID

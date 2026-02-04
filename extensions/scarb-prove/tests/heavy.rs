@@ -25,7 +25,6 @@ fn sequential_prove_with_execute() {
         [..]Executing hello
         Saving output to: target/execute/hello/execution1
         [..]Proving hello
-        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
         Saving proof to: target/execute/hello/execution1/proof/proof.json
         "#});
 
@@ -58,7 +57,6 @@ fn sequential_prove_from_execution_output() {
         .success()
         .stdout_eq(indoc! {r#"
         [..]Proving hello
-        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
         Saving proof to: target/execute/hello/execution1/proof/proof.json
         "#});
 
