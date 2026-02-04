@@ -137,7 +137,18 @@ fn execute_bootloader(
         cairo_run_config,
         &mut hint_processor,
         exec_scopes,
-    )?;
+    )
+    .map_err(|err| {
+        if let Some(cairo_hint_proc) = hint_processor.subtask_cairo1_hint_processor_stack.last()
+            && let Some(panic_data) = cairo_hint_proc
+                .as_ref()
+                .and_then(|proc| proc.markers.last())
+        {
+            anyhow!(format_for_panic(panic_data.iter().copied()))
+        } else {
+            anyhow::Error::from(err).context("Cairo program run failed")
+        }
+    })?;
 
     Ok((runner, Box::new(hint_processor)))
 }
