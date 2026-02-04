@@ -238,6 +238,9 @@ impl MacroPlugin for ProcMacroHostPlugin {
         let ctx = AllocationContext::default();
         let (input, body) = self.parse_attribute(db, item_ast.clone(), &ctx);
 
+        // All derives to be applied.
+        let derives = self.parse_derive(db, item_ast.clone());
+
         if let Some(result) = match input {
             AttrExpansionFound::Last(input) => Some((input, true)),
             AttrExpansionFound::Some(input) => Some((input, false)),
@@ -245,14 +248,23 @@ impl MacroPlugin for ProcMacroHostPlugin {
         }
         .map(|(input, last)| {
             let token_stream = body.with_metadata(stream_metadata.clone());
-            self.expand_attribute(db, last, input.args.clone(), token_stream, input)
+            self.expand_attribute(
+                db,
+                // We also want to mark that this is the last attribute if there are no derives to be applied.
+                last && derives.is_empty(),
+                input.args.clone(),
+                token_stream,
+                input,
+            )
         }) {
             return result.into();
         }
 
         // Expand all derives.
         // Note that all proc macro attributes should be already expanded at this point.
-        if let Some(result) = self.expand_derives(db, item_ast.clone(), stream_metadata.clone()) {
+        if let Some(result) =
+            self.expand_derives(db, item_ast.clone(), derives, stream_metadata.clone())
+        {
             return result;
         }
 

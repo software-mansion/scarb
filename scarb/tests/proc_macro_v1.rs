@@ -1654,3 +1654,72 @@ fn can_be_used_through_re_export() {
         "#},
     );
 }
+
+#[test]
+fn does_not_skip_derive_during_attributes_optimization() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default_v1()
+        .lib_rs(indoc! {r##"
+          use cairo_lang_macro::{attribute_macro, derive_macro, ProcMacroResult, TokenStream};
+
+          #[derive_macro]
+          #[allow(non_snake_case)]
+          pub fn Something(_token_stream: TokenStream) -> ProcMacroResult {
+              println!("------------------first------------------");
+              ProcMacroResult::new(TokenStream::new("impl MyTraitImpl of MyTrait<Bloop>{ }".to_string()))
+          }
+
+          #[attribute_macro]
+          pub fn second(_attr: TokenStream, code: TokenStream) -> ProcMacroResult {
+              println!("------------------second------------------");
+              ProcMacroResult::new(code)
+          }
+
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+          trait MyTrait<T> {
+              fn do_something(self: T) -> T {
+                  self
+              }
+          }
+
+          #[derive(Default, Clone, Drop, Something)]
+          #[second]
+          struct Bloop {
+              a: u8,
+              b: u16,
+              c: u32,
+              d: u64,
+          }
+
+
+          fn some_function() -> Bloop {
+              Bloop { a: 1, b: 2, c: 3, d: 4 }.do_something()
+          }
+        "#})
+        .build(&project);
+
+    Scarb::quick_command()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            ------------------second------------------
+            ------------------first------------------
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
+}
