@@ -40,6 +40,8 @@ pub enum CodeBlockAttribute {
     Runnable,
     Ignore,
     NoRun,
+    CompileFail,
+    ShouldPanic,
     Other(String),
 }
 
@@ -50,6 +52,8 @@ impl From<&str> for CodeBlockAttribute {
             "runnable" => CodeBlockAttribute::Runnable,
             "ignore" => CodeBlockAttribute::Ignore,
             "no_run" => CodeBlockAttribute::NoRun,
+            "should_panic" => CodeBlockAttribute::ShouldPanic,
+            "compile_fail" => CodeBlockAttribute::CompileFail,
             _ => CodeBlockAttribute::Other(string.to_string()),
         }
     }
@@ -101,6 +105,12 @@ impl CodeBlock {
     pub fn expected_outcome(&self) -> ExecutionOutcome {
         if self.attributes.contains(&CodeBlockAttribute::Ignore) {
             return ExecutionOutcome::None;
+        }
+        if self.attributes.contains(&CodeBlockAttribute::CompileFail) {
+            return ExecutionOutcome::CompileError;
+        }
+        if self.attributes.contains(&CodeBlockAttribute::ShouldPanic) {
+            return ExecutionOutcome::RuntimeError;
         }
         if self.attributes.contains(&CodeBlockAttribute::NoRun) {
             return ExecutionOutcome::BuildSuccess;

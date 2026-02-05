@@ -1,7 +1,7 @@
 use crate::attributes::find_groups_from_attributes;
 use crate::db::ScarbDocDatabase;
-use crate::doc_test::code_blocks::{CodeBlock, collect_code_blocks_from_tokens};
 use crate::doc_link_resolver::resolve_linked_item;
+use crate::doc_test::code_blocks::{CodeBlock, collect_code_blocks_from_tokens};
 use crate::location_links::DocLocationLink;
 use crate::types::other_types::doc_full_path;
 use cairo_lang_defs::db::DefsGroup;
@@ -50,7 +50,6 @@ impl<'db> ItemData<'db> {
         documentable_item_id: DocumentableItemId<'db>,
         parent_full_path: String,
     ) -> Self {
-        let doc = db.get_item_documentation_as_tokens(documentable_item_id);
         let (signature, doc_location_links) =
             db.get_item_signature_with_links(documentable_item_id);
         let doc_location_links = doc_location_links
@@ -84,7 +83,6 @@ impl<'db> ItemData<'db> {
         id: impl TopLevelLanguageElementId<'db>,
         documentable_item_id: DocumentableItemId<'db>,
     ) -> Self {
-        let doc = db.get_item_documentation_as_tokens(documentable_item_id);
         let (file_path, span_in_file) = get_file_and_location(db, &id);
         let full_path = format!(
             "{}::{}",
@@ -112,7 +110,6 @@ impl<'db> ItemData<'db> {
 
     pub fn new_crate(db: &'db ScarbDocDatabase, id: CrateId<'db>) -> Self {
         let documentable_id = DocumentableItemId::Crate(id);
-        let doc = db.get_item_documentation_as_tokens(documentable_id);
 
         let module_id = ModuleId::CrateRoot(id);
         let file_path = db
@@ -200,6 +197,7 @@ impl<'db> From<ItemData<'db>> for SubItemData<'db> {
             group: val.group,
             file_path: val.file_path,
             location_in_file: val.location_in_file,
+            code_blocks: val.code_blocks,
         }
     }
 }
