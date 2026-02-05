@@ -138,19 +138,7 @@ fn fails_when_attr_missing() {
 }
 
 #[test_case("standalone", "error: Panicked with \"abcd\".")]
-#[test_case(
-    "bootloader",
-    indoc! {r#"
-        error: Error at pc=14:19:
-        An ASSERT_EQ instruction failed: 0 != 1.
-        Cairo traceback (most recent call last):
-        <start>:3:1: (pc=0:2)
-        src/starkware/cairo/bootloaders/simple_bootloader/simple_bootloader.cairo:55:5: (pc=0:3192)
-        /var/lib/engflow/worker/exec/src/starkware/cairo/bootloaders/simple_bootloader/run_simple_bootloader.cairo:107:9: (pc=0:756)
-        /var/lib/engflow/worker/exec/src/starkware/cairo/bootloaders/simple_bootloader/run_simple_bootloader.cairo:192:5: (pc=0:811)
-        /var/lib/engflow/worker/exec/src/starkware/cairo/bootloaders/simple_bootloader/execute_task.cairo:246:5: (pc=0:644)
-"#}
-)]
+#[test_case("bootloader", "error: Panicked with \"abcd\".")]
 fn can_print_panic_reason(target: &str, panic: &str) {
     let t = TempDir::new().unwrap();
     executable_project_builder()
