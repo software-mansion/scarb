@@ -294,3 +294,16 @@ jobs:
           name: nextest-archive-ubuntu-latest
       - uses: foundry-rs/setup-snfoundry@v4
       - run: cargo nextest run --archive-file 'nextest-archive-ubuntu-latest.tar.zst' --run-ignored=all --filterset 'test(new_simple)'
+
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Link Checker
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # Check all markdown and html files
+          args: --verbose --no-progress  --exclude='file://' './**/*.md' './**/*.html'
+          # This makes the pipeline fail if a broken link is found
+          fail: true
