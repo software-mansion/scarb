@@ -294,18 +294,3 @@ jobs:
           name: nextest-archive-ubuntu-latest
       - uses: foundry-rs/setup-snfoundry@v4
       - run: cargo nextest run --archive-file 'nextest-archive-ubuntu-latest.tar.zst' --run-ignored=all --filterset 'test(new_simple)'
-
-  link-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Link Checker
-        uses: lycheeverse/lychee-action@v2
-        env:
-          # Avoid rate limiting.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: --verbose --no-progress --user-agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36' --exclude-path='scarb/tests/*' --exclude-path='scarb/build.rs' --exclude-path='xtask/src/nightly_release_notes.rs' --exclude-path='extensions/scarb-doc/tests/*' './**/*.md' './**/*.html' './**/*.rs'
-          # This makes the pipeline fail if a broken link is found
-          fail: true

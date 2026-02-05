@@ -1,0 +1,46 @@
+name: Link check
+
+on:
+  workflow_dispatch:
+    inputs:
+      silent:
+        description: "Silence Slack notifications"
+        type: boolean
+        default: false
+  schedule:
+    - cron: '0 5 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Link Checker
+        uses: lycheeverse/lychee-action@v2
+        env:
+          # Avoid rate limiting.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --verbose --no-progress --user-agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36' --exclude-path='scarb/tests/*' --exclude-path='scarb/build.rs' --exclude-path='xtask/src/nightly_release_notes.rs' --exclude-path='extensions/scarb-doc/tests/*' './**/*.md' './**/*.html' './**/*.rs'
+          # This makes the pipeline fail if a broken link is found
+          fail: true
+  notify_failed_check:
+    runs-on: ubuntu-latest
+    # Do not run on silent run or check success
+    if: always() && !(inputs.silent) && needs.link-check.result == 'failure'
+    needs: [ link-check ]
+    steps:
+      - name: Notifying about check fail!
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_LINKS_CHECK_FAILURE_WEBHOOK_URL }}
+          webhook-type: webhook-trigger
+          payload: |
+            {
+              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
