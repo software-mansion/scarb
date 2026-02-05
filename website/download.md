@@ -34,7 +34,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.starkup.dev | sh
 
 Starkup uses asdf under the hood and will install it if not already present.
 For more information on asdf, including how to manage and switch between different Scarb versions, see the [Install via asdf](#install-via-asdf) section below.
-In addition to Scarb, Starkup also installs other useful tools, including [Starknet Foundry](https://github.com/starknet-community-team/starknet-foundry), [Universal Sierra Compiler](https://github.com/software-mansion/universal-sierra-compiler), [Cairo Profiler](https://github.com/software-mansion/cairo-profiler), [Cairo Coverage](https://github.com/software-mansion/cairo-coverage), [CairoLS](https://github.com/software-mansion/cairols) VSCode extension.
+In addition to Scarb, Starkup also installs other useful tools, including [Starknet Foundry](https://github.com/foundry-rs/starknet-foundry), [Universal Sierra Compiler](https://github.com/software-mansion/universal-sierra-compiler), [Cairo Profiler](https://github.com/software-mansion/cairo-profiler), [Cairo Coverage](https://github.com/software-mansion/cairo-coverage), [CairoLS](https://github.com/software-mansion/cairols) VSCode extension.
 
 Check out the [Starkup repository on GitHub](https://github.com/software-mansion/starkup) for more information.
 
