@@ -14,6 +14,8 @@ const CODE_WITH_COMPILE_ERROR: &str = include_str!("code/code_13.cairo");
 const CODE_WITH_RUNTIME_ERROR: &str = include_str!("code/code_14.cairo");
 const CODE_WITH_MULTIPLE_CODE_BLOCKS_PER_ITEM: &str = include_str!("code/code_15.cairo");
 const CODE_WITH_STARKNET_CONTRACT: &str = include_str!("code/code_16.cairo");
+const CODE_WITH_COMPILE_FAIL: &str = include_str!("code/code_17.cairo");
+const CODE_WITH_SHOULD_PANIC: &str = include_str!("code/code_18.cairo");
 const EXPECTED_WITH_EMBEDDINGS_PATH: &str = "tests/data/runnable_examples";
 const EXPECTED_WITH_EMBEDDINGS_MDX_PATH: &str = "tests/data/runnable_examples_mdx";
 const EXPECTED_MULTIPLE_PER_ITEM_PATH: &str = "tests/data/runnable_examples_multiple_per_item";
@@ -268,5 +270,78 @@ fn supports_runnable_examples_with_starknet_contract() {
 
             Or open the following in your browser:[..]
             `[..]/target/doc/hello_world/book/index.html`
+        "#});
+}
+
+#[test]
+fn should_panic() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(CODE_WITH_SHOULD_PANIC)
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args(["--output-format", "markdown"])
+        .arg("--disable-remote-linking")
+        .arg("--build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            [..] Running 2 doc examples for `hello_world`
+            [..] Compiling hello_world_example_1 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            test hello_world::is_odd (example 0) ... ok
+            [..] Compiling hello_world_example_2 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            error: Test executable succeeded, but it's marked `should_panic`.
+            test hello_world::is_odd (example 1) ... FAILED
+
+            failures:
+                hello_world::is_odd (example 1)
+
+            test result: FAILED. 1 passed; 1 failed; 0 ignored
+            error: doc tests failed
+        "#});
+}
+
+#[test]
+fn compile_fail() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(CODE_WITH_COMPILE_FAIL)
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args(["--output-format", "markdown"])
+        .arg("--disable-remote-linking")
+        .arg("--build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            [..] Running 2 doc examples for `hello_world`
+            [..] Compiling hello_world_example_1 v0.1.0 ([..])
+            error[E2041]: Unexpected argument type. Expected: "core::integer::i32", found: "core::bool".
+             --> [..]lib.cairo[..]
+                is_odd(true);
+                       ^^^^
+
+            error: could not compile `hello_world_example_1` due to 1 previous error
+            test hello_world::is_odd (example 0) ... ok
+            [..] Compiling hello_world_example_2 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            error: Test compiled successfully, but it's marked `compile_fail`.
+            test hello_world::is_odd (example 1) ... FAILED
+
+            failures:
+                hello_world::is_odd (example 1)
+
+            test result: FAILED. 1 passed; 1 failed; 0 ignored
+            error: doc tests failed
         "#});
 }
