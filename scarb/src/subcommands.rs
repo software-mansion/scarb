@@ -27,6 +27,10 @@ pub fn get_env_vars(
             SCARB_MANIFEST_PATH_ENV.into(),
             config.manifest_path().into(),
         ),
+        (
+            "SCARB_OUTPUT_JSON".into(),
+            as_truthy_env_value(config.ui().output_format().is_json()),
+        ),
         ("SCARB_PROFILE".into(), config.profile().as_str().into()),
         (
             "SCARB_UI_VERBOSITY".into(),
@@ -48,4 +52,8 @@ pub fn get_env_vars(
         vars.push(("SCARB_TARGET_DIR".into(), target_dir.into()));
     }
     Ok(HashMap::from_iter(vars))
+}
+
+pub fn as_truthy_env_value(value: bool) -> OsString {
+    OsString::from(if value { "true" } else { "false" })
 }

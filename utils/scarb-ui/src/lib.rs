@@ -54,6 +54,13 @@ pub enum OutputFormat {
     Json,
 }
 
+impl OutputFormat {
+    /// Returns `true` if the output format is JSON.
+    pub fn is_json(&self) -> bool {
+        matches!(self, OutputFormat::Json)
+    }
+}
+
 /// An abstraction around console output which stores preferences for output format (human vs JSON),
 /// colour, etc.
 ///

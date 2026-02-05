@@ -20,16 +20,16 @@ use scarb_metadata::{
     Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
 };
 use scarb_oracle_hint_service::OracleHintService;
+use scarb_ui::Ui;
 use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::{NewLine, Status};
-use scarb_ui::{OutputFormat, Ui};
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> Result<()> {
     let args: Args = Args::parse();
-    let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
+    let ui = Ui::new(args.verbose.clone().into(), args.output_format());
 
     // Print deprecation warning.
     ui.warn(indoc! {r#"

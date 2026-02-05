@@ -3,6 +3,7 @@
 //! Extension CLI arguments datastructures.
 
 use clap::{Parser, ValueEnum};
+use scarb_ui::OutputFormat;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 
 /// CLI command name.
@@ -36,9 +37,24 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub print_resource_usage: bool,
 
+    /// Print machine-readable output in NDJSON format.
+    #[arg(long, env = "SCARB_OUTPUT_JSON")]
+    pub json: bool,
+
     /// Logging verbosity.
     #[command(flatten)]
     pub verbose: VerbositySpec,
+}
+
+impl Args {
+    /// Construct [`OutputFormat`] value from these arguments.
+    pub fn output_format(&self) -> OutputFormat {
+        if self.json {
+            OutputFormat::Json
+        } else {
+            OutputFormat::default()
+        }
+    }
 }
 
 /// Test kind to run.
