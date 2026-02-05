@@ -4,7 +4,7 @@ import { data as rel } from "../../../github.data";
 
 # Starknet Contract Target
 
-The `starknet-contract` target allows to build the package as a [Starknet Contract](https://book.cairo-lang.org/ch13-00-introduction-to-starknet-smart-contracts.html).
+The `starknet-contract` target allows to build the package as a [Starknet Contract](https://www.starknet.io/cairo-book/ch100-00-introduction-to-smart-contracts.html).
 It searches for all contract classes in the package, and builds a separate compiled JSON file each found class.
 Generated file will be named with following pattern: `[target name]_[contract name].contract_class.json`.
 
