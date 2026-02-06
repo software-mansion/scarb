@@ -305,6 +305,22 @@ impl GitCheckout {
         cmd.args(["reset", "--hard"]);
         cmd.arg(self.rev.to_string());
         cmd.current_dir(&self.location);
+        exec(&mut cmd, config)?;
+
+        self.update_submodules(config)
+    }
+
+    /// Update submodules after checkout/reset.
+    ///
+    /// After `git reset --hard`, submodules are not automatically updated to match the
+    /// commit's expected submodule state. This method runs `git submodule update --init --recursive`
+    /// to ensure submodule contents match what the current commit expects.
+    #[tracing::instrument(level = "trace", skip(config))]
+    fn update_submodules(&self, config: &Config) -> Result<()> {
+        let mut cmd = git_command();
+        cmd.args(["submodule", "update", "--init", "--recursive"]);
+        with_verbosity_flags(&mut cmd, config);
+        cmd.current_dir(&self.location);
         exec(&mut cmd, config)
     }
 }
