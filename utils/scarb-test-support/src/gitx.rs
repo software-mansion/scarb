@@ -42,6 +42,17 @@ impl GitProject {
     pub fn tag(&self, name: &str) {
         self.git(["tag", "-a", name, "-m", "test tag"])
     }
+
+    /// Get the commit hash for a given revision (e.g., "HEAD").
+    pub fn rev_parse(&self, rev: &str) -> String {
+        let output = git_command()
+            .args(["rev-parse", rev])
+            .current_dir(self.p.path())
+            .output()
+            .unwrap();
+        assert!(output.status.success(), "git rev-parse failed");
+        String::from_utf8(output.stdout).unwrap().trim().to_string()
+    }
 }
 
 impl fmt::Display for GitProject {
@@ -109,6 +120,10 @@ pub fn git_command() -> Command {
         .env_remove("GIT_INDEX_FILE")
         .env_remove("GIT_OBJECT_DIRECTORY")
         .env_remove("GIT_ALTERNATE_OBJECT_DIRECTORIES")
+        // Allow file:// protocol for submodules in tests.
+        .env("GIT_CONFIG_COUNT", "1")
+        .env("GIT_CONFIG_KEY_0", "protocol.file.allow")
+        .env("GIT_CONFIG_VALUE_0", "always")
 }
 
 pub trait GitContext {
@@ -131,4 +146,28 @@ impl GitContext for &Path {
     fn git_path(&self) -> &Path {
         self
     }
+}
+
+/// Add a submodule to a Git repository.
+///
+/// Note: This configures `protocol.file.allow=always` to allow `file://` URLs
+/// for submodules in tests.
+pub fn add_submodule(repo: impl GitContext, url: &str, path: impl AsRef<Path>) {
+    git_command()
+        .args([
+            "-c",
+            "protocol.file.allow=always",
+            "submodule",
+            "add",
+            url,
+            path.as_ref().to_str().unwrap(),
+        ])
+        .current_dir(repo.git_path())
+        .assert()
+        .success();
+}
+
+/// Update submodules in a Git repository.
+pub fn update_submodules(repo: impl GitContext) {
+    git(repo, ["submodule", "update", "--init", "--recursive"]);
 }
