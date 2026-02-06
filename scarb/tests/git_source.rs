@@ -233,7 +233,285 @@ fn fetch_with_invalid_keyword() {
         "#});
 }
 
-// TODO(#133): Add tests with submodules.
+#[test]
+fn dep_with_submodule() {
+    // Create a submodule project with Cairo code that will be the `src` directory
+    let submodule = gitx::new("src_submodule", |t| {
+        t.child("lib.cairo")
+            .write_str("pub fn hello() -> felt252 { 42 }")
+            .unwrap();
+    });
+
+    // Create the main dep project without src directory initially
+    let git_dep = gitx::new("dep1", |t| {
+        t.child("Scarb.toml")
+            .write_str(
+                r#"[package]
+name = "dep1"
+version = "1.0.0"
+edition = "2024_07"
+"#,
+            )
+            .unwrap();
+    });
+
+    // Add submodule as src directory
+    gitx::add_submodule(&git_dep, &submodule.url(), "src");
+    git_dep.commit();
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep1", &git_dep)
+        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..]  Updating git repository file://[..]/dep1
+        "#});
+}
+
+#[test]
+fn dep_with_submodule_update_on_rev_change() {
+    // This test verifies that when switching between revisions, submodule content
+    // is correctly updated to match the expected state for each revision.
+
+    // Create the submodule with initial content (v1)
+    let submodule = gitx::new("submodule", |t| {
+        t.child("lib.cairo")
+            .write_str("pub fn value() -> felt252 { 1 }")
+            .unwrap();
+    });
+
+    // Create the main dep project
+    let git_dep = gitx::new("dep1", |t| {
+        t.child("Scarb.toml")
+            .write_str(
+                r#"[package]
+name = "dep1"
+version = "1.0.0"
+edition = "2024_07"
+"#,
+            )
+            .unwrap();
+    });
+
+    // Add submodule and commit (this is rev v1)
+    gitx::add_submodule(&git_dep, &submodule.url(), "src");
+    git_dep.commit();
+
+    // Get the v1 revision
+    let rev_v1 = git_dep.rev_parse("HEAD");
+
+    // Update submodule to v2
+    submodule.change_file("lib.cairo", "pub fn value() -> felt252 { 2 }");
+
+    // Pull the submodule update in the main project
+    git_dep.git(["submodule", "update", "--remote"]);
+    git_dep.commit();
+
+    let rev_v2 = git_dep.rev_parse("HEAD");
+
+    // Use a shared cache directory
+    let cache_dir = TempDir::new().unwrap();
+
+    // First, fetch at v2 (latest)
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep1", &git_dep)
+        .lib_cairo("fn world() -> felt252 { dep1::value() }")
+        .build(&t);
+
+    Scarb::new()
+        .cache(cache_dir.path())
+        .command()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    // Now fetch at v1 (older revision) - this tests that submodule is updated after reset
+    let t2 = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello2")
+        .version("1.0.0")
+        .dep("dep1", git_dep.with("rev", &rev_v1))
+        .lib_cairo("fn world() -> felt252 { dep1::value() }")
+        .build(&t2);
+
+    Scarb::new()
+        .cache(cache_dir.path())
+        .command()
+        .arg("build")
+        .current_dir(&t2)
+        .assert()
+        .success();
+
+    // And back to v2 to verify switching works both ways
+    let t3 = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello3")
+        .version("1.0.0")
+        .dep("dep1", git_dep.with("rev", &rev_v2))
+        .lib_cairo("fn world() -> felt252 { dep1::value() }")
+        .build(&t3);
+
+    Scarb::new()
+        .cache(cache_dir.path())
+        .command()
+        .arg("build")
+        .current_dir(&t3)
+        .assert()
+        .success();
+}
+
+#[test]
+fn dep_with_submodule_as_path_dependency() {
+    // Test that a git dependency can have a submodule that provides a path dependency.
+    // This is a common pattern where a repo includes vendored dependencies as submodules.
+
+    // Create a submodule that will be a path dependency in the base project
+    let deployment = gitx::new("deployment", |t| {
+        t.child("Scarb.toml")
+            .write_str(
+                r#"[package]
+name = "deployment"
+version = "1.0.0"
+edition = "2024_07"
+"#,
+            )
+            .unwrap();
+        t.child("src/lib.cairo")
+            .write_str("pub fn deployment_func() -> felt252 { 123 }")
+            .unwrap();
+    });
+
+    // Create base project that uses deployment as a path dependency
+    let base = gitx::new("base", |t| {
+        t.child("Scarb.toml")
+            .write_str(
+                r#"[package]
+name = "base"
+version = "1.0.0"
+edition = "2024_07"
+
+[dependencies]
+deployment = { path = "deployment" }
+"#,
+            )
+            .unwrap();
+        t.child("src/lib.cairo")
+            .write_str("pub fn base_fn() -> felt252 { deployment::deployment_func() }")
+            .unwrap();
+    });
+
+    // Add deployment as a submodule with absolute URL
+    gitx::add_submodule(&base, &deployment.url(), "deployment");
+    base.commit();
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("base", &base)
+        .lib_cairo("fn world() -> felt252 { base::base_fn() }")
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+}
+
+#[test]
+fn dep_with_nested_submodule() {
+    // Test nested submodules: outer has a submodule that itself has a submodule.
+
+    // Create the innermost submodule
+    let inner = gitx::new("inner", |t| {
+        t.child("Scarb.toml")
+            .write_str(
+                r#"[package]
+name = "inner"
+version = "1.0.0"
+edition = "2024_07"
+"#,
+            )
+            .unwrap();
+        t.child("src/lib.cairo")
+            .write_str("pub fn inner_fn() -> felt252 { 999 }")
+            .unwrap();
+    });
+
+    // Create middle submodule that depends on inner via path
+    let middle = gitx::new("middle", |t| {
+        t.child("Scarb.toml")
+            .write_str(
+                r#"[package]
+name = "middle"
+version = "1.0.0"
+edition = "2024_07"
+
+[dependencies]
+inner = { path = "inner" }
+"#,
+            )
+            .unwrap();
+        t.child("src/lib.cairo")
+            .write_str("pub fn middle_fn() -> felt252 { inner::inner_fn() }")
+            .unwrap();
+    });
+
+    // Add inner as a submodule of middle
+    gitx::add_submodule(&middle, &inner.url(), "inner");
+    middle.commit();
+
+    // Create outer project that depends on middle
+    let outer = gitx::new("outer", |t| {
+        t.child("Scarb.toml")
+            .write_str(
+                r#"[package]
+name = "outer"
+version = "1.0.0"
+edition = "2024_07"
+
+[dependencies]
+middle = { path = "middle" }
+"#,
+            )
+            .unwrap();
+        t.child("src/lib.cairo")
+            .write_str("pub fn outer_fn() -> felt252 { middle::middle_fn() }")
+            .unwrap();
+    });
+
+    // Add middle as a submodule of outer
+    gitx::add_submodule(&outer, &middle.url(), "middle");
+    outer.commit();
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("outer", &outer)
+        .lib_cairo("fn world() -> felt252 { outer::outer_fn() }")
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+}
 
 #[test]
 fn stale_cached_version() {
@@ -637,6 +915,7 @@ fn deps_only_cloned_to_checkouts_once() {
         [..]Running git[EXE] fetch --verbose --force --update-head-ok [..]dep1[..] +HEAD:refs/remotes/origin/HEAD
         [..]Running git[EXE] clone --local --verbose --config 'core.autocrlf=false' --recurse-submodules [..].git[..] [..]
         [..]Running git[EXE] reset --hard [..]
+        [..]Running git[EXE] submodule update --init --recursive --verbose
         "#});
     fs::remove_file(t.child("Scarb.lock")).unwrap();
     Scarb::new()
