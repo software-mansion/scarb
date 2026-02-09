@@ -10,6 +10,7 @@ use indoc::{formatdoc, indoc};
 use mimalloc::MiMalloc;
 use scarb_extensions_cli::execute::{ExecutionTarget, OutputFormat, ToArgs};
 use scarb_extensions_cli::prove::Args;
+use scarb_fs_utils::{MANIFEST_FILE_NAME, find_manifest_path};
 use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
 use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars};
@@ -48,9 +49,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         }
     );
 
-    let scarb_target_dir = Utf8PathBuf::from(
-        env::var("SCARB_TARGET_DIR").context("`SCARB_TARGET_DIR` env var must be defined")?,
-    );
+    let scarb_target_dir = scarb_target_dir_from_env()?;
 
     let metadata = MetadataCommand::new()
         .envs(args.execute_args.features.clone().to_env_vars())
@@ -62,10 +61,6 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         Some(id) => id,
         None => {
             assert!(args.execute);
-            let scarb_target_dir = Utf8PathBuf::from(
-                env::var("SCARB_TARGET_DIR")
-                    .context("`SCARB_TARGET_DIR` env var must be defined")?,
-            );
             let output_dir = scarb_target_dir.join("execute").join(&package.name);
             create_output_dir(output_dir.as_std_path())?;
             let (_execution_output_dir, execution_id) = incremental_create_output_dir(&output_dir)?;
@@ -120,6 +115,22 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     ));
 
     Ok(())
+}
+
+fn scarb_target_dir_from_env() -> Result<Utf8PathBuf> {
+    match env::var("SCARB_TARGET_DIR") {
+        Ok(value) => Ok(Utf8PathBuf::from(value)),
+        Err(_) => {
+            let manifest_path = find_manifest_path(None)?;
+            if manifest_path.exists() {
+                bail!("`SCARB_TARGET_DIR` env var must be defined")
+            } else {
+                bail!(
+                    "no {MANIFEST_FILE_NAME} found, this command must be run inside a Scarb project"
+                )
+            }
+        }
+    }
 }
 
 fn resolve_paths_from_package(

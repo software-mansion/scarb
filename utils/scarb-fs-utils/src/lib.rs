@@ -7,6 +7,13 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, anyhow};
 use camino::{Utf8Path, Utf8PathBuf};
 
+mod manifest;
+
+pub use manifest::find_manifest_path;
+pub use manifest::try_find_manifest_of_pwd;
+
+pub const MANIFEST_FILE_NAME: &str = "Scarb.toml";
+
 /// Equivalent to [`fs::canonicalize`] with better error messages.
 ///
 /// Uses [`dunce`] to generate more familiar paths on Windows.
