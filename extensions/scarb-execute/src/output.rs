@@ -17,7 +17,7 @@ use thousands::Separable;
 
 #[derive(Serialize)]
 pub struct ExecutionSummary {
-    pub output: Option<ExecutionOutput>,
+    pub program_output: Option<ExecutionOutput>,
     pub resources: Option<ExecutionResources>,
 }
 
@@ -26,7 +26,7 @@ impl Message for ExecutionSummary {
     where
         Self: Sized,
     {
-        if let Some(output) = self.output {
+        if let Some(output) = self.program_output {
             output.print_text();
         }
         if let Some(resources) = self.resources {
@@ -43,14 +43,14 @@ impl Message for ExecutionSummary {
 }
 
 #[derive(Serialize)]
+#[serde(transparent)]
 pub struct ExecutionOutput(String);
 
 impl ExecutionOutput {
     pub fn try_new(runner: &mut CairoRunner) -> Result<Self> {
-        let mut output_buffer = "Program output:\n".to_string();
+        let mut output_buffer = String::new();
         runner.vm.write_output(&mut output_buffer)?;
-        let output = output_buffer.trim_end().to_string();
-        Ok(Self(output))
+        Ok(Self(output_buffer.trim_end().to_string()))
     }
 }
 
@@ -59,7 +59,7 @@ impl Message for ExecutionOutput {
     where
         Self: Sized,
     {
-        println!("{}", self.0);
+        println!("Program output:\n{}", self.0);
     }
 
     fn structured<S: Serializer>(self, ser: S) -> std::result::Result<S::Ok, S::Error>

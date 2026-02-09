@@ -332,8 +332,8 @@ pub fn execute(
         .then(|| ExecutionResources::try_new(&runner, hint_processor))
         .transpose()?;
 
-    ui.print(ExecutionSummary {
-        output: args
+    let summary = ExecutionSummary {
+        program_output: args
             .run
             .print_program_output
             .then(|| ExecutionOutput::try_new(&mut runner))
@@ -343,7 +343,12 @@ pub fn execute(
             .print_resource_usage
             .then_some(execution_resources.clone())
             .flatten(),
-    });
+    };
+    if args.run.print_resource_usage || args.run.print_program_output {
+        ui.force_print(summary);
+    } else {
+        ui.print(summary);
+    }
 
     if output.is_cairo_pie() {
         let output_value = runner.get_cairo_pie()?;
