@@ -6,6 +6,8 @@ on:
       - main
   pull_request:
     types: [opened, labeled, synchronize, reopened]
+    branches:
+      - release/2.15-3 #temporary
   merge_group:
 
 concurrency:
