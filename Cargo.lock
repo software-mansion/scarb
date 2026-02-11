@@ -1659,9 +1659,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-language-server"
-version = "2.15.0"
+version = "2.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02f3c1a6030b2dcd2f1244609467adaca6703fa348c6da03a8f209e00e705e26"
+checksum = "eeef02b824628434a42acb7881be9f8f4b35799fe9675bbb24b92db0bbfd5474"
 dependencies = [
  "anyhow",
  "bincode 2.0.1",

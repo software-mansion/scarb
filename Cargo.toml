@@ -72,7 +72,7 @@ cairo-lang-syntax = "2.15.0"
 cairo-lang-test-plugin = "2.15.0"
 cairo-lang-test-runner = "2.15.0"
 cairo-lang-utils = { version = "2.15.0", features = ["tracing"] }
-cairo-language-server = "2.15.0"
+cairo-language-server = "2.15.1"
 cairo-lint = "2.15.0"
 cairo-program-runner-lib = { git = "https://github.com/software-mansion-labs/proving-utils.git", rev = "96f628509578b2b30d82f18ac1e0d07df9557760" }
 cairo-vm = { version= "3.0.0", features = ["std"] }
