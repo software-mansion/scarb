@@ -78,6 +78,10 @@ impl Scarb {
         if let Some(target) = self.target.as_ref() {
             cmd.env("SCARB_TARGET_DIR", target);
         }
+        // Allow file:// protocol for Git submodules in tests.
+        cmd.env("GIT_CONFIG_COUNT", "1");
+        cmd.env("GIT_CONFIG_KEY_0", "protocol.file.allow");
+        cmd.env("GIT_CONFIG_VALUE_0", "always");
         cmd
     }
 
