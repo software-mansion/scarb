@@ -19,10 +19,6 @@ on:
         description: "Upgrade CairoLint"
         type: boolean
         default: true
-      # upgrade-stwo:
-      #   description: "Upgrade Stwo"
-      #   type: boolean
-      #   default: true
   workflow_call:
     inputs:
       dry_run:
@@ -41,16 +37,8 @@ on:
         description: "Upgrade CairoLint"
         type: boolean
         default: true
-      # upgrade-stwo:
-      #   description: "Upgrade Stwo"
-      #   type: boolean
-      #   default: true
       include-cairols:
         description: "Include CairoLS in build"
-        type: boolean
-        default: true
-      include-stwo:
-        description: "Include Stwo in build"
         type: boolean
         default: true
       include-lint:
@@ -106,10 +94,6 @@ jobs:
       - name: Upgrade Cairo-lint to latest main commit
         if: ${{ !contains(inputs.upgrade-cairolint, 'false') }}
         run: cargo xtask upgrade cairolint --rev $(git ls-remote --refs "https://github.com/software-mansion/cairo-lint" main | awk '{print $1}')
-
-      # - name: Upgrade stwo-cairo to latest main commit
-      #   if: ${{ !contains(inputs.upgrade-stwo, 'false') }}
-      #   run: cargo xtask upgrade stwo-cairo --rev $(git ls-remote --refs "https://github.com/starkware-libs/stwo-cairo" main | awk '{print $1}')
 
       - name: Rebuild xtasks after Cargo.toml changes
         run: cargo build -p xtask
@@ -188,7 +172,6 @@ jobs:
       ref: ${{ needs.prepare.outputs.nightly_branch }}
       full-verify: ${{ !inputs.is_dev }}
       include-cairols: ${{ !contains(inputs.include-cairols, 'false') }}
-      include-stwo: ${{ !contains(inputs.include-stwo, 'false') }}
       include-lint: ${{ !contains(inputs.include-lint, 'false') }}
 
   upload:

@@ -12,10 +12,6 @@ concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: ${{ github.head_ref != 'main' }}
 
-env:
-  # TODO(#1915): Use stable toolchain once stwo is stable.
-  RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-07-14"
-
 jobs:
   setup-matrix:
     runs-on: ubuntu-latest
@@ -71,7 +67,7 @@ jobs:
         with:
           tool: nextest@0.9.98
       - name: nextest archive
-        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude cairo-lang-macro
+        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude cairo-lang-macro
       - uses: actions/upload-artifact@v6
         with:
           name: nextest-archive-${{ matrix.platform.os }}
@@ -109,12 +105,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: run tests
-        run: cargo test --doc --workspace --exclude scarb-prove --exclude scarb-verify --exclude scarb-execute
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - name: run nightly tests
-        run: cargo test --doc -p scarb-prove -p scarb-verify -p scarb-execute
+        run: cargo test --doc --workspace
 
   scarb-metadata-compatibility:
     name: scarb-metadata compatibility check
@@ -130,72 +121,6 @@ jobs:
       - run: echo "SCARB_TEST_BIN=$(which scarb)" >> $GITHUB_ENV
       - name: run tests
         run: cargo test -p scarb-metadata
-
-  build-nightly-test:
-    name: build nightly test ${{ matrix.platform.name }}
-    runs-on: ${{ matrix.platform.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          # TODO: Enable tests on windows when stwo supports it.
-          - name: linux x86-64
-            os: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: nextest@0.9.98
-      - uses: Swatinem/rust-cache@v2
-      - name: nextest archive
-        run: cargo nextest archive --all-features --cargo-profile ci --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --package scarb-prove --package scarb-verify
-      - uses: actions/upload-artifact@v6
-        with:
-          name: nextest-nightly-archive-${{ matrix.platform.os }}
-          path: nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst
-
-  test-nightly:
-    name: test nightly ${{ matrix.platform.name }}
-    runs-on: ${{ matrix.platform.os }}
-    needs:
-      - build-test
-      - build-nightly-test
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: nextest@0.9.98
-      - uses: Swatinem/rust-cache@v2
-      - name: Download stable build artifacts  
-        uses: actions/download-artifact@v7
-        with:
-          name: nextest-archive-${{ matrix.platform.os }}
-      - name: Unpack build stable rust artifacts from nextest archive on linux
-        if: matrix.platform.os == 'ubuntu-latest'
-        run: |
-          tar --use-compress-program=unzstd -xvf nextest-archive-ubuntu-latest.tar.zst
-          mv target stable-crates-target
-          echo "NEXTEST_BIN_EXE_scarb=$GITHUB_WORKSPACE/stable-crates-target/ci/scarb" >> $GITHUB_ENV
-          echo "$GITHUB_WORKSPACE/stable-crates-target/ci" >> $GITHUB_PATH
-          echo "$GITHUB_WORKSPACE/target/ci" >> $GITHUB_PATH
-      - name: Download nightly build artifacts
-        uses: actions/download-artifact@v7
-        with:
-          name: nextest-nightly-archive-${{ matrix.platform.os }}
-      - name: nextest partition
-        run: cargo nextest run --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --extract-to ./
 
   test-cairo-lang-macro:
     name: test cairo-lang-macro ${{ matrix.platform.name }}
@@ -223,12 +148,11 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --check
-      # TODO(#1915): Build all crates with stable toolchain once stwo is stable.
-      - run: cargo clippy --all-targets --all-features --workspace --exclude scarb-prove --exclude scarb-verify -- --no-deps
+      - run: cargo clippy --all-targets --all-features --workspace -- --no-deps
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTFLAGS: "-Dwarnings"
-      - run: cargo doc --all-features --no-deps --workspace --exclude scarb-prove --exclude scarb-verify
+      - run: cargo doc --all-features --no-deps --workspace
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTDOCFLAGS: "-Dwarnings"
@@ -240,25 +164,6 @@ jobs:
         uses: actions/checkout@v6
       - name: Machete
         uses: bnjbvr/cargo-machete@v0.9.1
-
-  check-rust-nightly:
-    name: check-rust (nightly)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} clippy --all-targets --all-features -p scarb-prove -p scarb-verify -- --no-deps
-        env:
-          # Make sure CI fails on all warnings, including Clippy lints.
-          RUSTFLAGS: "-Dwarnings"
-      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} doc --all-features --no-deps -p scarb-prove -p scarb-verify
-        env:
-          # Make sure CI fails on all warnings, including Clippy lints.
-          RUSTDOCFLAGS: "-Dwarnings"
 
   check-website:
     runs-on: ubuntu-latest
