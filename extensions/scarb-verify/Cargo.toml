@@ -22,7 +22,6 @@ clap.workspace = true
 indoc.workspace = true
 mimalloc.workspace = true
 scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["verify"] }
-scarb-fs-utils = { path = "../../utils/scarb-fs-utils" }
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 serde_json.workspace = true
