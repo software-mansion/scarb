@@ -45,6 +45,9 @@ pub fn main(args: Args) -> Result<()> {
         if args.skip_cairols && bin == "scarb-cairo-language-server" {
             continue;
         }
+        if bin == "scarb-execute" {
+            continue;
+        }
         if args.skip_stwo && (bin == "scarb-prove" || bin == "scarb-verify") {
             continue;
         }
