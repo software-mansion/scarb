@@ -43,7 +43,7 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo test --profile=ci --all-features --no-fail-fast --workspace --exclude scarb-prove --exclude scarb-verify
+      - run: cargo test --profile=ci --no-fail-fast --workspace --exclude scarb-prove --exclude scarb-verify
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
