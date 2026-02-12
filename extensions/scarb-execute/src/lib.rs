@@ -124,7 +124,7 @@ fn execute_bootloader(
     let bootloader_program = Program::from_bytes(COMPILED_BOOTLOADER.as_bytes(), Some("main"))
         .context("failed to load bootloader program")?;
 
-    let mut hint_processor = BootloaderHintProcessor::new();
+    let mut hint_processor = BootloaderHintProcessor::new(None);
 
     let mut exec_scopes = ExecutionScopes::new();
     // Insert the program input into the execution scopes if exists
