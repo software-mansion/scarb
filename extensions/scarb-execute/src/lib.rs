@@ -12,7 +12,7 @@ use cairo_lang_runner::casm_run::format_for_panic;
 use cairo_lang_runner::{Arg, CairoHintProcessor, build_hints_dict};
 use cairo_lang_utils::bigint::BigUintAsHex;
 use cairo_program_runner_lib::utils::get_cairo_run_config;
-use cairo_program_runner_lib::{BootloaderHintProcessor, PROGRAM_INPUT, PROGRAM_OBJECT};
+use cairo_program_runner_lib::{BootloaderHintProcessor, ProgramInput, PROGRAM_INPUT, PROGRAM_OBJECT};
 use cairo_vm::Felt252;
 use cairo_vm::cairo_run::cairo_run_program;
 use cairo_vm::cairo_run::{CairoRunConfig, cairo_run_program_with_initial_scope};
@@ -118,7 +118,7 @@ fn execute_bootloader(
             }
         ],
     });
-    let program_input = serde_json::to_string(&program_input)?;
+    let program_input = ProgramInput::Json(serde_json::to_string(&program_input)?);
 
     // Load bootloader program from embedded resource
     let bootloader_program = Program::from_bytes(COMPILED_BOOTLOADER.as_bytes(), Some("main"))
