@@ -6186,7 +6186,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "2.15.0"
+version = "2.16.0-rc.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6303,7 +6303,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-build-metadata"
-version = "2.15.0"
+version = "2.16.0-rc.0"
 dependencies = [
  "cargo_metadata",
  "semver",
@@ -6311,7 +6311,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "2.15.0"
+version = "2.16.0-rc.0"
 dependencies = [
  "assert_fs",
  "cairo-language-server",
@@ -6323,7 +6323,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-test"
-version = "2.15.0"
+version = "2.16.0-rc.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6349,7 +6349,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-doc"
-version = "2.15.0"
+version = "2.16.0-rc.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6384,7 +6384,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-extensions-cli"
-version = "2.15.0"
+version = "2.16.0-rc.0"
 dependencies = [
  "anyhow",
  "cairo-vm",
@@ -6404,7 +6404,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-mdbook"
-version = "2.15.0"
+version = "2.16.0-rc.0"
 dependencies = [
  "anyhow",
  "assert_fs",
