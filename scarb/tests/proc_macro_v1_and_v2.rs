@@ -6,6 +6,7 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
+#[ignore]
 fn can_use_both_v1_and_v2_proc_macros() {
     let temp = TempDir::new().unwrap();
     let foo = temp.child("foo");

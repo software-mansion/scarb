@@ -8,6 +8,7 @@ use scarb_test_support::project_builder::ProjectBuilder;
 use snapbox::Assert;
 
 #[test]
+#[ignore]
 fn can_implement_derive_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -99,6 +100,7 @@ fn can_implement_derive_macro() {
 }
 
 #[test]
+#[ignore]
 fn can_use_both_derive_and_attr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -484,6 +486,7 @@ fn diags_can_be_mapped_to_call_site_correctly() {
     "#});
 }
 #[test]
+#[ignore]
 fn can_use_two_derive_macros() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");

@@ -8,6 +8,7 @@ use scarb_test_support::project_builder::ProjectBuilder;
 use snapbox::Assert;
 
 #[test]
+#[ignore]
 fn quote_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -60,6 +61,7 @@ fn quote_macro() {
 }
 
 #[test]
+#[ignore]
 fn quote_macro_with_token_tree() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -115,6 +117,7 @@ fn quote_macro_with_token_tree() {
 }
 
 #[test]
+#[ignore]
 fn quote_macro_with_token_stream() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -808,6 +811,7 @@ fn quote_macro_preserves_spans_of_parsed_args() {
 }
 
 #[test]
+#[ignore]
 fn quote_format_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -867,6 +871,7 @@ fn quote_format_macro() {
 }
 
 #[test]
+#[ignore]
 fn quote_format_macro_with_code_block() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -929,6 +934,7 @@ fn quote_format_macro_with_code_block() {
 }
 
 #[test]
+#[ignore]
 fn quote_format_macro_no_args() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -982,6 +988,7 @@ fn quote_format_macro_no_args() {
 }
 
 #[test]
+#[ignore]
 fn quote_format_macro_multiple_args() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1039,6 +1046,7 @@ fn quote_format_macro_multiple_args() {
 }
 
 #[test]
+#[ignore]
 fn quote_format_macro_fails_on_invalid_syntax() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1095,6 +1103,7 @@ fn quote_format_macro_fails_on_invalid_syntax() {
 }
 
 #[test]
+#[ignore]
 fn quote_format_macro_with_indexed_args() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");

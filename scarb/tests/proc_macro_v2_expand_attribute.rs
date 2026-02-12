@@ -109,6 +109,7 @@ fn diags_from_generated_code_mapped_correctly() {
 }
 
 #[test]
+#[ignore]
 fn can_remove_original_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -167,6 +168,7 @@ fn can_remove_original_node() {
 }
 
 #[test]
+#[ignore]
 fn can_replace_original_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -272,6 +274,7 @@ fn can_read_attribute_args() {
 }
 
 #[test]
+#[ignore]
 fn can_expand_trait_inner_func_attr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");

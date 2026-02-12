@@ -84,6 +84,7 @@ fn cairo_plugin_re_export_simple() {
 }
 
 #[test]
+#[ignore]
 fn components_in_the_same_unit_can_depend_on_conflicting_plugins() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default()

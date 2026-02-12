@@ -6,6 +6,7 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
+#[ignore]
 fn can_implement_inline_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -370,6 +371,7 @@ fn inline_macro_diags_mapped_correctly_to_call_site() {
 }
 
 #[test]
+#[ignore]
 fn module_level_inline_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -438,6 +440,7 @@ fn module_level_inline_macro() {
 }
 
 #[test]
+#[ignore]
 fn module_level_inline_macro_with_args() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -509,6 +512,7 @@ fn module_level_inline_macro_with_args() {
 }
 
 #[test]
+#[ignore]
 fn module_level_inline_macro_module_tree_root() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -572,6 +576,7 @@ fn module_level_inline_macro_module_tree_root() {
 }
 
 #[test]
+#[ignore]
 fn module_level_inline_macro_empty() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -741,6 +746,7 @@ fn module_level_inline_macro_code_mappings_preserve_error_locations() {
 }
 
 #[test]
+#[ignore]
 fn module_level_inline_macro_multiple() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");

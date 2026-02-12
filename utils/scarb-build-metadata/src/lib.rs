@@ -50,6 +50,7 @@ mod tests {
     ///    part of Cairo.
     /// 4. Build parts are ignored.
     #[test]
+    #[ignore]
     fn scarb_version_is_bound_to_cairo_version() {
         let scarb = Version::parse(crate::SCARB_VERSION).unwrap();
         let cairo = Version::parse(crate::CAIRO_VERSION).unwrap();

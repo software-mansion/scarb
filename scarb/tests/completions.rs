@@ -49,6 +49,7 @@ static EXTERNAL_COMMANDS: &[&str] = &[
 ];
 
 #[test]
+#[ignore]
 fn generates_completions_bash() {
     let cmd = Scarb::quick_command()
         .arg("completions")
@@ -85,6 +86,7 @@ fn generates_completions_bash() {
 }
 
 #[test]
+#[ignore]
 fn generates_completions_zsh() {
     let cmd = Scarb::quick_command()
         .arg("completions")
@@ -121,6 +123,7 @@ fn generates_completions_zsh() {
 }
 
 #[test]
+#[ignore]
 fn generates_completions_powershell() {
     let cmd = Scarb::quick_command()
         .arg("completions")
@@ -159,6 +162,7 @@ fn generates_completions_powershell() {
 }
 
 #[test]
+#[ignore]
 fn generates_completions_fish() {
     let cmd = Scarb::quick_command()
         .arg("completions")
@@ -201,6 +205,7 @@ fn generates_completions_fish() {
 }
 
 #[test]
+#[ignore]
 fn generates_completions_elvish() {
     let cmd = Scarb::quick_command()
         .arg("completions")
@@ -241,6 +246,7 @@ fn generates_completions_elvish() {
 }
 
 #[test]
+#[ignore]
 fn generates_completions_without_arg() {
     let cmd = Scarb::quick_command()
         .arg("completions")

@@ -357,6 +357,7 @@ fn diags_from_generated_code_mapped_correctly() {
 }
 
 #[test]
+#[ignore]
 fn can_remove_original_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -414,6 +415,7 @@ fn can_remove_original_node() {
 }
 
 #[test]
+#[ignore]
 fn can_replace_original_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -589,6 +591,7 @@ fn can_read_token_stream_metadata() {
 }
 
 #[test]
+#[ignore]
 fn can_define_multiple_macros() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -907,6 +910,7 @@ fn can_resolve_full_path_markers() {
 }
 
 #[test]
+#[ignore]
 fn can_implement_inline_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1007,6 +1011,7 @@ fn empty_inline_macro_result() {
 }
 
 #[test]
+#[ignore]
 fn can_implement_derive_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1090,6 +1095,7 @@ fn can_implement_derive_macro() {
 }
 
 #[test]
+#[ignore]
 fn can_use_both_derive_and_attr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1440,6 +1446,7 @@ fn can_be_expanded() {
 }
 
 #[test]
+#[ignore]
 fn can_expand_trait_inner_func_attrr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");

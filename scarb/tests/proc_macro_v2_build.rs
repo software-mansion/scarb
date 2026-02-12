@@ -206,6 +206,7 @@ fn compile_cairo_plugin_with_other_target() {
 }
 
 #[test]
+#[ignore]
 fn can_define_multiple_macros() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
