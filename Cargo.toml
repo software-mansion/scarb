@@ -5,7 +5,7 @@ members = [
     "extensions/scarb-cairo-language-server",
     "extensions/scarb-cairo-test",
     "extensions/scarb-doc",
-    "extensions/scarb-execute",
+#    "extensions/scarb-execute",
     "extensions/scarb-mdbook",
 #    "extensions/scarb-prove",
 #    "extensions/scarb-verify",
@@ -73,7 +73,7 @@ cairo-lang-test-runner = "2.16.0-rc.0"
 cairo-lang-utils = { version = "2.16.0-rc.0", features = ["tracing"] }
 cairo-language-server = "2.16.0-rc.0"
 cairo-lint = "2.16.0-rc.0"
-cairo-program-runner-lib = { git = "https://github.com/software-mansion-labs/proving-utils.git", rev = "d496eda1ec5e92526148ff5d5600b546f214fe5d" }
+#cairo-program-runner-lib = { git = "https://github.com/software-mansion-labs/proving-utils.git", rev = "d496eda1ec5e92526148ff5d5600b546f214fe5d" }
 cairo-vm = { version= "3.0.0", features = ["std"] }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
