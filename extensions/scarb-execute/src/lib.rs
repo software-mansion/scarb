@@ -29,6 +29,7 @@ use scarb_extensions_cli::execute::{
     Args, BuildTargetSpecifier, ExecutionArgs, ExecutionTarget, OutputFormat, ProgramArguments,
 };
 use scarb_fs_utils::canonicalize_utf8;
+use scarb_fs_utils::{MANIFEST_FILE_NAME, find_manifest_path};
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
 use scarb_oracle_hint_service::OracleHintService;
 use scarb_ui::Ui;
@@ -278,9 +279,7 @@ pub fn execute(
             .run()?;
     }
 
-    let scarb_target_dir = Utf8PathBuf::from(
-        env::var("SCARB_TARGET_DIR").context("`SCARB_TARGET_DIR` env var must be defined")?,
-    );
+    let scarb_target_dir = scarb_target_dir_from_env()?;
     let scarb_build_dir = scarb_target_dir
         .join(env::var("SCARB_PROFILE").context("`SCARB_PROFILE` env var must be defined")?);
 
@@ -428,6 +427,22 @@ pub fn execute(
     }
 
     Ok(())
+}
+
+fn scarb_target_dir_from_env() -> Result<Utf8PathBuf> {
+    match env::var("SCARB_TARGET_DIR") {
+        Ok(value) => Ok(Utf8PathBuf::from(value)),
+        Err(_) => {
+            let manifest_path = find_manifest_path(None)?;
+            if manifest_path.exists() {
+                bail!("`SCARB_TARGET_DIR` env var must be defined")
+            } else {
+                bail!(
+                    "no {MANIFEST_FILE_NAME} found, this command must be run inside a Scarb project"
+                )
+            }
+        }
+    }
 }
 
 fn find_build_target<'a>(
