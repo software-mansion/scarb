@@ -1,5 +1,6 @@
 use anyhow::{Result, anyhow};
 use camino::{Utf8Path, Utf8PathBuf};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use scarb_fs_utils as fsx;
@@ -107,8 +108,11 @@ where
 
 /// Type representing a path for use in `Scarb.toml` where all paths are expected to be relative to
 /// it.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+#[derive(
+    Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(transparent)]
+#[schemars(with = "String")]
 pub struct RelativeUtf8PathBuf(Utf8PathBuf);
 
 impl RelativeUtf8PathBuf {

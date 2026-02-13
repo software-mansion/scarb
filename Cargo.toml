@@ -21,6 +21,7 @@ members = [
     "utils/scarb-ui",
     "utils/test-for-each-example",
     "utils/scarb-extensions-cli",
+    "utils/scarb-manifest-schema",
     "utils/scarb-oracle-hint-service",
     "xtask", "utils/scarb-fs-utils",
 ]
@@ -121,6 +122,7 @@ ra_ap_toolchain = "0"
 rayon = "1.11.0"
 redb = "2.6.3"
 salsa = "0.26.0"
+schemars = { version = "1.2.1", features = ["smol_str03"] }
 semver = { version = "1", features = ["serde"] }
 semver-pubgrub = { git = "https://github.com/software-mansion-labs/semver-pubgrub.git" }
 serde = { version = "1", features = ["serde_derive"] }

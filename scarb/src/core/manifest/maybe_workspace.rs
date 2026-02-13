@@ -3,6 +3,7 @@
 // https://github.com/rust-lang/cargo/blob/31eda6f7c360d9911f853b3014e057db61238f3e/src/cargo/util/toml/mod.rs#L1071
 
 use anyhow::{Context, Result, bail};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
 
 /// This Trait exists to make [`MaybeWorkspace::Workspace`] generic. It makes deserialization of
@@ -21,7 +22,7 @@ pub trait WorkspaceInherit {
 }
 
 /// An enum that allows for inheriting keys from a workspace in a Scarb.toml.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, JsonSchema)]
 #[serde(untagged)]
 pub enum MaybeWorkspace<T, W: WorkspaceInherit> {
     /// The type when inheriting from a workspace.
