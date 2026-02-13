@@ -1,7 +1,7 @@
 #![deny(clippy::dbg_macro)]
 #![deny(clippy::disallowed_methods)]
 
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result, bail, ensure};
 use cairo_air::CairoProofForRustVerifier;
 use cairo_air::verifier::verify_cairo;
 use camino::{Utf8Path, Utf8PathBuf};
@@ -9,9 +9,10 @@ use clap::Parser;
 use indoc::formatdoc;
 use mimalloc::MiMalloc;
 use scarb_extensions_cli::verify::Args;
+use scarb_fs_utils::{MANIFEST_FILE_NAME, find_manifest_path};
 use scarb_metadata::{MetadataCommand, PackageMetadata};
 use scarb_ui::components::Status;
-use scarb_ui::{OutputFormat, Ui};
+use scarb_ui::Ui;
 use std::env;
 use std::fs;
 use std::process::ExitCode;
@@ -24,7 +25,7 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
+    let ui = Ui::new(args.verbose.clone().into(), args.output_format());
 
     match main_inner(args, ui.clone()) {
         Ok(()) => ExitCode::SUCCESS,
@@ -39,7 +40,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let proof_path = if let Some(execution_id) = args.execution_id {
         let metadata = MetadataCommand::new().inherit_stderr().exec()?;
         let package = args.packages_filter.match_one(&metadata)?;
-        let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
+        let scarb_target_dir = scarb_target_dir_from_env()?;
         ui.print(Status::new("Verifying", &package.name));
         resolve_proof_path_from_package(&scarb_target_dir, &package, execution_id)?
     } else {
@@ -55,6 +56,22 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     ui.print(Status::new("Verified", "proof successfully"));
 
     Ok(())
+}
+
+fn scarb_target_dir_from_env() -> Result<Utf8PathBuf> {
+    match env::var("SCARB_TARGET_DIR") {
+        Ok(value) => Ok(Utf8PathBuf::from(value)),
+        Err(_) => {
+            let manifest_path = find_manifest_path(None)?;
+            if manifest_path.exists() {
+                bail!("`SCARB_TARGET_DIR` env var must be defined")
+            } else {
+                bail!(
+                    "no {MANIFEST_FILE_NAME} found, this command must be run inside a Scarb project"
+                )
+            }
+        }
+    }
 }
 
 fn load_proof(

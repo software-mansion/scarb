@@ -91,7 +91,7 @@ dialoguer = "0.12.0"
 directories = "6"
 dunce = "1"
 expect-test = "1.5"
-flate2 = { version = "1.1.8", default-features = false, features = ["zlib"] }
+flate2 = { version = "1", default-features = false, features = ["zlib"] }
 fs_extra = "1"
 futures = { version = "0.3", default-features = false, features = ["std", "async-await", "executor"] }
 gix = { version = ">=0.73", default-features = false, features = ["revision"] }
@@ -167,7 +167,7 @@ which = "8"
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System", "Win32_System_Console"] }
 xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
-zip = { version = "7.2", default-features = false, features = ["deflate"] }
+zip = { version = "7", default-features = false, features = ["deflate"] }
 zstd = "0.13"
 
 [workspace.dependencies.reqwest]

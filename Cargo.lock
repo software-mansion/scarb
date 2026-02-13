@@ -7249,6 +7249,7 @@ dependencies = [
  "indoc",
  "mimalloc",
  "scarb-extensions-cli",
+ "scarb-fs-utils",
  "scarb-metadata 1.15.1",
  "scarb-test-support",
  "scarb-ui",
