@@ -71,7 +71,7 @@ jobs:
         with:
           tool: nextest@0.9.98
       - name: nextest archive
-        run: cargo nextest archive --workspace --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude cairo-lang-macro
+        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude cairo-lang-macro
       - uses: actions/upload-artifact@v6
         with:
           name: nextest-archive-${{ matrix.platform.os }}
@@ -212,7 +212,7 @@ jobs:
         # Note tests depending on trybuild crate cannot be run with nextest,
         # as they require access to cargo build cache of the package,
         # which is not archived with nextest-archive.
-        run: cargo test -p cairo-lang-macro --features serde
+        run: cargo test -p cairo-lang-macro --all-features
 
   check-rust:
     runs-on: ubuntu-latest
@@ -224,11 +224,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --check
       # TODO(#1915): Build all crates with stable toolchain once stwo is stable.
-      - run: cargo clippy --all-targets --workspace --exclude scarb-prove --exclude scarb-verify -- --no-deps
+      - run: cargo clippy --all-targets --all-features --workspace --exclude scarb-prove --exclude scarb-verify -- --no-deps
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTFLAGS: "-Dwarnings"
-      - run: cargo doc --no-deps --workspace --exclude scarb-prove --exclude scarb-verify
+      - run: cargo doc --all-features --no-deps --workspace --exclude scarb-prove --exclude scarb-verify
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTDOCFLAGS: "-Dwarnings"
