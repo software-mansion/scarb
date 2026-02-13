@@ -2,8 +2,8 @@
 #![deny(clippy::disallowed_methods)]
 
 use anyhow::{Context, Result, bail, ensure};
+use cairo_air::CairoProofForRustVerifier;
 use cairo_air::verifier::verify_cairo;
-use cairo_air::{CairoProof, PreProcessedTraceVariant};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use indoc::formatdoc;
@@ -16,8 +16,8 @@ use scarb_ui::components::Status;
 use std::env;
 use std::fs;
 use std::process::ExitCode;
-use stwo_cairo_prover::stwo::core::vcs::blake2_merkle::{
-    Blake2sMerkleChannel, Blake2sMerkleHasher,
+use stwo_cairo_prover::stwo::core::vcs_lifted::blake2_merkle::{
+    Blake2sMerkleChannelGeneric, Blake2sMerkleHasherGeneric,
 };
 
 #[global_allocator]
@@ -50,7 +50,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
     let proof = load_proof(&proof_path)?;
 
-    verify_cairo::<Blake2sMerkleChannel>(proof, PreProcessedTraceVariant::Canonical)
+    verify_cairo::<Blake2sMerkleChannelGeneric<false>>(proof)
         .with_context(|| "failed to verify proof")?;
 
     ui.print(Status::new("Verified", "proof successfully"));
@@ -74,7 +74,9 @@ fn scarb_target_dir_from_env() -> Result<Utf8PathBuf> {
     }
 }
 
-fn load_proof(path: &Utf8Path) -> Result<CairoProof<Blake2sMerkleHasher>> {
+fn load_proof(
+    path: &Utf8Path,
+) -> Result<CairoProofForRustVerifier<Blake2sMerkleHasherGeneric<false>>> {
     ensure!(
         path.exists(),
         format!("proof file does not exist at path: {path}")
