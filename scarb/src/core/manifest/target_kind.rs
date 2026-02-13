@@ -3,10 +3,11 @@ use std::fmt;
 use std::str::FromStr;
 
 use anyhow::{Result, bail};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
-#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(into = "SmolStr", try_from = "SmolStr")]
 pub struct TargetKind(SmolStr);
 

@@ -1,10 +1,11 @@
 use anyhow::Result;
 use deno_task_shell::parser::SequentialList;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
 use std::fmt;
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
 pub struct ScriptDefinition(String);
 
 impl ScriptDefinition {
