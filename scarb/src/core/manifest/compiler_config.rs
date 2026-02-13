@@ -1,4 +1,5 @@
 use cairo_lang_lowering::optimizations::config::Optimizations;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 
@@ -66,7 +67,7 @@ impl CompilerOptimizations {
     }
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, Eq, PartialEq, Hash, Clone)]
+#[derive(Debug, Default, Deserialize, Serialize, Eq, PartialEq, Hash, Clone, JsonSchema)]
 #[serde(
     rename_all = "kebab-case",
     try_from = "serdex::InliningStrategy",
@@ -85,9 +86,10 @@ pub enum InliningStrategy {
 }
 
 mod serdex {
+    use schemars::JsonSchema;
     use serde::{Deserialize, Serialize};
 
-    #[derive(Debug, Deserialize, Serialize)]
+    #[derive(Debug, Deserialize, Serialize, JsonSchema)]
     #[serde(untagged)]
     pub enum InliningStrategy {
         InlineSmallFunctions(usize),

@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use anyhow::{Result, bail};
 use cairo_lang_filesystem::db::CORELIB_CRATE_NAME;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
@@ -26,7 +27,7 @@ use crate::{
 ///
 /// Package naming rules are described in
 /// [Scarb docs](https://docs.swmansion.com/scarb/docs/reference/manifest.html#name).
-#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(into = "SmolStr", try_from = "SmolStr")]
 pub struct PackageName(SmolStr);
 
