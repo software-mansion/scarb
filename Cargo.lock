@@ -7047,9 +7047,11 @@ name = "scarb-manifest-schema"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "indoc",
  "scarb",
  "schemars",
  "serde_json",
+ "test-case",
 ]
 
 [[package]]
