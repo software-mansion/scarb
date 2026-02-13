@@ -21,7 +21,7 @@ pub trait WorkspaceInherit {
     fn workspace(&self) -> bool;
 }
 
-/// An enum that allows for inheriting keys from a workspace in a Scarb.toml.
+/// Allows inheriting keys from a workspace.
 #[derive(Clone, Debug, Serialize, JsonSchema)]
 #[serde(untagged)]
 pub enum MaybeWorkspace<T, W: WorkspaceInherit> {
