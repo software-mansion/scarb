@@ -31,6 +31,7 @@ use pathdiff::diff_utf8_paths;
 use scarb_fs_utils as fsx;
 use scarb_fs_utils::PathBufUtf8Ext;
 use scarb_ui::Ui;
+use schemars::JsonSchema;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize, de};
 use serde_untagged::UntaggedEnumVisitor;
@@ -45,7 +46,7 @@ use tracing::trace;
 use url::Url;
 
 /// This type is used to deserialize `Scarb.toml` files.
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlManifest {
     pub package: Option<Box<TomlPackage>>,
@@ -55,12 +56,27 @@ pub struct TomlManifest {
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
     pub executable: Option<TomlTarget<TomlExecutableTargetParams>>,
     pub cairo_plugin: Option<TomlTarget<TomlCairoPluginTargetParams>>,
+
+    #[schemars(with = "Option<Vec<TomlTarget<BTreeMap<SmolStr, serde_json::Value>>>>")]
     pub test: Option<Vec<TomlTarget<TomlExternalTargetParams>>>,
+
+    #[schemars(
+        with = "Option<BTreeMap<TargetKind, Vec<TomlTarget<BTreeMap<SmolStr, serde_json::Value>>>>>"
+    )]
     pub target: Option<BTreeMap<TargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
+
     pub cairo: Option<TomlCairo>,
+
+    #[schemars(with = "Option<BTreeMap<String, TomlProfile>>")]
     pub profile: Option<TomlProfilesDefinition>,
+
     pub scripts: Option<BTreeMap<SmolStr, MaybeWorkspaceScriptDefinition>>,
+
+    #[schemars(
+        with = "Option<BTreeMap<SmolStr, MaybeWorkspace<serde_json::Value, TomlWorkspaceTool>>>"
+    )]
     pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
+
     pub features: Option<BTreeMap<FeatureName, Vec<TomlFeatureToEnable>>>,
     pub patch: Option<BTreeMap<SmolStr, BTreeMap<PackageName, TomlDependency>>>,
     pub target_defaults: Option<BTreeMap<TomlTargetKindTestOnly, MaybeWorkspaceTargetDefaults>>,
@@ -68,7 +84,7 @@ pub struct TomlManifest {
 
 type MaybeWorkspaceScriptDefinition = MaybeWorkspace<ScriptDefinition, WorkspaceScriptDefinition>;
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct WorkspaceScriptDefinition {
     pub workspace: bool,
 }
@@ -85,7 +101,7 @@ impl WorkspaceInherit for WorkspaceScriptDefinition {
 
 type TomlProfilesDefinition = BTreeMap<SmolStr, TomlProfile>;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct TomlWorkspaceTool {
     pub workspace: bool,
 }
@@ -104,7 +120,7 @@ type MaybeWorkspaceTomlTool = MaybeWorkspace<toml::Value, TomlWorkspaceTool>;
 type TomlToolsDefinition = BTreeMap<SmolStr, toml::Value>;
 
 /// Represents the workspace root definition.
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlWorkspace {
     pub members: Option<Vec<String>>,
@@ -113,14 +129,20 @@ pub struct TomlWorkspace {
     pub package: Option<PackageInheritableFields>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub scripts: Option<BTreeMap<SmolStr, ScriptDefinition>>,
+
+    #[schemars(with = "Option<BTreeMap<SmolStr, serde_json::Value>>")]
     pub tool: Option<TomlToolsDefinition>,
+
     pub target_defaults: Option<BTreeMap<TomlTargetKindTestOnly, TargetDefaults>>,
 }
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct PackageInheritableFields {
+    #[schemars(with = "Option<String>")]
     pub version: Option<Version>,
+
+    #[schemars(with = "Option<String>")]
     pub edition: Option<Edition>,
     pub authors: Option<Vec<String>>,
     pub description: Option<String>,
@@ -128,9 +150,13 @@ pub struct PackageInheritableFields {
     pub homepage: Option<String>,
     pub keywords: Option<Vec<String>>,
     pub license: Option<String>,
+
+    #[schemars(with = "Option<String>")]
     pub license_file: Option<Utf8PathBuf>,
     pub readme: Option<PathOrBool>,
     pub repository: Option<String>,
+
+    #[schemars(with = "Option<String>")]
     pub cairo_version: Option<VersionReq>,
 }
 
@@ -174,7 +200,7 @@ impl PackageInheritableFields {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 pub struct TomlWorkspaceField {
     workspace: bool,
 }
@@ -192,12 +218,17 @@ impl WorkspaceInherit for TomlWorkspaceField {
 type MaybeWorkspaceField<T> = MaybeWorkspace<T, TomlWorkspaceField>;
 
 /// Represents the `package` section of a `Scarb.toml`.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlPackage {
     pub name: PackageName,
+
+    #[schemars(with = "MaybeWorkspaceField<String>")]
     pub version: MaybeWorkspaceField<Version>,
+
+    #[schemars(with = "Option<MaybeWorkspace<String, TomlWorkspaceField>>")]
     pub edition: Option<MaybeWorkspaceField<Edition>>,
+
     pub publish: Option<bool>,
     pub authors: Option<MaybeWorkspaceField<Vec<String>>>,
     pub urls: Option<BTreeMap<String, String>>,
@@ -206,21 +237,35 @@ pub struct TomlPackage {
     pub homepage: Option<MaybeWorkspaceField<String>>,
     pub keywords: Option<MaybeWorkspaceField<Vec<String>>>,
     pub license: Option<MaybeWorkspaceField<String>>,
+
+    #[schemars(with = "Option<MaybeWorkspace<String, TomlWorkspaceField>>")]
     pub license_file: Option<MaybeWorkspaceField<Utf8PathBuf>>,
+
     pub readme: Option<MaybeWorkspaceField<PathOrBool>>,
     pub repository: Option<MaybeWorkspaceField<String>>,
+
+    #[schemars(with = "Option<Vec<String>>")]
     pub include: Option<Vec<Utf8PathBuf>>,
+
+    #[schemars(with = "Option<Vec<String>>")]
     pub assets: Option<Vec<Utf8PathBuf>>,
+
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
     pub no_core: Option<bool>,
+
+    #[schemars(with = "Option<MaybeWorkspace<String, TomlWorkspaceField>>")]
     pub cairo_version: Option<MaybeWorkspaceField<VersionReq>>,
+
+    #[schemars(with = "Option<Vec<String>>")]
     pub experimental_features: Option<Vec<SmolStr>>,
+
     pub re_export_cairo_plugins: Option<Vec<PackageName>>,
 }
 
-#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Eq, PartialEq, JsonSchema)]
 #[serde(untagged)]
 pub enum PathOrBool {
+    #[schemars(with = "String")]
     Path(Utf8PathBuf),
     Bool(bool),
 }
@@ -249,8 +294,9 @@ impl From<bool> for PathOrBool {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, JsonSchema)]
 #[serde(try_from = "serdex::MaybeWorkspaceTomlDependency")]
+#[schemars(with = "MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>")]
 pub struct MaybeWorkspaceTomlDependency(MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>);
 
 impl From<MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>>
@@ -380,7 +426,7 @@ mod serdex {
 /// the dependency such as `version`, `registry`, `path`, `git`, `branch`, `tag`, `rev`.
 /// You can also not define `default-features`.
 /// Only `features` is allowed.
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
 pub struct TomlWorkspaceDependency {
     pub workspace: bool,
     pub features: Option<Vec<SmolStr>>,
@@ -396,45 +442,52 @@ impl WorkspaceInherit for TomlWorkspaceDependency {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(untagged)]
 pub enum TomlDependency {
     /// [`VersionReq`] specified as a string, e.g. `package = "<version>"`.
+    #[schemars(with = "String")]
     Simple(VersionReq),
+
     /// Detailed specification as a table, e.g. `package = { version = "<version>" }`.
     Detailed(Box<DetailedTomlDependency>),
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct DetailedTomlDependency {
+    #[schemars(with = "Option<String>")]
     pub version: Option<VersionReq>,
 
     /// Relative to the file it appears in.
     pub path: Option<RelativeUtf8PathBuf>,
 
+    #[schemars(with = "Option<String>")]
     pub git: Option<Url>,
+
     pub branch: Option<String>,
     pub tag: Option<String>,
     pub rev: Option<String>,
 
+    #[schemars(with = "Option<String>")]
     pub registry: Option<Url>,
-
     pub default_features: Option<bool>,
     pub features: Option<Vec<SmolStr>>,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlTarget<P> {
     pub name: Option<SmolStr>,
+
+    #[schemars(with = "Option<String>")]
     pub source_path: Option<Utf8PathBuf>,
 
     #[serde(flatten)]
     pub params: P,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlLibTargetParams {
     pub sierra: Option<bool>,
@@ -442,7 +495,7 @@ pub struct TomlLibTargetParams {
     pub sierra_text: Option<bool>,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlExecutableTargetParams {
     /// If true, will allow syscalls in the program.
@@ -459,7 +512,7 @@ pub struct TomlExecutableTargetParams {
     pub sierra: Option<bool>,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlCairoPluginTargetParams {
     pub builtin: Option<bool>,
@@ -467,7 +520,7 @@ pub struct TomlCairoPluginTargetParams {
 
 pub type TomlExternalTargetParams = BTreeMap<SmolStr, toml::Value>;
 
-#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+#[derive(Debug, Default, Deserialize, Serialize, Clone, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlCairo {
     /// Replace all names in generated Sierra code with dummy counterparts, representing the
@@ -525,11 +578,13 @@ pub struct TomlCairo {
     pub incremental: Option<bool>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlProfile {
     pub inherits: Option<SmolStr>,
     pub cairo: Option<TomlCairo>,
+
+    #[schemars(with = "BTreeMap<SmolStr, serde_json::Value>")]
     pub tool: Option<TomlToolsDefinition>,
 }
 
@@ -558,7 +613,7 @@ pub struct TomlToolScarbMetadata {
 
 const DEPENDENCY_FEATURE_SEPARATOR: &str = "/";
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, PartialOrd, Eq, Ord, JsonSchema)]
 pub struct TomlFeatureToEnable(String);
 
 impl From<EnabledFeature> for TomlFeatureToEnable {

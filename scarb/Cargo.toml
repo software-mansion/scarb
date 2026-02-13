@@ -82,6 +82,7 @@ scarb-metadata = { path = "../scarb-metadata", default-features = false, feature
 scarb-proc-macro-server-types = { path = "../utils/scarb-proc-macro-server-types" }
 scarb-stable-hash = { path = "../utils/scarb-stable-hash" }
 scarb-ui = { path = "../utils/scarb-ui" }
+schemars.workspace = true
 semver-pubgrub.workspace = true
 semver.workspace = true
 serde-untagged.workspace = true
