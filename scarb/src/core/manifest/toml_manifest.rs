@@ -49,36 +49,115 @@ use url::Url;
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlManifest {
+    /// The `[package]` section with metadata about the current package.
+    ///
+    /// Required for non-workspace members. Contains fields like `name`,
+    /// `version`, `edition`, `publish`, `license`, etc.
     pub package: Option<Box<TomlPackage>>,
+
+    /// The `[workspace]` section defining a multi-package workspace.
+    ///
+    /// Lets you list `members`, define shared `dependencies`, `scripts`,
+    /// and defaults inherited by workspace members.
     pub workspace: Option<TomlWorkspace>,
+
+    /// The `[dependencies]` table for normal build dependencies.
+    ///
+    /// Your packages can depend on other libraries from registries,
+    /// Git repositories, or subdirectories on your local file system.
+    ///  - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/specifying-dependencies.html>
     pub dependencies: Option<BTreeMap<PackageName, MaybeWorkspaceTomlDependency>>,
+
+    /// The `[dev-dependencies]` table for dependencies used only in tests.
+    /// Development dependencies are not used when compiling a package for building, but are used for compiling tests.
+    ///
+    /// These dependencies are not propagated to other packages which depend on this package.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/specifying-dependencies.html#development-dependencies>
     pub dev_dependencies: Option<BTreeMap<PackageName, MaybeWorkspaceTomlDependency>>,
+
+    /// The `[lib]` target describing how to build the package library.
+    ///
+    /// The library target defines a "library" that can be used by other packages.
+    /// In other words, if a package does not provide a library target, it cannot be used as a dependency.
+    /// If not specified, the name of the library defaults to the name of the package. A package can have only one library target.
+    ///
+    /// If the manifest does not list any targets, Scarb will assume the library target with its default parameters.
+    ///
+    /// Controls output artifacts (e.g. `sierra`, `casm`) and optional
+    /// `name` overrides.
+    ///  - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/targets.html#library>
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
+
+    /// The `[executable]` target describing how to build an executable entrypoint.
+    ///
+    /// The executable target defines an artifact that can be executed with `scarb execute` command.
+    /// This target should be used for packages that are meant to be executed rather than used as dependencies.
+    ///
+    /// Configure the entry `function`, `allow-syscalls`, and whether to emit
+    /// Sierra output for the executable.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/targets.html#executable-target>
     pub executable: Option<TomlTarget<TomlExecutableTargetParams>>,
+
+    /// The `[cairo-plugin]` target describing a Cairo compiler plugin artifact.
     pub cairo_plugin: Option<TomlTarget<TomlCairoPluginTargetParams>>,
 
+    /// The `[[test]]` array of tables defining external test suites.
+    ///
+    /// Each table describes a test target with its own parameters. When absent,
+    /// Scarb may auto-detect tests under the default tests directory.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/targets.html#test-targets>
     #[schemars(with = "Option<Vec<TomlTarget<BTreeMap<SmolStr, serde_json::Value>>>>")]
     pub test: Option<Vec<TomlTarget<TomlExternalTargetParams>>>,
 
+    /// The `[[target.*]]` tables to define additional, custom-named targets.
     #[schemars(
         with = "Option<BTreeMap<TargetKind, Vec<TomlTarget<BTreeMap<SmolStr, serde_json::Value>>>>>"
     )]
     pub target: Option<BTreeMap<TargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
 
+    /// Global Cairo compiler configuration for this package or workspace profile.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#cairo>
     pub cairo: Option<TomlCairo>,
 
+    /// The `[profile]` table defining build profiles.
+    ///
+    /// Common profiles are `dev` and `release`. Each profile can override `cairo`
+    /// options and `tool` settings, and may `inherit` from another profile.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/profiles.html#profiles>
     #[schemars(with = "Option<BTreeMap<String, TomlProfile>>")]
     pub profile: Option<TomlProfilesDefinition>,
 
+    /// The `[scripts]` table with custom commands you can run via `scarb run <name>`.
+    ///
+    /// Script commands are simple shell snippets; in workspaces, they can be
+    /// marked with `{ workspace = true }` to indicate inheritance.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/scripts.html#listing-scripts>
     pub scripts: Option<BTreeMap<SmolStr, MaybeWorkspaceScriptDefinition>>,
 
+    /// The `[tool]` table for third‑party tool configuration namespaces.
+    ///
+    /// Keys under `tool.<name>` are passed to external tools. Use
+    /// `{ workspace = true }` to opt into workspace inheritance when applicable.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#tool>
     #[schemars(
         with = "Option<BTreeMap<SmolStr, MaybeWorkspace<serde_json::Value, TomlWorkspaceTool>>>"
     )]
     pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
 
+    /// The `[features]` table defining feature flags for conditional compilation.
+    ///
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/conditional-compilation.html#features>
     pub features: Option<BTreeMap<FeatureName, Vec<TomlFeatureToEnable>>>,
+
+    /// The `[patch.<source>]` tables to override dependency sources.
+    ///
+    /// Useful to redirect packages to local paths or forks for the resolver.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/overriding-dependencies.html#the-patch-section>
     pub patch: Option<BTreeMap<SmolStr, BTreeMap<PackageName, TomlDependency>>>,
+
+    /// The `[target-defaults]` table to define defaults applied to targets
+    /// (for example, test settings) when not explicitly set on a target.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/targets.html#target-defaults>
     pub target_defaults: Option<BTreeMap<TomlTargetKindTestOnly, MaybeWorkspaceTargetDefaults>>,
 }
 
@@ -86,6 +165,8 @@ type MaybeWorkspaceScriptDefinition = MaybeWorkspace<ScriptDefinition, Workspace
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct WorkspaceScriptDefinition {
+    /// If `true`, the script entry is defined at the workspace level and can be
+    /// inherited by member packages.
     pub workspace: bool,
 }
 
@@ -103,6 +184,8 @@ type TomlProfilesDefinition = BTreeMap<SmolStr, TomlProfile>;
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct TomlWorkspaceTool {
+    /// If `true`, indicates that the tool configuration is defined at the
+    /// workspace level and should be inherited by members.
     pub workspace: bool,
 }
 
@@ -123,39 +206,100 @@ type TomlToolsDefinition = BTreeMap<SmolStr, toml::Value>;
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlWorkspace {
+    /// List of workspace member package paths (relative to the workspace root).
+    /// Supports globs to match multiple paths, using typical filename glob patterns like * and ?.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/workspaces.html#members>
     pub members: Option<Vec<String>>,
+
+    /// Setting this field to true will cause Scarb to ignore any versions of dependencies, including transitive ones, that are not marked as audited in the registry.
+    /// If unable to resolve the dependency tree due to this, Scarb will exit with an error.
+    /// By default, this field is set to false. This policy applies to the entire workspace.
+    /// This field is ignored in member packages manifest files, and only the one defined in the workspace root manifest is applied when compiling member packages.
+    ///
+    /// You may whitelist specific packages to ignore the require-audits setting by specifying them in the allow-no-audits key:
+    /// ```toml
+    /// [workspace]
+    /// allow-no-audits = ["alexandria_math"]
+    /// ```
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/workspaces.html#security-and-audits>
     pub require_audits: Option<bool>,
+
+    /// List of workspace packages that are allowed to have no audits.
     pub allow_no_audits: Option<Vec<PackageName>>,
+
+    /// Package fields that can be inherited by workspace members
+    /// via `workspace.package.*` (e.g., `version`, `edition`, `authors`).
     pub package: Option<PackageInheritableFields>,
+
+    /// Shared workspace `[workspace.dependencies]` available to members.
+    /// Specifying a workspace dependency is similar to package dependencies,
+    /// except you can then inherit the workspace dependency as a package dependency.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/workspaces.html#dependencies>
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
+
+    /// Workspace-wide `[workspace.scripts]` available to members.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/workspaces.html#scripts>
     pub scripts: Option<BTreeMap<SmolStr, ScriptDefinition>>,
 
+    /// Workspace-level `[workspace.tool]` configuration passed to external tools.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/workspaces.html#tool>
     #[schemars(with = "Option<BTreeMap<SmolStr, serde_json::Value>>")]
     pub tool: Option<TomlToolsDefinition>,
 
+    /// Defaults applied to targets within workspace members when not
+    /// configured on the target, must be inherited explicitly.
+    /// For example:
+    /// ```toml
+    ///  [target-defaults]
+    ///  test.workspace = true
+    /// ```
     pub target_defaults: Option<BTreeMap<TomlTargetKindTestOnly, TargetDefaults>>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct PackageInheritableFields {
+    /// Version to inherit for members that opt into
+    /// `workspace.package.version = ...`.
     #[schemars(with = "Option<String>")]
     pub version: Option<Version>,
 
+    /// Cairo edition to inherit for members (e.g. `"2023_10"`).
     #[schemars(with = "Option<String>")]
     pub edition: Option<Edition>,
+
+    /// Authors list to inherit for members.
     pub authors: Option<Vec<String>>,
+
+    /// Short description of the package; shown on registries.
     pub description: Option<String>,
+
+    /// URL of the package documentation.
     pub documentation: Option<String>,
+
+    /// Project homepage URL.
     pub homepage: Option<String>,
+
+    /// Search keywords for package discovery on registries.
     pub keywords: Option<Vec<String>>,
+
+    /// SPDX license expression, e.g. `"MIT"` or `"Apache-2.0"`.
     pub license: Option<String>,
 
+    /// Path to a license file to include in the package.
     #[schemars(with = "Option<String>")]
     pub license_file: Option<Utf8PathBuf>,
+
+    /// Path to a README file, or `false` to disable including a readme.
     pub readme: Option<PathOrBool>,
+
+    /// URL of the source repository.
     pub repository: Option<String>,
 
+    /// A Cairo compiler version requirement that this package is
+    /// compatible with. This does not change the compiler version used by Scarb
+    /// but enforces compatibility (can be ignored with `--ignore-cairo-version`).
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#cairo-version>
     #[schemars(with = "Option<String>")]
     pub cairo_version: Option<VersionReq>,
 }
@@ -221,44 +365,156 @@ type MaybeWorkspaceField<T> = MaybeWorkspace<T, TomlWorkspaceField>;
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlPackage {
+    /// The package name is a valid Cairo identifier used to refer to the package.
+    /// It is used when listed as a dependency in another package, and as the default name of targets.
+    ///
+    /// The name must use only ASCII lowercase alphanumeric characters or _, and cannot be empty. It also must not be a valid Cairo keyword or a wildcard pattern (_).
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#name>
     pub name: PackageName,
 
+    /// Package version obeying Semantic Versioning (semver), e.g. `"0.1.0"`.
+    /// Can be inherited from the workspace via `{ workspace = true }`.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#version>
     #[schemars(with = "MaybeWorkspaceField<String>")]
     pub version: MaybeWorkspaceField<Version>,
 
+    /// An optional key that affects which Cairo edition your package is compiled with.
+    /// The editions allow newer Cairo compiler versions to introduce opt-in features that may break existing code.
+    /// Setting the edition key in `[package]` will affect all targets in the package, including test suites etc.
+    ///
+    /// Most manifests have the edition field filled in automatically by scarb new with the latest available edition.
+    /// If the edition field is not present in Scarb.toml, then the default edition is assumed.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#edition>
     #[schemars(with = "Option<MaybeWorkspace<String, TomlWorkspaceField>>")]
     pub edition: Option<MaybeWorkspaceField<Edition>>,
 
+    /// Whether the package is allowed to be published to a registry.
+    /// Defaults to `true`. Set to `false` to prevent publishing.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#publish>
     pub publish: Option<bool>,
+
+    /// List of package authors.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#authors>
     pub authors: Option<MaybeWorkspaceField<Vec<String>>>,
+
+    /// A free-form map of additional internet links related to this package. Keys are human-readable link names, and values are URLs.
+    /// ```toml
+    /// [package.urls]
+    /// "We can help you build your project" = "https://swmansion.com/services/"
+    /// "We're hiring" = "https://swmansion.com/careers/"
+    /// ```
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#urls>
     pub urls: Option<BTreeMap<String, String>>,
+
+    /// Short description of the package.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#description>
     pub description: Option<MaybeWorkspaceField<String>>,
+
+    /// URL to package documentation.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#documentation>
     pub documentation: Option<MaybeWorkspaceField<String>>,
+
+    /// Project homepage URL.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#homepage>
     pub homepage: Option<MaybeWorkspaceField<String>>,
+
+    /// An array of strings that describe your package. This can help when searching for the package on a registry,
+    /// and it is allowed to choose any words that would help someone find this package.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#keywords>
     pub keywords: Option<MaybeWorkspaceField<Vec<String>>>,
+
+    /// SThe `license` field contains the name of the software license that the package is released under.
+    /// The `license-file` field contains the path to a file containing the text of the license (relative to this `Scarb.toml`).
+    ///
+    /// Package registries must interpret the `license` field as
+    /// an [SPDX 2 license expression](https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/).
+    /// The license name must be a known license from the [SPDX license list](https://spdx.org/licenses/).
+    ///
+    /// SPDX license expressions support AND and OR operators to combine multiple licenses.
+    ///
+    /// ```toml
+    /// [package]
+    /// license = "MIT OR Apache-2.0"
+    /// ```
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#license-and-license-file>
     pub license: Option<MaybeWorkspaceField<String>>,
 
+    /// Path to a license file.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#license-and-license-file>
     #[schemars(with = "Option<MaybeWorkspace<String, TomlWorkspaceField>>")]
     pub license_file: Option<MaybeWorkspaceField<Utf8PathBuf>>,
 
+    /// This field should be the path to a file in the package root (relative to this `Scarb.toml`) that contains general
+    /// information about the package.
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#readme>
     pub readme: Option<MaybeWorkspaceField<PathOrBool>>,
+
+    /// This field should be a URL to the source repository for your package.
+    ///
+    /// ```toml
+    /// [package]
+    /// repository = "https://github.com/software-mansion/scarb"
+    /// ```
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#repository>
     pub repository: Option<MaybeWorkspaceField<String>>,
 
+    /// When packaging a package with `scarb package` command (see
+    /// [packaging your package](../registries/publishing.md#packaging-your-package)), all files excluded with rules from
+    /// `.gitignore` or `.scarbignore` files are not included in the resulting package tarball.
+    /// This field can be used mark files and subdirectories that should be included in the package tarball, even if those files
+    /// would be excluded by rules from ignore files.
+    /// The paths are relative to the package root and cannot point to files outside the package.
+    ///
+    /// ```toml
+    /// [package]
+    /// include = ["target/some/file.txt"]
+    /// ```
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#include>
     #[schemars(with = "Option<Vec<String>>")]
     pub include: Option<Vec<Utf8PathBuf>>,
 
+    /// A list of additional assets to ship with the package (packaged alongside sources).
+    /// Declare files that should be treated as runtime assets of the package.
+    /// Paths are relative to the package root and must point to files (directories are not allowed).
+    /// Assets must exist at build time.
+    ///
+    /// ```toml
+    /// [package]
+    /// assets = ["mypackage-oracle.wasm", "some/file.dat"]
+    /// ```
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#assets>
     #[schemars(with = "Option<Vec<String>>")]
     pub assets: Option<Vec<Utf8PathBuf>>,
 
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
     pub no_core: Option<bool>,
 
+    /// A Cairo compiler version requirement that this package is
+    /// compatible with. This does not change the compiler version used by Scarb
+    /// but enforces compatibility (can be ignored with `--ignore-cairo-version`).
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#cairo-version>
     #[schemars(with = "Option<MaybeWorkspace<String, TomlWorkspaceField>>")]
     pub cairo_version: Option<MaybeWorkspaceField<VersionReq>>,
 
+    /// This field is responsible for setting experimental flags to be used on the package for the compiler.
+    /// ```toml
+    /// [package]
+    /// experimental-features = ["negative_impls"]
+    /// ```
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#experimental-features>
     #[schemars(with = "Option<Vec<String>>")]
     pub experimental_features: Option<Vec<SmolStr>>,
 
+    /// Re-exports direct `cairo-plugin` dependencies to all downstream packages.
+    ///
+    /// When declared, any package depending on this one will automatically inherit
+    /// these plugins as dependencies. Only direct dependencies with the
+    /// `cairo-plugin` target are eligible for re-export.
+    /// ```toml
+    /// [package]
+    /// re-export-cairo-plugins = ["proc_macro_package"]
+    /// ```
+    /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#re-export-cairo-plugins>
     pub re_export_cairo_plugins: Option<Vec<PackageName>>,
 }
 
@@ -456,33 +712,50 @@ pub enum TomlDependency {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct DetailedTomlDependency {
+    /// A semver version requirement for the dependency.
     #[schemars(with = "Option<String>")]
     pub version: Option<VersionReq>,
 
-    /// Relative to the file it appears in.
+    /// Local path to the dependency source, relative to the manifest that
+    /// declares it.
     pub path: Option<RelativeUtf8PathBuf>,
 
+    /// Git URL for the dependency source.
     #[schemars(with = "Option<String>")]
     pub git: Option<Url>,
 
+    /// Git branch to use when `git` is specified.
     pub branch: Option<String>,
+
+    /// Git tag to use when `git` is specified.
     pub tag: Option<String>,
+
+    /// Specific Git revision (commit hash) to use when `git` is specified.
     pub rev: Option<String>,
 
+    /// Custom registry index URL to fetch this dependency from.
     #[schemars(with = "Option<String>")]
     pub registry: Option<Url>,
+
+    /// Whether to enable this dependency's default features (defaults to `true`).
     pub default_features: Option<bool>,
+
+    /// A list of features to enable for this dependency.
     pub features: Option<Vec<SmolStr>>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlTarget<P> {
+    /// Override the default target name.
     pub name: Option<SmolStr>,
 
+    /// Path to the source root of this target.
+    /// Defaults to `src/lib.cairo`.
     #[schemars(with = "Option<String>")]
     pub source_path: Option<Utf8PathBuf>,
 
+    /// Target-kind specific parameters.
     #[serde(flatten)]
     pub params: P,
 }
@@ -490,8 +763,13 @@ pub struct TomlTarget<P> {
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlLibTargetParams {
+    /// Emit a compiled Sierra program for the library target, in JSON format.
     pub sierra: Option<bool>,
+
+    /// Emit CASM assembly for the library target.
     pub casm: Option<bool>,
+
+    /// Emit Sierra in a human-readable text form.
     pub sierra_text: Option<bool>,
 }
 
@@ -515,6 +793,8 @@ pub struct TomlExecutableTargetParams {
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlCairoPluginTargetParams {
+    /// If `true`, mark this plugin as builtin.
+    /// Generally, it should not be used.
     pub builtin: Option<bool>,
 }
 
@@ -581,9 +861,13 @@ pub struct TomlCairo {
 #[derive(Debug, Deserialize, Serialize, Clone, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlProfile {
+    /// The name of another profile to inherit defaults from.
     pub inherits: Option<SmolStr>,
+
+    /// Cairo compiler configuration for this profile.
     pub cairo: Option<TomlCairo>,
 
+    /// Tool-specific configuration for this profile (under `tool.<name>`).
     #[schemars(with = "BTreeMap<SmolStr, serde_json::Value>")]
     pub tool: Option<TomlToolsDefinition>,
 }
