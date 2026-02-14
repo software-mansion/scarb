@@ -27,7 +27,7 @@ members = [
 "resolver" = "2"
 
 [workspace.package]
-version = "2.15.0"
+version = "2.15.0+nightly-2026-02-14"
 edition = "2024"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
@@ -221,5 +221,5 @@ cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev 
 cairo-lang-test-utils = { git = "https://github.com/starkware-libs/cairo", rev = "661df684cb9f5e14b24d0cd0a0b78166c92185ab" }
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "661df684cb9f5e14b24d0cd0a0b78166c92185ab" }
 cairo-language-common = { git = "https://github.com/software-mansion/cairo-language-common" , rev = "e780ac2be99edda452643a8edb4b10acc7adccf1" }
-cairo-language-server = { git = "https://github.com/software-mansion/cairols/", rev = "e7c2f3a42e246d295c744f3b0f87787f25f6947f" }
-cairo-lint = { git = "https://github.com/software-mansion/cairo-lint/", rev = "9cdf2ba5e836c1998fa2efe87197ce1c148ab8c0" }
+cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "e7c2f3a42e246d295c744f3b0f87787f25f6947f" }
+cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "9cdf2ba5e836c1998fa2efe87197ce1c148ab8c0" }

@@ -1623,7 +1623,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.15.0"
-source = "git+https://github.com/software-mansion/cairols/?rev=e7c2f3a42e246d295c744f3b0f87787f25f6947f#e7c2f3a42e246d295c744f3b0f87787f25f6947f"
+source = "git+https://github.com/software-mansion/cairols?rev=e7c2f3a42e246d295c744f3b0f87787f25f6947f#e7c2f3a42e246d295c744f3b0f87787f25f6947f"
 dependencies = [
  "anyhow",
  "bincode 2.0.1",
@@ -1683,7 +1683,7 @@ dependencies = [
 [[package]]
 name = "cairo-lint"
 version = "2.15.0"
-source = "git+https://github.com/software-mansion/cairo-lint/?rev=9cdf2ba5e836c1998fa2efe87197ce1c148ab8c0#9cdf2ba5e836c1998fa2efe87197ce1c148ab8c0"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=9cdf2ba5e836c1998fa2efe87197ce1c148ab8c0#9cdf2ba5e836c1998fa2efe87197ce1c148ab8c0"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -6788,7 +6788,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "2.15.0"
+version = "2.15.0+nightly-2026-02-14"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6905,7 +6905,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-build-metadata"
-version = "2.15.0"
+version = "2.15.0+nightly-2026-02-14"
 dependencies = [
  "cargo_metadata",
  "semver 1.0.27",
@@ -6913,7 +6913,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "2.15.0"
+version = "2.15.0+nightly-2026-02-14"
 dependencies = [
  "assert_fs",
  "cairo-language-server",
@@ -6925,7 +6925,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-test"
-version = "2.15.0"
+version = "2.15.0+nightly-2026-02-14"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6951,7 +6951,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-doc"
-version = "2.15.0"
+version = "2.15.0+nightly-2026-02-14"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6986,7 +6986,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-execute"
-version = "2.15.0"
+version = "2.15.0+nightly-2026-02-14"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7023,7 +7023,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-extensions-cli"
-version = "2.15.0"
+version = "2.15.0+nightly-2026-02-14"
 dependencies = [
  "anyhow",
  "cairo-vm",
@@ -7043,7 +7043,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-mdbook"
-version = "2.15.0"
+version = "2.15.0+nightly-2026-02-14"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7125,7 +7125,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-prove"
-version = "2.15.0"
+version = "2.15.0+nightly-2026-02-14"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7214,7 +7214,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-verify"
-version = "2.15.0"
+version = "2.15.0+nightly-2026-02-14"
 dependencies = [
  "anyhow",
  "assert_fs",
