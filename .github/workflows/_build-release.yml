@@ -145,7 +145,7 @@ jobs:
             os: ubuntu-22.04
 
           - target: aarch64-apple-darwin
-            os: macos-latest
+            os: [self-hosted, macOS, ARM64]
 
           - target: x86_64-pc-windows-msvc
             os: windows-latest
