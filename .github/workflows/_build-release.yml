@@ -66,7 +66,7 @@ jobs:
             os: macos-15-intel
 
           - target: aarch64-apple-darwin
-            os: macos-latest
+            os: [self-hosted, macOS, ARM64]
 
           - target: x86_64-pc-windows-msvc
             os: windows-latest
