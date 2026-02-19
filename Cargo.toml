@@ -1,33 +1,34 @@
 [workspace]
 members = [
-    "scarb",
-    "scarb-metadata",
-    "extensions/scarb-cairo-language-server",
-    "extensions/scarb-cairo-test",
-    "extensions/scarb-doc",
-    "extensions/scarb-execute",
-    "extensions/scarb-mdbook",
-    "extensions/scarb-prove",
-    "extensions/scarb-verify",
-    "plugins/cairo-lang-macro",
-    "plugins/cairo-lang-macro-attributes",
-    "plugins/cairo-lang-macro-stable",
-    "plugins/cairo-lang-quote",
-    "utils/create-output-dir",
-    "utils/scarb-build-metadata",
-    "utils/scarb-proc-macro-server-types",
-    "utils/scarb-stable-hash",
-    "utils/scarb-test-support",
-    "utils/scarb-ui",
-    "utils/test-for-each-example",
-    "utils/scarb-extensions-cli",
-    "utils/scarb-oracle-hint-service",
-    "xtask", "utils/scarb-fs-utils",
+  "scarb",
+  "scarb-metadata",
+  "extensions/scarb-cairo-language-server",
+  "extensions/scarb-cairo-test",
+  "extensions/scarb-doc",
+  "extensions/scarb-execute",
+  "extensions/scarb-mdbook",
+  "extensions/scarb-prove",
+  "extensions/scarb-verify",
+  "plugins/cairo-lang-macro",
+  "plugins/cairo-lang-macro-attributes",
+  "plugins/cairo-lang-macro-stable",
+  "plugins/cairo-lang-quote",
+  "utils/create-output-dir",
+  "utils/scarb-build-metadata",
+  "utils/scarb-proc-macro-server-types",
+  "utils/scarb-stable-hash",
+  "utils/scarb-test-support",
+  "utils/scarb-ui",
+  "utils/test-for-each-example",
+  "utils/scarb-extensions-cli",
+  "utils/scarb-oracle-hint-service",
+  "xtask",
+  "utils/scarb-fs-utils",
 ]
 "resolver" = "2"
 
 [workspace.package]
-version = "2.17.0-rc.0"
+version = "2.17.0-rc.1"
 edition = "2024"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
@@ -40,7 +41,11 @@ repository = "https://github.com/software-mansion/scarb"
 anyhow = "1"
 assert_fs = "1"
 async-trait = "0.1"
-axum = { version = "0.8.6", default-features = false, features = ["http1", "tokio", "tracing"] }
+axum = { version = "0.8.6", default-features = false, features = [
+  "http1",
+  "tokio",
+  "tracing",
+] }
 bumpalo = "=3.17.0"
 cairo-air = { git = "https://github.com/software-mansion-labs/stwo-cairo/", rev = "3fdd4bd9a5240b630e1de0a140d092b11d313654" }
 cairo-annotations = "0.7.0"
@@ -54,7 +59,9 @@ cairo-lang-executable-plugin = "2.17.0-rc.0"
 cairo-lang-filesystem = "2.17.0-rc.0"
 cairo-lang-formatter = "2.17.0-rc.0"
 cairo-lang-lowering = "2.17.0-rc.0"
-cairo-lang-macro-v1 = { version = "0.1", package = "cairo-lang-macro", features = ["serde"] }
+cairo-lang-macro-v1 = { version = "0.1", package = "cairo-lang-macro", features = [
+  "serde",
+] }
 cairo-lang-parser = "2.17.0-rc.0"
 cairo-lang-plugins = "2.17.0-rc.0"
 cairo-lang-primitive-token = "1"
@@ -70,10 +77,10 @@ cairo-lang-syntax = "2.17.0-rc.0"
 cairo-lang-test-plugin = "2.17.0-rc.0"
 cairo-lang-test-runner = "2.17.0-rc.0"
 cairo-lang-utils = { version = "2.17.0-rc.0", features = ["tracing"] }
-cairo-language-server = "2.17.0-rc.0"
-cairo-lint = "2.17.0-rc.0"
+cairo-language-server = "2.17.0-rc.1"
+cairo-lint = "2.17.0-rc.1"
 cairo-program-runner-lib = { git = "https://github.com/software-mansion-labs/proving-utils.git", rev = "a83cfafc914870366057a2fe8df71669ab940145" }
-cairo-vm = { version= "3.1.0", features = ["std"] }
+cairo-vm = { version = "3.1.0", features = ["std"] }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 chrono = "0.4"
@@ -92,7 +99,11 @@ dunce = "1"
 expect-test = "1.5"
 flate2 = { version = "1", default-features = false, features = ["zlib"] }
 fs_extra = "1"
-futures = { version = "0.3", default-features = false, features = ["std", "async-await", "executor"] }
+futures = { version = "0.3", default-features = false, features = [
+  "std",
+  "async-await",
+  "executor",
+] }
 gix = { version = ">=0.73", default-features = false, features = ["revision"] }
 glob = "0.3"
 ignore = "0.4"
@@ -146,7 +157,14 @@ test-case = "3"
 thiserror = "2"
 thousands = "0.2"
 time = "0.3"
-tokio = { version = "1", features = ["macros", "io-util", "process", "rt", "rt-multi-thread", "sync"] }
+tokio = { version = "1", features = [
+  "macros",
+  "io-util",
+  "process",
+  "rt",
+  "rt-multi-thread",
+  "sync",
+] }
 tokio-stream = "0.1"
 toml = "0.9.11"
 toml_edit = { version = "0.24", features = ["serde"] }
@@ -164,7 +182,11 @@ walkdir = "2"
 wasmtime = "39"
 wasmtime-wasi = "39"
 which = "8"
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System", "Win32_System_Console"] }
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_System",
+  "Win32_System_Console",
+] }
 xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "7", default-features = false, features = ["deflate"] }
