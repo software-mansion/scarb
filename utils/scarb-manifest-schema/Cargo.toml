@@ -1,0 +1,16 @@
+[package]
+name = "scarb-manifest-schema"
+version = "1.0.0"
+description = "Allows access to the Scarb manifest fields documentation"
+readme = "README.md"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+scarb = { path = "../../scarb" }
+schemars.workspace = true
+serde_json.workspace = true

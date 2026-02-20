@@ -1,17 +1,18 @@
 use crate::core::TargetKind;
 use crate::core::{MaybeWorkspace, WorkspaceInherit};
 use anyhow::{Result, bail};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use std::fmt;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TargetDefaults {
     pub build_external_contracts: Vec<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlTargetDefaults {
     pub build_external_contracts: MaybeWorkspaceBuildExternalContracts,
@@ -28,7 +29,7 @@ impl From<TargetDefaults> for TomlTargetDefaults {
 pub type MaybeWorkspaceTargetDefaults =
     MaybeWorkspace<TomlTargetDefaults, TomlWorkspaceTargetDefault>;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlWorkspaceTargetDefault {
     workspace: bool,
@@ -47,7 +48,7 @@ impl WorkspaceInherit for TomlWorkspaceTargetDefault {
 pub type MaybeWorkspaceBuildExternalContracts =
     MaybeWorkspace<Vec<String>, TomlWorkspaceBuildExternalContracts>;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlWorkspaceBuildExternalContracts {
     workspace: bool,
@@ -63,7 +64,9 @@ impl WorkspaceInherit for TomlWorkspaceBuildExternalContracts {
     }
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Ord, PartialOrd, Hash, Deserialize)]
+#[derive(
+    Debug, Clone, Serialize, PartialEq, Eq, Ord, PartialOrd, Hash, Deserialize, JsonSchema,
+)]
 #[serde(try_from = "TargetKind")]
 pub struct TomlTargetKindTestOnly(TargetKind);
 
