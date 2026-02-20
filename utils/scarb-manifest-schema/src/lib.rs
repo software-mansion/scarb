@@ -4,12 +4,12 @@
 //! definition for a specific TOML path, such as `package.dependencies`.
 
 use anyhow::{Result, anyhow};
-use scarb::core::TomlManifest;
-use schemars::schema_for;
 use serde_json::Value;
 use std::sync::OnceLock;
 
 static GLOBAL_TRAVERSER: OnceLock<SchemaTraverser> = OnceLock::new();
+
+pub const SCARB_SCHEMA_JSON: &str = include_str!("../schema.json");
 
 /// Returns a lazily initialised, shared, globally accessible instance of the [`SchemaTraverser`].
 pub fn get_shared_traverser() -> &'static SchemaTraverser {
@@ -19,9 +19,9 @@ pub fn get_shared_traverser() -> &'static SchemaTraverser {
     })
 }
 
-/// Generates the full JSON Schema for the TomlManifest and serializes it into a serde_json::Value.
+///  Serializes full JSON Schema for the TomlManifest it into a serde_json::Value.
 pub fn get_manifest_schema() -> Value {
-    serde_json::to_value(schema_for!(TomlManifest)).expect("Failed to serialize Manifest schema")
+    serde_json::from_str(SCARB_SCHEMA_JSON).expect("Failed to serialize Manifest schema")
 }
 
 /// Traverses the JSON Schema and returns the definition for a specific TOML path, such as `package.dependencies`.
