@@ -7048,10 +7048,19 @@ version = "1.0.0"
 dependencies = [
  "anyhow",
  "indoc",
- "scarb",
- "schemars",
  "serde_json",
  "test-case",
+]
+
+[[package]]
+name = "scarb-manifest-schema-gen"
+version = "1.0.0"
+dependencies = [
+ "indoc",
+ "scarb",
+ "scarb-manifest-schema",
+ "schemars",
+ "serde_json",
 ]
 
 [[package]]
