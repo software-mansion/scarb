@@ -13,7 +13,7 @@
   "dependencies": {
     "@octokit/core": "6.1.4",
     "cairo-tm-grammar": "github:software-mansion-labs/cairo-tm-grammar",
-    "mermaid": "11.10.0",
+    "mermaid": "11.12.3",
     "prettier": "3.6.2",
     "semver": "7.6.2",
     "vitepress": "1.6.3",
