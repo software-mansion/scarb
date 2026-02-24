@@ -67,7 +67,6 @@ const sidebar = {
       items: [
         p("Compilation model", "/docs/reference/compilation-model"),
         p("Conditional compilation", "/docs/reference/conditional-compilation"),
-        p("Procedural Macros", "/docs/reference/procedural-macro"),
         p("Global directories", "/docs/reference/global-directories"),
         p("Manifest", "/docs/reference/manifest"),
         p("Lockfile", "/docs/reference/lockfile"),
@@ -95,6 +94,20 @@ const sidebar = {
         p("Publishing", "/docs/registries/publishing"),
         p("Package tarball", "/docs/registries/package-tarball"),
         p("Custom registry", "/docs/registries/custom-registry"),
+      ],
+    },
+    {
+      text: "Procedural Macros",
+      items: [
+        p("Overview", "/docs/procedural-macros/"),
+        p("Using procedural macros", "/docs/procedural-macros/using"),
+        p("Writing procedural macros", "/docs/procedural-macros/writing"),
+        p("Parsing token streams", "/docs/procedural-macros/parsing"),
+        p("Diagnostics and errors", "/docs/procedural-macros/diagnostics"),
+        p("Incremental compilation", "/docs/procedural-macros/incremental"),
+        p("Advanced topics", "/docs/procedural-macros/advanced"),
+        p("Design details", "/docs/procedural-macros/appendix"),
+        p("Examples", "/docs/procedural-macros/examples"),
       ],
     },
     {
