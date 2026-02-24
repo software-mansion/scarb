@@ -79,7 +79,7 @@ The result is a single numerical value, that we convert to a `TokenStream`, by w
 Span is a location in the source code of a project that uses this macro.
 It is used to persist information about the origin of tokens that are moved or copied from user code.
 For new tokens, that you create in your macro like we do here, it should be set to `TextSpan::call_site()`, which is
- a span that points to the location of the macro call.
+a span that points to the location of the macro call.
 `TokenTree` is an additional enum that describes the type of the token, currently only `TokenTree::Ident` is used (but
 may be more in the future).
 Finally, `TokenStream` is a stream of `TokenTree`s, that can be iterated over or converted into a string.
@@ -319,7 +319,6 @@ Tests: 1 passed, 0 failed, 0 ignored, 0 filtered out
 Using quote macro we can as well modify the body of the function that the attribute macro is being applied to.
 In this example, with the use of an attribute macro, we will define completely new variable inside the function, which later will be used in a user code. We also make all the diagnostics from user code correctly mapped to the origin code.
 
-
 ```rust
 // src/lib.rs
 use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
@@ -436,7 +435,6 @@ note: this error originates in the attribute macro: `my_macro`
 
 which is pointing to the original user code, as he's the one that's the author of this piece of code.
 
-
 If we make a mistake while generating code in the macro like this:
 
 ```rust
@@ -457,7 +455,7 @@ fn my_macro(_attr: TokenStream, code: TokenStream) -> ProcMacroResult {
 }
 ```
 
-we are left with error, that maps directly to the attribute macro (which is correct, because it's the macro author's fault here): 
+we are left with error, that maps directly to the attribute macro (which is correct, because it's the macro author's fault here):
 
 ```
 error[E0006]: Identifier not found.
@@ -467,4 +465,4 @@ error[E0006]: Identifier not found.
 note: this error originates in the attribute macro: `my_macro`
 ```
 
-Note that we are using the `cairo_lang_parser::printer::print_tree` function here. It's really helpful when creating any procedural macros that modify or read any syntax items. It's also important to note, that in some rather rare cases, the structure of the tree changes as the Cairo compiler is under continuous development. 
+Note that we are using the `cairo_lang_parser::printer::print_tree` function here. It's really helpful when creating any procedural macros that modify or read any syntax items. It's also important to note, that in some rather rare cases, the structure of the tree changes as the Cairo compiler is under continuous development.
