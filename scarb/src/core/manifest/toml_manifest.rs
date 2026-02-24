@@ -112,7 +112,6 @@ pub struct TomlWorkspace {
     pub allow_no_audits: Option<Vec<PackageName>>,
     pub package: Option<PackageInheritableFields>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
-    pub dev_dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub scripts: Option<BTreeMap<SmolStr, ScriptDefinition>>,
     pub tool: Option<TomlToolsDefinition>,
     pub target_defaults: Option<BTreeMap<TomlTargetKindTestOnly, TargetDefaults>>,
