@@ -63,7 +63,7 @@ jobs:
             cross: true
 
           - target: x86_64-apple-darwin
-            os: macos-15-intel
+            os: [self-hosted, macOS, X64]
 
           - target: aarch64-apple-darwin
             os: [self-hosted, macOS, ARM64]

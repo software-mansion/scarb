@@ -73,7 +73,7 @@ jobs:
           - name: macos arm64
             os: [self-hosted, macOS, ARM64]
           - name: macos x86-64
-            os: macos-15-intel
+            os: [self-hosted, macOS, X64]
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
