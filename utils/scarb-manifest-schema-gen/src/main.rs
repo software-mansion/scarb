@@ -37,7 +37,12 @@ mod tests {
         let current_json = serde_json::to_string_pretty(&current_schema)
             .expect("Failed to serialize current schema");
 
-        if current_json != SCARB_SCHEMA_JSON {
+        // Normalize line endings to LF before comparing, as git may check out
+        // schema.json with CRLF on Windows (core.autocrlf=true).
+        let current_json = current_json.replace("\r\n", "\n");
+        let schema_json = SCARB_SCHEMA_JSON.replace("\r\n", "\n");
+
+        if current_json != schema_json {
             panic!(
                 "{}",
                 formatdoc! {"
