@@ -32,7 +32,7 @@ If you encounter this issue, please report it to the compiler team at [Cairo iss
 ## Rust toolchain used for procedural macro compilation
 
 If a procedural macro that you depend on cannot be compiled with the current Rust toolchain version you use,
-please follow [procedural macros docs here](reference/procedural-macro.html#controlling-rust-version) to override it.
+please follow [procedural macros docs here](/docs/procedural-macros/advanced#controlling-rust-version) to override it.
 
 ## Procedural macros undefined symbol
 
