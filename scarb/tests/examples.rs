@@ -22,7 +22,7 @@ fn build(example: &Path) {
         .success();
 }
 
-#[test_for_each_example]
+#[test_for_each_example(ignore = "procedural_macros")]
 fn readme(example: &Path) {
     let example_name = example.file_name().unwrap().to_str().unwrap();
     let readme = ChildPath::new(example.join("README.md"));
