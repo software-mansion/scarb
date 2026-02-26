@@ -1,8 +1,15 @@
-use cairo_lang_macro::{inline_macro, quote, ProcMacroResult, TextSpan, Token, TokenStream, TokenTree};
+use cairo_lang_macro::{
+    Diagnostics, ProcMacroResult, TextSpan, Token, TokenStream, TokenTree, inline_macro, quote,
+};
 
 #[inline_macro]
 pub fn fib(args: TokenStream) -> ProcMacroResult {
-    let argument = parse_arguments(args);
+    let argument = match parse_arguments(args) {
+        Ok(arg) => arg,
+        Err(diagnostics) => {
+            return ProcMacroResult::new(TokenStream::new(vec![])).with_diagnostics(diagnostics);
+        }
+    };
     let result = fib_impl(argument);
     let result = TokenTree::Ident(Token::new(result.to_string(), TextSpan::call_site()));
     ProcMacroResult::new(quote! {
@@ -14,12 +21,18 @@ pub fn fib(args: TokenStream) -> ProcMacroResult {
 ///
 /// Always expects a single, numerical value in parentheses.
 /// Panics otherwise.
-fn parse_arguments(args: TokenStream) -> u32 {
+fn parse_arguments(args: TokenStream) -> Result<u32, Diagnostics> {
     let args = args.to_string();
-    let (_prefix, rest) = args.split_once('(').unwrap();
-    let (argument, _suffix) = rest.rsplit_once(')').unwrap();
-    let argument = argument.parse::<u32>().unwrap();
-    argument
+    let (_prefix, rest) = args
+        .split_once("(")
+        .ok_or_else(|| Diagnostics::new(Vec::new()).error("Invalid format: expected '('"))?;
+    let (argument, _suffix) = rest
+        .rsplit_once(")")
+        .ok_or_else(|| Diagnostics::new(Vec::new()).error("Invalid format: expected ')'"))?;
+    let argument = argument
+        .parse::<u32>()
+        .map_err(|_| Diagnostics::new(Vec::new()).error("Invalid argument: expected a number"))?;
+    Ok(argument)
 }
 
 /// Calculate n-th Fibonacci number.
