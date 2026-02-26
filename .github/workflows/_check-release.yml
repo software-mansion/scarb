@@ -35,7 +35,7 @@ jobs:
           - name: linux x86-64
             os: ubuntu-latest
           - name: macos aarch64
-            os: [self-hosted, macOS, ARM64]
+            os: macos-latest
           - name: windows x86-64
             os: windows-latest
     steps:
@@ -71,7 +71,7 @@ jobs:
         platform:
           # linux x86-64 and windows x86-64 are tested in the main test job.
           - name: macos arm64
-            os: [self-hosted, macOS, ARM64]
+            os: macos-latest
           - name: macos x86-64
             os: macos-15-intel
     steps:
