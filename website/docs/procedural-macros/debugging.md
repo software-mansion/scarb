@@ -4,7 +4,6 @@
 
 Debugging procedural macros can be challenging. A practical approach is to inspect the syntax tree of the input using `cairo_lang_parser::printer::print_tree`. This function generates a readable representation of the parsed syntax structure, which you can print and examine to understand the token stream you're working with.
 
-
 ```rust
 use cairo_lang_parser::{printer::print_tree, utils::SimpleParserDatabase};
 
