@@ -14,7 +14,6 @@ import { data as rel } from "../../github.data";
 > To use procedural macros, you need to have Rust toolchain (Cargo) installed on your machine.
 > Please see [Rust installation guide](https://www.rust-lang.org/tools/install) for more information.
 
-
 **All of the examples listed below can be found within Scarb repository [here](https://github.com/software-mansion/scarb/tree/main/examples/procedural_macros).**
 
 ## Example 1: returning a value
