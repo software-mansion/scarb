@@ -108,6 +108,7 @@ const sidebar = {
         p("Advanced topics", "/docs/procedural-macros/advanced"),
         p("Design details", "/docs/procedural-macros/appendix"),
         p("Examples", "/docs/procedural-macros/examples"),
+        p("Debugging", "/docs/procedural-macros/debugging"),
       ],
     },
     {

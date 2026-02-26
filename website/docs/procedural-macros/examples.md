@@ -4,6 +4,16 @@ import { data as rel } from "../../github.data";
 
 # Examples
 
+> [!WARNING]
+> Procedural macros, by design, introduce a lot of overhead during the compilation.
+> They may also be harder to maintain.
+> Prefer the declarative inline macros written directly in Cairo, unless you have a specific reason to use procedural macros.
+> Please see the [declarative macros chapter in Cairo Book](https://www.starknet.io/cairo-book/ch12-05-macros.html#declarative-inline-macros-for-general-metaprogramming) for more information.
+
+> [!INFO]
+> To use procedural macros, you need to have Rust toolchain (Cargo) installed on your machine.
+> Please see [Rust installation guide](https://www.rust-lang.org/tools/install) for more information.
+
 ## Example 1: returning a value
 
 Note, we omit the toml files here, as their content is the same as in the previous example.
@@ -12,11 +22,16 @@ Usually you want to define a procedural macro that injects some code into your C
 In this example, we will create an inline procedural macro that returns a single numerical value as a token.
 
 ```rust
-use cairo_lang_macro::{inline_macro, ProcMacroResult, TextSpan, Token, TokenStream, TokenTree};
+use cairo_lang_macro::{inline_macro, Diagnostics, ProcMacroResult, TextSpan, Token, TokenStream, TokenTree};
 
 #[inline_macro]
 pub fn fib(args: TokenStream) -> ProcMacroResult {
-    let argument = parse_arguments(args);
+    let argument = match parse_arguments(args) {
+        Ok(arg) => arg,
+        Err(diagnostics) => {
+            return ProcMacroResult::new(TokenStream::new(vec![])).with_diagnostics(diagnostics)
+        }
+    };
 
     let result = fib(argument);
 
@@ -30,12 +45,18 @@ pub fn fib(args: TokenStream) -> ProcMacroResult {
 ///
 /// Always expects a single, numerical value in parentheses.
 /// Panics otherwise.
-fn parse_arguments(args: TokenStream) -> u32 {
+fn parse_arguments(args: TokenStream) -> Result<u32, Diagnostics> {
     let args = args.to_string();
-    let (_prefix, rest) = args.split_once("(").unwrap();
-    let (argument, _suffix) = rest.rsplit_once(")").unwrap();
-    let argument = argument.parse::<u32>().unwrap();
-    argument
+    let (_prefix, rest) = args
+        .split_once("(")
+        .ok_or_else(|| Diagnostics::new(Vec::new()).error("Invalid format: expected '('"))?;
+    let (argument, _suffix) = rest
+        .rsplit_once(")")
+        .ok_or_else(|| Diagnostics::new(Vec::new()).error("Invalid format: expected ')'"))?;
+    let argument = argument
+      .parse::<u32>()
+      .map_err(|_| Diagnostics::new(Vec::new()).error("Invalid argument: expected a number"))?;
+    Ok(argument)
 }
 
 /// Calculate n-th Fibonacci number.
@@ -203,7 +224,7 @@ The name of the wrapper function and argument value will be controlled by attrib
 ```rust
 // src/lib.rs
 use cairo_lang_macro::{
-    attribute_macro, quote, ProcMacroResult, TextSpan, Token, TokenStream, TokenTree,
+    attribute_macro, quote, Diagnostics, ProcMacroResult, TextSpan, Token, TokenStream, TokenTree,
 };
 use cairo_lang_parser::utils::SimpleParserDatabase;
 use cairo_lang_syntax::node::{
@@ -216,59 +237,79 @@ use cairo_lang_syntax::node::{
 
 #[attribute_macro]
 fn create_wrapper(args: TokenStream, body: TokenStream) -> ProcMacroResult {
-    // Initialize parser to parse function body.
     let db = SimpleParserDatabase::default();
-    // Define small helper for creating single token.
     let new_token = |content| TokenTree::Ident(Token::new(content, TextSpan::call_site()));
-    // Parse attribute arguments with helper function.
-    let (wrapper_name, argument_value) = parse_arguments(&db, args);
+
+    let (wrapper_name, argument_value) = match parse_arguments(&db, args) {
+        Ok((name, value)) => (name, value),
+        Err(diag) => return ProcMacroResult::new(body).with_diagnostics(diag),
+    };
+
     let wrapper_name = new_token(wrapper_name);
     let argument_value = new_token(argument_value);
-    // Parse incoming token stream.
-    let (node, _diagnostics) = db.parse_token_stream(&body);
-    // Parse function name.
-    let function_name = parse_function_name(&db, node.clone());
-    let function_name = new_token(function_name);
-    // Create `SyntaxNodeWithDb`, from a single syntax node.
-    // This struct implements `ToPrimitiveTokenStream` trait, thus can be used as argument to `quote!`.
-    let node = SyntaxNodeWithDb::new(&node, &db);
-    ProcMacroResult::new(quote! {
-        #node
 
-        fn #wrapper_name() -> u32 {
-            #function_name(#argument_value)
-        }
+    let (node, _diagnostics) = db.parse_token_stream(&body);
+
+    let function_name = match parse_function_name(&db, node.clone()) {
+        Ok(name) => name,
+        Err(diag) => return ProcMacroResult::new(body).with_diagnostics(diag),
+    };
+
+    let function_name = new_token(function_name);
+    let node = SyntaxNodeWithDb::new(&node, &db);
+
+    ProcMacroResult::new(quote! {
+      #node
+
+      fn #wrapper_name() -> u32 {
+        #function_name(#argument_value)
+      }
     })
 }
 
-fn parse_function_name<'db>(db: &'db SimpleParserDatabase, node: SyntaxNode<'db>) -> String {
-    assert_eq!(node.kind(db), SyntaxKind::SyntaxFile);
+fn parse_function_name<'db>(
+    db: &'db SimpleParserDatabase,
+    node: SyntaxNode<'db>,
+) -> Result<String, Diagnostics> {
+    if node.kind(db) != SyntaxKind::SyntaxFile {
+        return Err(Diagnostics::new(Vec::new()).error("Expected SyntaxFile"));
+    }
     let file = ast::SyntaxFile::from_syntax_node(db, node);
     let items = file.items(db).elements_vec(db);
-    assert_eq!(items.len(), 1);
+    if items.len() != 1 {
+        return Err(Diagnostics::new(Vec::new()).error("Expected exactly one item"));
+    }
     let func = items.into_iter().next().unwrap();
-    assert!(matches!(func, ModuleItem::FreeFunction(_)));
-    let ModuleItem::FreeFunction(func) = func else {
-        panic!("not a function");
-    };
-    func.name(db).text(db).to_string(db)
+    match func {
+        ModuleItem::FreeFunction(f) => Ok(f.name(db).text(db).to_string(db)),
+        _ => Err(Diagnostics::new(Vec::new()).error("Expected a function")),
+    }
 }
 
-fn parse_arguments(db: &SimpleParserDatabase, args: TokenStream) -> (String, String) {
-    // Parse argument token stream.
+fn parse_arguments(
+    db: &SimpleParserDatabase,
+    args: TokenStream,
+) -> Result<(String, String), Diagnostics> {
     let (node, _diagnostics) = db.parse_token_stream_expr(&args);
-    // Read parsed syntax node.
-    assert_eq!(node.kind(db), SyntaxKind::ExprListParenthesized);
+    if node.kind(db) != SyntaxKind::ExprListParenthesized {
+        return Err(Diagnostics::new(Vec::new()).error("Expected parenthesized expression list"));
+    }
     let expr = ast::ExprListParenthesized::from_syntax_node(db, node);
-    // `expressions` returns a list of all expressions inside parentheses.
-    // We expect two expressions, the first one is the wrapper name, the second one is the argument value.
     let mut expressions = expr.expressions(db).elements_vec(db).into_iter();
-    let wrapper_name_expr = expressions.next().unwrap();
+
+    let wrapper_name_expr = match expressions.next() {
+        Some(e) => e,
+        None => return Err(Diagnostics::new(Vec::new()).error("Expected wrapper name argument")),
+    };
     let wrapper_name = wrapper_name_expr.as_syntax_node().get_text(db).to_string();
-    let value_expr = expressions.next().unwrap();
+
+    let value_expr = match expressions.next() {
+        Some(e) => e,
+        None => return Err(Diagnostics::new(Vec::new()).error("Expected value argument")),
+    };
     let value = value_expr.as_syntax_node().get_text(db).to_string();
-    // We return both expressions as strings.
-    (wrapper_name, value)
+
+    Ok((wrapper_name, value))
 }
 ```
 
@@ -316,55 +357,71 @@ Tests: 1 passed, 0 failed, 0 ignored, 0 filtered out
 
 ## Example 4: modifying an already existing function
 
-Using quote macro we can as well modify the body of the function that the attribute macro is being applied to.
-In this example, with the use of an attribute macro, we will define completely new variable inside the function, which later will be used in a user code. We also make all the diagnostics from user code correctly mapped to the origin code.
+Using the quote macro, we can also modify the body of the function that the attribute macro is being applied to.
+In this example, with the use of an attribute macro, we will define a completely new variable inside the function, which later will be used in a user code. We also make all the diagnostics from the user code correctly mapped to the original code.
 
 ```rust
 // src/lib.rs
-use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
-use cairo_lang_parser::{printer::print_tree, utils::SimpleParserDatabase};
+use cairo_lang_macro::{
+    attribute_macro, derive_macro, quote, Diagnostics, ProcMacroResult, TokenStream,
+};
+use cairo_lang_parser::utils::SimpleParserDatabase;
 use cairo_lang_syntax::node::{ast, with_db::SyntaxNodeWithDb, TypedSyntaxNode};
 
 #[attribute_macro]
-fn my_macro(_attr: TokenStream, code: TokenStream) -> ProcMacroResult {
+fn my_macro(_args: TokenStream, body: TokenStream) -> ProcMacroResult {
+    let diagnostics = Diagnostics::new(Vec::new());
     // Initialize parser and parse the incoming token stream.
     let db = SimpleParserDatabase::default();
     // Parse incoming token stream.
-    let (node, _diagnostics) = db.parse_token_stream(&code);
-
-    // This section is used only for macro debugging purposes.
-    // This way, we can see the exact syntax structure of the item we want to modify.
-    let node_tree = print_tree(&db, &node, false, false);
-    println!("node tree: \n{}", node_tree);
+    let (node, _diagnostics) = db.parse_token_stream(&body);
 
     // Locate the function item this attribute macro is applied to.
-    let module_item_list = node
-        .get_children(&db)
-        .get(0)
-        .expect("This attribute macro should be only used for a function");
+    let module_item_list = match node.get_children(&db).get(0) {
+        Some(item) => item,
+        None => {
+            let diagnostics =
+                diagnostics.error("This attribute macro should be only used for a function");
+            return ProcMacroResult::new(body).with_diagnostics(diagnostics);
+        }
+    };
 
-    let function = module_item_list
-        .get_children(&db)
-        .get(0)
-        .expect("This attribute macro should be only used for a function");
+    let function = match module_item_list.get_children(&db).get(0) {
+        Some(item) => item,
+        None => {
+            let diagnostics =
+                diagnostics.error("This attribute macro should be only used for a function");
+            return ProcMacroResult::new(body).with_diagnostics(diagnostics);
+        }
+    };
 
     // Extract the function's syntax components.
     let expr = ast::FunctionWithBody::from_syntax_node(&db, *function);
     let attributes = expr.attributes(&db);
     let visibility = expr.visibility(&db);
     let declaration = expr.declaration(&db);
-    let body = expr.body(&db);
+    let body_expr = expr.body(&db);
 
     // Pull out braces and the first two statements from the body.
-    let l_brace = body.lbrace(&db);
-    let r_brace = body.rbrace(&db);
-    let mut statements = body.statements(&db).elements(&db);
-    let first_statement = statements
-        .next()
-        .expect("function needs at least 2 statements to be valid candidate for attr macro");
-    let second_statement = statements
-        .next()
-        .expect("function needs at least 2 statements to be valid candidate for attr macro");
+    let l_brace = body_expr.lbrace(&db);
+    let r_brace = body_expr.rbrace(&db);
+    let mut statements = body_expr.statements(&db).elements(&db);
+    let first_statement = match statements.next() {
+        Some(stmt) => stmt,
+        None => {
+            let diagnostics = diagnostics
+                .error("function needs at least 2 statements to be valid candidate for attr macro");
+            return ProcMacroResult::new(body).with_diagnostics(diagnostics);
+        }
+    };
+    let second_statement = match statements.next() {
+        Some(stmt) => stmt,
+        None => {
+            let diagnostics = diagnostics
+                .error("function needs at least 2 statements to be valid candidate for attr macro");
+            return ProcMacroResult::new(body).with_diagnostics(diagnostics);
+        }
+    };
 
     // Convert syntax nodes into `SyntaxNodeWithDb` for quoting.
     let attributes_node = attributes.as_syntax_node();
@@ -439,7 +496,6 @@ If we make a mistake while generating code in the macro like this:
 
 ```rust
 // src/lib.rs
-}
 #[attribute_macro]
 fn my_macro(_attr: TokenStream, code: TokenStream) -> ProcMacroResult {
   ...
@@ -464,5 +520,3 @@ error[E0006]: Identifier not found.
 ^^^^^^^^^^^
 note: this error originates in the attribute macro: `my_macro`
 ```
-
-Note that we are using the `cairo_lang_parser::printer::print_tree` function here. It's really helpful when creating any procedural macros that modify or read any syntax items. It's also important to note, that in some rather rare cases, the structure of the tree changes as the Cairo compiler is under continuous development.

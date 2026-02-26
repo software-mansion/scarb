@@ -1,5 +1,15 @@
 # Design Details
 
+> [!WARNING]
+> Procedural macros, by design, introduce a lot of overhead during the compilation.
+> They may also be harder to maintain.
+> Prefer the declarative inline macros written directly in Cairo, unless you have a specific reason to use procedural macros.
+> Please see the [declarative macros chapter in Cairo Book](https://www.starknet.io/cairo-book/ch12-05-macros.html#declarative-inline-macros-for-general-metaprogramming) for more information.
+
+> [!INFO]
+> To use procedural macros, you need to have Rust toolchain (Cargo) installed on your machine.
+> Please see [Rust installation guide](https://www.rust-lang.org/tools/install) for more information.
+
 ## Procedural macros are special Scarb packages containing Rust code
 
 - Procedural macros are packaged as special Scarb packages, which use a native target type: `cairo-plugin`.

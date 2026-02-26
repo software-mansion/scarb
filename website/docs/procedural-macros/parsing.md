@@ -4,6 +4,16 @@ import { data as rel } from "../../github.data";
 
 # Parsing Token Streams
 
+> [!WARNING]
+> Procedural macros, by design, introduce a lot of overhead during the compilation.
+> They may also be harder to maintain.
+> Prefer the declarative inline macros written directly in Cairo, unless you have a specific reason to use procedural macros.
+> Please see the [declarative macros chapter in Cairo Book](https://www.starknet.io/cairo-book/ch12-05-macros.html#declarative-inline-macros-for-general-metaprogramming) for more information.
+
+> [!INFO]
+> To use procedural macros, you need to have Rust toolchain (Cargo) installed on your machine.
+> Please see [Rust installation guide](https://www.rust-lang.org/tools/install) for more information.
+
 We said before, that `TokenStream` is some encapsulation of code represented in plain Cairo.
 To use procedural macro arguments passed in this format, you need to parse them semantically in some way.
 
