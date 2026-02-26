@@ -2,6 +2,7 @@ use crate::compiler::incremental::fingerprint::{
     ComponentFingerprint, Fingerprint, FreshnessCheck, LocalFingerprint, UnitComponentsFingerprint,
     is_fresh,
 };
+use crate::compiler::compilation_unit::CompilationUnitAttributes;
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
 use crate::process::is_truthy_env;
@@ -286,6 +287,7 @@ pub fn save_incremental_artifacts(
         return Ok(());
     };
 
+    let main_component_id = &unit.main_component().id;
     let components = unit
         .components
         .iter()
@@ -293,13 +295,29 @@ pub fn save_incremental_artifacts(
             let fingerprint = fingerprints
                 .get(&component.id)
                 .expect("component fingerprint must exist in unit fingerprints");
-            (component, fingerprint)
+            // For the main component, use the actual warnings_found flag.
+            // For dependency components, warnings are suppressed during compilation so
+            // warnings_found is not reliable. Instead, preserve the previously cached
+            // has_warnings value to avoid incorrectly marking a component as warning-free.
+            // If the component has no prior cache entry, default to true (conservative) so
+            // that warnings will be re-checked when the component is next compiled as main.
+            let component_has_warnings = if &component.id == main_component_id {
+                warnings_found
+            } else {
+                let crate_input = component.crate_input(db);
+                if ctx.cached_crates().contains(&crate_input) {
+                    ctx.cached_crates_with_warnings().contains(&crate_input)
+                } else {
+                    true
+                }
+            };
+            (component, fingerprint, component_has_warnings)
         })
         .collect_vec();
 
     let results: Vec<Result<()>> = components
         .par_iter()
-        .map_with(db.dyn_clone(), move |group, (component, fingerprint)| {
+        .map_with(db.dyn_clone(), move |group, (component, fingerprint, component_has_warnings)| {
             let fingerprint = match fingerprint.deref() {
                 ComponentFingerprint::Library(lib) => lib,
                 ComponentFingerprint::Plugin(_plugin) => {
@@ -311,7 +329,7 @@ pub fn save_incremental_artifacts(
                 group.as_ref(),
                 unit,
                 component,
-                warnings_found,
+                *component_has_warnings,
                 ws,
             )
             .with_context(|| {
