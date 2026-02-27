@@ -13,7 +13,6 @@ use cairo_lang_filesystem::ids::CrateId;
 use itertools::Itertools;
 use salsa::Database;
 use serde::Serialize;
-use std::collections::HashSet;
 use std::io::{BufWriter, Write};
 
 pub struct CountingWriter<W> {
@@ -64,35 +63,16 @@ where
     // we should not use it in the first place.
     // We also skip showing warnings produced for dependency crates.
     let crates_to_check = db.crates().iter().filter(|crate_id| {
-        !ctx.cached_crates()
-            .contains(&crate_id.long(db).clone().into_crate_input(db))
-    });
-    // Note we may need to add the main crates to display warnings generated from them.
-    // This is because warnings do not fail compilation, so we can produce caches for crates with them.
-    //
-    // We only need them in one case: if ui is set to print warnings (verbosity higher than no warnings)
-    // and the compiler is configured to succeed on warnings.
-    //
-    // Note that the compiler may be configured to fail on warnings, so it seems we should check for
-    // them in this case as well. However, if the compiler is set to fail on warnings, we are unable
-    // to produce caches for crates with warnings. If this config changes in between runs, we will
-    // invalidate the cache anyway.
-    let crates_to_check: HashSet<CrateId<'db>> =
-        if ws.config().ui().verbosity().should_print_warnings()
-            && unit.compiler_config.allow_warnings
-        {
-            crates_to_check
-                .chain(main_crate_ids.iter().filter(|c| {
-                    // If we saved information about crate warnings, we can use it here to decide
-                    // whether we should calculate diagnostics for it.
-                    ctx.cached_crates_with_warnings()
-                        .contains(&c.long(db).clone().into_crate_input(db))
-                }))
-                .copied()
-                .collect()
+        let crate_input = crate_id.long(db).clone().into_crate_input(db);
+        if ctx.cached_crates().contains(&crate_input) {
+            // Even if cached, include the main crate in diagnostics checking when its
+            // warnings are unknown (i.e., it was previously compiled only as a dependency).
+            main_crate_ids.contains(crate_id)
+                && ctx.cached_crate_warnings_for(&crate_input).is_none()
         } else {
-            crates_to_check.copied().collect()
-        };
+            true
+        }
+    });
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
 
@@ -110,9 +90,10 @@ where
                     }
                 }
                 Severity::Warning => {
-                    ctx.report_warnings();
-                    if let Some(code) = entry.error_code() {
-                        config.ui().warn_with_code(code.as_str(), msg)
+                    let code = entry.error_code().map(|c| c.as_str().to_string());
+                    ctx.add_warning(code.clone(), msg.to_string());
+                    if let Some(code) = code {
+                        config.ui().warn_with_code(&code, msg)
                     } else {
                         config.ui().warn(msg)
                     }

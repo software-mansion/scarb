@@ -287,12 +287,16 @@ fn compile_cairo_unit_inner(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> R
 
         let ctx = load_incremental_artifacts(&unit, &mut db, ws)?;
 
-        let warnings_to_print = ws.config().ui().verbosity().should_print_warnings()
-            && !ctx.cached_crates_with_warnings().is_empty();
+        // Check whether we already have the main crate's warnings stored in cache.
+        // - Some(warnings): warnings are known; replayed after skipping compilation.
+        // - None: never compiled as main unit before; no warnings to replay.
+        let main_crate_input = unit.main_component().crate_input(&db);
+        let main_crate_known_warnings: Option<Vec<_>> = ctx
+            .cached_crate_warnings_for(&main_crate_input)
+            .map(|w| w.to_vec());
+        let main_crate_is_cached = ctx.cached_crates().contains(&main_crate_input);
 
-        let is_fresh_unit_artifacts = !warnings_to_print
-            && artifacts_fingerprint_allowed()
-            && ctx.cached_crates_with_warnings().is_empty()
+        let is_fresh_unit_artifacts = artifacts_fingerprint_allowed()
             && ctx
                 .fingerprints()
                 .and_then(|unit_fingerprint| {
@@ -319,7 +323,26 @@ fn compile_cairo_unit_inner(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> R
                     .post_process(&db)
                     .context("procedural macro post processing callback failed")?;
             }
-        };
+        }
+
+        // Replay cached warnings for the main crate when:
+        // - compilation was skipped entirely, or
+        // - compilation ran, but the main crate came from incremental cache and was not
+        //   included in diagnostics crates_to_check.
+        let should_replay_main_cached_warnings =
+            !(!is_fresh_unit_artifacts && !main_crate_is_cached);
+        if should_replay_main_cached_warnings
+            && ws.config().ui().verbosity().should_print_warnings()
+            && let Some(warnings) = main_crate_known_warnings
+        {
+            for warning in &warnings {
+                if let Some(code) = &warning.code {
+                    ws.config().ui().warn_with_code(code, &warning.message);
+                } else {
+                    ws.config().ui().warn(&warning.message);
+                }
+            }
+        }
 
         let span = trace_span!("drop_db");
         {
