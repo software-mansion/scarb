@@ -22,6 +22,7 @@ members = [
     "utils/test-for-each-example",
     "utils/scarb-extensions-cli",
     "utils/scarb-manifest-schema",
+    "utils/scarb-manifest-validator",
     "utils/scarb-manifest-schema-gen",
     "utils/scarb-oracle-hint-service",
     "xtask", "utils/scarb-fs-utils",
