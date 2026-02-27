@@ -6968,6 +6968,7 @@ dependencies = [
  "cairo-lang-utils",
  "camino",
  "clap",
+ "console 0.16.2",
  "expect-test",
  "gix",
  "indoc",
@@ -6975,14 +6976,15 @@ dependencies = [
  "mimalloc",
  "opener",
  "salsa",
+ "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
  "scarb-test-support",
  "scarb-ui",
  "serde",
  "serde_json",
+ "tempfile",
  "thiserror 2.0.18",
- "walkdir",
 ]
 
 [[package]]

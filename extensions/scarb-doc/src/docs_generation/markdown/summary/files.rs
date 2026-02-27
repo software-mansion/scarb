@@ -4,10 +4,8 @@ use crate::docs_generation::markdown::traits::{
     MarkdownDocItem, TopLevelMarkdownDocItem,
     generate_markdown_table_summary_for_top_level_subitems,
 };
-use crate::docs_generation::markdown::{
-    BASE_HEADER_LEVEL, BASE_MODULE_CHAPTER_PREFIX, SummaryIndexMap,
-};
-use crate::docs_generation::{DocItem, TopLevelItems};
+use crate::docs_generation::markdown::{BASE_HEADER_LEVEL, BASE_MODULE_CHAPTER_PREFIX};
+use crate::docs_generation::{DocItem, TopLevelItems, common};
 use crate::types::module_type::Module;
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, MacroDeclaration,
@@ -15,6 +13,7 @@ use crate::types::other_types::{
 };
 use crate::types::struct_types::Struct;
 use anyhow::Result;
+use common::SummaryIndexMap;
 use itertools::chain;
 
 macro_rules! module_summary {
@@ -148,19 +147,19 @@ pub fn generate_doc_files_for_module_items(
     summary_index_map: &SummaryIndexMap,
 ) -> Result<Vec<(String, String)>> {
     Ok(chain!(
-        generate_top_level_docs_contents(&top_level_items.modules, context, summary_index_map)?,
-        generate_top_level_docs_contents(&top_level_items.constants, context, summary_index_map)?,
+        generate_top_level_docs_contents(&top_level_items.modules, context, summary_index_map,)?,
+        generate_top_level_docs_contents(&top_level_items.constants, context, summary_index_map,)?,
         generate_top_level_docs_contents(
             &top_level_items.free_functions,
             context,
-            summary_index_map
+            summary_index_map,
         )?,
-        generate_top_level_docs_contents(&top_level_items.structs, context, summary_index_map)?,
-        generate_top_level_docs_contents(&top_level_items.enums, context, summary_index_map)?,
+        generate_top_level_docs_contents(&top_level_items.structs, context, summary_index_map,)?,
+        generate_top_level_docs_contents(&top_level_items.enums, context, summary_index_map,)?,
         generate_top_level_docs_contents(
             &top_level_items.type_aliases,
             context,
-            summary_index_map
+            summary_index_map,
         )?,
         generate_top_level_docs_contents(
             &top_level_items.impl_aliases,

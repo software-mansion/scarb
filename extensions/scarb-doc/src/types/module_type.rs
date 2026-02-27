@@ -240,6 +240,53 @@ impl<'db> ModulePubUses<'db> {
         self.use_submodules.extend(use_submodules);
         self.use_macro_declarations.extend(use_macro_declarations);
     }
+
+    pub fn get_all_item_ids<'a>(&'a self) -> IncludedItems<'a, 'db> {
+        let mut ids: IncludedItems<'a, 'db> = HashMap::default();
+
+        self.use_constants.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.use_free_functions.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.use_module_type_aliases.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.use_impl_aliases.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.use_extern_types.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.use_extern_functions.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.use_macro_declarations.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.use_structs.iter().for_each(|struct_| {
+            ids.insert(struct_.item_data.id, &struct_.item_data);
+            ids.extend(struct_.get_all_item_ids());
+        });
+        self.use_enums.iter().for_each(|enum_| {
+            ids.insert(enum_.item_data.id, &enum_.item_data);
+            ids.extend(enum_.get_all_item_ids());
+        });
+        self.use_traits.iter().for_each(|trait_| {
+            ids.insert(trait_.item_data.id, &trait_.item_data);
+            ids.extend(trait_.get_all_item_ids());
+        });
+        self.use_impl_defs.iter().for_each(|impl_| {
+            ids.insert(impl_.item_data.id, &impl_.item_data);
+            ids.extend(impl_.get_all_item_ids());
+        });
+        self.use_submodules.iter().for_each(|sub_module| {
+            ids.extend(sub_module.get_all_item_ids());
+        });
+
+        ids
+    }
 }
 
 macro_rules! define_insert_function {
