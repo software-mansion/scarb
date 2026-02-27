@@ -1,0 +1,21 @@
+[package]
+name = "scarb-manifest-validator"
+version.workspace = true
+description = "Scarb manifest validation helpers for editor integrations"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+camino.workspace = true
+scarb = { path = "../../scarb" }
+scarb-ui = { path = "../scarb-ui" }
+smol_str.workspace = true
+toml.workspace = true
+
+[dev-dependencies]
+indoc.workspace = true
+tempfile.workspace = true

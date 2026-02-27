@@ -6883,6 +6883,7 @@ dependencies = [
  "snapbox",
  "tar",
  "target-triple",
+ "tempfile",
  "test-case",
  "test-for-each-example",
  "thiserror 2.0.18",
@@ -7061,6 +7062,20 @@ dependencies = [
  "scarb-manifest-schema",
  "schemars",
  "serde_json",
+]
+
+[[package]]
+name = "scarb-manifest-validator"
+version = "2.15.0"
+dependencies = [
+ "anyhow",
+ "camino",
+ "indoc",
+ "scarb",
+ "scarb-ui",
+ "smol_str",
+ "tempfile",
+ "toml 1.0.3+spec-1.1.0",
 ]
 
 [[package]]
