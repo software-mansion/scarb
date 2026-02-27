@@ -1,3 +1,4 @@
+use crate::compiler::compilation_unit::CompilationUnitAttributes;
 use crate::compiler::incremental::fingerprint::{
     ComponentFingerprint, Fingerprint, FreshnessCheck, LocalFingerprint, UnitComponentsFingerprint,
     is_fresh,
@@ -286,6 +287,7 @@ pub fn save_incremental_artifacts(
         return Ok(());
     };
 
+    let main_component_id = &unit.main_component().id;
     let components = unit
         .components
         .iter()
@@ -293,34 +295,60 @@ pub fn save_incremental_artifacts(
             let fingerprint = fingerprints
                 .get(&component.id)
                 .expect("component fingerprint must exist in unit fingerprints");
-            (component, fingerprint)
+            let crate_input = component.crate_input(db);
+            let cached_has_warnings = if ctx.cached_crates().contains(&crate_input) {
+                Some(ctx.cached_crates_with_warnings().contains(&crate_input))
+            } else {
+                None
+            };
+            // For the main component, use the actual warnings_found flag.
+            // For dependency components, warnings are suppressed during compilation so
+            // warnings_found is not reliable. Instead, preserve the previously cached
+            // has_warnings value to avoid incorrectly marking a component as warning-free.
+            // If the component has no prior cache entry, default to true (conservative) so
+            // that warnings will be re-checked when the component is next compiled as main.
+            let component_has_warnings = if &component.id == main_component_id {
+                warnings_found
+            } else {
+                cached_has_warnings.unwrap_or(true)
+            };
+            (
+                component,
+                fingerprint,
+                component_has_warnings,
+                cached_has_warnings,
+            )
         })
         .collect_vec();
 
     let results: Vec<Result<()>> = components
         .par_iter()
-        .map_with(db.dyn_clone(), move |group, (component, fingerprint)| {
-            let fingerprint = match fingerprint.deref() {
-                ComponentFingerprint::Library(lib) => lib,
-                ComponentFingerprint::Plugin(_plugin) => {
-                    unreachable!("we iterate through components not plugins");
-                }
-            };
-            save_component_cache(
-                fingerprint,
-                group.as_ref(),
-                unit,
-                component,
-                warnings_found,
-                ws,
-            )
-            .with_context(|| {
-                format!(
-                    "failed to save cache for `{}` component",
-                    component.target_name()
+        .map_with(
+            db.dyn_clone(),
+            move |group, (component, fingerprint, component_has_warnings, cached_has_warnings)| {
+                let fingerprint = match fingerprint.deref() {
+                    ComponentFingerprint::Library(lib) => lib,
+                    ComponentFingerprint::Plugin(_plugin) => {
+                        unreachable!("we iterate through components not plugins");
+                    }
+                };
+                save_component_cache(
+                    fingerprint,
+                    group.as_ref(),
+                    unit,
+                    component,
+                    *component_has_warnings,
+                    *cached_has_warnings,
+                    ws,
                 )
-            })
-        })
+                .with_context(|| {
+                    format!(
+                        "failed to save cache for `{}` component",
+                        component.target_name()
+                    )
+                })
+            },
+        )
         .collect();
     results.into_iter().collect::<Result<Vec<_>>>()?;
 
@@ -334,6 +362,7 @@ fn save_component_cache(
     unit: &CairoCompilationUnit,
     component: &CompilationUnitComponent,
     warnings_found: bool,
+    cached_has_warnings: Option<bool>,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let fingerprint_digest = fingerprint.digest();
@@ -350,7 +379,14 @@ fn save_component_cache(
     )?;
     // We drop the fingerprint lock, so it can be locked for writing.
     drop(file_guard);
-    if !is_fresh {
+    // Write the cache when the component is not fresh (artifacts changed), when there is no
+    // prior cache entry (first time caching this component), or when the main component's
+    // cached `has_warnings` flag disagrees with the actual compilation result (e.g.,
+    // conservatively cached with `has_warnings=true` but this compilation found no warnings).
+    // Note: for dependency components, `warnings_found` is set to the cached value, so
+    // `warnings_changed` can only be true here when there is no prior cache entry.
+    let warnings_changed = cached_has_warnings != Some(warnings_found);
+    if !is_fresh || warnings_changed {
         debug!(
             "component `{}` is not fresh, saving new cache artifacts",
             component.target_name()
@@ -372,13 +408,6 @@ fn save_component_cache(
             blob: cache_blob,
         };
         let cache_blob = postcard::to_allocvec(&component_cache)?;
-        let fingerprint_dir = unit.fingerprint_dir(ws);
-        let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(fingerprint));
-        let fingerprint_file = fingerprint_dir.create_rw(
-            component.target_name().as_str(),
-            "fingerprint file",
-            ws.config(),
-        )?;
         let cache_file = cache_dir.create_rw(
             component.cache_filename(fingerprint),
             "cache file",
@@ -388,15 +417,24 @@ fn save_component_cache(
             .deref()
             .write_all(&cache_blob)
             .with_context(|| format!("failed to write cache to `{}`", cache_file.path()))?;
-        fingerprint_file
-            .deref()
-            .write_all(fingerprint_digest.as_bytes())
-            .with_context(|| {
-                format!(
-                    "failed to write fingerprint to `{}`",
-                    fingerprint_file.path()
-                )
-            })?;
+        if !is_fresh {
+            let fingerprint_dir = unit.fingerprint_dir(ws);
+            let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(fingerprint));
+            let fingerprint_file = fingerprint_dir.create_rw(
+                component.target_name().as_str(),
+                "fingerprint file",
+                ws.config(),
+            )?;
+            fingerprint_file
+                .deref()
+                .write_all(fingerprint_digest.as_bytes())
+                .with_context(|| {
+                    format!(
+                        "failed to write fingerprint to `{}`",
+                        fingerprint_file.path()
+                    )
+                })?;
+        }
     }
     Ok(())
 }
