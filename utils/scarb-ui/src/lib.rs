@@ -157,6 +157,16 @@ impl Ui {
         }
     }
 
+    /// Print a warning to the user.
+    /// Include error code if defined.
+    pub fn warn_maybe_with_code(&self, message: impl AsRef<str>, code: &Option<impl AsRef<str>>) {
+        if let Some(code) = code {
+            self.warn_with_code(code, message.as_ref());
+        } else {
+            self.warn(message.as_ref());
+        }
+    }
+
     /// Print an error to the user.
     pub fn error(&self, message: impl AsRef<str>) {
         self.counter.error();
