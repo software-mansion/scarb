@@ -139,6 +139,7 @@ similar-asserts.workspace = true
 snapbox.workspace = true
 test-case.workspace = true
 test-for-each-example = { path = "../utils/test-for-each-example" }
+tempfile.workspace = true
 cairo-lint = { workspace = true }
 
 [build-dependencies]
