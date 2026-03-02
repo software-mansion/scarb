@@ -95,7 +95,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: nextest@0.9.98
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: nextest-archive-${{ matrix.platform.os }}
       - name: nextest partition ${{ matrix.partition }}/4
@@ -179,7 +179,7 @@ jobs:
           tool: nextest@0.9.98
       - uses: Swatinem/rust-cache@v2
       - name: Download stable build artifacts  
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: nextest-archive-${{ matrix.platform.os }}
       - name: Unpack build stable rust artifacts from nextest archive on linux
@@ -191,7 +191,7 @@ jobs:
           echo "$GITHUB_WORKSPACE/stable-crates-target/ci" >> $GITHUB_PATH
           echo "$GITHUB_WORKSPACE/target/ci" >> $GITHUB_PATH
       - name: Download nightly build artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: nextest-nightly-archive-${{ matrix.platform.os }}
       - name: nextest partition
@@ -289,7 +289,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: nextest@0.9.98
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: nextest-archive-ubuntu-latest
       - uses: foundry-rs/setup-snfoundry@v4
