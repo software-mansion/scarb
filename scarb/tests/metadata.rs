@@ -112,6 +112,32 @@ fn includes_compilation_units() {
 }
 
 #[test]
+fn reports_manifest_diagnostics_for_invalid_manifest() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            "[package]
+name = 1
+",
+        )
+        .unwrap();
+
+    let output = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.contains("\"manifest_diagnostics\""));
+    assert!(stdout.contains("failed to parse manifest"));
+}
+
+#[test]
 fn fails_without_format_version() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().build(&t);

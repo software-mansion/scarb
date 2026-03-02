@@ -422,6 +422,7 @@ mod tests {
             compilation_units: Default::default(),
             current_profile: "dev".into(),
             profiles: vec!["dev".into()],
+            manifest_diagnostics: Default::default(),
             extra: Default::default(),
         }
     }
