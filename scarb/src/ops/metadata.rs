@@ -28,11 +28,7 @@ pub struct MetadataOptions {
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
-pub fn collect_metadata(
-    opts: &MetadataOptions,
-    ws: &Workspace<'_>,
-    manifest_diagnostics: Vec<m::ManifestDiagnostic>,
-) -> Result<m::Metadata> {
+pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m::Metadata> {
     if opts.version != m::VersionPin.numeric() {
         bail!(
             "metadata version {} not supported, only {} is currently supported",
@@ -81,7 +77,6 @@ pub fn collect_metadata(
         .compilation_units(compilation_units)
         .current_profile(ws.current_profile()?.to_string())
         .profiles(ws.profile_names())
-        .manifest_diagnostics(manifest_diagnostics)
         .build()
         .unwrap())
 }
@@ -382,7 +377,7 @@ where
         .collect()
 }
 
-pub fn collect_app_version_metadata() -> m::VersionInfo {
+fn collect_app_version_metadata() -> m::VersionInfo {
     let v = crate::version::get();
 
     let scarb_version: Version = v

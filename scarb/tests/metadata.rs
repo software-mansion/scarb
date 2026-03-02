@@ -112,7 +112,7 @@ fn includes_compilation_units() {
 }
 
 #[test]
-fn reports_manifest_diagnostics_for_invalid_manifest() {
+fn emits_manifest_diagnostic_ndjson_for_invalid_manifest_in_json_mode() {
     let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(
@@ -133,8 +133,8 @@ name = 1
 
     assert!(!output.status.success());
     let stdout = String::from_utf8(output.stdout).unwrap();
-    assert!(stdout.contains("\"manifest_diagnostics\""));
-    assert!(stdout.contains("failed to parse manifest"));
+    assert!(stdout.contains("\"type\":\"manifest_diagnostic\""));
+    assert!(stdout.contains("\"span\":{"));
 }
 
 #[test]

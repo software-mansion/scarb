@@ -189,43 +189,10 @@ pub struct Metadata {
     #[serde(default = "profiles_default")]
     pub profiles: Vec<String>,
 
-    /// Manifest validation diagnostics collected during metadata generation.
-    #[serde(default)]
-    pub manifest_diagnostics: Vec<ManifestDiagnostic>,
-
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
-}
-
-/// Manifest validation diagnostic emitted by `scarb metadata`.
-#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "builder", derive(Builder))]
-#[cfg_attr(feature = "builder", builder(setter(into)))]
-#[non_exhaustive]
-pub struct ManifestDiagnostic {
-    /// Path to the manifest file where this diagnostic was produced.
-    pub file: Utf8PathBuf,
-
-    /// Human-readable diagnostic message.
-    pub message: String,
-
-    /// Optional source span represented as byte offsets.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub span: Option<ManifestDiagnosticSpan>,
-}
-
-/// Optional source span for manifest diagnostics.
-#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "builder", derive(Builder))]
-#[cfg_attr(feature = "builder", builder(setter(into)))]
-#[non_exhaustive]
-pub struct ManifestDiagnosticSpan {
-    /// Inclusive start byte offset.
-    pub start: u32,
-    /// Exclusive end byte offset.
-    pub end: u32,
 }
 
 /// Current workspace metadata.
