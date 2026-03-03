@@ -6883,7 +6883,6 @@ dependencies = [
  "snapbox",
  "tar",
  "target-triple",
- "tempfile",
  "test-case",
  "test-for-each-example",
  "thiserror 2.0.18",

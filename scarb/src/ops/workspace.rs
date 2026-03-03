@@ -1,11 +1,11 @@
+use std::collections::HashMap;
+use std::collections::hash_map::Entry;
+
 use anyhow::{Context, Result, anyhow};
 use camino::{Utf8Path, Utf8PathBuf};
 use glob::glob;
 use indoc::formatdoc;
 use indoc::indoc;
-use std::collections::HashMap;
-use std::collections::hash_map::Entry;
-use std::path::PathBuf;
 use tracing::trace;
 
 use crate::MANIFEST_FILE_NAME;
@@ -18,17 +18,6 @@ use crate::core::workspace::Workspace;
 use crate::ops::find_workspace_manifest_path;
 use scarb_fs_utils as fsx;
 use scarb_fs_utils::{PathBufUtf8Ext, is_hidden};
-
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct WorkspaceMemberDiscovery {
-    pub members_manifests: Vec<Utf8PathBuf>,
-    pub warnings: Vec<WorkspaceMemberWarning>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum WorkspaceMemberWarning {
-    MissingManifest { manifest_path: Utf8PathBuf },
-}
 
 #[tracing::instrument(level = "debug", skip(config))]
 pub fn read_workspace<'c>(manifest_path: &Utf8Path, config: &'c Config) -> Result<Workspace<'c>> {
@@ -69,12 +58,7 @@ fn read_workspace_impl<'c>(
     }
 }
 
-/// Validates workspace root (virtual) manifest
-pub fn validate_root_manifest(manifest: &TomlManifest) -> Result<()> {
-    if manifest.is_package() {
-        return Ok(());
-    }
-
+fn validate_virtual_manifest(manifest: &TomlManifest) -> Result<()> {
     if manifest.dependencies.is_some() {
         return Err(anyhow!(indoc! {r#"
             this virtual manifest specifies a [dependencies] section, which is not allowed
@@ -82,11 +66,7 @@ pub fn validate_root_manifest(manifest: &TomlManifest) -> Result<()> {
         "#}));
     }
 
-    if manifest.is_workspace() {
-        return Ok(());
-    }
-
-    Err(anyhow!("the [package] section is missing"))
+    Ok(())
 }
 
 fn read_workspace_root<'c>(
@@ -98,9 +78,6 @@ fn read_workspace_root<'c>(
     let toml_workspace = toml_manifest.get_workspace();
     let profiles = toml_manifest
         .collect_profiles()
-        .map_err(|err| ManifestParseError::new(manifest_path, err))?;
-
-    validate_root_manifest(&toml_manifest)
         .map_err(|err| ManifestParseError::new(manifest_path, err))?;
 
     let root_package = if toml_manifest.is_package() {
@@ -118,6 +95,8 @@ fn read_workspace_root<'c>(
         let package = Package::new(manifest.summary.package_id, manifest_path.into(), manifest);
         Some(package)
     } else {
+        validate_virtual_manifest(&toml_manifest)
+            .map_err(|err| ManifestParseError::new(manifest_path, err))?;
         None
     };
 
@@ -131,27 +110,11 @@ fn read_workspace_root<'c>(
             .expect("Manifest path must have parent.");
 
         let scripts = workspace.scripts.unwrap_or_default();
-        let member_discovery = workspace
-            .members
-            .map(|members| discover_workspace_member_manifests(workspace_root, &members))
-            .transpose()?
-            .unwrap_or_default();
-
-        for warning in &member_discovery.warnings {
-            match warning {
-                WorkspaceMemberWarning::MissingManifest { manifest_path } => {
-                    config.ui().warn(format!(
-                        "workspace members definition matched path `{}`, \
-                        which misses a manifest file",
-                        manifest_path
-                    ));
-                }
-            }
-        }
-
         // Read workspace members.
-        let mut packages = member_discovery
-            .members_manifests
+        let mut packages = workspace
+            .members
+            .map(|members| find_member_paths(workspace_root, members, config))
+            .unwrap_or_else(|| Ok(Vec::new()))?
             .iter()
             .map(AsRef::as_ref)
             .map(|package_path| {
@@ -194,53 +157,44 @@ fn read_workspace_root<'c>(
         )
     } else {
         // Read single package workspace
-        let package = root_package.ok_or_else(|| anyhow!("the [package] section is missing"))?;
+        let package = root_package.ok_or_else(|| {
+            ManifestParseError::new(manifest_path, anyhow!("the [package] section is missing"))
+        })?;
         Workspace::from_single_package(package, config, profiles, patch)
     }
 }
 
-pub fn discover_workspace_member_manifests(
+fn find_member_paths(
     root: &Utf8Path,
-    globs: &Vec<String>,
-) -> Result<WorkspaceMemberDiscovery> {
-    let mut members_manifests = Vec::with_capacity(globs.len());
-    let mut warnings = Vec::new();
-
+    globs: Vec<String>,
+    config: &Config,
+) -> Result<Vec<Utf8PathBuf>> {
+    let mut paths = Vec::with_capacity(globs.len());
     for pattern in globs {
-        for path in glob(root.join(pattern).as_str())
+        for path in glob(root.join(&pattern).as_str())
             .with_context(|| format!("could not parse pattern: {pattern}"))?
         {
             let path =
                 path.with_context(|| format!("unable to match path to pattern: {pattern}"))?;
-            maybe_collect_member_manifest_path(path, &mut members_manifests, &mut warnings)?;
+            // Skip hidden directories.
+            if is_hidden(path.clone()) {
+                continue;
+            }
+            // Look for manifest file, continuing if it does not exist.
+            let path = path.join(MANIFEST_FILE_NAME);
+            if path.is_file() {
+                let path = fsx::canonicalize_utf8(path)?;
+                paths.push(path)
+            } else {
+                config.ui().warn(format!(
+                    "workspace members definition matched path `{}`, \
+                    which misses a manifest file",
+                    path.display()
+                ));
+            }
         }
     }
-
-    Ok(WorkspaceMemberDiscovery {
-        members_manifests,
-        warnings,
-    })
-}
-
-fn maybe_collect_member_manifest_path(
-    path: PathBuf,
-    manifests: &mut Vec<Utf8PathBuf>,
-    warnings: &mut Vec<WorkspaceMemberWarning>,
-) -> Result<()> {
-    if is_hidden(path.clone()) {
-        return Ok(());
-    }
-
-    let manifest_path = path.join(MANIFEST_FILE_NAME);
-    if manifest_path.is_file() {
-        manifests.push(fsx::canonicalize_utf8(manifest_path)?);
-    } else {
-        warnings.push(WorkspaceMemberWarning::MissingManifest {
-            manifest_path: manifest_path.try_into_utf8()?,
-        });
-    }
-
-    Ok(())
+    Ok(paths)
 }
 
 #[tracing::instrument(level = "debug", skip(config))]
@@ -338,98 +292,4 @@ pub fn find_all_packages_recursive_with_source_id(
         }
     }
     Ok(found.into_values().collect())
-}
-
-#[cfg(test)]
-mod tests {
-    use std::fs;
-
-    use crate::core::TomlManifest;
-    use indoc::indoc;
-    use tempfile::Builder;
-
-    use super::{
-        WorkspaceMemberWarning, discover_workspace_member_manifests, validate_root_manifest,
-    };
-
-    #[test]
-    fn discovers_workspace_member_manifests_from_direct_and_glob_patterns() {
-        let temp = Builder::new().prefix("scarb-workspace-").tempdir().unwrap();
-        fs::create_dir_all(temp.path().join("member-a")).unwrap();
-        fs::create_dir_all(temp.path().join("members/member-b")).unwrap();
-        fs::create_dir_all(temp.path().join(".hidden")).unwrap();
-        fs::write(temp.path().join("member-a/Scarb.toml"), "").unwrap();
-        fs::write(temp.path().join("members/member-b/Scarb.toml"), "").unwrap();
-        fs::write(temp.path().join(".hidden/Scarb.toml"), "").unwrap();
-
-        let root = camino::Utf8Path::from_path(temp.path()).unwrap();
-        let members = vec![
-            "member-a".to_string(),
-            "members/*".to_string(),
-            ".hidden".to_string(),
-        ];
-
-        let discovery = discover_workspace_member_manifests(root, &members).unwrap();
-
-        assert_eq!(discovery.members_manifests.len(), 2);
-        assert!(
-            discovery
-                .members_manifests
-                .iter()
-                .any(|manifest| manifest.ends_with("member-a/Scarb.toml"))
-        );
-        assert!(
-            discovery
-                .members_manifests
-                .iter()
-                .any(|manifest| manifest.ends_with("members/member-b/Scarb.toml"))
-        );
-    }
-
-    #[test]
-    fn reports_warning_for_member_match_without_manifest() {
-        let temp = Builder::new().prefix("scarb-workspace-").tempdir().unwrap();
-        fs::create_dir_all(temp.path().join("member-a/src")).unwrap();
-        fs::write(temp.path().join("member-a/src/lib.cairo"), "fn main() {}\n").unwrap();
-
-        let root = camino::Utf8Path::from_path(temp.path()).unwrap();
-        let members = vec!["member-a".to_string()];
-
-        let discovery = discover_workspace_member_manifests(root, &members).unwrap();
-
-        assert!(discovery.members_manifests.is_empty());
-        assert_eq!(
-            discovery.warnings,
-            vec![WorkspaceMemberWarning::MissingManifest {
-                manifest_path: root.join("member-a/Scarb.toml")
-            }]
-        );
-    }
-
-    #[test]
-    fn validates_virtual_workspace_root_manifest_rules() {
-        let manifest = TomlManifest::read_from_str(indoc! {r#"
-            [workspace]
-            members = []
-
-            [dependencies]
-            foo = "1.0.0"
-        "#})
-        .unwrap();
-
-        let error = validate_root_manifest(&manifest).unwrap_err();
-
-        assert!(format!("{error:#}").contains(
-            "this virtual manifest specifies a [dependencies] section, which is not allowed"
-        ));
-    }
-
-    #[test]
-    fn rejects_root_manifest_without_package_or_workspace() {
-        let manifest = TomlManifest::read_from_str("").unwrap();
-
-        let error = validate_root_manifest(&manifest).unwrap_err();
-
-        assert!(format!("{error:#}").contains("the [package] section is missing"));
-    }
 }
