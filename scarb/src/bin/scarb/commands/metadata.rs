@@ -61,11 +61,14 @@ fn emit_manifest_diagnostic_if_json(config: &Config, error: &anyhow::Error) {
         return;
     }
 
-    let file = error.chain().find_map(|cause| {
-        cause
-            .downcast_ref::<ManifestParseError>()
-            .map(|error| error.path().to_string())
-    }).unwrap_or_else(|| config.manifest_path().to_string());
+    let file = error
+        .chain()
+        .find_map(|cause| {
+            cause
+                .downcast_ref::<ManifestParseError>()
+                .map(|error| error.path().to_string())
+        })
+        .unwrap_or_else(|| config.manifest_path().to_string());
 
     let span = error
         .chain()
@@ -79,7 +82,7 @@ fn emit_manifest_diagnostic_if_json(config: &Config, error: &anyhow::Error) {
             end: span.end,
         });
 
-    let message =  error
+    let message = error
         .chain()
         .find(|cause| cause.downcast_ref::<ManifestParseError>().is_none())
         .map(ToString::to_string)
