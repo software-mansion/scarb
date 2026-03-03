@@ -6191,9 +6191,9 @@ dependencies = [
 
 [[package]]
 name = "ra_ap_toolchain"
-version = "0.0.321"
+version = "0.0.322"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4750549054b411714b31475c8379c42683276ea3bde8e3c369b6963251ea37ef"
+checksum = "65c88999d3963aadc4c27023abcfb5f9c2f561ff04bba0ca62c7475a25c9c26c"
 dependencies = [
  "camino",
  "home",
@@ -8565,9 +8565,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.49.0"
+version = "1.50.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72a2903cd7736441aac9df9d7688bd0ce48edccaadf181c3b90be801e81d3d86"
+checksum = "27ad5e34374e03cfffefc301becb44e9dc3c17584f414349ebe29ed26661822d"
 dependencies = [
  "bytes",
  "libc",
@@ -9090,9 +9090,9 @@ checksum = "458f7a779bf54acc9f347480ac654f68407d3aab21269a6e3c9f922acd9e2da9"
 
 [[package]]
 name = "uv-once-map"
-version = "0.0.26"
+version = "0.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9365b9b02eb9048fd5838586c10a9f327f4f7da8f686c74059f17dbce8c2e311"
+checksum = "2b0c8d9841134c40bd77c81eb2fc477498fb0ff64676c1384b590bfa401eba6b"
 dependencies = [
  "dashmap",
  "futures",
