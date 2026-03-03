@@ -1,5 +1,6 @@
 use super::{FeatureName, Manifest};
 use crate::compiler::Profile;
+use crate::core::errors::ManifestParseError;
 use crate::core::manifest::maybe_workspace::{MaybeWorkspace, WorkspaceInherit};
 use crate::core::manifest::scripts::ScriptDefinition;
 use crate::core::manifest::target_defaults::{
@@ -949,8 +950,7 @@ impl TomlManifest {
         let contents = fs::read_to_string(path)
             .with_context(|| format!("failed to read manifest at: {path}"))?;
 
-        Self::read_from_str(&contents)
-            .with_context(|| format!("failed to parse manifest at: {path}"))
+        Self::read_from_str(&contents).map_err(|err| ManifestParseError::new(path, err).into())
     }
 
     pub fn read_from_str(contents: &str) -> Result<Self> {

@@ -7065,20 +7065,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scarb-manifest-validator"
-version = "2.15.0"
-dependencies = [
- "anyhow",
- "camino",
- "indoc",
- "scarb",
- "scarb-ui",
- "smol_str",
- "tempfile",
- "toml 1.0.3+spec-1.1.0",
-]
-
-[[package]]
 name = "scarb-mdbook"
 version = "2.15.0"
 dependencies = [
