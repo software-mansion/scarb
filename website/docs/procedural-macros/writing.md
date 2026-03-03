@@ -8,6 +8,13 @@ import { data as rel } from "../../github.data";
 > Procedural macros, by design, introduce a lot of overhead during the compilation.
 > They may also be harder to maintain.
 > Prefer the declarative inline macros written directly in Cairo, unless you have a specific reason to use procedural macros.
+> There are several reasons for this:
+>
+> - **Compilation overhead**: procedural macros are Rust crates compiled into shared libraries, adding a full Rust compilation step (via Cargo) on top of the Cairo build and significantly increasing build times.
+> - **Rust toolchain dependency**: anyone using your macro must have the Rust toolchain (Cargo) installed on their machine (unless the macro is distributed as a precompiled shared library, which is not always the case).
+> - **Harder to debug**: errors in macro expansion surface as confusing Cairo compiler diagnostics, making them difficult to diagnose.
+> - **Higher maintenance burden**: they require knowledge of both Rust and Cairo, and the FFI boundary between them adds complexity.
+>
 > Please see the [declarative macros chapter in Cairo Book](https://www.starknet.io/cairo-book/ch12-05-macros.html#declarative-inline-macros-for-general-metaprogramming) for more information.
 
 > [!INFO]
@@ -44,7 +51,7 @@ To implement a procedural macro, a programmer has to:
 - Alongside the new TokenStream, a procedural macro can emit compiler diagnostics, auxiliary data and full path
   identifiers, described in detail in advanced macro usage section.
 
-We define `TokenStream` as some encapsulation of code represented in plain Cairo.
+`TokenStream` is an abstraction that represents a piece of Cairo source code as a sequence of tokens. Rather than exposing the compiler's internal AST directly — which would tightly couple procedural macros to Cairo's internal representations and make them fragile across compiler versions — `TokenStream` provides a stable, serializable interface that can be safely passed across the FFI boundary between Scarb and the macro's shared library. This means macro authors work with raw Cairo source text rather than compiler internals, keeping the API simple and stable.
 
 ## Creating procedural macros with helpers
 
@@ -149,3 +156,28 @@ error: could not compile `hello_world` due to previous error
 ```
 
 Maybe it's not the most productive code you wrote, but the function has been removed during the compilation.
+
+## Building token streams with `quote!`
+
+When your macro needs to return more than a trivial result, constructing a `TokenStream` token by token quickly becomes unwieldy.
+For example, returning a whole function or a struct definition by manually wrapping each token in `Token`, `TokenTree` and `TokenStream` is tedious and hard to read.
+
+The `cairo-lang-macro` crate provides a [`quote!`](https://docs.rs/cairo-lang-macro/latest/cairo_lang_macro/macro.quote.html) macro for exactly this purpose.
+It lets you write Cairo code inline in Rust and interpolate Rust variables directly into it using the `#variable` syntax:
+
+```rust
+use cairo_lang_macro::{inline_macro, quote, ProcMacroResult, TextSpan, Token, TokenStream, TokenTree};
+
+#[inline_macro]
+pub fn example(args: TokenStream) -> ProcMacroResult {
+    let value = TokenTree::Ident(Token::new("42", TextSpan::call_site()));
+    ProcMacroResult::new(quote! {
+        const MY_CONST: u32 = #value;
+    })
+}
+```
+
+Any variable used with `#` must implement the [`ToPrimitiveTokenStream`](https://docs.rs/cairo-lang-primitive-token/latest/cairo_lang_primitive_token/trait.ToPrimitiveTokenStream.html) trait.
+This includes `TokenStream` itself, as well as syntax nodes from the `cairo-lang-syntax` AST — making it straightforward to take a piece of Cairo code from the input and embed it in the output.
+
+See the [examples](./examples#example-2-building-token-stream-with-quote-macro) page for full end-to-end usage of `quote!`, including composing token streams and working with syntax nodes.
