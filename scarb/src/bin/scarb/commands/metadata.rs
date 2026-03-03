@@ -3,6 +3,7 @@ use serde::Serialize;
 use toml::de::Error as TomlParseError;
 
 use scarb::core::Config;
+use scarb::core::errors::ManifestParseError;
 use scarb::ops;
 use scarb_ui::OutputFormat;
 use scarb_ui::components::MachineMessage;
@@ -11,11 +12,17 @@ use crate::args::MetadataArgs;
 
 #[derive(Serialize)]
 struct ManifestDiagnosticMessage {
-    r#type: &'static str,
+    kind: ManifestMessageKind,
     message: String,
     file: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     span: Option<ManifestDiagnosticSpan>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "snake_case")]
+enum ManifestMessageKind {
+    ManifestDiagnostic,
 }
 
 #[derive(Serialize)]
@@ -54,6 +61,12 @@ fn emit_manifest_diagnostic_if_json(config: &Config, error: &anyhow::Error) {
         return;
     }
 
+    let file = error.chain().find_map(|cause| {
+        cause
+            .downcast_ref::<ManifestParseError>()
+            .map(|error| error.path().to_string())
+    }).unwrap_or_else(|| config.manifest_path().to_string());
+
     let span = error
         .chain()
         .find_map(|cause| {
@@ -66,16 +79,18 @@ fn emit_manifest_diagnostic_if_json(config: &Config, error: &anyhow::Error) {
             end: span.end,
         });
 
-    if span.is_none() {
-        return;
-    }
+    let message =  error
+        .chain()
+        .find(|cause| cause.downcast_ref::<ManifestParseError>().is_none())
+        .map(ToString::to_string)
+        .unwrap_or_else(|| error.to_string());
 
     config
         .ui()
         .force_print(MachineMessage(ManifestDiagnosticMessage {
-            r#type: "manifest_diagnostic",
-            message: format!("{error:#}"),
-            file: config.manifest_path().to_string(),
+            kind: ManifestMessageKind::ManifestDiagnostic,
+            message,
+            file,
             span,
         }));
 }

@@ -11,6 +11,7 @@ use tracing::trace;
 use crate::MANIFEST_FILE_NAME;
 use crate::core::TomlManifest;
 use crate::core::config::Config;
+use crate::core::errors::ManifestParseError;
 use crate::core::package::Package;
 use crate::core::source::SourceId;
 use crate::core::workspace::Workspace;
@@ -95,10 +96,12 @@ fn read_workspace_root<'c>(
 ) -> Result<Workspace<'c>> {
     let toml_manifest = TomlManifest::read_from_path(manifest_path)?;
     let toml_workspace = toml_manifest.get_workspace();
-    let profiles = toml_manifest.collect_profiles()?;
+    let profiles = toml_manifest
+        .collect_profiles()
+        .map_err(|err| ManifestParseError::new(manifest_path, err))?;
 
     validate_root_manifest(&toml_manifest)
-        .with_context(|| format!("failed to parse manifest at: {manifest_path}"))?;
+        .map_err(|err| ManifestParseError::new(manifest_path, err))?;
 
     let root_package = if toml_manifest.is_package() {
         let manifest = toml_manifest
@@ -110,7 +113,7 @@ fn read_workspace_root<'c>(
                 &toml_manifest,
                 config,
             )
-            .with_context(|| format!("failed to parse manifest at: {manifest_path}"))?;
+            .map_err(|err| ManifestParseError::new(manifest_path, err))?;
         let manifest = Box::new(manifest);
         let package = Package::new(manifest.summary.package_id, manifest_path.into(), manifest);
         Some(package)
@@ -118,7 +121,9 @@ fn read_workspace_root<'c>(
         None
     };
 
-    let patch = toml_manifest.collect_patch(manifest_path)?;
+    let patch = toml_manifest
+        .collect_patch(manifest_path)
+        .map_err(|err| ManifestParseError::new(manifest_path, err))?;
 
     if let Some(workspace) = toml_workspace {
         let workspace_root = manifest_path
@@ -161,7 +166,7 @@ fn read_workspace_root<'c>(
                         &toml_manifest,
                         config,
                     )
-                    .with_context(|| format!("failed to parse manifest at: {manifest_path}"))?;
+                    .map_err(|err| ManifestParseError::new(package_path, err))?;
                 let manifest = Box::new(manifest);
                 let package =
                     Package::new(manifest.summary.package_id, package_path.into(), manifest);

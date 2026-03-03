@@ -133,8 +133,94 @@ name = 1
 
     assert!(!output.status.success());
     let stdout = String::from_utf8(output.stdout).unwrap();
-    assert!(stdout.contains("\"type\":\"manifest_diagnostic\""));
+    assert!(stdout.contains("\"kind\":\"manifest_diagnostic\""));
     assert!(stdout.contains("\"span\":{"));
+}
+
+#[test]
+fn attributes_manifest_diagnostic_to_workspace_member_manifest() {
+    let t = TempDir::new().unwrap();
+    WorkspaceBuilder::start()
+        .add_member("members/member_a")
+        .build(&t);
+
+    ProjectBuilder::start()
+        .name("member_a")
+        .version("1.0.0")
+        .manifest_extra(indoc! {r#"
+            [dependencies]
+            member_b = { workspace = true, version = "1.0.0" }
+        "#})
+        .build(&t.child("members/member_a"));
+
+    let output = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let diagnostic = stdout
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .find(|line| line["kind"] == "manifest_diagnostic")
+        .unwrap();
+    let expected_path = fsx::canonicalize(t.child("members/member_a/Scarb.toml").path()).unwrap();
+
+    assert_eq!(
+        diagnostic["file"].as_str().unwrap(),
+        expected_path.to_str().unwrap()
+    );
+    assert!(diagnostic["span"].is_object());
+}
+
+#[test]
+fn emits_manifest_diagnostic_for_semantic_manifest_error_without_span() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(indoc! {r#"
+            [package]
+            name = "manifest_diagnostics_ws"
+            version = "0.1.0"
+            edition = "2025_12"
+
+            [profile.test]
+        "#})
+        .unwrap();
+
+    let output = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let diagnostic = stdout
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .find(|line| line["kind"] == "manifest_diagnostic")
+        .unwrap();
+    let expected_path = fsx::canonicalize(t.child("Scarb.toml").path()).unwrap();
+
+    assert_eq!(
+        diagnostic["file"].as_str().unwrap(),
+        expected_path.to_str().unwrap()
+    );
+    assert_eq!(
+        diagnostic["message"].as_str().unwrap(),
+        "profile name `test` is not allowed"
+    );
+    assert!(diagnostic.get("span").is_none());
 }
 
 #[test]
