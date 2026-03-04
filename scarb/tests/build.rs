@@ -1849,3 +1849,108 @@ fn can_use_dependency_twice_with_different_kinds() {
             [..]Finished `dev` profile target(s) in [..]
         "#});
 }
+
+#[test]
+fn warnings_shown_for_workspace_member_that_is_also_a_dep() {
+    // Regression test for a bug where warnings from a workspace member were silently
+    // dropped when that member was also compiled as a dependency of another workspace member.
+    //
+    // Root cause: when `pkg_consumer` is compiled first (it depends on `pkg_user`), the
+    // incremental cache for `pkg_user` is saved with `has_warnings=false`, because dependency
+    // warnings are suppressed. When `pkg_user` is later compiled as its own workspace member,
+    // it hits the stale cache entry and shows no warnings.
+    let t = TempDir::new().unwrap();
+
+    // pkg_deprecated: defines a trait with a deprecated method.
+    let pkg_deprecated = t.child("pkg_deprecated");
+    ProjectBuilder::start()
+        .name("pkg_deprecated")
+        .lib_cairo(indoc! {r#"
+            pub trait FooTrait {
+                #[deprecated(
+                    feature: "deprecated-foo",
+                    note: "Use `FooTrait::bar` instead.",
+                    since: "0.1.0",
+                )]
+                fn foo(self: u32) -> u32;
+                fn bar(self: u32) -> u32;
+            }
+            pub impl FooImpl of FooTrait {
+                fn foo(self: u32) -> u32 { self }
+                fn bar(self: u32) -> u32 { self }
+            }
+        "#})
+        .build(&pkg_deprecated);
+
+    // pkg_user: calls the deprecated method — should always emit warn[E2066].
+    let pkg_user = t.child("pkg_user");
+    ProjectBuilder::start()
+        .name("pkg_user")
+        .dep("pkg_deprecated", &pkg_deprecated)
+        .lib_cairo(indoc! {r#"
+            use pkg_deprecated::FooTrait;
+            pub fn use_deprecated(x: u32) -> u32 {
+                x.foo()
+            }
+        "#})
+        .build(&pkg_user);
+
+    // pkg_consumer: depends on pkg_user, making pkg_user both a workspace member
+    // and a transitive dependency compiled before its own compilation unit.
+    let pkg_consumer = t.child("pkg_consumer");
+    ProjectBuilder::start()
+        .name("pkg_consumer")
+        .dep("pkg_user", &pkg_user)
+        .lib_cairo(indoc! {r#"
+            use pkg_user::use_deprecated;
+            pub fn consume(x: u32) -> u32 {
+                use_deprecated(x)
+            }
+        "#})
+        .build(&pkg_consumer);
+
+    WorkspaceBuilder::start()
+        .add_member("pkg_deprecated")
+        .add_member("pkg_user")
+        .add_member("pkg_consumer")
+        .build(&t);
+
+    // Scenario 1: workspace build from a clean target dir.
+    // pkg_consumer is compiled first (it has the most dependents), which caches pkg_user.
+    // When pkg_user is subsequently compiled as its own workspace member, the warning
+    // must still be emitted even though pkg_user is already in the incremental cache.
+    Scarb::quick_command()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..]Compiling pkg_consumer v1.0.0 ([..]Scarb.toml)
+        [..]Compiling pkg_deprecated v1.0.0 ([..]Scarb.toml)
+        [..]Compiling pkg_user v1.0.0 ([..]Scarb.toml)
+        warn[E2066]: Usage of deprecated feature `"deprecated-foo"` with no `#[feature("deprecated-foo")]` attribute. Note: "Use `FooTrait::bar` instead."
+         --> [..]lib.cairo:3:7
+            x.foo()
+              ^^^
+
+            Finished `dev` profile target(s) in [..]
+        "#});
+
+    // Scenario 2: build only pkg_user using the cache produced by the workspace build.
+    // The incremental cache must record that pkg_user has warnings so they are
+    // re-displayed on subsequent builds of that package.
+    Scarb::quick_command()
+        .args(["build", "-p", "pkg_user"])
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..]Compiling pkg_user v1.0.0 ([..]Scarb.toml)
+        warn[E2066]: Usage of deprecated feature `"deprecated-foo"` with no `#[feature("deprecated-foo")]` attribute. Note: "Use `FooTrait::bar` instead."
+         --> [..]lib.cairo:3:7
+            x.foo()
+              ^^^
+
+            Finished `dev` profile target(s) in [..]
+        "#});
+}
