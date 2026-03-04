@@ -112,6 +112,118 @@ fn includes_compilation_units() {
 }
 
 #[test]
+fn emits_manifest_diagnostic_ndjson_for_invalid_manifest_in_json_mode() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(indoc! {r#"
+                [package]
+                name = 1
+            "#,
+        })
+        .unwrap();
+
+    let output = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.contains("\"kind\":\"manifest_diagnostic\""));
+    assert!(stdout.contains("\"span\":{"));
+}
+
+#[test]
+fn attributes_manifest_diagnostic_to_workspace_member_manifest() {
+    let t = TempDir::new().unwrap();
+    WorkspaceBuilder::start()
+        .add_member("members/member_a")
+        .build(&t);
+
+    ProjectBuilder::start()
+        .name("member_a")
+        .version("1.0.0")
+        .manifest_extra(indoc! {r#"
+            [dependencies]
+            member_b = { workspace = true, version = "1.0.0" }
+        "#})
+        .build(&t.child("members/member_a"));
+
+    let output = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let diagnostic = stdout
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .find(|line| line["kind"] == "manifest_diagnostic")
+        .unwrap();
+    let expected_path = fsx::canonicalize(t.child("members/member_a/Scarb.toml").path()).unwrap();
+
+    assert_eq!(
+        diagnostic["file"].as_str().unwrap(),
+        expected_path.to_str().unwrap()
+    );
+    assert!(diagnostic["span"].is_object());
+}
+
+#[test]
+fn emits_manifest_diagnostic_for_semantic_manifest_error_without_span() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(indoc! {r#"
+            [package]
+            name = "manifest_diagnostics_ws"
+            version = "0.1.0"
+            edition = "2025_12"
+
+            [profile.test]
+        "#})
+        .unwrap();
+
+    let output = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let diagnostic = stdout
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .find(|line| line["kind"] == "manifest_diagnostic")
+        .unwrap();
+    let expected_path = fsx::canonicalize(t.child("Scarb.toml").path()).unwrap();
+
+    assert_eq!(
+        diagnostic["file"].as_str().unwrap(),
+        expected_path.to_str().unwrap()
+    );
+    assert_eq!(
+        diagnostic["message"].as_str().unwrap(),
+        "profile name `test` is not allowed"
+    );
+    assert!(diagnostic.get("span").is_none());
+}
+
+#[test]
 fn fails_without_format_version() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().build(&t);
@@ -1183,17 +1295,47 @@ fn infer_readme_simple_bool() {
         )
         .unwrap();
 
-    Scarb::quick_command()
+    let output = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
         .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_eq(indoc! {r#"
-            {"type":"error","message":"failed to parse manifest at: [..]/Scarb.toml[..]Caused by:[..]failed to find readme at [..]/README.md[..]"}
-        "#});
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let lines = stdout
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .collect_vec();
+
+    assert_eq!(lines.len(), 2, "{stdout}");
+    assert_eq!(lines[0]["kind"], "manifest_diagnostic");
+    assert!(
+        lines[0]["message"]
+            .as_str()
+            .unwrap()
+            .contains("failed to find readme at")
+    );
+    assert!(lines[0]["message"].as_str().unwrap().contains("README.md"));
+    assert!(lines[0]["file"].as_str().unwrap().ends_with("/Scarb.toml"));
+
+    assert_eq!(lines[1]["type"], "error");
+    assert!(
+        lines[1]["message"]
+            .as_str()
+            .unwrap()
+            .contains("failed to parse manifest at:")
+    );
+    assert!(
+        lines[1]["message"]
+            .as_str()
+            .unwrap()
+            .contains("failed to find readme at")
+    );
 
     t.child("README.md").touch().unwrap();
 

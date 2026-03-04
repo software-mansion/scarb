@@ -11,6 +11,7 @@ use tracing::trace;
 use crate::MANIFEST_FILE_NAME;
 use crate::core::TomlManifest;
 use crate::core::config::Config;
+use crate::core::errors::ManifestParseError;
 use crate::core::package::Package;
 use crate::core::source::SourceId;
 use crate::core::workspace::Workspace;
@@ -57,16 +58,15 @@ fn read_workspace_impl<'c>(
     }
 }
 
-fn validate_virtual_manifest(manifest_path: &Utf8Path, manifest: &TomlManifest) -> Result<()> {
+fn validate_virtual_manifest(manifest: &TomlManifest) -> Result<()> {
     if manifest.dependencies.is_some() {
-        Err(anyhow!(indoc! {r#"
+        return Err(anyhow!(indoc! {r#"
             this virtual manifest specifies a [dependencies] section, which is not allowed
             help: use [workspace.dependencies] instead
-        "#}))
-        .with_context(|| format!("failed to parse manifest at: {manifest_path}"))
-    } else {
-        Ok(())
+        "#}));
     }
+
+    Ok(())
 }
 
 fn read_workspace_root<'c>(
@@ -76,7 +76,9 @@ fn read_workspace_root<'c>(
 ) -> Result<Workspace<'c>> {
     let toml_manifest = TomlManifest::read_from_path(manifest_path)?;
     let toml_workspace = toml_manifest.get_workspace();
-    let profiles = toml_manifest.collect_profiles()?;
+    let profiles = toml_manifest
+        .collect_profiles()
+        .map_err(|err| ManifestParseError::new(manifest_path, err))?;
 
     let root_package = if toml_manifest.is_package() {
         let manifest = toml_manifest
@@ -88,16 +90,19 @@ fn read_workspace_root<'c>(
                 &toml_manifest,
                 config,
             )
-            .with_context(|| format!("failed to parse manifest at: {manifest_path}"))?;
+            .map_err(|err| ManifestParseError::new(manifest_path, err))?;
         let manifest = Box::new(manifest);
         let package = Package::new(manifest.summary.package_id, manifest_path.into(), manifest);
         Some(package)
     } else {
-        validate_virtual_manifest(manifest_path, &toml_manifest)?;
+        validate_virtual_manifest(&toml_manifest)
+            .map_err(|err| ManifestParseError::new(manifest_path, err))?;
         None
     };
 
-    let patch = toml_manifest.collect_patch(manifest_path)?;
+    let patch = toml_manifest
+        .collect_patch(manifest_path)
+        .map_err(|err| ManifestParseError::new(manifest_path, err))?;
 
     if let Some(workspace) = toml_workspace {
         let workspace_root = manifest_path
@@ -108,7 +113,7 @@ fn read_workspace_root<'c>(
         // Read workspace members.
         let mut packages = workspace
             .members
-            .map(|m| find_member_paths(workspace_root, m, config))
+            .map(|members| find_member_paths(workspace_root, members, config))
             .unwrap_or_else(|| Ok(Vec::new()))?
             .iter()
             .map(AsRef::as_ref)
@@ -124,7 +129,7 @@ fn read_workspace_root<'c>(
                         &toml_manifest,
                         config,
                     )
-                    .with_context(|| format!("failed to parse manifest at: {manifest_path}"))?;
+                    .map_err(|err| ManifestParseError::new(package_path, err))?;
                 let manifest = Box::new(manifest);
                 let package =
                     Package::new(manifest.summary.package_id, package_path.into(), manifest);
@@ -152,7 +157,9 @@ fn read_workspace_root<'c>(
         )
     } else {
         // Read single package workspace
-        let package = root_package.ok_or_else(|| anyhow!("the [package] section is missing"))?;
+        let package = root_package.ok_or_else(|| {
+            ManifestParseError::new(manifest_path, anyhow!("the [package] section is missing"))
+        })?;
         Workspace::from_single_package(package, config, profiles, patch)
     }
 }
