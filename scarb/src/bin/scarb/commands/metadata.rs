@@ -61,13 +61,11 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
 }
 
 fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
-    let file = error
-        .chain()
-        .find_map(|cause| {
-            cause
-                .downcast_ref::<ManifestParseError>()
-                .map(|error| error.path().to_string())
-        });
+    let file = error.chain().find_map(|cause| {
+        cause
+            .downcast_ref::<ManifestParseError>()
+            .map(|error| error.path().to_string())
+    });
 
     let span = error
         .chain()
