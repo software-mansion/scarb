@@ -479,15 +479,13 @@ fn invalid_url() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(
-            Data::from(indoc! { r#"
-        error: failed to parse `scarbs.xyz` as patch source url
+        .stdout_eq(indoc! { r#"
+            error: failed to parse manifest at: [..]Scarb.toml
 
-        Caused by:
-            relative URL without a base
-        "#})
-            .raw(),
-        );
+            Caused by:
+                0: failed to parse `scarbs.xyz` as patch source url
+                1: relative URL without a base
+        "#});
 }
 
 #[test]
@@ -670,10 +668,10 @@ fn cannot_define_default_registry_both_short_and_long_name() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(
-            Data::from(indoc! {r#"
-            error: the `[patch]` section cannot specify both `scarbs-xyz` and `https://scarbs.xyz/`
-        "#})
-            .raw(),
-        );
+        .stdout_eq(indoc! {r#"
+            error: failed to parse manifest at: [..]Scarb.toml
+
+            Caused by:
+                the `[patch]` section cannot specify both `scarbs-xyz` and `https://scarbs.xyz/`
+        "#});
 }

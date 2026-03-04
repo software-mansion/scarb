@@ -36,7 +36,10 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
     let ws = match ops::read_workspace(config.manifest_path(), config) {
         Ok(ws) => ws,
         Err(error) => {
-            emit_manifest_diagnostic_if_json(config, &error);
+            if config.ui().output_format() == OutputFormat::Json {
+                emit_manifest_diagnostic(config, &error);
+            }
+
             return Err(error);
         }
     };
@@ -56,11 +59,7 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
     Ok(())
 }
 
-fn emit_manifest_diagnostic_if_json(config: &Config, error: &anyhow::Error) {
-    if config.ui().output_format() != OutputFormat::Json {
-        return;
-    }
-
+fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
     let file = error
         .chain()
         .find_map(|cause| {

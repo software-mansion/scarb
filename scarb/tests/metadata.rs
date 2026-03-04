@@ -115,11 +115,11 @@ fn includes_compilation_units() {
 fn emits_manifest_diagnostic_ndjson_for_invalid_manifest_in_json_mode() {
     let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
-        .write_str(
-            "[package]
-name = 1
-",
-        )
+        .write_str(indoc! {r#"
+                [package]
+                name = 1
+            "#,
+        })
         .unwrap();
 
     let output = Scarb::quick_command()
@@ -1295,17 +1295,47 @@ fn infer_readme_simple_bool() {
         )
         .unwrap();
 
-    Scarb::quick_command()
+    let output = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
         .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_eq(indoc! {r#"
-            {"type":"error","message":"failed to parse manifest at: [..]/Scarb.toml[..]Caused by:[..]failed to find readme at [..]/README.md[..]"}
-        "#});
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let lines = stdout
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .collect_vec();
+
+    assert_eq!(lines.len(), 2, "{stdout}");
+    assert_eq!(lines[0]["kind"], "manifest_diagnostic");
+    assert!(
+        lines[0]["message"]
+            .as_str()
+            .unwrap()
+            .contains("failed to find readme at")
+    );
+    assert!(lines[0]["message"].as_str().unwrap().contains("README.md"));
+    assert!(lines[0]["file"].as_str().unwrap().ends_with("/Scarb.toml"));
+
+    assert_eq!(lines[1]["type"], "error");
+    assert!(
+        lines[1]["message"]
+            .as_str()
+            .unwrap()
+            .contains("failed to parse manifest at:")
+    );
+    assert!(
+        lines[1]["message"]
+            .as_str()
+            .unwrap()
+            .contains("failed to find readme at")
+    );
 
     t.child("README.md").touch().unwrap();
 
