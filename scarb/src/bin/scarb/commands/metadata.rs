@@ -14,7 +14,8 @@ use crate::args::MetadataArgs;
 struct ManifestDiagnosticMessage {
     kind: ManifestMessageKind,
     message: String,
-    file: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    file: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     span: Option<ManifestDiagnosticSpan>,
 }
@@ -66,8 +67,7 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
             cause
                 .downcast_ref::<ManifestParseError>()
                 .map(|error| error.path().to_string())
-        })
-        .unwrap_or_else(|| config.manifest_path().to_string());
+        });
 
     let span = error
         .chain()
