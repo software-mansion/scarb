@@ -70,9 +70,48 @@ These three macro helpers are:
 You can find documentation for these helpers in [attribute macros section](https://docs.rs/cairo-lang-macro/latest/cairo_lang_macro/#attributes)
 of the `cairo-lang-macro` crate documentation.
 
-## Example projects
+### Building the output with `quote!`
 
-See the [examples](./examples) for working end-to-end macro implementations.
+The primary way to produce a `TokenStream` output from your macro is the [`quote!`](https://docs.rs/cairo-lang-macro/latest/cairo_lang_macro/macro.quote.html) macro provided by `cairo-lang-macro`.
+It lets you write Cairo code inline in Rust and interpolate Rust variables directly into it using the `#variable` syntax:
+
+```rust
+use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
+
+#[attribute_macro]
+pub fn my_macro(_args: TokenStream, body: TokenStream) -> ProcMacroResult {
+    ProcMacroResult::new(quote! {
+        const MY_CONST: u32 = 42;
+        #body
+    })
+}
+```
+
+When applied to a function in Cairo, the macro prepends the constant declaration before the annotated item:
+
+```cairo
+#[my_macro]
+fn example() -> u32 {
+    MY_CONST
+}
+```
+
+This expands to:
+
+```cairo
+const MY_CONST: u32 = 42;
+
+fn example() -> u32 {
+    MY_CONST
+}
+```
+
+Any variable used with `#` must implement the [`ToPrimitiveTokenStream`](https://docs.rs/cairo-lang-primitive-token/latest/cairo_lang_primitive_token/trait.ToPrimitiveTokenStream.html) trait.
+This includes `TokenStream` itself, as well as syntax nodes from the `cairo-lang-syntax` AST — making it straightforward to embed pieces of Cairo code from the input directly into the output.
+
+While you can also construct a `TokenStream` manually by wrapping individual tokens in `Token`, `TokenTree`, and `TokenStream`, this is tedious for anything beyond the most trivial output and should be avoided in favour of `quote!`.
+
+See the [examples](./examples#example-2-building-token-stream-with-quote-macro) for full end-to-end usage of `quote!`, including composing token streams and working with syntax nodes.
 
 ### Minimal example: a macro that removes code
 
@@ -157,27 +196,6 @@ error: could not compile `hello_world` due to previous error
 
 Maybe it's not the most productive code you wrote, but the function has been removed during the compilation.
 
-## Building token streams with `quote!`
+## Example projects
 
-When your macro needs to return more than a trivial result, constructing a `TokenStream` token by token quickly becomes unwieldy.
-For example, returning a whole function or a struct definition by manually wrapping each token in `Token`, `TokenTree` and `TokenStream` is tedious and hard to read.
-
-The `cairo-lang-macro` crate provides a [`quote!`](https://docs.rs/cairo-lang-macro/latest/cairo_lang_macro/macro.quote.html) macro for exactly this purpose.
-It lets you write Cairo code inline in Rust and interpolate Rust variables directly into it using the `#variable` syntax:
-
-```rust
-use cairo_lang_macro::{inline_macro, quote, ProcMacroResult, TextSpan, Token, TokenStream, TokenTree};
-
-#[inline_macro]
-pub fn example(args: TokenStream) -> ProcMacroResult {
-    let value = TokenTree::Ident(Token::new("42", TextSpan::call_site()));
-    ProcMacroResult::new(quote! {
-        const MY_CONST: u32 = #value;
-    })
-}
-```
-
-Any variable used with `#` must implement the [`ToPrimitiveTokenStream`](https://docs.rs/cairo-lang-primitive-token/latest/cairo_lang_primitive_token/trait.ToPrimitiveTokenStream.html) trait.
-This includes `TokenStream` itself, as well as syntax nodes from the `cairo-lang-syntax` AST — making it straightforward to take a piece of Cairo code from the input and embed it in the output.
-
-See the [examples](./examples#example-2-building-token-stream-with-quote-macro) page for full end-to-end usage of `quote!`, including composing token streams and working with syntax nodes.
+See the [examples](./examples) for working end-to-end macro implementations.
