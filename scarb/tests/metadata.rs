@@ -1321,7 +1321,7 @@ fn infer_readme_simple_bool() {
             .contains("failed to find readme at")
     );
     assert!(lines[0]["message"].as_str().unwrap().contains("README.md"));
-    assert!(lines[0]["file"].as_str().unwrap().ends_with("/Scarb.toml"));
+    assert!(lines[0]["file"].as_str().unwrap().ends_with("Scarb.toml"));
 
     assert_eq!(lines[1]["type"], "error");
     assert!(
