@@ -136,6 +136,7 @@ pub fn collect_code_blocks(crate_: &Crate<'_>) -> Vec<CodeBlock> {
         collect_from_module(module, &mut runnable_code_blocks);
     }
     runnable_code_blocks.sort_by_key(|block| block.id.clone());
+    runnable_code_blocks.dedup_by_key(|block| block.id.clone());
     runnable_code_blocks
 }
 
