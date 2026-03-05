@@ -16,6 +16,7 @@ const CODE_WITH_MULTIPLE_CODE_BLOCKS_PER_ITEM: &str = include_str!("code/code_15
 const CODE_WITH_STARKNET_CONTRACT: &str = include_str!("code/code_16.cairo");
 const CODE_WITH_COMPILE_FAIL: &str = include_str!("code/code_17.cairo");
 const CODE_WITH_SHOULD_PANIC: &str = include_str!("code/code_18.cairo");
+const CODE_WITH_REEXPORTED_ITEM: &str = include_str!("code/code_19.cairo");
 const EXPECTED_WITH_EMBEDDINGS_PATH: &str = "tests/data/runnable_examples";
 const EXPECTED_WITH_EMBEDDINGS_MDX_PATH: &str = "tests/data/runnable_examples_mdx";
 const EXPECTED_MULTIPLE_PER_ITEM_PATH: &str = "tests/data/runnable_examples_multiple_per_item";
@@ -385,5 +386,37 @@ fn compile_fail() {
 
             test result: FAILED. 1 passed; 1 failed; 0 ignored
             error: doc tests failed
+        "#});
+}
+
+#[test]
+fn runnable_examples_not_duplicated_for_reexported_items() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(CODE_WITH_REEXPORTED_ITEM)
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args(["--output-format", "markdown"])
+        .arg("--disable-remote-linking")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(formatdoc! {r#"
+            [..] Running 1 doc examples for `hello_world`
+            [..] Compiling hello_world_example_1 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            test hello_world::inner::MyStruct ... ok
+
+            test result: ok. 1 passed; 0 failed; 0 ignored
+            Saving output to: target/doc/hello_world
+
+            Run the following to see the results:[..]
+            `mdbook serve target/doc/hello_world`
+            (you will need to have mdbook installed)
+
+            Or build html docs by running `scarb doc --build`
         "#});
 }
