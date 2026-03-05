@@ -7034,6 +7034,7 @@ dependencies = [
  "itertools 0.14.0",
  "mimalloc",
  "opener",
+ "rayon",
  "salsa",
  "scarb-build-metadata",
  "scarb-extensions-cli",
@@ -7042,6 +7043,7 @@ dependencies = [
  "scarb-ui",
  "serde",
  "serde_json",
+ "snapbox",
  "tempfile",
  "thiserror 2.0.18",
 ]
