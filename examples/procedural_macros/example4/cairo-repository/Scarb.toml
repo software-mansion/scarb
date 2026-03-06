@@ -1,0 +1,7 @@
+[package]
+name = "example4_app"
+version = "0.1.0"
+edition = "2023_11"
+
+[dependencies]
+example4_macro = { path = "../macro" }

@@ -576,7 +576,7 @@ The prebuilt binaries are used in a best-effort manner - if it's not possible to
 it will attempt to compile the macro source code instead.
 No errors will be emitted if the prebuilt binary is not found or cannot be loaded.
 
-See [prebuilt procedural macros](./procedural-macro.md#prebuilt-procedural-macros) for more information.
+See [prebuilt procedural macros](/docs/procedural-macros/advanced#prebuilt-procedural-macros) for more information.
 
 ## `[workspace]`
 

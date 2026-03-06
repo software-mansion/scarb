@@ -1,0 +1,17 @@
+[package]
+name = "example4_macro"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+cairo-lang-macro = "0.2"
+cairo-lang-parser = "2.16.0"
+cairo-lang-primitive-token = "1"
+cairo-lang-syntax = "2.16.0"
+
+[package.metadata.cargo-machete]
+ignored = ["cairo-lang-primitive-token"]

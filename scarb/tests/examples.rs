@@ -7,7 +7,7 @@ use snapbox::cmd::Command;
 use scarb_test_support::cargo::cargo_bin;
 use test_for_each_example::test_for_each_example;
 
-#[test_for_each_example(ignore = "dependencies")]
+#[test_for_each_example(ignore = "dependencies,procedural_macros")]
 fn build(example: &Path) {
     Command::new(cargo_bin("scarb"))
         .arg("clean")
@@ -22,7 +22,7 @@ fn build(example: &Path) {
         .success();
 }
 
-#[test_for_each_example]
+#[test_for_each_example(ignore = "procedural_macros")]
 fn readme(example: &Path) {
     let example_name = example.file_name().unwrap().to_str().unwrap();
     let readme = ChildPath::new(example.join("README.md"));

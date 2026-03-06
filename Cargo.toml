@@ -27,6 +27,12 @@ members = [
     "xtask", "utils/scarb-fs-utils",
 ]
 "resolver" = "2"
+exclude = [
+    "examples/procedural_macros/example1/macro",
+    "examples/procedural_macros/example2/macro",
+    "examples/procedural_macros/example3/macro",
+    "examples/procedural_macros/example4/macro",
+]
 
 [workspace.package]
 version = "2.15.0"
