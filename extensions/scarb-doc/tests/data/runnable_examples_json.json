@@ -1,0 +1,77 @@
+{
+  "format_version": 1,
+  "packages_information": [
+    {
+      "crate_": {
+        "groups": [],
+        "root_module": {
+          "constants": [],
+          "enums": [],
+          "extern_functions": [],
+          "extern_types": [],
+          "free_functions": [
+            {
+              "item_data": {
+                "doc": "Function that prints \"foo\" to stdout with endline.\nCan invoke it like that:\n```runnable\nfoo();\n```",
+                "full_path": "hello_world::foo",
+                "group": null,
+                "name": "foo",
+                "signature": "pub fn foo()"
+              }
+            },
+            {
+              "item_data": {
+                "doc": "Function that prints \"bar\" to stdout with endline.\nCan invoke it like that:\n```cairo\n    bar();\n```",
+                "full_path": "hello_world::bar",
+                "group": null,
+                "name": "bar",
+                "signature": "pub fn bar()"
+              }
+            },
+            {
+              "item_data": {
+                "doc": "Function that calls both foo and bar functions.\nCan invoke it like that:\n```cairo,runnable\nfoo_bar();\n```",
+                "full_path": "hello_world::foo_bar",
+                "group": null,
+                "name": "foo_bar",
+                "signature": "pub fn foo_bar()"
+              }
+            }
+          ],
+          "impl_aliases": [],
+          "impls": [],
+          "item_data": {
+            "doc": null,
+            "full_path": "hello_world",
+            "group": null,
+            "name": "hello_world",
+            "signature": null
+          },
+          "macro_declarations": [],
+          "pub_uses": {
+            "use_constants": [],
+            "use_enums": [],
+            "use_extern_functions": [],
+            "use_extern_types": [],
+            "use_free_functions": [],
+            "use_impl_aliases": [],
+            "use_impl_defs": [],
+            "use_macro_declarations": [],
+            "use_module_type_aliases": [],
+            "use_structs": [],
+            "use_submodules": [],
+            "use_traits": []
+          },
+          "structs": [],
+          "submodules": [],
+          "traits": [],
+          "type_aliases": []
+        }
+      },
+      "metadata": {
+        "authors": null,
+        "name": "hello_world"
+      }
+    }
+  ]
+}
