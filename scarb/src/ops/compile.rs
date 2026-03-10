@@ -7,7 +7,7 @@ use crate::compiler::incremental::artifacts_fingerprint::{
     save_unit_artifacts_fingerprint, unit_artifacts_fingerprint_is_fresh,
 };
 use crate::compiler::incremental::{
-    IncrementalContext, load_incremental_artifacts, save_incremental_artifacts,
+    CachedWarnings, IncrementalContext, load_incremental_artifacts, save_incremental_artifacts,
 };
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
@@ -287,12 +287,11 @@ fn compile_cairo_unit_inner(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> R
 
         let ctx = load_incremental_artifacts(&unit, &mut db, ws)?;
 
-        let warnings_to_print = ws.config().ui().verbosity().should_print_warnings()
-            && !ctx.cached_crates_with_warnings().is_empty();
+        // Check whether we already have the main crate's warnings stored in cache.
+        let main_crate_input = unit.main_component().crate_input(&db);
+        let main_crate_known_warnings = ctx.cached_crate_warnings_for(&main_crate_input);
 
-        let is_fresh_unit_artifacts = !warnings_to_print
-            && artifacts_fingerprint_allowed()
-            && ctx.cached_crates_with_warnings().is_empty()
+        let is_fresh_unit_artifacts = artifacts_fingerprint_allowed()
             && ctx
                 .fingerprints()
                 .and_then(|unit_fingerprint| {
@@ -319,7 +318,24 @@ fn compile_cairo_unit_inner(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> R
                     .post_process(&db)
                     .context("procedural macro post processing callback failed")?;
             }
-        };
+        }
+
+        let main_crate_is_cached = ctx.cached_crates().contains(&main_crate_input);
+        // Replay cached warnings for the main crate when:
+        // - compilation was skipped entirely, or
+        // - compilation ran, but the main crate came from incremental cache and was not
+        //   included in diagnostics crates_to_check.
+        let should_replay_main_cached_warnings = is_fresh_unit_artifacts || main_crate_is_cached;
+        if should_replay_main_cached_warnings
+            && ws.config().ui().verbosity().should_print_warnings()
+            && let CachedWarnings::Resolved(warnings) = &main_crate_known_warnings
+        {
+            for warning in warnings {
+                ws.config()
+                    .ui()
+                    .warn_maybe_with_code(&warning.message, &warning.code);
+            }
+        }
 
         let span = trace_span!("drop_db");
         {
