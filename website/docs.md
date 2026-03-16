@@ -10,7 +10,7 @@ The goal is to make programmers used to writing Rust feel at home.
 
 ## Installation
 
-Check out the [download](/download) page for installation instruction and release archives.
+Check out the [download](./download) page for installation instruction and release archives.
 
 ## Command line help
 

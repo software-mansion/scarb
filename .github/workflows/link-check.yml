@@ -26,7 +26,7 @@ jobs:
           # Avoid rate limiting.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: --verbose --no-progress --user-agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36' --exclude-path='scarb/tests/*' --exclude-path='scarb/build.rs' --exclude-path='xtask/src/nightly_release_notes.rs' --exclude-path='extensions/scarb-doc/tests/*' './**/*.md' './**/*.html' './**/*.rs'
+          args: --verbose --no-progress --user-agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36' --exclude-path='scarb/tests/*' --exclude-path='scarb/build.rs' --exclude-path='xtask/src/nightly_release_notes.rs' --exclude-path='extensions/scarb-doc/tests/*' --exclude-path='extensions/scarb-mdbook/tests/data/hello_world/output' --exclude='medium\.com' './**/*.md' './**/*.html' './**/*.rs'
           # This makes the pipeline fail if a broken link is found
           fail: true
   notify_failed_check:
