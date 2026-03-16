@@ -68,7 +68,6 @@ name = "example2_macro"
 version = "0.1.0"
 dependencies = [
  "cairo-lang-macro",
- "cairo-lang-primitive-token",
 ]
 
 [[package]]

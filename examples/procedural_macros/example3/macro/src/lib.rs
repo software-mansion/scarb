@@ -54,10 +54,10 @@ fn parse_function_name<'db>(
     if items.len() != 1 {
         return Err(Diagnostics::new(Vec::new()).error("Expected exactly one item"));
     }
-    let func = items.into_iter().next().unwrap();
-    match func {
-        ModuleItem::FreeFunction(f) => Ok(f.name(db).text(db).to_string(db)),
-        _ => Err(Diagnostics::new(Vec::new()).error("Expected a function")),
+    match items.into_iter().next() {
+        Some(ModuleItem::FreeFunction(f)) => Ok(f.name(db).text(db).to_string(db)),
+        Some(_) => Err(Diagnostics::new(Vec::new()).error("Expected a function")),
+        None => Err(Diagnostics::new(Vec::new()).error("Expected exactly one item")),
     }
 }
 

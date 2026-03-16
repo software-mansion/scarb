@@ -52,7 +52,7 @@ starknet = "{{ rel.stable.starknetPackageVersionReq }}"
 ## Sierra contract class generation
 
 The enabled by default property `sierra` determines whether this target builds a Sierra
-[Contract Class](https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/contract-classes/) file.
+[Contract Class](https://www.starknet.io/cairo-book/ch100-01-contracts-classes-and-instances.html#starknet-contract-classes-and-instances) file.
 
 ## CASM contract class generation
 

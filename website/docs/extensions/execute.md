@@ -67,7 +67,7 @@ This list should correspond to the Cairo’s Serde of main’s arguments, for ex
 | `fn main(num1: u8, arr: Array<u8>)`    | 1,2,1,2                 | ["0x1", "0x2", "0x1", "0x2"]          |
 
 Note that when using `--arguments-file`, the expected input is an array of felts represented as hex string.
-See the [documentation](https://docs.starknet.io/architecture-and-concepts/smart-contracts/serialization-of-cairo-types/) for more information about Cairo’s Serde.
+See the [documentation](https://www.starknet.io/cairo-book/ch102-04-serialization-of-cairo-types.html#serialization-of-cairo-types) for more information about Cairo’s Serde.
 
 ## Profiling your cairo program
 

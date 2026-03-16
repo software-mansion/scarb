@@ -49,7 +49,7 @@ For this to be possible, two conditions need to be met:
 To include a precompiled macro binary in your package, you need to place the binary files in `target/scarb/cairo-plugin`
 directory of the package, with names adhering to the following convention: `{package_name}_v{version}_{target_name}.{dll_extension}`,
 where target name describes the target OS in [Cargo conventions](https://doc.rust-lang.org/rustc/platform-support.html#tier-1-with-host-tools).
-For publishing, [the `include` field](/docs/reference/manifest#include) of the package manifest may be useful, as it can be used
+For publishing, [the `include` field](../reference/manifest#include) of the package manifest may be useful, as it can be used
 to instruct Scarb to include this directory when packaging Scarb package with `scarb package`/`scarb publish`.
 
 To allow usage of precompiled procedural macros, you need to add a list of package names under `allow-prebuilt-plugins`
