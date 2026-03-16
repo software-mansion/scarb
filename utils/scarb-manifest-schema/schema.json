@@ -810,7 +810,7 @@
           ]
         },
         "urls": {
-          "description": "A free-form map of additional internet links related to this package. Keys are human-readable link names, and values are URLs.\n```toml\n[package.urls]\n\"We can help you build your project\" = \"https://swmansion.com/services/\"\n\"We're hiring\" = \"https://swmansion.com/careers/\"\n```\n- See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#urls>",
+          "description": "A free-form map of additional internet links related to this package. Keys are human-readable link names, and values are URLs.\n```toml\n[package.urls]\n\"We can help you build your project\" = \"https://swmansion.com/products/\"\n\"We're hiring\" = \"https://swmansion.com/careers/\"\n```\n- See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#urls>",
           "type": [
             "object",
             "null"
