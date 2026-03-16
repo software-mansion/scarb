@@ -5,6 +5,7 @@ use assert_fs::prelude::*;
 use snapbox::cmd::Command;
 
 use scarb_test_support::cargo::cargo_bin;
+use scarb_test_support::command::Scarb;
 use test_for_each_example::test_for_each_example;
 
 #[test_for_each_example(ignore = "dependencies,procedural_macros")]
@@ -52,13 +53,7 @@ fn build_procedural_macro_examples() {
 
             let cairo_repo = entry.path().join("cairo-repository");
             if cairo_repo.is_dir() {
-                Command::new(cargo_bin("scarb"))
-                    .arg("clean")
-                    .current_dir(&cairo_repo)
-                    .assert()
-                    .success();
-
-                Command::new(cargo_bin("scarb"))
+                Scarb::quick_command()
                     .arg("build")
                     .current_dir(&cairo_repo)
                     .assert()
