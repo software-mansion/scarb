@@ -51,6 +51,23 @@ To implement a procedural macro, a programmer has to:
 - Alongside the new TokenStream, a procedural macro can emit compiler diagnostics, auxiliary data and full path
   identifiers, described in detail in advanced macro usage section.
 
+```mermaid
+flowchart TB
+    start["Create new package"]
+    scarb_toml["Add Scarb.toml file with cairo-plugin target"]
+    cargo_toml["Add Cargo.toml file with crate-type = \[''cdylib''\]"]
+    code["Implement macro in Rust using cairo-lang-macro crate"]
+    publish["Publish package, like other Cairo packages"]
+    user["User adds dependency on your package"]
+    run["Scarb loads and runs macro during compilation"]
+
+    start --> scarb_toml
+    start --> cargo_toml
+    scarb_toml --> code
+    cargo_toml --> code
+    code --> publish --> user --> run
+```
+
 `TokenStream` is an abstraction that represents a piece of Cairo source code as a sequence of tokens. Rather than exposing the compiler's internal AST directly — which would tightly couple procedural macros to Cairo's internal representations and make them fragile across compiler versions — `TokenStream` provides a stable, serializable interface that can be safely passed across the FFI boundary between Scarb and the macro's shared library. This means macro authors work with raw Cairo source text rather than compiler internals, keeping the API simple and stable.
 
 ## Creating procedural macros with helpers
