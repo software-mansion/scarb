@@ -401,7 +401,7 @@ pub struct TomlPackage {
     /// A free-form map of additional internet links related to this package. Keys are human-readable link names, and values are URLs.
     /// ```toml
     /// [package.urls]
-    /// "We can help you build your project" = "https://swmansion.com/services/"
+    /// "We can help you build your project" = "https://swmansion.com/products/"
     /// "We're hiring" = "https://swmansion.com/careers/"
     /// ```
     /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#urls>
