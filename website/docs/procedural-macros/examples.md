@@ -478,7 +478,8 @@ This way, we ensure that this code is fully valid and the `scarb check` will end
 Finished checking `dev` profile target(s) in 1 second
 ```
 
-Note that all the original user code used in the `quote!` macro will be correctly mapped to the origin code. If something would be wrong with the user code. For example, if user makes a mistake in its own code, like that:
+Note, that in case something would be wrong in the user code, all the original user code used in the `quote!` macro will be correctly mapped to its original location.
+For example, if a user makes a mistake in its own code, like that:
 
 ```cairo
 // hello_world/src/lib.cairo
