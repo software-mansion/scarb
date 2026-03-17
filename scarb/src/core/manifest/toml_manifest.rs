@@ -48,7 +48,7 @@ use url::Url;
 
 /// This type is used to deserialize `Scarb.toml` files.
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TomlManifest {
     /// The `[package]` section with metadata about the current package.
     ///
@@ -205,7 +205,7 @@ type TomlToolsDefinition = BTreeMap<SmolStr, toml::Value>;
 
 /// Represents the workspace root definition.
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TomlWorkspace {
     /// List of workspace member package paths (relative to the workspace root).
     /// Supports globs to match multiple paths, using typical filename glob patterns like * and ?.
@@ -258,7 +258,7 @@ pub struct TomlWorkspace {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct PackageInheritableFields {
     /// Version to inherit for members that opt into
     /// `workspace.package.version = ...`.
@@ -364,7 +364,7 @@ type MaybeWorkspaceField<T> = MaybeWorkspace<T, TomlWorkspaceField>;
 
 /// Represents the `package` section of a `Scarb.toml`.
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TomlPackage {
     /// The package name is a valid Cairo identifier used to refer to the package.
     /// It is used when listed as a dependency in another package, and as the default name of targets.
@@ -517,6 +517,13 @@ pub struct TomlPackage {
     /// ```
     /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#re-export-cairo-plugins>
     pub re_export_cairo_plugins: Option<Vec<PackageName>>,
+
+    /// Arbitrary metadata for external tools.
+    ///
+    /// This section is ignored by Scarb itself and is intended to be used by external tools
+    /// that need to store package-specific configuration.
+    #[schemars(with = "Option<serde_json::Value>")]
+    pub metadata: Option<toml::Value>,
 }
 
 #[derive(Clone, Debug, Serialize, Eq, PartialEq, JsonSchema)]
@@ -711,7 +718,7 @@ pub enum TomlDependency {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct DetailedTomlDependency {
     /// A semver version requirement for the dependency.
     #[schemars(with = "Option<String>")]
@@ -762,7 +769,7 @@ pub struct TomlTarget<P> {
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TomlLibTargetParams {
     /// Emit a compiled Sierra program for the library target, in JSON format.
     pub sierra: Option<bool>,
@@ -775,7 +782,7 @@ pub struct TomlLibTargetParams {
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TomlExecutableTargetParams {
     /// If true, will allow syscalls in the program.
     ///
@@ -792,7 +799,7 @@ pub struct TomlExecutableTargetParams {
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TomlCairoPluginTargetParams {
     /// If `true`, mark this plugin as builtin.
     /// Generally, it should not be used.
@@ -802,7 +809,7 @@ pub struct TomlCairoPluginTargetParams {
 pub type TomlExternalTargetParams = BTreeMap<SmolStr, toml::Value>;
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TomlCairo {
     /// Replace all names in generated Sierra code with dummy counterparts, representing the
     /// expanded information about the named items.
@@ -860,7 +867,7 @@ pub struct TomlCairo {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TomlProfile {
     /// The name of another profile to inherit defaults from.
     pub inherits: Option<SmolStr>,
