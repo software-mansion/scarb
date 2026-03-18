@@ -6,6 +6,14 @@ use crate::core::manifest::scripts::ScriptDefinition;
 use crate::core::manifest::target_defaults::{
     MaybeWorkspaceTargetDefaults, TargetDefaults, TomlTargetKindTestOnly,
 };
+use crate::core::manifest::{
+    DependencyGitPathAmbiguous, DependencyGitRefWithoutGit, DependencyGitReferenceAmbiguous,
+    DependencyGitRegistryAmbiguous, DependencySourceMissing, DependencyWorkspaceNotFound,
+    DuplicateDefaultTargetDefinition, DuplicateNamedTargetDefinition, LicensePathInvalid,
+    ManifestDependencyTable, ManifestDiagnosticAnchor, ManifestSemanticError,
+    PatchNotInWorkspaceRoot, PatchSourceConflict, PatchSourceInvalidUrl, ProfileCairoConflict,
+    ProfileInheritanceInvalid, ProfileNameInvalid, ReadmePathInvalid,
+};
 use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Target};
 use crate::core::package::PackageId;
 use crate::core::registry::{DEFAULT_REGISTRY_INDEX, DEFAULT_REGISTRY_INDEX_PATCH_SOURCE};
@@ -333,7 +341,12 @@ impl PackageInheritableFields {
     get_field!(edition, Edition);
 
     pub fn readme(&self, workspace_root: &Utf8Path, package_root: &Utf8Path) -> Result<PathOrBool> {
-        let Ok(Some(readme)) = readme_for_package(workspace_root, self.readme.as_ref()) else {
+        let readme = readme_for_package(
+            workspace_root,
+            self.readme.as_ref(),
+            Some(ManifestDiagnosticAnchor::workspace_package_field("readme")),
+        )?;
+        let Some(readme) = readme else {
             bail!("`workspace.package.readme` was not defined");
         };
         diff_utf8_paths(
@@ -946,16 +959,27 @@ impl TryFrom<TomlFeatureToEnable> for EnabledFeature {
 }
 
 impl TomlManifest {
-    pub fn read_from_path(path: &Utf8Path) -> Result<Self> {
-        let contents = fs::read_to_string(path)
+    pub fn read_from_path_with_source(path: &Utf8Path) -> Result<TomlManifestSource> {
+        let source = fs::read_to_string(path)
             .with_context(|| format!("failed to read manifest at: {path}"))?;
+        let manifest =
+            Self::read_from_str(&source).map_err(|err| ManifestParseError::new(path, err))?;
+        Ok(TomlManifestSource { manifest, source })
+    }
 
-        Self::read_from_str(&contents).map_err(|err| ManifestParseError::new(path, err).into())
+    pub fn read_from_path(path: &Utf8Path) -> Result<Self> {
+        Self::read_from_path_with_source(path).map(|document| document.manifest)
     }
 
     pub fn read_from_str(contents: &str) -> Result<Self> {
         toml::from_str(contents).map_err(Into::into)
     }
+}
+
+#[derive(Debug)]
+pub struct TomlManifestSource {
+    pub manifest: TomlManifest,
+    pub source: String,
 }
 
 impl TomlDependency {
@@ -1033,14 +1057,20 @@ impl TomlManifest {
         };
 
         let mut dependencies = Vec::new();
-        let toml_deps = zip(self.dependencies.iter().flatten(), repeat(DepKind::Normal));
+        let toml_deps = zip(
+            self.dependencies.iter().flatten(),
+            repeat((DepKind::Normal, ManifestDependencyTable::Dependencies)),
+        );
         let toml_dev_deps = zip(
             self.dev_dependencies.iter().flatten(),
-            repeat(DepKind::Target(TargetKind::TEST)),
+            repeat((
+                DepKind::Target(TargetKind::TEST),
+                ManifestDependencyTable::DevDependencies,
+            )),
         );
         let all_deps = toml_deps.chain(toml_dev_deps);
 
-        for ((name, toml_dep), kind) in all_deps {
+        for ((name, toml_dep), (kind, dep_table)) in all_deps {
             let inherit_ws = || {
                 let ws_dep = workspace
                     .dependencies
@@ -1048,7 +1078,10 @@ impl TomlManifest {
                     .and_then(|deps| deps.get(name.as_str()))
                     .cloned()
                     .ok_or_else(|| {
-                        anyhow!("dependency `{}` not found in workspace", name.clone())
+                        ManifestSemanticError::from(DependencyWorkspaceNotFound::new(
+                            name.clone(),
+                            dep_table.clone(),
+                        ))
                     })?;
 
                 // If `TomlWorkspaceDependency` declares `features` list,
@@ -1074,28 +1107,52 @@ impl TomlManifest {
                 };
 
                 dep.map(|dep| {
-                    dep.to_dependency(name.clone(), workspace_manifest_path, kind.clone())
+                    dep.to_dependency(
+                        name.clone(),
+                        workspace_manifest_path,
+                        kind.clone(),
+                        ManifestDiagnosticAnchor::dependency(
+                            ManifestDependencyTable::WorkspaceDependencies,
+                            name.clone(),
+                        ),
+                    )
                 })
                 .unwrap_or_else(|| {
-                    ws_dep.to_dependency(name.clone(), workspace_manifest_path, kind.clone())
+                    ws_dep.to_dependency(
+                        name.clone(),
+                        workspace_manifest_path,
+                        kind.clone(),
+                        ManifestDiagnosticAnchor::dependency(
+                            ManifestDependencyTable::WorkspaceDependencies,
+                            name.clone(),
+                        ),
+                    )
                 })
             };
             let toml_dep = toml_dep
                 .clone()
                 .as_ref()
                 .clone()
-                .map(|dep| dep.to_dependency(name.clone(), manifest_path, kind.clone()))?
+                .map(|dep| {
+                    dep.to_dependency(
+                        name.clone(),
+                        manifest_path,
+                        kind.clone(),
+                        ManifestDiagnosticAnchor::dependency(dep_table.clone(), name.clone()),
+                    )
+                })?
                 .resolve(name.as_str(), inherit_ws)?;
             dependencies.push(toml_dep);
         }
 
         if self.patch.is_some() {
-            ensure!(
-                workspace_manifest_path == manifest_path,
-                "the `[patch]` section can only be defined in the workspace root manifests\nsection found in manifest: `{}`\nworkspace root manifest: `{}`",
-                manifest_path,
-                workspace_manifest_path
-            );
+            if workspace_manifest_path != manifest_path {
+                return Err(ManifestSemanticError::from(PatchNotInWorkspaceRoot::new(
+                    manifest_path.to_path_buf(),
+                    workspace_manifest_path.to_path_buf(),
+                ))
+                .into());
+            }
         };
 
         let no_core = package.no_core.unwrap_or(false);
@@ -1148,6 +1205,7 @@ impl TomlManifest {
             config.ui(),
             target_defaults,
         )?;
+        Self::verify_unique_targets(&targets, &package.name.to_smol_str())?;
 
         let publish = package.publish.unwrap_or(true);
 
@@ -1197,7 +1255,7 @@ impl TomlManifest {
         };
         let profile_definition = profile_source.collect_profile_definition(profile.clone())?;
 
-        Self::verify_toml_cairo_section(&profile_definition)?;
+        Self::verify_toml_cairo_section(&profile, &profile_definition)?;
         let compiler_config = Self::collect_compiler_config(profile_definition.clone());
 
         let workspace_tool = workspace.tool.clone();
@@ -1241,13 +1299,29 @@ impl TomlManifest {
                 .clone()
                 .map(|mw| match mw {
                     MaybeWorkspace::Defined(license_rel_path) => {
-                        abs_canonical_path("license", manifest_path, &license_rel_path)
+                        let anchor =
+                            ManifestDiagnosticAnchor::package_field("license-file");
+                        abs_canonical_path(manifest_path, &license_rel_path, |path| {
+                            ManifestSemanticError::from(LicensePathInvalid::new(
+                                path,
+                                Some(anchor),
+                            ))
+                            .into()
+                        })
                     }
                     MaybeWorkspace::Workspace(_) => mw.resolve("license_file", || {
+                        let anchor =
+                            ManifestDiagnosticAnchor::workspace_package_field("license-file");
                         abs_canonical_path(
-                            "license",
                             workspace_manifest_path,
                             &inheritable_package.license_file()?,
+                            |path| {
+                                ManifestSemanticError::from(LicensePathInvalid::new(
+                                    path,
+                                    Some(anchor),
+                                ))
+                                .into()
+                            },
                         )
                     }),
                 })
@@ -1264,6 +1338,7 @@ impl TomlManifest {
                     })
                     .transpose()?
                     .as_ref(),
+                Some(ManifestDiagnosticAnchor::package_field("readme")),
             )?,
             repository: package
                 .repository
@@ -1583,17 +1658,46 @@ impl TomlManifest {
         Ok(Some(target))
     }
 
+    fn verify_unique_targets(targets: &[Target], package_name: &SmolStr) -> Result<()> {
+        let mut used = std::collections::HashSet::with_capacity(targets.len());
+        for target in targets {
+            if !used.insert((target.kind.as_str(), target.name.as_str())) {
+                if target.name == package_name.as_str() {
+                    return Err(ManifestSemanticError::from(
+                        DuplicateDefaultTargetDefinition::new(
+                            target.kind.clone(),
+                            target.name.clone(),
+                        ),
+                    )
+                    .into());
+                }
+
+                return Err(
+                    ManifestSemanticError::from(DuplicateNamedTargetDefinition::new(
+                        target.kind.clone(),
+                        target.name.clone(),
+                    ))
+                    .into(),
+                );
+            }
+        }
+        Ok(())
+    }
+
     pub fn collect_profiles(&self) -> Result<Vec<Profile>> {
-        self.profile
-            .as_ref()
-            .map(|toml_profiles| {
-                toml_profiles
-                    .keys()
-                    .cloned()
-                    .map(Profile::try_new)
-                    .try_collect()
-            })
-            .unwrap_or(Ok(vec![]))
+        let Some(toml_profiles) = self.profile.as_ref() else {
+            return Ok(vec![]);
+        };
+
+        let mut profiles = Vec::with_capacity(toml_profiles.len());
+        for name in toml_profiles.keys() {
+            let profile = Profile::try_new(name.clone()).map_err(|err| {
+                ManifestSemanticError::from(ProfileNameInvalid::new(name.clone(), err.to_string()))
+            })?;
+            profiles.push(profile);
+        }
+
+        Ok(profiles)
     }
 
     /// Invariant: `self` is a workspace manifest or a manifest in a single package project.
@@ -1617,10 +1721,11 @@ impl TomlManifest {
             })?;
 
         if parent_profile.is_custom() {
-            bail!(
-                "profile can inherit from `dev` or `release` only, found `{}`",
-                parent_profile.as_str()
-            );
+            return Err(ManifestSemanticError::from(ProfileInheritanceInvalid::new(
+                profile.as_str(),
+                parent_profile.as_str(),
+            ))
+            .into());
         }
 
         let parent_default = TomlProfile::default_for_builtin_profile(&parent_profile);
@@ -1647,7 +1752,10 @@ impl TomlManifest {
         Ok(profile)
     }
 
-    fn verify_toml_cairo_section(profile_definition: &TomlProfile) -> Result<()> {
+    fn verify_toml_cairo_section(
+        profile: &Profile,
+        profile_definition: &TomlProfile,
+    ) -> Result<()> {
         let Some(cairo) = &profile_definition.cairo else {
             return Ok(());
         };
@@ -1658,11 +1766,9 @@ impl TomlManifest {
                 .as_ref()
                 .is_some_and(|inlining_strategy| inlining_strategy != &InliningStrategy::Avoid)
         {
-            bail!(formatdoc! {r#"
-                inlining-strategy field is set but its effects are overriden by skip-optimizations = true
-                if you want to skip compiler optimizations, unset the inlining-strategy or explicitly set it to "avoid"
-                "#,
-            })
+            return Err(
+                ManifestSemanticError::from(ProfileCairoConflict::new(profile.as_str())).into(),
+            );
         }
 
         Ok(())
@@ -1774,19 +1880,26 @@ impl TomlManifest {
         if let Some(patch) = self.patch.clone() {
             let default_index_patch_source =
                 SmolStr::new_static(DEFAULT_REGISTRY_INDEX_PATCH_SOURCE);
-            ensure!(
-                !(patch.contains_key(&default_index_patch_source)
-                    && patch.contains_key(DEFAULT_REGISTRY_INDEX)),
-                "the `[patch]` section cannot specify both `{DEFAULT_REGISTRY_INDEX_PATCH_SOURCE}` and `{DEFAULT_REGISTRY_INDEX}`"
-            );
+            if patch.contains_key(&default_index_patch_source)
+                && patch.contains_key(DEFAULT_REGISTRY_INDEX)
+            {
+                return Err(ManifestSemanticError::from(PatchSourceConflict::new(
+                    DEFAULT_REGISTRY_INDEX_PATCH_SOURCE,
+                    DEFAULT_REGISTRY_INDEX,
+                ))
+                .into());
+            }
             patch
                 .into_iter()
-                .map(|(source, patches)| {
-                    let source = if source == default_index_patch_source {
+                .map(|(raw_source, patches)| {
+                    let source = if raw_source == default_index_patch_source {
                         SourceId::default().canonical_url.clone()
                     } else {
-                        let url = Url::parse(source.as_str()).with_context(|| {
-                            format!("failed to parse `{}` as patch source url", source.as_str())
+                        let url = Url::parse(raw_source.as_str()).map_err(|e| {
+                            ManifestSemanticError::from(PatchSourceInvalidUrl::new(
+                                raw_source.clone(),
+                                e,
+                            ))
                         })?;
                         CanonicalUrl::new(&url)?
                     };
@@ -1799,6 +1912,10 @@ impl TomlManifest {
                                     name.clone(),
                                     manifest_path,
                                     DepKind::Normal,
+                                    ManifestDiagnosticAnchor::patch_dependency(
+                                        raw_source.as_str(),
+                                        name.clone(),
+                                    ),
                                 )
                             })
                             .collect::<Result<Vec<ManifestDependency>>>()?,
@@ -1834,6 +1951,7 @@ fn merge_profile(target: &TomlProfile, source: &TomlProfile) -> Result<TomlProfi
 pub fn readme_for_package(
     package_root: &Utf8Path,
     readme: Option<&PathOrBool>,
+    anchor: Option<ManifestDiagnosticAnchor>,
 ) -> Result<Option<Utf8PathBuf>> {
     let file_name = match readme {
         None => default_readme_from_package_root(package_root.parent().unwrap()),
@@ -1846,16 +1964,27 @@ pub fn readme_for_package(
     };
 
     file_name
-        .map(|file_name| abs_canonical_path("readme", package_root, file_name))
+        .map(|file_name| {
+            abs_canonical_path(package_root, file_name, |path| match anchor.clone() {
+                Some(a) => {
+                    ManifestSemanticError::from(ReadmePathInvalid::new(path, Some(a))).into()
+                }
+                None => anyhow!("failed to find readme at {path}"),
+            })
+        })
         .transpose()
 }
 
-/// Creates the absolute canonical path of the file and checks if it exists
-fn abs_canonical_path(file_label: &str, prefix: &Utf8Path, path: &Utf8Path) -> Result<Utf8PathBuf> {
-    let path = prefix.parent().unwrap().join(path);
-    let path = fsx::canonicalize_utf8(&path)
-        .with_context(|| format!("failed to find {file_label} at {path}"))?;
-    Ok(path)
+/// Creates the absolute canonical path of the file and checks if it exists.
+///
+/// `make_error` is called with the resolved (non-canonical) path when the file is not found.
+fn abs_canonical_path(
+    prefix: &Utf8Path,
+    path: &Utf8Path,
+    make_error: impl FnOnce(Utf8PathBuf) -> anyhow::Error,
+) -> Result<Utf8PathBuf> {
+    let full_path = prefix.parent().unwrap().join(path);
+    fsx::canonicalize_utf8(&full_path).map_err(|_| make_error(full_path))
 }
 
 const DEFAULT_README_FILES: &[&str] = &["README.md", "README.txt", "README"];
@@ -1877,8 +2006,10 @@ impl TomlDependency {
         name: PackageName,
         manifest_path: &Utf8Path,
         dep_kind: DepKind,
+        anchor: ManifestDiagnosticAnchor,
     ) -> Result<ManifestDependency> {
-        self.resolve().to_dependency(name, manifest_path, dep_kind)
+        self.resolve()
+            .to_dependency(name, manifest_path, dep_kind, anchor)
     }
 }
 
@@ -1888,6 +2019,7 @@ impl DetailedTomlDependency {
         name: PackageName,
         manifest_path: &Utf8Path,
         dep_kind: DepKind,
+        anchor: ManifestDiagnosticAnchor,
     ) -> Result<ManifestDependency> {
         let version_req = self
             .version
@@ -1896,20 +2028,40 @@ impl DetailedTomlDependency {
             .unwrap_or_default();
 
         if self.branch.is_some() || self.tag.is_some() || self.rev.is_some() {
-            ensure!(
-                self.git.is_some(),
-                "dependency ({name}) is non-Git, but provides `branch`, `tag` or `rev`"
-            );
+            if self.git.is_none() {
+                let primary_field = if self.branch.is_some() {
+                    "branch"
+                } else if self.tag.is_some() {
+                    "tag"
+                } else {
+                    "rev"
+                };
+                return Err(ManifestSemanticError::from(DependencyGitRefWithoutGit::new(
+                    name.clone(),
+                    anchor.clone(),
+                    primary_field,
+                ))
+                .into());
+            }
 
-            ensure!(
-                [&self.branch, &self.tag, &self.rev]
-                    .iter()
-                    .filter(|o| o.is_some())
-                    .count()
-                    <= 1,
-                "dependency ({name}) specification is ambiguous, \
-                only one of `branch`, `tag` or `rev` is allowed"
-            );
+            let refs = [
+                ("branch", &self.branch),
+                ("tag", &self.tag),
+                ("rev", &self.rev),
+            ]
+            .into_iter()
+            .filter_map(|(field, value)| value.as_ref().map(|_| field))
+            .collect::<Vec<_>>();
+            if refs.len() > 1 {
+                return Err(
+                    ManifestSemanticError::from(DependencyGitReferenceAmbiguous::new(
+                        name.clone(),
+                        anchor.clone(),
+                        refs,
+                    ))
+                    .into(),
+                );
+            }
         }
         let source_id = match (
             self.version.as_ref(),
@@ -1917,20 +2069,31 @@ impl DetailedTomlDependency {
             self.path.as_ref(),
             self.registry.as_ref(),
         ) {
-            (None, None, None, _) => bail!(
-                "dependency ({name}) must be specified providing a local path, Git repository, \
-                or version to use"
-            ),
+            (None, None, None, _) => {
+                return Err(ManifestSemanticError::from(DependencySourceMissing::new(
+                    name.clone(),
+                    anchor.clone(),
+                ))
+                .into());
+            }
 
-            (_, Some(_), Some(_), _) => bail!(
-                "dependency ({name}) specification is ambiguous, \
-                only one of `git` or `path` is allowed"
-            ),
+            (_, Some(_), Some(_), _) => {
+                return Err(ManifestSemanticError::from(DependencyGitPathAmbiguous::new(
+                    name.clone(),
+                    anchor.clone(),
+                ))
+                .into());
+            }
 
-            (_, Some(_), _, Some(_)) => bail!(
-                "dependency ({name}) specification is ambiguous, \
-                only one of `git` or `registry` is allowed"
-            ),
+            (_, Some(_), _, Some(_)) => {
+                return Err(
+                    ManifestSemanticError::from(DependencyGitRegistryAmbiguous::new(
+                        name.clone(),
+                        anchor.clone(),
+                    ))
+                    .into(),
+                );
+            }
 
             (_, None, Some(path), _) => {
                 let path = path

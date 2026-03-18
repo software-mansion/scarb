@@ -9,12 +9,12 @@ use indoc::indoc;
 use tracing::trace;
 
 use crate::MANIFEST_FILE_NAME;
-use crate::core::TomlManifest;
 use crate::core::config::Config;
 use crate::core::errors::ManifestParseError;
 use crate::core::package::Package;
 use crate::core::source::SourceId;
 use crate::core::workspace::Workspace;
+use crate::core::{ManifestSemanticError, TomlManifest};
 use crate::ops::find_workspace_manifest_path;
 use scarb_fs_utils as fsx;
 use scarb_fs_utils::{PathBufUtf8Ext, is_hidden};
@@ -69,16 +69,32 @@ fn validate_virtual_manifest(manifest: &TomlManifest) -> Result<()> {
     Ok(())
 }
 
+fn wrap_manifest_error(path: &Utf8Path, source: &str, error: anyhow::Error) -> ManifestParseError {
+    let diagnostic = error
+        .chain()
+        .find_map(|cause| cause.downcast_ref::<ManifestSemanticError>())
+        .map(|diagnostic| diagnostic.resolve(source));
+
+    let parse_error = ManifestParseError::new(path, error);
+    if let Some(diagnostic) = diagnostic {
+        parse_error.with_diagnostic(diagnostic)
+    } else {
+        parse_error
+    }
+}
+
 fn read_workspace_root<'c>(
     manifest_path: &Utf8Path,
     source_id: SourceId,
     config: &'c Config,
 ) -> Result<Workspace<'c>> {
-    let toml_manifest = TomlManifest::read_from_path(manifest_path)?;
+    let toml_document = TomlManifest::read_from_path_with_source(manifest_path)?;
+    let toml_manifest = toml_document.manifest;
+    let manifest_source = toml_document.source;
     let toml_workspace = toml_manifest.get_workspace();
     let profiles = toml_manifest
         .collect_profiles()
-        .map_err(|err| ManifestParseError::new(manifest_path, err))?;
+        .map_err(|err| wrap_manifest_error(manifest_path, &manifest_source, err))?;
 
     let root_package = if toml_manifest.is_package() {
         let manifest = toml_manifest
@@ -90,19 +106,19 @@ fn read_workspace_root<'c>(
                 &toml_manifest,
                 config,
             )
-            .map_err(|err| ManifestParseError::new(manifest_path, err))?;
+            .map_err(|err| wrap_manifest_error(manifest_path, &manifest_source, err))?;
         let manifest = Box::new(manifest);
         let package = Package::new(manifest.summary.package_id, manifest_path.into(), manifest);
         Some(package)
     } else {
         validate_virtual_manifest(&toml_manifest)
-            .map_err(|err| ManifestParseError::new(manifest_path, err))?;
+            .map_err(|err| wrap_manifest_error(manifest_path, &manifest_source, err))?;
         None
     };
 
     let patch = toml_manifest
         .collect_patch(manifest_path)
-        .map_err(|err| ManifestParseError::new(manifest_path, err))?;
+        .map_err(|err| wrap_manifest_error(manifest_path, &manifest_source, err))?;
 
     if let Some(workspace) = toml_workspace {
         let workspace_root = manifest_path
@@ -118,7 +134,9 @@ fn read_workspace_root<'c>(
             .iter()
             .map(AsRef::as_ref)
             .map(|package_path| {
-                let package_manifest = TomlManifest::read_from_path(package_path)?;
+                let package_document = TomlManifest::read_from_path_with_source(package_path)?;
+                let package_manifest_source = package_document.source;
+                let package_manifest = package_document.manifest;
                 // Read the member package.
                 let manifest = package_manifest
                     .to_manifest(
@@ -129,7 +147,9 @@ fn read_workspace_root<'c>(
                         &toml_manifest,
                         config,
                     )
-                    .map_err(|err| ManifestParseError::new(package_path, err))?;
+                    .map_err(|err| {
+                        wrap_manifest_error(package_path, &package_manifest_source, err)
+                    })?;
                 let manifest = Box::new(manifest);
                 let package =
                     Package::new(manifest.summary.package_id, package_path.into(), manifest);

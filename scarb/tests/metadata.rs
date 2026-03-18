@@ -180,7 +180,7 @@ fn attributes_manifest_diagnostic_to_workspace_member_manifest() {
 }
 
 #[test]
-fn emits_manifest_diagnostic_for_semantic_manifest_error_without_span() {
+fn emits_manifest_diagnostic_for_semantic_manifest_error_with_span() {
     let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(indoc! {r#"
@@ -220,6 +220,45 @@ fn emits_manifest_diagnostic_for_semantic_manifest_error_without_span() {
         diagnostic["message"].as_str().unwrap(),
         "profile name `test` is not allowed"
     );
+    assert!(diagnostic.get("code").is_none());
+    assert!(diagnostic["primary"].is_object());
+    assert!(diagnostic["span"].is_object());
+}
+
+#[test]
+fn emits_manifest_diagnostic_without_span_for_unanchored_semantic_error() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(indoc! {r#"
+            [package]
+            name = "manifest_diagnostics_ws"
+            version = "0.1.0"
+            edition = "2025_12"
+
+            [scripts]
+            hello = { workspace = true }
+        "#})
+        .unwrap();
+
+    let output = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let diagnostic = stdout
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .find(|line| line["kind"] == "manifest_diagnostic")
+        .unwrap();
+
+    assert!(diagnostic.get("primary").is_none());
     assert!(diagnostic.get("span").is_none());
 }
 

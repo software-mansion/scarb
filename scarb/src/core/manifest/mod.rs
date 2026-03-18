@@ -12,6 +12,8 @@ use toml::Value;
 
 pub use compiler_config::*;
 pub use dependency::*;
+pub use diagnostic::*;
+pub use diagnostic_kinds::*;
 pub use maybe_workspace::*;
 pub use scripts::*;
 pub use summary::*;
@@ -24,6 +26,8 @@ use super::PackageName;
 
 mod compiler_config;
 mod dependency;
+mod diagnostic;
+mod diagnostic_kinds;
 mod maybe_workspace;
 mod scripts;
 mod summary;
