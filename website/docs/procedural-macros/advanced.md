@@ -43,12 +43,16 @@ of compiling it on their system themselves.
 
 For this to be possible, two conditions need to be met:
 
-- The procedural macro package has to be published with the precompiled macros included.
-- Usage of the precompiled macro binaries needs to be explicitly allowed in the top-level Scarb toml manifest file.
+- (Macro author POV) The procedural macro package has to be published with the precompiled macros included.
+- (Macro user POV) Usage of the precompiled macro binaries needs to be explicitly allowed in the top-level Scarb toml manifest file.
+
+This feature is especially useful for big projects well known in the ecosystem, that users trust.
+Otherwise, running precompiled binary code downloaded from the internet is a security risk and should be discouraged.
 
 To include a precompiled macro binary in your package, you need to place the binary files in `target/scarb/cairo-plugin`
 directory of the package, with names adhering to the following convention: `{package_name}_v{version}_{target_name}.{dll_extension}`,
 where target name describes the target OS in [Cargo conventions](https://doc.rust-lang.org/rustc/platform-support.html#tier-1-with-host-tools).
+Note that if your package lacks a prebuilt binary for the current users platform, Scarb will compile the macro source code instead.
 For publishing, [the `include` field](../reference/manifest#include) of the package manifest may be useful, as it can be used
 to instruct Scarb to include this directory when packaging Scarb package with `scarb package`/`scarb publish`.
 
