@@ -7,8 +7,11 @@ use crate::core::manifest::target_defaults::{
     MaybeWorkspaceTargetDefaults, TargetDefaults, TomlTargetKindTestOnly,
 };
 use crate::core::manifest::{
-    ManifestDependency, ManifestMetadata, ManifestSemanticError, ProfileCairoConflict,
-    ProfileInheritanceInvalid, ProfileNameInvalid, Summary, Target,
+    DependencyGitPathAmbiguous, DependencyGitRefWithoutGit, DependencyGitReferenceAmbiguous,
+    DependencyGitRegistryAmbiguous, DependencySourceMissing, DependencyWorkspaceNotFound,
+    ManifestDependency, ManifestDependencyTable, ManifestDiagnosticAnchor, ManifestMetadata,
+    ManifestSemanticError, ProfileCairoConflict, ProfileInheritanceInvalid, ProfileNameInvalid,
+    Summary, Target,
 };
 use crate::core::package::PackageId;
 use crate::core::registry::{DEFAULT_REGISTRY_INDEX, DEFAULT_REGISTRY_INDEX_PATCH_SOURCE};
@@ -1043,14 +1046,21 @@ impl TomlManifest {
         };
 
         let mut dependencies = Vec::new();
-        let toml_deps = zip(self.dependencies.iter().flatten(), repeat(DepKind::Normal));
+        let toml_deps = zip(
+            self.dependencies.iter().flatten(),
+            repeat((DepKind::Normal, ManifestDependencyTable::Dependencies)),
+        );
         let toml_dev_deps = zip(
             self.dev_dependencies.iter().flatten(),
-            repeat(DepKind::Target(TargetKind::TEST)),
+            repeat((
+                DepKind::Target(TargetKind::TEST),
+                ManifestDependencyTable::DevDependencies,
+            )),
         );
         let all_deps = toml_deps.chain(toml_dev_deps);
 
-        for ((name, toml_dep), kind) in all_deps {
+        for ((name, toml_dep), (kind, dep_table)) in all_deps {
+            let anchor = ManifestDiagnosticAnchor::dependency(dep_table.clone(), name.clone());
             let inherit_ws = || {
                 let ws_dep = workspace
                     .dependencies
@@ -1058,7 +1068,10 @@ impl TomlManifest {
                     .and_then(|deps| deps.get(name.as_str()))
                     .cloned()
                     .ok_or_else(|| {
-                        anyhow!("dependency `{}` not found in workspace", name.clone())
+                        ManifestSemanticError::from(DependencyWorkspaceNotFound::new(
+                            name.clone(),
+                            dep_table.clone(),
+                        ))
                     })?;
 
                 // If `TomlWorkspaceDependency` declares `features` list,
@@ -1084,17 +1097,29 @@ impl TomlManifest {
                 };
 
                 dep.map(|dep| {
-                    dep.to_dependency(name.clone(), workspace_manifest_path, kind.clone())
+                    dep.to_dependency(
+                        name.clone(),
+                        workspace_manifest_path,
+                        kind.clone(),
+                        anchor.clone(),
+                    )
                 })
                 .unwrap_or_else(|| {
-                    ws_dep.to_dependency(name.clone(), workspace_manifest_path, kind.clone())
+                    ws_dep.to_dependency(
+                        name.clone(),
+                        workspace_manifest_path,
+                        kind.clone(),
+                        anchor.clone(),
+                    )
                 })
             };
             let toml_dep = toml_dep
                 .clone()
                 .as_ref()
                 .clone()
-                .map(|dep| dep.to_dependency(name.clone(), manifest_path, kind.clone()))?
+                .map(|dep| {
+                    dep.to_dependency(name.clone(), manifest_path, kind.clone(), anchor.clone())
+                })?
                 .resolve(name.as_str(), inherit_ws)?;
             dependencies.push(toml_dep);
         }
@@ -1814,6 +1839,10 @@ impl TomlManifest {
                                     name.clone(),
                                     manifest_path,
                                     DepKind::Normal,
+                                    ManifestDiagnosticAnchor::dependency(
+                                        ManifestDependencyTable::Dependencies,
+                                        name.clone(),
+                                    ),
                                 )
                             })
                             .collect::<Result<Vec<ManifestDependency>>>()?,
@@ -1892,8 +1921,10 @@ impl TomlDependency {
         name: PackageName,
         manifest_path: &Utf8Path,
         dep_kind: DepKind,
+        anchor: ManifestDiagnosticAnchor,
     ) -> Result<ManifestDependency> {
-        self.resolve().to_dependency(name, manifest_path, dep_kind)
+        self.resolve()
+            .to_dependency(name, manifest_path, dep_kind, anchor)
     }
 }
 
@@ -1903,6 +1934,7 @@ impl DetailedTomlDependency {
         name: PackageName,
         manifest_path: &Utf8Path,
         dep_kind: DepKind,
+        anchor: ManifestDiagnosticAnchor,
     ) -> Result<ManifestDependency> {
         let version_req = self
             .version
@@ -1911,20 +1943,40 @@ impl DetailedTomlDependency {
             .unwrap_or_default();
 
         if self.branch.is_some() || self.tag.is_some() || self.rev.is_some() {
-            ensure!(
-                self.git.is_some(),
-                "dependency ({name}) is non-Git, but provides `branch`, `tag` or `rev`"
-            );
+            if self.git.is_none() {
+                let field = if self.branch.is_some() {
+                    "branch"
+                } else if self.tag.is_some() {
+                    "tag"
+                } else {
+                    "rev"
+                };
+                return Err(ManifestSemanticError::from(DependencyGitRefWithoutGit::new(
+                    name.clone(),
+                    anchor.clone(),
+                    field,
+                ))
+                .into());
+            }
 
-            ensure!(
-                [&self.branch, &self.tag, &self.rev]
-                    .iter()
-                    .filter(|o| o.is_some())
-                    .count()
-                    <= 1,
-                "dependency ({name}) specification is ambiguous, \
-                only one of `branch`, `tag` or `rev` is allowed"
-            );
+            let ambiguous_fields: Vec<&'static str> = [
+                self.branch.as_ref().map(|_| "branch"),
+                self.tag.as_ref().map(|_| "tag"),
+                self.rev.as_ref().map(|_| "rev"),
+            ]
+            .into_iter()
+            .flatten()
+            .collect();
+            if ambiguous_fields.len() > 1 {
+                return Err(
+                    ManifestSemanticError::from(DependencyGitReferenceAmbiguous::new(
+                        name.clone(),
+                        anchor.clone(),
+                        ambiguous_fields,
+                    ))
+                    .into(),
+                );
+            }
         }
         let source_id = match (
             self.version.as_ref(),
@@ -1932,20 +1984,31 @@ impl DetailedTomlDependency {
             self.path.as_ref(),
             self.registry.as_ref(),
         ) {
-            (None, None, None, _) => bail!(
-                "dependency ({name}) must be specified providing a local path, Git repository, \
-                or version to use"
-            ),
+            (None, None, None, _) => {
+                return Err(ManifestSemanticError::from(DependencySourceMissing::new(
+                    name.clone(),
+                    anchor.clone(),
+                ))
+                .into());
+            }
 
-            (_, Some(_), Some(_), _) => bail!(
-                "dependency ({name}) specification is ambiguous, \
-                only one of `git` or `path` is allowed"
-            ),
+            (_, Some(_), Some(_), _) => {
+                return Err(ManifestSemanticError::from(DependencyGitPathAmbiguous::new(
+                    name.clone(),
+                    anchor.clone(),
+                ))
+                .into());
+            }
 
-            (_, Some(_), _, Some(_)) => bail!(
-                "dependency ({name}) specification is ambiguous, \
-                only one of `git` or `registry` is allowed"
-            ),
+            (_, Some(_), _, Some(_)) => {
+                return Err(
+                    ManifestSemanticError::from(DependencyGitRegistryAmbiguous::new(
+                        name.clone(),
+                        anchor.clone(),
+                    ))
+                    .into(),
+                );
+            }
 
             (_, None, Some(path), _) => {
                 let path = path
