@@ -45,7 +45,7 @@ fn usage() {
     let expected = expect![[r#"
         GET /api/v1/index/config.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 
@@ -60,7 +60,7 @@ fn usage() {
 
         GET /index/3/b/bar.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 
@@ -75,7 +75,7 @@ fn usage() {
 
         GET /index/3/b/bar.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         if-none-match: ...
         user-agent: ...
@@ -87,7 +87,7 @@ fn usage() {
 
         GET /bar-1.0.0.tar.zst
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 
@@ -134,7 +134,7 @@ fn publish_verified() {
     let expected = expect![[r#"
         GET /api/v1/index/config.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 
@@ -149,7 +149,7 @@ fn publish_verified() {
 
         GET /index/3/b/bar.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 
@@ -164,7 +164,7 @@ fn publish_verified() {
 
         GET /index/3/b/bar.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         if-none-match: ...
         user-agent: ...
@@ -176,7 +176,7 @@ fn publish_verified() {
 
         GET /bar-1.0.0.tar.zst
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 
@@ -224,10 +224,10 @@ fn not_found() {
             1: package not found in registry: baz ^1 (registry+http://[..])
         "#});
 
-    let expected = expect![["
+    let expected = expect![[r#"
         GET /api/v1/index/config.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 
@@ -242,13 +242,13 @@ fn not_found() {
 
         GET /index/3/b/baz.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 
         404 Not Found
         etag: ...
-    "]];
+    "#]];
     expected.assert_eq(&registry.logs());
 }
 
@@ -279,16 +279,16 @@ fn missing_config_json() {
             2: HTTP status client error (404 Not Found) for url (http://[..]/config.json)
         "#});
 
-    let expected = expect![["
+    let expected = expect![[r#"
         GET /api/v1/index/config.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 
         404 Not Found
         etag: ...
-    "]];
+    "#]];
     expected.assert_eq(&registry.logs());
 }
 
@@ -350,7 +350,7 @@ fn caching() {
     let expected = expect![[r#"
         GET /api/v1/index/config.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 
@@ -365,7 +365,7 @@ fn caching() {
 
         GET /index/3/b/bar.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 
@@ -380,7 +380,7 @@ fn caching() {
 
         GET /index/3/b/bar.json
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         if-none-match: ...
         user-agent: ...
@@ -392,7 +392,7 @@ fn caching() {
 
         GET /bar-1.0.0.tar.zst
         accept: */*
-        accept-encoding: gzip, br, deflate
+        accept-encoding: gzip,deflate,br
         host: ...
         user-agent: ...
 

@@ -47,35 +47,35 @@ fn publish() {
         [..] Published bar v1.0.0 (registry+http[..])
         "#});
 
-    let expected = expect![["
-    GET /api/v1/index/config.json
-    accept: */*
-    accept-encoding: gzip, br, deflate
-    host: ...
-    user-agent: ...
+    let expected = expect![[r#"
+        GET /api/v1/index/config.json
+        accept: */*
+        accept-encoding: gzip,deflate,br
+        host: ...
+        user-agent: ...
 
-    200 OK
-    accept-ranges: bytes
-    content-length: ...
-    content-type: application/json
-    etag: ...
-    last-modified: ...
+        200 OK
+        accept-ranges: bytes
+        content-length: ...
+        content-type: application/json
+        etag: ...
+        last-modified: ...
 
-    ###
+        ###
 
-    POST /api/v1/packages/new
-    accept: */*
-    accept-encoding: gzip, br, deflate
-    authorization: Bearer scrb_supersecrettoken
-    content-type: ...
-    host: ...
-    transfer-encoding: chunked
-    user-agent: ...
+        POST /api/v1/packages/new
+        accept: */*
+        accept-encoding: gzip,deflate,br
+        authorization: Bearer scrb_supersecrettoken
+        content-type: ...
+        host: ...
+        transfer-encoding: chunked
+        user-agent: ...
 
-    200 OK
-    content-type: text/plain; charset=utf-8
-    etag: ...
-    "]];
+        200 OK
+        content-type: text/plain; charset=utf-8
+        etag: ...
+    "#]];
     expected.assert_eq(&registry.logs());
 }
 
@@ -159,34 +159,34 @@ fn error_from_registry() {
         error: upload failed with status code: `400 Bad Request`, `Version '1.0.0' of package 'bar' already exists.`
         "#});
 
-    let expected = expect![["
-    GET /api/v1/index/config.json
-    accept: */*
-    accept-encoding: gzip, br, deflate
-    host: ...
-    user-agent: ...
+    let expected = expect![[r#"
+        GET /api/v1/index/config.json
+        accept: */*
+        accept-encoding: gzip,deflate,br
+        host: ...
+        user-agent: ...
 
-    200 OK
-    accept-ranges: bytes
-    content-length: ...
-    content-type: application/json
-    etag: ...
-    last-modified: ...
+        200 OK
+        accept-ranges: bytes
+        content-length: ...
+        content-type: application/json
+        etag: ...
+        last-modified: ...
 
-    ###
+        ###
 
-    POST /api/v1/packages/new
-    accept: */*
-    accept-encoding: gzip, br, deflate
-    authorization: Bearer scrb_supersecrettoken
-    content-type: ...
-    host: ...
-    transfer-encoding: chunked
-    user-agent: ...
+        POST /api/v1/packages/new
+        accept: */*
+        accept-encoding: gzip,deflate,br
+        authorization: Bearer scrb_supersecrettoken
+        content-type: ...
+        host: ...
+        transfer-encoding: chunked
+        user-agent: ...
 
-    400 Bad Request
-    content-type: text/plain; charset=utf-8
-    etag: ...
-    "]];
+        400 Bad Request
+        content-type: text/plain; charset=utf-8
+        etag: ...
+    "#]];
     expected.assert_eq(&registry.logs());
 }
