@@ -35,6 +35,22 @@ Apart from this requirement, the user does not have to perform any additional st
 In particular, these two steps can be performed without any knowledge of Rust, or even the fact that the procedural
 macro is implemented in Rust.
 
+### Architecture overview
+
+```mermaid
+%%{init: { "flowchart": { "nodeSpacing": 50, "rankSpacing": 150 }}}%%
+flowchart TD
+    Cairo@{ shape: manual-input, label: "Cairo project"} -->|Builds Cairo source| Scarb["Scarb build"]
+    Scarb --> Resolve
+    Resolve@{ shape: rounded, label: "Resolved project dependencies" } --> ProceduralMacro
+    ProceduralMacro@{ shape: manual-input, label: "Procedural macros source code"} -->|Builds macro source code| Scarb["Scarb build"]
+    Scarb -->|Builds macro source code| Cargo["Cargo build"]
+    Cargo --> SharedLibrary@{ shape: stadium, label: "Shared library with built procedural macro"}
+    SharedLibrary -->|Loads shared library into memory| Scarb["Scarb build"]
+    Scarb -->|Builds Cairo source code with loaded macros| Cairo["Cairo project"]
+    Cairo@{ shape: manual-input, label: "Cairo project"} --> CairoArtifacts@{ shape: stadium, label: "Cairo artifacts"}
+```
+
 ### Procedural macro must be called from Cairo code
 
 The procedural macro has to be called from Cairo code to be executed during the compilation.
