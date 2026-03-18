@@ -9,9 +9,10 @@ use crate::core::manifest::target_defaults::{
 use crate::core::manifest::{
     DependencyGitPathAmbiguous, DependencyGitRefWithoutGit, DependencyGitReferenceAmbiguous,
     DependencyGitRegistryAmbiguous, DependencySourceMissing, DependencyWorkspaceNotFound,
-    ManifestDependency, ManifestDependencyTable, ManifestDiagnosticAnchor, ManifestMetadata,
-    ManifestSemanticError, PatchNotInWorkspaceRoot, PatchSourceConflict, PatchSourceInvalidUrl,
-    ProfileCairoConflict, ProfileInheritanceInvalid, ProfileNameInvalid, Summary, Target,
+    LicensePathInvalid, ManifestDependency, ManifestDependencyTable, ManifestDiagnosticAnchor,
+    ManifestMetadata, ManifestSemanticError, PatchNotInWorkspaceRoot, PatchSourceConflict,
+    PatchSourceInvalidUrl, ProfileCairoConflict, ProfileInheritanceInvalid, ProfileNameInvalid,
+    ReadmePathInvalid, Summary, Target,
 };
 use crate::core::package::PackageId;
 use crate::core::registry::{DEFAULT_REGISTRY_INDEX, DEFAULT_REGISTRY_INDEX_PATCH_SOURCE};
@@ -339,7 +340,12 @@ impl PackageInheritableFields {
     get_field!(edition, Edition);
 
     pub fn readme(&self, workspace_root: &Utf8Path, package_root: &Utf8Path) -> Result<PathOrBool> {
-        let Ok(Some(readme)) = readme_for_package(workspace_root, self.readme.as_ref()) else {
+        let readme = readme_for_package(
+            workspace_root,
+            self.readme.as_ref(),
+            Some(ManifestDiagnosticAnchor::workspace_package_field("readme")),
+        )?;
+        let Some(readme) = readme else {
             bail!("`workspace.package.readme` was not defined");
         };
         diff_utf8_paths(
@@ -1275,13 +1281,25 @@ impl TomlManifest {
                 .clone()
                 .map(|mw| match mw {
                     MaybeWorkspace::Defined(license_rel_path) => {
-                        abs_canonical_path("license", manifest_path, &license_rel_path)
+                        let anchor = ManifestDiagnosticAnchor::package_field("license-file");
+                        abs_canonical_path(manifest_path, &license_rel_path, |path| {
+                            ManifestSemanticError::from(LicensePathInvalid::new(path, Some(anchor)))
+                                .into()
+                        })
                     }
                     MaybeWorkspace::Workspace(_) => mw.resolve("license_file", || {
+                        let anchor =
+                            ManifestDiagnosticAnchor::workspace_package_field("license-file");
                         abs_canonical_path(
-                            "license",
                             workspace_manifest_path,
                             &inheritable_package.license_file()?,
+                            |path| {
+                                ManifestSemanticError::from(LicensePathInvalid::new(
+                                    path,
+                                    Some(anchor),
+                                ))
+                                .into()
+                            },
                         )
                     }),
                 })
@@ -1298,6 +1316,7 @@ impl TomlManifest {
                     })
                     .transpose()?
                     .as_ref(),
+                Some(ManifestDiagnosticAnchor::package_field("readme")),
             )?,
             repository: package
                 .repository
@@ -1884,6 +1903,7 @@ fn merge_profile(target: &TomlProfile, source: &TomlProfile) -> Result<TomlProfi
 pub fn readme_for_package(
     package_root: &Utf8Path,
     readme: Option<&PathOrBool>,
+    anchor: Option<ManifestDiagnosticAnchor>,
 ) -> Result<Option<Utf8PathBuf>> {
     let file_name = match readme {
         None => default_readme_from_package_root(package_root.parent().unwrap()),
@@ -1896,16 +1916,27 @@ pub fn readme_for_package(
     };
 
     file_name
-        .map(|file_name| abs_canonical_path("readme", package_root, file_name))
+        .map(|file_name| {
+            abs_canonical_path(package_root, file_name, |path| match anchor.clone() {
+                Some(a) => {
+                    ManifestSemanticError::from(ReadmePathInvalid::new(path, Some(a))).into()
+                }
+                None => anyhow!("failed to find readme at {path}"),
+            })
+        })
         .transpose()
 }
 
-/// Creates the absolute canonical path of the file and checks if it exists
-fn abs_canonical_path(file_label: &str, prefix: &Utf8Path, path: &Utf8Path) -> Result<Utf8PathBuf> {
-    let path = prefix.parent().unwrap().join(path);
-    let path = fsx::canonicalize_utf8(&path)
-        .with_context(|| format!("failed to find {file_label} at {path}"))?;
-    Ok(path)
+/// Creates the absolute canonical path of the file and checks if it exists.
+///
+/// `make_error` is called with the resolved (non-canonical) path when the file is not found.
+fn abs_canonical_path(
+    prefix: &Utf8Path,
+    path: &Utf8Path,
+    make_error: impl FnOnce(Utf8PathBuf) -> anyhow::Error,
+) -> Result<Utf8PathBuf> {
+    let full_path = prefix.parent().unwrap().join(path);
+    fsx::canonicalize_utf8(&full_path).map_err(|_| make_error(full_path))
 }
 
 const DEFAULT_README_FILES: &[&str] = &["README.md", "README.txt", "README"];

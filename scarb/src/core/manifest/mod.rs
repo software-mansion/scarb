@@ -119,18 +119,21 @@ impl ManifestBuilder {
         for target in targets {
             if !used.insert((target.kind.as_str(), target.name.as_str())) {
                 if target.name == summary.package_id.name.as_str() {
-                    bail!(
-                        "manifest contains duplicate target definitions `{}`, \
-                        consider explicitly naming targets with the `name` field",
-                        target.kind
+                    return Err(ManifestSemanticError::from(
+                        DuplicateDefaultTargetDefinition::new(
+                            target.kind.clone(),
+                            target.name.clone(),
+                        ),
                     )
+                    .into());
                 } else {
-                    bail!(
-                        "manifest contains duplicate target definitions `{} ({})`, \
-                        use different target names to resolve the conflict",
-                        target.kind,
-                        target.name
-                    )
+                    return Err(
+                        ManifestSemanticError::from(DuplicateNamedTargetDefinition::new(
+                            target.kind.clone(),
+                            target.name.clone(),
+                        ))
+                        .into(),
+                    );
                 }
             }
         }

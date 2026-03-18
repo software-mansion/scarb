@@ -464,7 +464,7 @@ impl DuplicateDefaultTargetDefinition {
     }
 
     fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
-        ManifestDiagnosticAnchor::target(self.kind.clone(), Some(self.name.clone()))
+        ManifestDiagnosticAnchor::target(self.kind.clone(), Some(self.name.to_string()))
     }
 }
 
@@ -484,6 +484,6 @@ impl DuplicateNamedTargetDefinition {
     }
 
     fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
-        ManifestDiagnosticAnchor::target(self.kind.clone(), Some(self.name.clone()))
+        ManifestDiagnosticAnchor::target(self.kind.clone(), Some(self.name.to_string()))
     }
 }
