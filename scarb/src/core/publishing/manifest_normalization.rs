@@ -59,6 +59,7 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
     );
 
     Ok(TomlManifest {
+        raw_content: String::new(),
         package,
         workspace: None,
         dependencies,
