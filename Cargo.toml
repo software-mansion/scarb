@@ -188,6 +188,7 @@ features = ["gzip", "brotli", "deflate", "json", "stream", "multipart"]
 
 [profile.release]
 lto = "thin"
+codegen-units = 1
 
 [profile.ci]
 inherits = "test"
