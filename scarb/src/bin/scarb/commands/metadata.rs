@@ -1,9 +1,11 @@
 use anyhow::Result;
 use serde::Serialize;
+use std::error::Error;
 use toml::de::Error as TomlParseError;
 
 use scarb::core::Config;
-use scarb::core::errors::ManifestParseError;
+use scarb::core::errors::{ManifestErrorWithSource, ManifestParseError};
+use scarb::core::{ManifestDiagnosticSpan, ManifestSemanticError};
 use scarb::ops;
 use scarb_ui::OutputFormat;
 use scarb_ui::components::MachineMessage;
@@ -16,6 +18,8 @@ struct ManifestDiagnosticMessage {
     message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     file: Option<String>,
+    /// Semantic span when a typed [`ManifestSemanticError`] produced an anchor;
+    /// falls back to the raw TOML parse-error span for syntax errors.
     #[serde(skip_serializing_if = "Option::is_none")]
     span: Option<ManifestDiagnosticSpan>,
 }
@@ -24,12 +28,6 @@ struct ManifestDiagnosticMessage {
 #[serde(rename_all = "snake_case")]
 enum ManifestMessageKind {
     ManifestDiagnostic,
-}
-
-#[derive(Serialize)]
-struct ManifestDiagnosticSpan {
-    start: usize,
-    end: usize,
 }
 
 #[tracing::instrument(skip_all, level = "info")]
@@ -61,29 +59,50 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
 }
 
 fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
-    let file = error.chain().find_map(|cause| {
-        cause
-            .downcast_ref::<ManifestParseError>()
-            .map(|error| error.path().to_string())
-    });
-
-    let span = error
+    let (file, message, span) = if let Some(sem) = error
         .chain()
-        .find_map(|cause| {
-            cause
-                .downcast_ref::<TomlParseError>()
-                .and_then(TomlParseError::span)
-        })
-        .map(|span| ManifestDiagnosticSpan {
-            start: span.start,
-            end: span.end,
-        });
-
-    let message = error
+        .find_map(|c| c.downcast_ref::<ManifestSemanticError>())
+    {
+        // Semantic validation error: ManifestErrorWithSource carries the path and source text.
+        let src = error
+            .chain()
+            .find_map(|c| c.downcast_ref::<ManifestErrorWithSource>());
+        let span = src.and_then(|src| sem.resolve(&src.content).span);
+        let file = src.map(|src| src.path.to_string());
+        (file, sem.to_string(), span)
+    } else if let Some(parse_err) = error
         .chain()
-        .find(|cause| cause.downcast_ref::<ManifestParseError>().is_none())
-        .map(ToString::to_string)
-        .unwrap_or_else(|| error.to_string());
+        .find_map(|c| c.downcast_ref::<ManifestParseError>())
+    {
+        // TOML syntax error: ManifestParseError carries the path, TomlParseError
+        // carries the byte span of the offending token.
+        let toml_err = error
+            .chain()
+            .find_map(|c| c.downcast_ref::<TomlParseError>());
+        let message = if let Some(toml_err) = toml_err {
+            toml_err.to_string()
+        } else {
+            parse_err.to_string()
+        };
+        let span = toml_err
+            .and_then(|e| e.span())
+            .map(|s| ManifestDiagnosticSpan {
+                start: s.start,
+                end: s.end,
+            });
+        (Some(parse_err.path().to_string()), message, span)
+    } else if let Some(src) = error
+        .chain()
+        .find_map(|c| c.downcast_ref::<ManifestErrorWithSource>())
+    {
+        let message = src
+            .source()
+            .map(|err| err.to_string())
+            .unwrap_or_else(|| error.to_string());
+        (Some(src.path.to_string()), message, None)
+    } else {
+        return;
+    };
 
     config
         .ui()
