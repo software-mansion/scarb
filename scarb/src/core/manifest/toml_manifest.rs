@@ -50,6 +50,12 @@ use url::Url;
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlManifest {
+    /// The raw source text of the manifest file, populated by [`TomlManifest::read_from_path`].
+    /// Empty when the manifest was constructed via [`TomlManifest::read_from_str`].
+    #[serde(skip)]
+    #[schemars(skip)]
+    pub raw_content: String,
+
     /// The `[package]` section with metadata about the current package.
     ///
     /// Required for non-workspace members. Contains fields like `name`,
@@ -953,7 +959,10 @@ impl TomlManifest {
         let contents = fs::read_to_string(path)
             .with_context(|| format!("failed to read manifest at: {path}"))?;
 
-        Self::read_from_str(&contents).map_err(|err| ManifestParseError::new(path, err).into())
+        let mut manifest =
+            Self::read_from_str(&contents).map_err(|err| ManifestParseError::new(path, err))?;
+        manifest.raw_content = contents;
+        Ok(manifest)
     }
 
     pub fn read_from_str(contents: &str) -> Result<Self> {
