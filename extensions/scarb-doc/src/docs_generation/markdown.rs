@@ -3,7 +3,7 @@ use crate::docs_generation::markdown::book_toml::generate_book_toml_content;
 use crate::docs_generation::markdown::summary::generate_summary_file_content;
 use crate::errors::{IODirectoryCreationError, IOWriteError};
 use anyhow::Result;
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
 use std::collections::HashMap;
 use std::fs;
 
@@ -11,6 +11,7 @@ mod book_toml;
 pub mod context;
 mod summary;
 pub mod traits;
+use crate::doc_test::runner::ExecutionResults;
 use crate::docs_generation::common::{
     GeneratedFile, OutputFilesExtension, SummaryIndexMap, SummaryListItem,
 };
@@ -27,7 +28,8 @@ pub const GROUP_CHAPTER_PREFIX: &str = "- ###";
 /// Prefixes that indicate the start of complex Markdown structures,
 /// such as tables. These should be avoided in brief documentation to maintain simple text
 /// formatting and prevent disruption of the layout.
-const SHORT_DOCUMENTATION_AVOID_PREFIXES: &[&str] = &["#", "\n\n", "```", "- ", "1.  ", "{{#"];
+const SHORT_DOCUMENTATION_AVOID_PREFIXES: &[&str] =
+    &["#", "\n\n", "```", "~~~", "- ", "1.  ", "{{#"];
 
 pub struct MarkdownContent {
     book_toml: String,
@@ -40,11 +42,13 @@ impl MarkdownContent {
     pub fn from_crate(
         package_information: &PackageInformation,
         format: OutputFilesExtension,
+        execution_results: Option<ExecutionResults>,
     ) -> Result<Self> {
         let (summary, doc_files) = generate_summary_file_content(
             &package_information.crate_,
             format,
             &package_information.remote_linking_data,
+            execution_results,
         )?;
 
         Ok(Self {
@@ -79,11 +83,11 @@ impl WorkspaceMarkdownBuilder {
         if self.book_toml.is_none() {
             self.book_toml = Some(generate_book_toml_content(&package_information.metadata));
         }
-
         let (summary, files) = generate_summary_file_content(
             &package_information.crate_,
             self.output_format,
             &package_information.remote_linking_data,
+            None,
         )?;
         let current = std::mem::replace(&mut self.summary, SummaryIndexMap::new());
         self.summary = current.add(summary);
@@ -110,6 +114,7 @@ fn package_information_placeholder() -> crate::AdditionalMetadata {
         name: "workspace".to_string(),
         authors: None,
         repository: None,
+        manifest_path: Utf8PathBuf::from("Scarb.toml"),
     }
 }
 
