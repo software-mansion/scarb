@@ -6,6 +6,20 @@ use toml_edit::{Document, Item, Table};
 pub struct ManifestDiagnosticData {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub span: Option<ManifestDiagnosticSpan>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub related: Vec<ManifestRelatedLocation>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ManifestRelatedLocation {
+    pub message: String,
+    pub span: ManifestDiagnosticSpan,
+}
+
+#[derive(Debug, Clone)]
+pub struct ManifestRelatedAnchor {
+    pub message: String,
+    pub anchor: ManifestDiagnosticAnchor,
 }
 
 #[derive(Debug, Clone, Serialize)]

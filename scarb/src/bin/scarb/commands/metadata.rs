@@ -5,7 +5,7 @@ use toml::de::Error as TomlParseError;
 
 use scarb::core::Config;
 use scarb::core::errors::{ManifestErrorWithSource, ManifestParseError};
-use scarb::core::{ManifestDiagnosticSpan, ManifestSemanticError};
+use scarb::core::{ManifestDiagnosticSpan, ManifestRelatedLocation, ManifestSemanticError};
 use scarb::ops;
 use scarb_ui::OutputFormat;
 use scarb_ui::components::MachineMessage;
@@ -22,6 +22,9 @@ struct ManifestDiagnosticMessage {
     /// falls back to the raw TOML parse-error span for syntax errors.
     #[serde(skip_serializing_if = "Option::is_none")]
     span: Option<ManifestDiagnosticSpan>,
+    /// Related diagnostic locations for errors that span multiple TOML positions.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    related: Vec<ManifestRelatedLocation>,
 }
 
 #[derive(Serialize)]
@@ -59,7 +62,7 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
 }
 
 fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
-    let (file, message, span) = if let Some(sem) = error
+    let (file, message, span, related) = if let Some(sem) = error
         .chain()
         .find_map(|c| c.downcast_ref::<ManifestSemanticError>())
     {
@@ -67,9 +70,14 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
         let src = error
             .chain()
             .find_map(|c| c.downcast_ref::<ManifestErrorWithSource>());
-        let span = src.and_then(|src| sem.resolve(&src.content).span);
+        let (span, related) = src
+            .map(|src| {
+                let data = sem.resolve(&src.content);
+                (data.span, data.related)
+            })
+            .unwrap_or_default();
         let file = src.map(|src| src.path.to_string());
-        (file, sem.to_string(), span)
+        (file, sem.to_string(), span, related)
     } else if let Some(parse_err) = error
         .chain()
         .find_map(|c| c.downcast_ref::<ManifestParseError>())
@@ -90,7 +98,7 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
                 start: s.start,
                 end: s.end,
             });
-        (Some(parse_err.path().to_string()), message, span)
+        (Some(parse_err.path().to_string()), message, span, vec![])
     } else if let Some(src) = error
         .chain()
         .find_map(|c| c.downcast_ref::<ManifestErrorWithSource>())
@@ -99,7 +107,7 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
             .source()
             .map(|err| err.to_string())
             .unwrap_or_else(|| error.to_string());
-        (Some(src.path.to_string()), message, None)
+        (Some(src.path.to_string()), message, None, vec![])
     } else {
         return;
     };
@@ -111,5 +119,6 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
             message,
             file,
             span,
+            related,
         }));
 }
