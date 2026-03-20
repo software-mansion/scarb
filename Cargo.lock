@@ -1712,7 +1712,7 @@ dependencies = [
 [[package]]
 name = "cairo-program-runner-lib"
 version = "1.1.0"
-source = "git+https://github.com/software-mansion-labs/proving-utils.git?rev=303b6f8369c277baba54eab42a974e32aca4bc3b#303b6f8369c277baba54eab42a974e32aca4bc3b"
+source = "git+https://github.com/software-mansion-labs/proving-utils.git?rev=23a407177cfcc463444b3a000e0f7d3cb2c02f40#23a407177cfcc463444b3a000e0f7d3cb2c02f40"
 dependencies = [
  "anyhow",
  "cairo-lang-casm",
@@ -6165,7 +6165,7 @@ dependencies = [
  "once_cell",
  "socket2 0.6.1",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
