@@ -143,7 +143,7 @@ pub struct RunArgs {
     pub save_profiler_trace_data: bool,
 
     /// Override layout configuration.
-    #[arg(long, default_value_t = LayoutName::all_cairo_stwo)]
+    #[arg(long, default_value_t = LayoutName::stwo_no_ecop)]
     pub layout: LayoutName,
 }
 
