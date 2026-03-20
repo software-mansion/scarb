@@ -292,10 +292,10 @@ pub fn execute(
         .get("allow-syscalls")
         .and_then(|v| v.as_bool())
         .unwrap_or_default();
-    if syscalls_allowed && args.run.layout == LayoutName::all_cairo_stwo {
+    if syscalls_allowed && args.run.layout == LayoutName::stwo_no_ecop {
         ui.warn(formatdoc!(r#"
             the executable target {} you are trying to execute has `allow-syscalls` set to `true`
-            if your executable uses syscalls, it cannot be run with `all_cairo_stwo` layout
+            if your executable uses syscalls, it cannot be run with `stwo_no_ecop` layout
             please use `--layout` flag to specify a different layout, for example: `--layout=all_cairo`
         "#, build_target.name));
     }

@@ -559,7 +559,7 @@ fn allow_syscalls_triggers_layout_warning() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         warn: the executable target hello you are trying to execute has `allow-syscalls` set to `true`
-        if your executable uses syscalls, it cannot be run with `all_cairo_stwo` layout
+        if your executable uses syscalls, it cannot be run with `stwo_no_ecop` layout
         please use `--layout` flag to specify a different layout, for example: `--layout=all_cairo`
 
         [..]Executing hello
