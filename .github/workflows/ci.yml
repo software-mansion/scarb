@@ -232,6 +232,13 @@ jobs:
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTDOCFLAGS: "-Dwarnings"
+      - name: Check unused cargo patches
+        run: |
+          if grep -q '^\[\[patch\.unused\]\]' Cargo.lock; then
+            grep -A 2 '^\[\[patch\.unused\]\]' Cargo.lock
+            echo "::error::Found unused cargo patches in [patch.crates-io]."
+            exit 1
+          fi
 
   detect-unused-dependencies:
     runs-on: ubuntu-latest
