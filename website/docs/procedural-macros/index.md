@@ -41,3 +41,4 @@ Go to cairo-lang-macro documentation on docs.rs
 - [Advanced topics](./advanced)
 - [Design details](./appendix)
 - [Examples](./examples)
+- [Debugging](./debugging)
