@@ -44,6 +44,9 @@ You might need to swiftly pause the [Website Deploy] workflow to prevent publish
 > the release tag and publish each crate. For Scarb RC releases, update and pin the matching `proving-utils` fork
 > commit first, otherwise version solving can become unresolvable. When one published crate is needed by the next
 > repo in the chain, wait until it is visible on [crates.io] before continuing.
+>
+> If you want agent assistance for this flow, use the `cairo-rc-release` skill from
+> `skills-src/cairo-rc-release/`.
 
 > [!IMPORTANT]
 > If you add or remove a binary target compiled with the release (i.e. create or remove a crate in `extensions` directory),
