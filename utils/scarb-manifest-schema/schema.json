@@ -764,9 +764,6 @@
             }
           ]
         },
-        "metadata": {
-          "description": "Arbitrary metadata for external tools.\n\nThis section is ignored by Scarb itself and is intended to be used by external tools\nthat need to store package-specific configuration."
-        },
         "name": {
           "description": "The package name is a valid Cairo identifier used to refer to the package.\nIt is used when listed as a dependency in another package, and as the default name of targets.\n\nThe name must use only ASCII lowercase alphanumeric characters or _, and cannot be empty. It also must not be a valid Cairo keyword or a wildcard pattern (_).\n- See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#name>",
           "$ref": "#/$defs/PackageName"
@@ -816,6 +813,11 @@
               "type": "null"
             }
           ]
+        },
+        "tool": {
+          "description": "Arbitrary metadata for external tools.\n\nThis section is ignored by Scarb itself and is intended to be used by external tools\nthat need to store package-specific configuration.",
+          "type": "object",
+          "additionalProperties": true
         },
         "urls": {
           "description": "A free-form map of additional internet links related to this package. Keys are human-readable link names, and values are URLs.\n```toml\n[package.urls]\n\"We can help you build your project\" = \"https://swmansion.com/products/\"\n\"We're hiring\" = \"https://swmansion.com/careers/\"\n```\n- See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#urls>",

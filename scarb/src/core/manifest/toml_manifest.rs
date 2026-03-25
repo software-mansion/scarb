@@ -522,8 +522,8 @@ pub struct TomlPackage {
     ///
     /// This section is ignored by Scarb itself and is intended to be used by external tools
     /// that need to store package-specific configuration.
-    #[schemars(with = "Option<serde_json::Value>")]
-    pub metadata: Option<toml::Value>,
+    #[schemars(with = "Option<serde_json::Value>", extend("type" = "object", "additionalProperties" = true))]
+    pub tool: Option<toml::Value>,
 }
 
 #[derive(Clone, Debug, Serialize, Eq, PartialEq, JsonSchema)]
