@@ -38,6 +38,14 @@ You might need to swiftly pause the [Website Deploy] workflow to prevent publish
 > Only [Starknet Crates.io Admins] can do this.
 
 > [!IMPORTANT]
+> For Cairo RC bumps, do not tag or publish immediately after preparing the branch. First push the same-named
+> release branch for each releasable repo, open a PR, and wait for CI to go green there. The usual release chain
+> is: `cairo-language-common` -> `cairo-lint` -> `cairo-language-server` (`cairols`) -> `scarb`. Only then create
+> the release tag and publish each crate. For Scarb RC releases, update and pin the matching `proving-utils` fork
+> commit first, otherwise version solving can become unresolvable. When one published crate is needed by the next
+> repo in the chain, wait until it is visible on [crates.io] before continuing.
+
+> [!IMPORTANT]
 > If you add or remove a binary target compiled with the release (i.e. create or remove a crate in `extensions` directory),
 > make sure to work with the Homebrew team to upgrade their
 > [Scarb installation formula](https://github.com/Homebrew/homebrew-core/blob/master/Formula/s/scarb.rb#L26).
