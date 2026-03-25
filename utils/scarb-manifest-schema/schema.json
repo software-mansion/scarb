@@ -257,14 +257,21 @@
       }
     },
     "InliningStrategy": {
+      "description": "Controls function inlining behavior during compilation.\n\nCan be a non-negative integer (inline small functions up to the given weight)\nor one of the predefined strategies: `\"default\"`, `\"avoid\"`.",
       "anyOf": [
         {
+          "description": "Inline small functions up to the given weight threshold.",
           "type": "integer",
           "format": "uint",
           "minimum": 0
         },
         {
-          "type": "string"
+          "description": "A predefined strategy: `\"default\"` or `\"avoid\"`.",
+          "type": "string",
+          "enum": [
+            "default",
+            "avoid"
+          ]
         }
       ]
     },
