@@ -738,7 +738,7 @@
           ]
         },
         "license": {
-          "description": "SThe `license` field contains the name of the software license that the package is released under.\nThe `license-file` field contains the path to a file containing the text of the license (relative to this `Scarb.toml`).\n\nPackage registries must interpret the `license` field as\nan [SPDX 2 license expression](https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/).\nThe license name must be a known license from the [SPDX license list](https://spdx.org/licenses/).\n\nSPDX license expressions support AND and OR operators to combine multiple licenses.\n\n```toml\n[package]\nlicense = \"MIT OR Apache-2.0\"\n```\n- See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#license-and-license-file>",
+          "description": "The `license` field contains the name of the software license that the package is released under.\nThe `license-file` field contains the path to a file containing the text of the license (relative to this `Scarb.toml`).\n\nPackage registries must interpret the `license` field as\nan [SPDX 2 license expression](https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/).\nThe license name must be a known license from the [SPDX license list](https://spdx.org/licenses/).\n\nSPDX license expressions support AND and OR operators to combine multiple licenses.\n\n```toml\n[package]\nlicense = \"MIT OR Apache-2.0\"\n```\n- See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#license-and-license-file>",
           "anyOf": [
             {
               "$ref": "#/$defs/MaybeWorkspace"

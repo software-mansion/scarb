@@ -424,7 +424,7 @@ pub struct TomlPackage {
     /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#keywords>
     pub keywords: Option<MaybeWorkspaceField<Vec<String>>>,
 
-    /// SThe `license` field contains the name of the software license that the package is released under.
+    /// The `license` field contains the name of the software license that the package is released under.
     /// The `license-file` field contains the path to a file containing the text of the license (relative to this `Scarb.toml`).
     ///
     /// Package registries must interpret the `license` field as
