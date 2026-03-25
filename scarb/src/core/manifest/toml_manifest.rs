@@ -872,7 +872,7 @@ pub struct TomlProfile {
     pub cairo: Option<TomlCairo>,
 
     /// Tool-specific configuration for this profile (under `tool.<name>`).
-    #[schemars(with = "BTreeMap<SmolStr, serde_json::Value>")]
+    #[schemars(with = "Option<BTreeMap<SmolStr, serde_json::Value>>")]
     pub tool: Option<TomlToolsDefinition>,
 }
 

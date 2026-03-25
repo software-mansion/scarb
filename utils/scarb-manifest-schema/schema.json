@@ -862,13 +862,13 @@
         },
         "tool": {
           "description": "Tool-specific configuration for this profile (under `tool.<name>`).",
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": true
         }
-      },
-      "required": [
-        "tool"
-      ]
+      }
     },
     "TomlTarget": {
       "type": "object",
