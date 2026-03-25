@@ -276,9 +276,11 @@ pub struct PackageInheritableFields {
     pub description: Option<String>,
 
     /// URL of the package documentation.
+    #[schemars(url)]
     pub documentation: Option<String>,
 
     /// Project homepage URL.
+    #[schemars(url)]
     pub homepage: Option<String>,
 
     /// Search keywords for package discovery on registries.
@@ -295,6 +297,7 @@ pub struct PackageInheritableFields {
     pub readme: Option<PathOrBool>,
 
     /// URL of the source repository.
+    #[schemars(url)]
     pub repository: Option<String>,
 
     /// A Cairo compiler version requirement that this package is

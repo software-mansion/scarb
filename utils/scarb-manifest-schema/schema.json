@@ -416,7 +416,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "format": "uri"
         },
         "edition": {
           "description": "Cairo edition to inherit for members (e.g. `\"2023_10\"`).",
@@ -430,7 +431,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "format": "uri"
         },
         "keywords": {
           "description": "Search keywords for package discovery on registries.",
@@ -472,7 +474,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "format": "uri"
         },
         "version": {
           "description": "Version to inherit for members that opt into\n`workspace.package.version = ...`.",
