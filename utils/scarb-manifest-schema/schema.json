@@ -484,7 +484,7 @@
       }
     },
     "PackageName": {
-      "description": "A [`String`]-like type representing [`Package`] name.\n\n* Instances of this type are validated upon construction to comply with the\n  [package naming rules](#package-naming-rules).\n* Values are immutable.\n* [`Clone`] is `O(1)`.\n* Short names (which is common for package names) are stack-allocated.\n\nPackage naming rules are described in\n[Scarb docs](https://docs.swmansion.com/scarb/docs/reference/manifest.html#name).",
+      "description": "A valid Cairo package name.\n\nMust use only ASCII lowercase alphanumeric characters or `_`, cannot be empty,\ncannot start with a digit, cannot be a Cairo keyword, and cannot be just `_`.\n\nSee the full naming rules in the\n[Scarb docs](https://docs.swmansion.com/scarb/docs/reference/manifest.html#name).",
       "type": "string"
     },
     "PathOrBool": {

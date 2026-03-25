@@ -17,16 +17,23 @@ use crate::{
     EXECUTABLE_PLUGIN_NAME, STARKNET_PLUGIN_NAME, TEST_ASSERTS_PLUGIN_NAME, TEST_PLUGIN_NAME,
 };
 
-/// A [`String`]-like type representing [`Package`] name.
+/// A valid Cairo package name.
 ///
-/// * Instances of this type are validated upon construction to comply with the
-///   [package naming rules](#package-naming-rules).
-/// * Values are immutable.
-/// * [`Clone`] is `O(1)`.
-/// * Short names (which is common for package names) are stack-allocated.
+/// Must use only ASCII lowercase alphanumeric characters or `_`, cannot be empty,
+/// cannot start with a digit, cannot be a Cairo keyword, and cannot be just `_`.
 ///
-/// Package naming rules are described in
+/// See the full naming rules in the
 /// [Scarb docs](https://docs.swmansion.com/scarb/docs/reference/manifest.html#name).
+// A [`String`]-like type representing [`Package`] name.
+//
+// * Instances of this type are validated upon construction to comply with the
+//   [package naming rules](#package-naming-rules).
+// * Values are immutable.
+// * [`Clone`] is `O(1)`.
+// * Short names (which is common for package names) are stack-allocated.
+//
+// Package naming rules are described in
+// [Scarb docs](https://docs.swmansion.com/scarb/docs/reference/manifest.html#name).
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(into = "SmolStr", try_from = "SmolStr")]
 pub struct PackageName(SmolStr);
