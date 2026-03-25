@@ -7,13 +7,13 @@ use std::convert::TryFrom;
 use std::fmt;
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+#[serde(rename_all = "kebab-case")]
 pub struct TargetDefaults {
     pub build_external_contracts: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+#[serde(rename_all = "kebab-case")]
 pub struct TomlTargetDefaults {
     pub build_external_contracts: MaybeWorkspaceBuildExternalContracts,
 }

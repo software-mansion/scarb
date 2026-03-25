@@ -180,7 +180,6 @@
       ]
     }
   },
-  "additionalProperties": false,
   "$defs": {
     "DetailedTomlDependency": {
       "type": "object",
@@ -255,8 +254,7 @@
             "null"
           ]
         }
-      },
-      "additionalProperties": false
+      }
     },
     "InliningStrategy": {
       "anyOf": [
@@ -476,8 +474,7 @@
             "null"
           ]
         }
-      },
-      "additionalProperties": false
+      }
     },
     "PackageName": {
       "description": "A [`String`]-like type representing [`Package`] name.\n\n* Instances of this type are validated upon construction to comply with the\n  [package naming rules](#package-naming-rules).\n* Values are immutable.\n* [`Clone`] is `O(1)`.\n* Short names (which is common for package names) are stack-allocated.\n\nPackage naming rules are described in\n[Scarb docs](https://docs.swmansion.com/scarb/docs/reference/manifest.html#name).",
@@ -510,7 +507,6 @@
           }
         }
       },
-      "additionalProperties": false,
       "required": [
         "build-external-contracts"
       ]
@@ -613,8 +609,7 @@
             "null"
           ]
         }
-      },
-      "additionalProperties": false
+      }
     },
     "TomlDependency": {
       "anyOf": [
@@ -764,9 +759,6 @@
             }
           ]
         },
-        "metadata": {
-          "description": "Arbitrary metadata for external tools.\n\nThis section is ignored by Scarb itself and is intended to be used by external tools\nthat need to store package-specific configuration."
-        },
         "name": {
           "description": "The package name is a valid Cairo identifier used to refer to the package.\nIt is used when listed as a dependency in another package, and as the default name of targets.\n\nThe name must use only ASCII lowercase alphanumeric characters or _, and cannot be empty. It also must not be a valid Cairo keyword or a wildcard pattern (_).\n- See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#name>",
           "$ref": "#/$defs/PackageName"
@@ -832,7 +824,6 @@
           "$ref": "#/$defs/MaybeWorkspace"
         }
       },
-      "additionalProperties": false,
       "required": [
         "name",
         "version"
@@ -865,7 +856,6 @@
           "additionalProperties": true
         }
       },
-      "additionalProperties": false,
       "required": [
         "tool"
       ]
@@ -1003,7 +993,6 @@
           "$ref": "#/$defs/MaybeWorkspace8"
         }
       },
-      "additionalProperties": false,
       "required": [
         "build-external-contracts"
       ]
@@ -1088,8 +1077,7 @@
           ],
           "additionalProperties": true
         }
-      },
-      "additionalProperties": false
+      }
     },
     "TomlWorkspaceBuildExternalContracts": {
       "type": "object",

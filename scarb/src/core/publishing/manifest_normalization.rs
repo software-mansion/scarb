@@ -128,7 +128,6 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
         cairo_version: metadata.cairo_version.clone().map(MaybeWorkspace::Defined),
         experimental_features: pkg.manifest.experimental_features.clone(),
         re_export_cairo_plugins: Some(pkg.manifest.summary.re_export_cairo_plugins.clone()),
-        metadata: None,
     })
 }
 
