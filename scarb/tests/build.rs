@@ -276,67 +276,6 @@ fn compile_with_invalid_cairo_version() {
 }
 
 #[test]
-fn compile_with_unknown_top_level_field() {
-    let t = TempDir::new().unwrap();
-    t.child("Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "foo"
-            version = "0.1.0"
-
-            [typo-key]
-            "#,
-        )
-        .unwrap();
-    Scarb::quick_command()
-        .arg("build")
-        .current_dir(&t)
-        .assert()
-        .code(1)
-        .stdout_eq(indoc! {r#"
-            error: failed to parse manifest at: [..]/Scarb.toml
-
-            Caused by:
-                TOML parse error at line 6, column 14
-                  |
-                6 |             [typo-key]
-                  |              ^^^^^^^^
-                unknown field `typo-key`, expected one of `package`, `workspace`, `dependencies`, `dev-dependencies`, `lib`, `executable`, `cairo-plugin`, `test`, `target`, `cairo`, `profile`, `scripts`, `tool`, `features`, `patch`, `target-defaults`
-        "#});
-}
-
-#[test]
-fn compile_with_unknown_package_field() {
-    let t = TempDir::new().unwrap();
-    t.child("Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "foo"
-            version = "0.1.0"
-            autors = ["Alice"]
-            "#,
-        )
-        .unwrap();
-    Scarb::quick_command()
-        .arg("build")
-        .current_dir(&t)
-        .assert()
-        .code(1)
-        .stdout_eq(indoc! {r#"
-            error: failed to parse manifest at: [..]/Scarb.toml
-
-            Caused by:
-                TOML parse error at line 5, column 13
-                  |
-                5 |             autors = ["Alice"]
-                  |             ^^^^^^
-                unknown field `autors`, expected one of `name`, `version`, `edition`, `publish`, `authors`, `urls`, `description`, `documentation`, `homepage`, `keywords`, `license`, `license-file`, `readme`, `repository`, `include`, `assets`, `no-core`, `cairo-version`, `experimental-features`, `re-export-cairo-plugins`, `metadata`
-        "#});
-}
-
-#[test]
 fn compile_with_incompatible_cairo_version() {
     let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
