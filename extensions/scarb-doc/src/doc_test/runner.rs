@@ -105,6 +105,8 @@ pub struct TestRunner<'a> {
     profile: String,
 }
 
+type IndexedBlock<'b> = (usize, &'b CodeBlock);
+
 impl<'a> TestRunner<'a> {
     pub fn new(metadata: &'a AdditionalMetadata, has_lib_target: bool, ui: Ui) -> Result<Self> {
         let target_dir =
@@ -126,7 +128,6 @@ impl<'a> TestRunner<'a> {
         let mut summary = TestSummary::default();
         let mut failed_names = Vec::new();
         let blocks_per_item = count_blocks_per_item(code_blocks);
-        type IndexedBlock<'b> = (usize, &'b CodeBlock);
         let indexed_blocks = code_blocks
             .iter()
             .enumerate()
@@ -137,7 +138,7 @@ impl<'a> TestRunner<'a> {
             &format!("{} doc examples for `{pkg_name}`", code_blocks.len()),
         ));
 
-        let execution_blocks: Vec<(usize, &CodeBlock)> = indexed_blocks
+        let execution_blocks: Vec<IndexedBlock> = indexed_blocks
             .iter()
             .filter(|(_, block)| block.run_strategy() != RunStrategy::Ignore)
             .map(|(order, block)| (*order, *block))
@@ -167,71 +168,46 @@ impl<'a> TestRunner<'a> {
             }
         }
 
-        let parallel_results = execution_blocks
-            .iter()
-            .filter(|(order, _)| !run_results.contains_key(order))
-            .collect_vec()
-            .into_par_iter()
-            .map(|(order, block)| {
-                let target_dir = tempdir()
-                    .context("failed to create temporary target directory for doc test run")?;
-                let display_name = Self::display_name(block, &blocks_per_item);
-                copy_incremental_cache(self.target_dir.path(), target_dir.path(), &self.profile)
-                    .context(format!(
-                        "failed to copy incremental cache for `{}`",
-                        display_name
-                    ))?;
-                let result =
-                    self.run_single(block, block.run_strategy(), *order + 1, target_dir.path());
-                Ok::<(usize, Result<ExecutionResult>), anyhow::Error>((*order, result))
-            })
-            .collect::<Vec<_>>();
-
-        for result in parallel_results {
-            let (order, run_result) = result?;
-            run_results.insert(order, run_result);
-        }
+        self.run_remaining_in_parallel(&execution_blocks, &blocks_per_item, &mut run_results)?;
 
         for (order, block) in indexed_blocks {
-            match block.run_strategy() {
-                RunStrategy::Ignore => {
-                    summary.ignored += 1;
+            if block.run_strategy() == RunStrategy::Ignore {
+                summary.ignored += 1;
+                let display_name = Self::display_name(block, &blocks_per_item);
+                self.ui.print(TestResult::ignored(&display_name));
+                continue;
+            }
+
+            match run_results.remove(&order) {
+                Some(Ok(res)) if res.status == TestStatus::Passed => {
+                    summary.passed += 1;
                     let display_name = Self::display_name(block, &blocks_per_item);
-                    self.ui.print(TestResult::ignored(&display_name));
+                    self.ui.print(TestResult::ok(&display_name));
+                    results.insert(block.id.clone(), res);
                 }
-                _ => match run_results.remove(&order) {
-                    Some(Ok(res)) => match res.status {
-                        TestStatus::Passed => {
-                            summary.passed += 1;
-                            let display_name = Self::display_name(block, &blocks_per_item);
-                            self.ui.print(TestResult::ok(&display_name));
-                            results.insert(block.id.clone(), res);
-                        }
-                        TestStatus::Failed => {
-                            summary.failed += 1;
-                            let display_name = Self::display_name(block, &blocks_per_item);
-                            self.report_mismatch(res.outcome, block.expected_outcome());
-                            self.ui.print(res.print_output.clone());
-                            self.ui.print(res.program_output.clone());
-                            self.ui.print(TestResult::failed(&display_name));
-                            failed_names.push(display_name);
-                        }
-                    },
-                    Some(Err(e)) => {
-                        summary.failed += 1;
-                        let display_name = Self::display_name(block, &blocks_per_item);
-                        self.ui.print(TestResult::failed(&display_name));
-                        failed_names.push(display_name);
-                        self.ui.error(format!("Error running example: {:#}", e));
-                    }
-                    None => {
-                        summary.failed += 1;
-                        let display_name = Self::display_name(block, &blocks_per_item);
-                        self.ui.print(TestResult::failed(&display_name));
-                        failed_names.push(display_name);
-                        self.ui.error("Missing doc test run result.");
-                    }
-                },
+                Some(Ok(res)) => {
+                    summary.failed += 1;
+                    let display_name = Self::display_name(block, &blocks_per_item);
+                    self.report_mismatch(res.outcome, block.expected_outcome());
+                    self.ui.print(res.print_output.clone());
+                    self.ui.print(res.program_output.clone());
+                    self.ui.print(TestResult::failed(&display_name));
+                    failed_names.push(display_name);
+                }
+                Some(Err(e)) => {
+                    summary.failed += 1;
+                    let display_name = Self::display_name(block, &blocks_per_item);
+                    self.ui.print(TestResult::failed(&display_name));
+                    failed_names.push(display_name);
+                    self.ui.error(format!("Error running example: {:#}", e));
+                }
+                None => {
+                    summary.failed += 1;
+                    let display_name = Self::display_name(block, &blocks_per_item);
+                    self.ui.print(TestResult::failed(&display_name));
+                    failed_names.push(display_name);
+                    self.ui.error("Missing doc test run result.");
+                }
             }
         }
         // TODO: add struct with `impl Message` to display this
@@ -259,6 +235,39 @@ impl<'a> TestRunner<'a> {
             }
             _ => {}
         }
+    }
+
+    fn run_remaining_in_parallel(
+        &self,
+        execution_blocks: &[IndexedBlock<'_>],
+        blocks_per_item: &HashMap<String, usize>,
+        run_results: &mut HashMap<usize, Result<ExecutionResult>>,
+    ) -> Result<()> {
+        let parallel_results = execution_blocks
+            .iter()
+            .filter(|(order, _)| !run_results.contains_key(order))
+            .collect_vec()
+            .into_par_iter()
+            .map(|(order, block)| {
+                let target_dir = tempdir()
+                    .context("failed to create temporary target directory for doc test run")?;
+                let display_name = Self::display_name(block, blocks_per_item);
+                copy_incremental_cache(self.target_dir.path(), target_dir.path(), &self.profile)
+                    .context(format!(
+                        "failed to copy incremental cache for `{}`",
+                        display_name
+                    ))?;
+                let result =
+                    self.run_single(block, block.run_strategy(), *order + 1, target_dir.path());
+                Ok::<(usize, Result<ExecutionResult>), anyhow::Error>((*order, result))
+            })
+            .collect::<Vec<_>>();
+
+        for result in parallel_results {
+            let (order, run_result) = result?;
+            run_results.insert(order, run_result);
+        }
+        Ok(())
     }
 
     fn display_name(block: &CodeBlock, blocks_per_item: &HashMap<String, usize>) -> String {
