@@ -3,6 +3,7 @@ use crate::doc_test::code_blocks::{CodeBlock, CodeBlockId, count_blocks_per_item
 use crate::doc_test::ui::TestResult;
 use crate::doc_test::workspace::DocTestWorkspace;
 use anyhow::{Context, Result};
+use fs_extra::dir::{CopyOptions, copy};
 use itertools::Itertools;
 use rayon::prelude::*;
 use scarb_metadata::ScarbCommand;
@@ -374,33 +375,14 @@ fn copy_incremental_cache(from: &Path, to: &Path, profile: &str) -> Result<()> {
         let dst = profile_to.join(cache_dir);
         fs::create_dir_all(&dst)
             .with_context(|| format!("failed to create `{}`", dst.display()))?;
-        copy_dir_contents(&src, &dst)?;
-    }
-    Ok(())
-}
-
-fn copy_dir_contents(from: &Path, to: &Path) -> Result<()> {
-    for entry in fs::read_dir(from).context("failed to read source target dir")? {
-        let entry = entry.context("failed to read target dir entry")?;
-        let from_path = entry.path();
-        let to_path = to.join(entry.file_name());
-        if entry
-            .file_type()
-            .context("failed to read target dir entry type")?
-            .is_dir()
-        {
-            fs::create_dir_all(&to_path)
-                .with_context(|| format!("failed to create `{}`", to_path.display()))?;
-            copy_dir_contents(&from_path, &to_path)?;
-        } else {
-            fs::copy(&from_path, &to_path).with_context(|| {
-                format!(
-                    "failed to copy target dir entry from `{}` to `{}`",
-                    from_path.display(),
-                    to_path.display()
-                )
-            })?;
-        }
+        copy(
+            &src,
+            &dst,
+            &CopyOptions {
+                content_only: true,
+                ..Default::default()
+            },
+        )?;
     }
     Ok(())
 }
