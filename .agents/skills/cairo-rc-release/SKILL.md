@@ -46,7 +46,7 @@ Do not continue to the next mutating step until the user approves it.
 ## Branching Rule
 
 - Never assume `main` is the release branch.
-- Prefer a dedicated worktree or branch named exactly as the RC version, for example `2.17.0-rc.4`.
+- Prefer a dedicated worktree or branch named exactly as the RC version, for example `v2.17.0-rc.4`.
 - Do not push `main` unless the user explicitly asks.
 - If local `main` was used by mistake, move the work onto the release branch first, then reset local `main` back to `origin/main`.
 
