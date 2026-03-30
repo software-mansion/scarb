@@ -495,3 +495,335 @@ impl DuplicateNamedTargetDefinition {
         ManifestDiagnosticAnchor::target(self.kind.clone(), self.name.clone())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use indoc::indoc;
+
+    use super::*;
+    use crate::compiler::ProfileValidationError;
+    use crate::core::manifest::ManifestDiagnosticSpan;
+
+    /// Parses `toml`, calls `resolve` on `err`, and returns the diagnostic data.
+    fn resolve_err(err: impl Into<ManifestSemanticError>, toml: &str) -> ManifestDiagnosticData {
+        let doc = toml_edit::Document::parse(toml).expect("valid TOML");
+        err.into().resolve(doc.as_table())
+    }
+
+    /// Slices `source` at `span`, panicking if `span` is `None`.
+    fn span_text(source: &str, span: Option<ManifestDiagnosticSpan>) -> &str {
+        let span = span.expect("expected Some span, got None");
+        &source[span.start..span.end]
+    }
+
+    // ── Profile errors ────────────────────────────────────────────────────────
+
+    #[test]
+    fn profile_name_invalid_anchors_to_profile_section() {
+        let toml = indoc! {r#"
+            [profile.bad_name]
+        "#};
+        let err = ProfileNameInvalid::new(
+            "bad_name",
+            ProfileValidationError::InvalidCharacters {
+                name: "bad_name".into(),
+            },
+        );
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "[profile.bad_name]");
+    }
+
+    #[test]
+    fn profile_inheritance_invalid_anchors_to_inherits_field() {
+        let toml = indoc! {r#"
+            [profile.custom]
+            inherits = "invalid"
+        "#};
+        let err = ProfileInheritanceInvalid::new("custom", "invalid");
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "inherits");
+    }
+
+    #[test]
+    fn cairo_inlining_strategy_conflict_anchors_to_both_fields() {
+        let toml = indoc! {r#"
+            [profile.release.cairo]
+            inlining-strategy = "inline_all"
+            skip-optimizations = true
+        "#};
+        let err = CairoInliningStrategyConflict::new("release");
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "inlining-strategy");
+        assert_eq!(data.related.len(), 1);
+        assert_eq!(
+            &toml[data.related[0].span.start..data.related[0].span.end],
+            "skip-optimizations"
+        );
+    }
+
+    // ── Dependency errors ─────────────────────────────────────────────────────
+
+    #[test]
+    fn dependency_workspace_not_found_anchors_to_dep_key() {
+        let toml = indoc! {r#"
+            [dependencies]
+            foo = { workspace = true }
+        "#};
+        let err = DependencyWorkspaceNotFound::new(
+            PackageName::new("foo"),
+            ManifestDependencyTable::Dependencies,
+        );
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "foo");
+        assert!(data.related.is_empty());
+    }
+
+    #[test]
+    fn dependency_workspace_not_found_dev_dep_anchors_to_dep_key() {
+        let toml = indoc! {r#"
+            [dev-dependencies]
+            foo = { workspace = true }
+        "#};
+        let err = DependencyWorkspaceNotFound::new(
+            PackageName::new("foo"),
+            ManifestDependencyTable::DevDependencies,
+        );
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "foo");
+        assert!(data.related.is_empty());
+    }
+
+    #[test]
+    fn dependency_workspace_not_found_workspace_dep_anchors_to_dep_key() {
+        let toml = indoc! {r#"
+            [workspace.dependencies]
+            foo = { workspace = true }
+        "#};
+        let err = DependencyWorkspaceNotFound::new(
+            PackageName::new("foo"),
+            ManifestDependencyTable::WorkspaceDependencies,
+        );
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "foo");
+        assert!(data.related.is_empty());
+    }
+
+    #[test]
+    fn dependency_git_ref_without_git_anchors_to_branch_field() {
+        let toml = indoc! {r#"
+            [dependencies]
+            foo = { path = "../foo", branch = "main" }
+        "#};
+        let anchor = ManifestDiagnosticAnchor::dependency(
+            ManifestDependencyTable::Dependencies,
+            PackageName::new("foo"),
+        );
+        let err = DependencyGitRefWithoutGit::new(PackageName::new("foo"), anchor, "branch");
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "branch");
+        assert!(data.related.is_empty());
+    }
+
+    #[test]
+    fn dependency_git_ref_without_git_anchors_to_rev_field() {
+        let toml = indoc! {r#"
+            [dependencies]
+            foo = { path = "../foo", rev = "abc123" }
+        "#};
+        let anchor = ManifestDiagnosticAnchor::dependency(
+            ManifestDependencyTable::Dependencies,
+            PackageName::new("foo"),
+        );
+        let err = DependencyGitRefWithoutGit::new(PackageName::new("foo"), anchor, "rev");
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "rev");
+        assert!(data.related.is_empty());
+    }
+
+    #[test]
+    fn dependency_git_ref_without_git_anchors_to_tag_field() {
+        let toml = indoc! {r#"
+            [dependencies]
+            foo = { path = "../foo", tag = "v1.0" }
+        "#};
+        let anchor = ManifestDiagnosticAnchor::dependency(
+            ManifestDependencyTable::Dependencies,
+            PackageName::new("foo"),
+        );
+        let err = DependencyGitRefWithoutGit::new(PackageName::new("foo"), anchor, "tag");
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "tag");
+        assert!(data.related.is_empty());
+    }
+
+    #[test]
+    fn dependency_git_reference_ambiguous_anchors_to_all_ref_fields() {
+        let toml = indoc! {r#"
+            [dependencies]
+            foo = { git = "https://example.com", branch = "main", tag = "v1" }
+        "#};
+        let anchor = ManifestDiagnosticAnchor::dependency(
+            ManifestDependencyTable::Dependencies,
+            PackageName::new("foo"),
+        );
+        let err = DependencyGitReferenceAmbiguous::new(
+            PackageName::new("foo"),
+            anchor,
+            vec!["branch", "tag"],
+        );
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "branch");
+        assert_eq!(data.related.len(), 1);
+        assert_eq!(
+            &toml[data.related[0].span.start..data.related[0].span.end],
+            "tag"
+        );
+    }
+
+    #[test]
+    fn dependency_source_missing_anchors_to_dep_key() {
+        let toml = indoc! {r#"
+            [dependencies]
+            foo = {}
+        "#};
+        let anchor = ManifestDiagnosticAnchor::dependency(
+            ManifestDependencyTable::Dependencies,
+            PackageName::new("foo"),
+        );
+        let err = DependencySourceMissing::new(PackageName::new("foo"), anchor);
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "foo");
+    }
+
+    #[test]
+    fn dependency_git_path_ambiguous_anchors_to_both_fields() {
+        let toml = indoc! {r#"
+            [dependencies]
+            foo = { git = "https://example.com", path = "../foo" }
+        "#};
+        let anchor = ManifestDiagnosticAnchor::dependency(
+            ManifestDependencyTable::Dependencies,
+            PackageName::new("foo"),
+        );
+        let err = DependencyGitPathAmbiguous::new(PackageName::new("foo"), anchor);
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "git");
+        assert_eq!(data.related.len(), 1);
+        assert_eq!(
+            &toml[data.related[0].span.start..data.related[0].span.end],
+            "path"
+        );
+    }
+
+    #[test]
+    fn dependency_git_registry_ambiguous_anchors_to_both_fields() {
+        let toml = indoc! {r#"
+            [dependencies]
+            foo = { git = "https://example.com", registry = "custom" }
+        "#};
+        let anchor = ManifestDiagnosticAnchor::dependency(
+            ManifestDependencyTable::Dependencies,
+            PackageName::new("foo"),
+        );
+        let err = DependencyGitRegistryAmbiguous::new(PackageName::new("foo"), anchor);
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "git");
+        assert_eq!(data.related.len(), 1);
+        assert_eq!(
+            &toml[data.related[0].span.start..data.related[0].span.end],
+            "registry"
+        );
+    }
+
+    // ── Patch errors ──────────────────────────────────────────────────────────
+
+    #[test]
+    fn patch_not_in_workspace_root_anchors_to_patch_section() {
+        let toml = indoc! {r#"
+            [patch.crates-io]
+        "#};
+        let err = PatchNotInWorkspaceRoot::new(
+            camino::Utf8PathBuf::from("member/Scarb.toml"),
+            camino::Utf8PathBuf::from("Scarb.toml"),
+        );
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "[patch.crates-io]");
+    }
+
+    #[test]
+    fn patch_source_conflict_anchors_to_both_sources() {
+        let toml = indoc! {r#"
+            [patch.crates-io]
+            [patch.my-registry]
+        "#};
+        let err = PatchSourceConflict::new("crates-io", "my-registry");
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "[patch.crates-io]");
+        assert_eq!(data.related.len(), 1);
+        assert_eq!(
+            &toml[data.related[0].span.start..data.related[0].span.end],
+            "[patch.my-registry]"
+        );
+    }
+
+    #[test]
+    fn patch_source_invalid_url_anchors_to_source_table() {
+        let toml = indoc! {r#"
+            [patch.not-a-url]
+        "#};
+        let cause = url::Url::parse("not-a-url").unwrap_err();
+        let err = PatchSourceInvalidUrl::new("not-a-url", cause);
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "[patch.not-a-url]");
+    }
+
+    // ── File-path errors ──────────────────────────────────────────────────────
+
+    #[test]
+    fn readme_path_invalid_anchors_to_readme_field() {
+        let toml = indoc! {r#"
+            [package]
+            readme = "MISSING.md"
+        "#};
+        let anchor = ManifestDiagnosticAnchor::package_field("readme");
+        let err = ReadmePathInvalid::new("readme not found", Some(anchor));
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "readme");
+    }
+
+    #[test]
+    fn license_path_invalid_anchors_to_license_file_field() {
+        let toml = indoc! {r#"
+            [package]
+            license-file = "MISSING.txt"
+        "#};
+        let anchor = ManifestDiagnosticAnchor::package_field("license-file");
+        let err = LicensePathInvalid::new("license file not found", Some(anchor));
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "license-file");
+    }
+
+    // ── Target errors ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn duplicate_default_target_definition_anchors_to_target_section() {
+        let toml = indoc! {r#"
+            [lib]
+            name = "lib"
+        "#};
+        let err = DuplicateDefaultTargetDefinition::new(TargetKind::LIB, "lib");
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "name");
+    }
+
+    #[test]
+    fn duplicate_named_target_definition_anchors_to_name_field() {
+        let toml = indoc! {r#"
+            [[target.starknet-contract]]
+            name = "mycontract"
+        "#};
+        let err = DuplicateNamedTargetDefinition::new(TargetKind::STARKNET_CONTRACT, "mycontract");
+        let data = resolve_err(err, toml);
+        assert_eq!(span_text(toml, data.span), "name");
+    }
+}
