@@ -276,9 +276,11 @@ pub struct PackageInheritableFields {
     pub description: Option<String>,
 
     /// URL of the package documentation.
+    #[schemars(url)]
     pub documentation: Option<String>,
 
     /// Project homepage URL.
+    #[schemars(url)]
     pub homepage: Option<String>,
 
     /// Search keywords for package discovery on registries.
@@ -295,6 +297,7 @@ pub struct PackageInheritableFields {
     pub readme: Option<PathOrBool>,
 
     /// URL of the source repository.
+    #[schemars(url)]
     pub repository: Option<String>,
 
     /// A Cairo compiler version requirement that this package is
@@ -424,7 +427,7 @@ pub struct TomlPackage {
     /// - See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#keywords>
     pub keywords: Option<MaybeWorkspaceField<Vec<String>>>,
 
-    /// SThe `license` field contains the name of the software license that the package is released under.
+    /// The `license` field contains the name of the software license that the package is released under.
     /// The `license-file` field contains the path to a file containing the text of the license (relative to this `Scarb.toml`).
     ///
     /// Package registries must interpret the `license` field as
@@ -869,7 +872,7 @@ pub struct TomlProfile {
     pub cairo: Option<TomlCairo>,
 
     /// Tool-specific configuration for this profile (under `tool.<name>`).
-    #[schemars(with = "BTreeMap<SmolStr, serde_json::Value>")]
+    #[schemars(with = "Option<BTreeMap<SmolStr, serde_json::Value>>")]
     pub tool: Option<TomlToolsDefinition>,
 }
 

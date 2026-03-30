@@ -257,14 +257,21 @@
       }
     },
     "InliningStrategy": {
+      "description": "Controls function inlining behavior during compilation.\n\nCan be a non-negative integer (inline small functions up to the given weight)\nor one of the predefined strategies: `\"default\"`, `\"avoid\"`.",
       "anyOf": [
         {
+          "description": "Inline small functions up to the given weight threshold.",
           "type": "integer",
           "format": "uint",
           "minimum": 0
         },
         {
-          "type": "string"
+          "description": "A predefined strategy: `\"default\"` or `\"avoid\"`.",
+          "type": "string",
+          "enum": [
+            "default",
+            "avoid"
+          ]
         }
       ]
     },
@@ -409,7 +416,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "format": "uri"
         },
         "edition": {
           "description": "Cairo edition to inherit for members (e.g. `\"2023_10\"`).",
@@ -423,7 +431,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "format": "uri"
         },
         "keywords": {
           "description": "Search keywords for package discovery on registries.",
@@ -465,7 +474,8 @@
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "format": "uri"
         },
         "version": {
           "description": "Version to inherit for members that opt into\n`workspace.package.version = ...`.",
@@ -477,7 +487,7 @@
       }
     },
     "PackageName": {
-      "description": "A [`String`]-like type representing [`Package`] name.\n\n* Instances of this type are validated upon construction to comply with the\n  [package naming rules](#package-naming-rules).\n* Values are immutable.\n* [`Clone`] is `O(1)`.\n* Short names (which is common for package names) are stack-allocated.\n\nPackage naming rules are described in\n[Scarb docs](https://docs.swmansion.com/scarb/docs/reference/manifest.html#name).",
+      "description": "A valid Cairo package name.\n\nMust use only ASCII lowercase alphanumeric characters or `_`, cannot be empty,\ncannot start with a digit, cannot be a Cairo keyword, and cannot be just `_`.\n\nSee the full naming rules in the\n[Scarb docs](https://docs.swmansion.com/scarb/docs/reference/manifest.html#name).",
       "type": "string"
     },
     "PathOrBool": {
@@ -738,7 +748,7 @@
           ]
         },
         "license": {
-          "description": "SThe `license` field contains the name of the software license that the package is released under.\nThe `license-file` field contains the path to a file containing the text of the license (relative to this `Scarb.toml`).\n\nPackage registries must interpret the `license` field as\nan [SPDX 2 license expression](https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/).\nThe license name must be a known license from the [SPDX license list](https://spdx.org/licenses/).\n\nSPDX license expressions support AND and OR operators to combine multiple licenses.\n\n```toml\n[package]\nlicense = \"MIT OR Apache-2.0\"\n```\n- See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#license-and-license-file>",
+          "description": "The `license` field contains the name of the software license that the package is released under.\nThe `license-file` field contains the path to a file containing the text of the license (relative to this `Scarb.toml`).\n\nPackage registries must interpret the `license` field as\nan [SPDX 2 license expression](https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/).\nThe license name must be a known license from the [SPDX license list](https://spdx.org/licenses/).\n\nSPDX license expressions support AND and OR operators to combine multiple licenses.\n\n```toml\n[package]\nlicense = \"MIT OR Apache-2.0\"\n```\n- See official documentation at: <https://docs.swmansion.com/scarb/docs/reference/manifest.html#license-and-license-file>",
           "anyOf": [
             {
               "$ref": "#/$defs/MaybeWorkspace"
@@ -852,13 +862,13 @@
         },
         "tool": {
           "description": "Tool-specific configuration for this profile (under `tool.<name>`).",
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": true
         }
-      },
-      "required": [
-        "tool"
-      ]
+      }
     },
     "TomlTarget": {
       "type": "object",

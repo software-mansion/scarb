@@ -89,10 +89,17 @@ mod serdex {
     use schemars::JsonSchema;
     use serde::{Deserialize, Serialize};
 
+    /// Controls function inlining behavior during compilation.
+    ///
+    /// Can be a non-negative integer (inline small functions up to the given weight)
+    /// or one of the predefined strategies: `"default"`, `"avoid"`.
     #[derive(Debug, Deserialize, Serialize, JsonSchema)]
     #[serde(untagged)]
     pub enum InliningStrategy {
+        /// Inline small functions up to the given weight threshold.
         InlineSmallFunctions(usize),
+        /// A predefined strategy: `"default"` or `"avoid"`.
+        #[schemars(extend("enum" = ["default", "avoid"]))]
         Predefined(String),
     }
 
