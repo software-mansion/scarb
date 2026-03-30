@@ -46,7 +46,7 @@ You might need to swiftly pause the [Website Deploy] workflow to prevent publish
 > repo in the chain, wait until it is visible on [crates.io] before continuing.
 >
 > If you want agent assistance for this flow, use the `cairo-rc-release` skill from
-> `skills-src/cairo-rc-release/`.
+> `.agents/skills/cairo-rc-release/`.
 
 > [!IMPORTANT]
 > If you add or remove a binary target compiled with the release (i.e. create or remove a crate in `extensions` directory),

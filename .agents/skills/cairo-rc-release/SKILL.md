@@ -1,17 +1,17 @@
 ---
 name: cairo-rc-bump-release
-description: Use when preparing a Cairo release candidate bump across local sibling repos such as cairo-language-common, cairo-lint, cairols, scarb, and proving-utils. Covers the patchless release flow, crates.io publication ordering, required proving-utils pinning for Scarb RC releases, same-named branch and tag conventions, and requires explicit user approval before every mutating action including edits, git operations, lockfile regeneration, pushes, tags, and cargo publish.
+description: Use when preparing a Cairo release candidate bump across the local Cairo sibling repos.
 ---
 
 # Cairo RC Bump Release
 
 Use this workflow for coordinated Cairo RC bumps across local sibling repos such as:
 
-- `../proving-utils`
-- `../cairo-language-common`
-- `../cairo-lint`
-- `../cairols`
-- `../scarb`
+- `proving-utils`
+- `cairo-language-common`
+- `cairo-lint`
+- `cairols`
+- `scarb`
 
 ## Prerequisites
 
@@ -177,10 +177,10 @@ Keep updates short and concrete. Before each mutating step, say exactly what wil
 
 Examples:
 
-- `Waiting for your permission to fetch origin in ../cairo-lint and verify the release branch will be based on the latest origin/main.`
+- `Waiting for your permission to fetch origin in the cairo-lint checkout and verify the release branch will be based on the latest origin/main.`
 - `Waiting for your permission to check whether the proving-utils fork remote main is synced with upstream main before creating branch 2.17.0-rc.4.`
-- `Waiting for your permission to fetch origin in ../cairols and create worktree 2.17.0-rc.4 from origin/main.`
-- `Waiting for your permission to commit the cairo-lint release changes in ../cairo-lint-2.17.0-rc.4.`
+- `Waiting for your permission to fetch origin in the cairols checkout and create worktree 2.17.0-rc.4 from origin/main.`
+- `Waiting for your permission to commit the cairo-lint release changes in the cairo-lint 2.17.0-rc.4 checkout.`
 - `Waiting for your permission to push branch 2.17.0-rc.4 so you can open a PR and watch CI.`
 - `CI is green on the release PR. Waiting for your permission to create and push tag v2.17.0-rc.4.`
 - `Waiting for your permission to run cargo publish for cairo-language-server 2.17.0-rc.4.`
