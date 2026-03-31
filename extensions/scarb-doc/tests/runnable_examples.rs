@@ -3,11 +3,37 @@ use indoc::{formatdoc, indoc};
 use scarb_test_support::command::Scarb;
 // use scarb_test_support::filesystem::dump_temp;
 use scarb_test_support::project_builder::ProjectBuilder;
+use snapbox::Assert;
 mod markdown_target;
 use markdown_target::MarkdownTargetChecker;
 
 mod json_target;
 use json_target::JsonTargetChecker;
+
+/// Strips compilation progress lines (`Compiling …` and `Finished … profile target(s)`) from
+/// captured stdout so that tests are not sensitive to the interleaved output produced when doc
+/// examples are compiled in parallel.
+///
+/// `expected_removed` is the number of compilation lines expected to be stripped, asserted to
+/// guard against the filter silently matching nothing when the output format changes.
+fn without_compilation_lines(stdout: &str, expected_removed: usize) -> String {
+    let filtered: Vec<&str> = stdout
+        .lines()
+        .filter(|line| {
+            let trimmed = line.trim();
+            !(trimmed.starts_with("Compiling ")
+                || (trimmed.starts_with('[') && trimmed.contains("] Compiling "))
+                || (trimmed.starts_with('[') && trimmed.contains("]  Finished "))
+                || (trimmed.starts_with("Finished ") && trimmed.contains("profile target(s)")))
+        })
+        .collect();
+    assert_eq!(
+        stdout.lines().count() - filtered.len(),
+        expected_removed,
+        "expected {expected_removed} compilation lines to be removed from stdout"
+    );
+    filtered.join("\n")
+}
 
 const CODE_WITH_RUNNABLE_CODE_BLOCKS: &str = include_str!("code/code_12.cairo");
 const CODE_WITH_COMPILE_ERROR: &str = include_str!("code/code_13.cairo");
@@ -39,10 +65,10 @@ fn supports_runnable_examples() {
         .success()
         .stdout_eq(formatdoc! {r#"
             [..] Running 3 doc examples for `hello_world`
+            [..] Compiling hello_world_example_3 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
             test hello_world::bar ... ignored
             test hello_world::foo ... ignored
-            [..] Compiling hello_world_example_1 v0.1.0 ([..])
-            [..]  Finished `dev` profile target(s) in [..]
             test hello_world::foo_bar ... ok
 
             test result: ok. 1 passed; 0 failed; 2 ignored
@@ -79,10 +105,10 @@ fn supports_runnable_examples_mdx() {
         .success()
         .stdout_eq(formatdoc! {r#"
             [..] Running 3 doc examples for `hello_world`
+            [..] Compiling hello_world_example_3 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
             test hello_world::bar ... ignored
             test hello_world::foo ... ignored
-            [..] Compiling hello_world_example_1 v0.1.0 ([..])
-            [..]  Finished `dev` profile target(s) in [..]
             test hello_world::foo_bar ... ok
 
             test result: ok. 1 passed; 0 failed; 2 ignored
@@ -111,10 +137,10 @@ fn supports_runnable_examples_json() {
         .success()
         .stdout_eq(formatdoc! {r#"
             [..] Running 3 doc examples for `hello_world`
+            [..] Compiling hello_world_example_3 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
             test hello_world::bar ... ignored
             test hello_world::foo ... ignored
-            [..] Compiling hello_world_example_1 v0.1.0 ([..])
-            [..]  Finished `dev` profile target(s) in [..]
             test hello_world::foo_bar ... ok
 
             test result: ok. 1 passed; 0 failed; 2 ignored
@@ -135,21 +161,27 @@ fn supports_runnable_examples_multiple_per_item() {
         .lib_cairo(CODE_WITH_MULTIPLE_CODE_BLOCKS_PER_ITEM)
         .build(&t);
 
-    Scarb::quick_command()
+    let output = Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "markdown"])
         .arg("--disable-remote-linking")
         .arg("--build")
         .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_eq(formatdoc! {r#"
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "stdout={}\nstderr={}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    // 2 examples × (1 "Compiling" + 1 "Finished") = 4 lines removed
+    let filtered = without_compilation_lines(&String::from_utf8_lossy(&output.stdout), 4);
+    Assert::new().eq(
+        filtered,
+        formatdoc! {r#"
             [..] Running 2 doc examples for `hello_world`
-            [..] Compiling hello_world_example_1 v0.1.0 ([..])
-            [..]  Finished `dev` profile target(s) in [..]
             test hello_world::add (example 1) ... ok
-            [..] Compiling hello_world_example_2 v0.1.0 ([..])
-            [..]  Finished `dev` profile target(s) in [..]
             test hello_world::add (example 2) ... ok
 
             test result: ok. 2 passed; 0 failed; 0 ignored
@@ -160,8 +192,8 @@ fn supports_runnable_examples_multiple_per_item() {
             `mdbook serve target/doc/hello_world`
 
             Or open the following in your browser:[..]
-            `[..]/target/doc/hello_world/book/index.html`
-        "#});
+            `[..]/target/doc/hello_world/book/index.html`"#},
+    );
 
     MarkdownTargetChecker::lenient()
         .actual(t.path().join("target/doc/hello_world").to_str().unwrap())
@@ -324,21 +356,27 @@ fn should_panic() {
         .lib_cairo(CODE_WITH_SHOULD_PANIC)
         .build(&t);
 
-    Scarb::quick_command()
+    let output = Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "markdown"])
         .arg("--disable-remote-linking")
         .arg("--build")
         .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_eq(indoc! {r#"
+        .output()
+        .unwrap();
+    assert!(
+        !output.status.success(),
+        "expected command to fail\nstdout={}\nstderr={}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    // 2 examples × (1 "Compiling" + 1 "Finished") = 4 lines removed
+    let filtered = without_compilation_lines(&String::from_utf8_lossy(&output.stdout), 4);
+    Assert::new().eq(
+        filtered,
+        indoc! {r#"
             [..] Running 2 doc examples for `hello_world`
-            [..] Compiling hello_world_example_1 v0.1.0 ([..])
-            [..]  Finished `dev` profile target(s) in [..]
             test hello_world::is_odd (example 1) ... ok
-            [..] Compiling hello_world_example_2 v0.1.0 ([..])
-            [..]  Finished `dev` profile target(s) in [..]
             error: Test executable succeeded, but it's marked `should_panic`.
             test hello_world::is_odd (example 2) ... FAILED
 
@@ -346,8 +384,8 @@ fn should_panic() {
                 hello_world::is_odd (example 2)
 
             test result: FAILED. 1 passed; 1 failed; 0 ignored
-            error: doc tests failed
-        "#});
+            error: doc tests failed"#},
+    );
 }
 
 #[test]
@@ -358,17 +396,26 @@ fn compile_fail() {
         .lib_cairo(CODE_WITH_COMPILE_FAIL)
         .build(&t);
 
-    Scarb::quick_command()
+    let output = Scarb::quick_command()
         .arg("doc")
         .args(["--output-format", "markdown"])
         .arg("--disable-remote-linking")
         .arg("--build")
         .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_eq(indoc! {r#"
+        .output()
+        .unwrap();
+    assert!(
+        !output.status.success(),
+        "expected command to fail\nstdout={}\nstderr={}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    // example 1 fails to compile (1 "Compiling", no "Finished") + example 2 succeeds (1+1) = 3 lines removed
+    let filtered = without_compilation_lines(&String::from_utf8_lossy(&output.stdout), 3);
+    Assert::new().eq(
+        filtered,
+        indoc! {r#"
             [..] Running 2 doc examples for `hello_world`
-            [..] Compiling hello_world_example_1 v0.1.0 ([..])
             error[E2041]: Unexpected argument type. Expected: "core::integer::i32", found: "core::bool".
              --> [..]lib.cairo[..]
                 is_odd(true);
@@ -376,8 +423,6 @@ fn compile_fail() {
 
             error: could not compile `hello_world_example_1` due to 1 previous error
             test hello_world::is_odd (example 1) ... ok
-            [..] Compiling hello_world_example_2 v0.1.0 ([..])
-            [..]  Finished `dev` profile target(s) in [..]
             error: Test compiled successfully, but it's marked `compile_fail`.
             test hello_world::is_odd (example 2) ... FAILED
 
@@ -385,8 +430,8 @@ fn compile_fail() {
                 hello_world::is_odd (example 2)
 
             test result: FAILED. 1 passed; 1 failed; 0 ignored
-            error: doc tests failed
-        "#});
+            error: doc tests failed"#},
+    );
 }
 
 #[test]
