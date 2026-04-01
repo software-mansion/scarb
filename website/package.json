@@ -10,6 +10,9 @@
     "fmt:check": "prettier --check .",
     "preview": "vitepress preview"
   },
+  "overrides": {
+    "axios": ">=1.8.2 <1.14.1 || >1.14.1"
+  },
   "dependencies": {
     "@octokit/core": "6.1.4",
     "cairo-tm-grammar": "github:software-mansion-labs/cairo-tm-grammar",
