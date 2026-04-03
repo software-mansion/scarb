@@ -1,10 +1,14 @@
 use crate::compiler::ProfileValidationError;
+use crate::core::PackageName;
 use thiserror::Error;
 use toml_edit::Table;
 
 use super::ManifestDiagnosticData;
 use super::diagnostic::resolve_anchor_in_doc;
-use super::{ManifestDiagnosticAnchor, ManifestRelatedAnchor, ManifestRelatedLocation};
+use super::{
+    ManifestDependencyTable, ManifestDiagnosticAnchor, ManifestRelatedAnchor,
+    ManifestRelatedLocation,
+};
 
 /// Typed manifest validation errors that carry semantic anchors for diagnostic span resolution.
 ///
@@ -19,6 +23,18 @@ pub enum ManifestSemanticError {
     ProfileInheritanceInvalid(#[from] ProfileInheritanceInvalid),
     #[error(transparent)]
     CairoInliningStrategyConflict(#[from] CairoInliningStrategyConflict),
+    #[error(transparent)]
+    DependencyWorkspaceNotFound(#[from] DependencyWorkspaceNotFound),
+    #[error(transparent)]
+    DependencyGitRefWithoutGit(#[from] DependencyGitRefWithoutGit),
+    #[error(transparent)]
+    DependencyGitReferenceAmbiguous(#[from] DependencyGitReferenceAmbiguous),
+    #[error(transparent)]
+    DependencySourceMissing(#[from] DependencySourceMissing),
+    #[error(transparent)]
+    DependencyGitPathAmbiguous(#[from] DependencyGitPathAmbiguous),
+    #[error(transparent)]
+    DependencyGitRegistryAmbiguous(#[from] DependencyGitRegistryAmbiguous),
 }
 
 impl ManifestSemanticError {
@@ -46,12 +62,21 @@ impl ManifestSemanticError {
             Self::ProfileNameInvalid(e) => Some(e.primary_anchor()),
             Self::ProfileInheritanceInvalid(e) => Some(e.primary_anchor()),
             Self::CairoInliningStrategyConflict(e) => Some(e.primary_anchor()),
+            Self::DependencyWorkspaceNotFound(e) => Some(e.primary_anchor()),
+            Self::DependencyGitRefWithoutGit(e) => Some(e.primary_anchor()),
+            Self::DependencyGitReferenceAmbiguous(e) => Some(e.primary_anchor()),
+            Self::DependencySourceMissing(e) => Some(e.primary_anchor()),
+            Self::DependencyGitPathAmbiguous(e) => Some(e.primary_anchor()),
+            Self::DependencyGitRegistryAmbiguous(e) => Some(e.primary_anchor()),
         }
     }
 
     fn related_anchors(&self) -> Vec<ManifestRelatedAnchor> {
         match self {
             Self::CairoInliningStrategyConflict(e) => e.related_anchors(),
+            Self::DependencyGitReferenceAmbiguous(e) => e.related_anchors(),
+            Self::DependencyGitPathAmbiguous(e) => e.related_anchors(),
+            Self::DependencyGitRegistryAmbiguous(e) => e.related_anchors(),
             _ => vec![],
         }
     }
@@ -128,6 +153,157 @@ impl CairoInliningStrategyConflict {
             anchor: ManifestDiagnosticAnchor::profile(self.profile.clone())
                 .with_sub_table("cairo")
                 .with_field("skip-optimizations"),
+        }]
+    }
+}
+
+// ── Dependency errors ─────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Error)]
+#[error("dependency `{name}` not found in workspace")]
+pub struct DependencyWorkspaceNotFound {
+    pub name: PackageName,
+    pub table: ManifestDependencyTable,
+}
+
+impl DependencyWorkspaceNotFound {
+    pub fn new(name: PackageName, table: ManifestDependencyTable) -> Self {
+        Self { name, table }
+    }
+
+    fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
+        ManifestDiagnosticAnchor::dependency(self.table.clone(), self.name.clone())
+    }
+}
+
+#[derive(Debug, Clone, Error)]
+#[error("dependency ({name}) is non-Git, but provides `branch`, `tag` or `rev`")]
+pub struct DependencyGitRefWithoutGit {
+    pub name: PackageName,
+    pub anchor: ManifestDiagnosticAnchor,
+    pub field: &'static str,
+}
+
+impl DependencyGitRefWithoutGit {
+    pub fn new(name: PackageName, anchor: ManifestDiagnosticAnchor, field: &'static str) -> Self {
+        Self {
+            name,
+            anchor,
+            field,
+        }
+    }
+
+    fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
+        self.anchor.clone().with_field(self.field)
+    }
+}
+
+#[derive(Debug, Clone, Error)]
+#[error(
+    "dependency ({name}) specification is ambiguous, only one of `branch`, `tag` or `rev` is allowed"
+)]
+pub struct DependencyGitReferenceAmbiguous {
+    pub name: PackageName,
+    pub anchor: ManifestDiagnosticAnchor,
+    pub fields: Vec<&'static str>,
+}
+
+impl DependencyGitReferenceAmbiguous {
+    pub fn new(
+        name: PackageName,
+        anchor: ManifestDiagnosticAnchor,
+        fields: Vec<&'static str>,
+    ) -> Self {
+        Self {
+            name,
+            anchor,
+            fields,
+        }
+    }
+
+    fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
+        self.anchor
+            .clone()
+            .with_field(self.fields.first().copied().unwrap_or("branch"))
+    }
+
+    fn related_anchors(&self) -> Vec<ManifestRelatedAnchor> {
+        self.fields
+            .iter()
+            .skip(1)
+            .map(|field| ManifestRelatedAnchor {
+                message: "conflicting Git reference".to_string(),
+                anchor: self.anchor.clone().with_field(field),
+            })
+            .collect()
+    }
+}
+
+#[derive(Debug, Clone, Error)]
+#[error(
+    "dependency ({name}) must be specified providing a local path, Git repository, or version to use"
+)]
+pub struct DependencySourceMissing {
+    pub name: PackageName,
+    pub anchor: ManifestDiagnosticAnchor,
+}
+
+impl DependencySourceMissing {
+    pub fn new(name: PackageName, anchor: ManifestDiagnosticAnchor) -> Self {
+        Self { name, anchor }
+    }
+
+    fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
+        self.anchor.clone()
+    }
+}
+
+#[derive(Debug, Clone, Error)]
+#[error("dependency ({name}) specification is ambiguous, only one of `git` or `path` is allowed")]
+pub struct DependencyGitPathAmbiguous {
+    pub name: PackageName,
+    pub anchor: ManifestDiagnosticAnchor,
+}
+
+impl DependencyGitPathAmbiguous {
+    pub fn new(name: PackageName, anchor: ManifestDiagnosticAnchor) -> Self {
+        Self { name, anchor }
+    }
+
+    fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
+        self.anchor.clone().with_field("git")
+    }
+
+    fn related_anchors(&self) -> Vec<ManifestRelatedAnchor> {
+        vec![ManifestRelatedAnchor {
+            message: "conflicts with this field".to_string(),
+            anchor: self.anchor.clone().with_field("path"),
+        }]
+    }
+}
+
+#[derive(Debug, Clone, Error)]
+#[error(
+    "dependency ({name}) specification is ambiguous, only one of `git` or `registry` is allowed"
+)]
+pub struct DependencyGitRegistryAmbiguous {
+    pub name: PackageName,
+    pub anchor: ManifestDiagnosticAnchor,
+}
+
+impl DependencyGitRegistryAmbiguous {
+    pub fn new(name: PackageName, anchor: ManifestDiagnosticAnchor) -> Self {
+        Self { name, anchor }
+    }
+
+    fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
+        self.anchor.clone().with_field("git")
+    }
+
+    fn related_anchors(&self) -> Vec<ManifestRelatedAnchor> {
+        vec![ManifestRelatedAnchor {
+            message: "conflicts with this field".to_string(),
+            anchor: self.anchor.clone().with_field("registry"),
         }]
     }
 }
