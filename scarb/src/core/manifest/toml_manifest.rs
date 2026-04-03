@@ -10,8 +10,9 @@ use crate::core::manifest::{
     CairoInliningStrategyConflict, DependencyGitPathAmbiguous, DependencyGitRefWithoutGit,
     DependencyGitReferenceAmbiguous, DependencyGitRegistryAmbiguous, DependencySourceMissing,
     DependencyWorkspaceNotFound, ManifestDependency, ManifestDependencyTable,
-    ManifestDiagnosticAnchor, ManifestMetadata, ManifestSemanticError, ProfileInheritanceInvalid,
-    ProfileNameInvalid, Summary, Target,
+    ManifestDiagnosticAnchor, ManifestMetadata, ManifestSemanticError, PatchNotInWorkspaceRoot,
+    PatchSourceConflict, PatchSourceInvalidUrl, ProfileInheritanceInvalid, ProfileNameInvalid,
+    Summary, Target,
 };
 use crate::core::package::PackageId;
 use crate::core::registry::{DEFAULT_REGISTRY_INDEX, DEFAULT_REGISTRY_INDEX_PATCH_SOURCE};
@@ -1126,14 +1127,14 @@ impl TomlManifest {
             dependencies.push(toml_dep);
         }
 
-        if self.patch.is_some() {
-            ensure!(
-                workspace_manifest_path == manifest_path,
-                "the `[patch]` section can only be defined in the workspace root manifests\nsection found in manifest: `{}`\nworkspace root manifest: `{}`",
-                manifest_path,
-                workspace_manifest_path
-            );
-        };
+        if self.patch.is_some() && workspace_manifest_path != manifest_path {
+            let err: ManifestSemanticError = PatchNotInWorkspaceRoot::new(
+                manifest_path.to_path_buf(),
+                workspace_manifest_path.to_path_buf(),
+            )
+            .into();
+            return Err(err.into());
+        }
 
         let no_core = package.no_core.unwrap_or(false);
 
@@ -1820,24 +1821,31 @@ impl TomlManifest {
         if let Some(patch) = self.patch.clone() {
             let default_index_patch_source =
                 SmolStr::new_static(DEFAULT_REGISTRY_INDEX_PATCH_SOURCE);
-            ensure!(
-                !(patch.contains_key(&default_index_patch_source)
-                    && patch.contains_key(DEFAULT_REGISTRY_INDEX)),
-                "the `[patch]` section cannot specify both `{DEFAULT_REGISTRY_INDEX_PATCH_SOURCE}` and `{DEFAULT_REGISTRY_INDEX}`"
-            );
+            if patch.contains_key(&default_index_patch_source)
+                && patch.contains_key(DEFAULT_REGISTRY_INDEX)
+            {
+                let err: ManifestSemanticError = PatchSourceConflict::new(
+                    default_index_patch_source.clone(),
+                    SmolStr::from(DEFAULT_REGISTRY_INDEX),
+                )
+                .into();
+                return Err(err.into());
+            }
             patch
                 .into_iter()
-                .map(|(source, patches)| {
-                    let source = if source == default_index_patch_source {
+                .map(|(raw_source, patches)| {
+                    let canonical = if raw_source == default_index_patch_source {
                         SourceId::default().canonical_url.clone()
                     } else {
-                        let url = Url::parse(source.as_str()).with_context(|| {
-                            format!("failed to parse `{}` as patch source url", source.as_str())
+                        let url = Url::parse(raw_source.as_str()).map_err(|e| {
+                            let err: ManifestSemanticError =
+                                PatchSourceInvalidUrl::new(raw_source.clone(), e).into();
+                            err
                         })?;
                         CanonicalUrl::new(&url)?
                     };
                     Ok((
-                        source,
+                        canonical,
                         patches
                             .into_iter()
                             .map(|(name, dep)| {
@@ -1845,8 +1853,8 @@ impl TomlManifest {
                                     name.clone(),
                                     manifest_path,
                                     DepKind::Normal,
-                                    ManifestDiagnosticAnchor::dependency(
-                                        ManifestDependencyTable::Dependencies,
+                                    ManifestDiagnosticAnchor::patch_dependency(
+                                        raw_source.clone(),
                                         name.clone(),
                                     ),
                                 )
