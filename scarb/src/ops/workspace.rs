@@ -89,7 +89,9 @@ fn read_workspace_root<'c>(
         ))
     };
 
-    let profiles = toml_manifest.collect_profiles().map_err(with_source)?;
+    let profiles = toml_manifest
+        .collect_profiles()
+        .map_err(|err| with_source(err.into()))?;
 
     let root_package = if toml_manifest.is_package() {
         let manifest = toml_manifest

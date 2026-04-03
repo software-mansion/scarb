@@ -6,7 +6,10 @@ use crate::core::manifest::scripts::ScriptDefinition;
 use crate::core::manifest::target_defaults::{
     MaybeWorkspaceTargetDefaults, TargetDefaults, TomlTargetKindTestOnly,
 };
-use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Target};
+use crate::core::manifest::{
+    CairoInliningStrategyConflict, ManifestDependency, ManifestMetadata, ManifestSemanticError,
+    ProfileInheritanceInvalid, ProfileNameInvalid, Summary, Target,
+};
 use crate::core::package::PackageId;
 use crate::core::registry::{DEFAULT_REGISTRY_INDEX, DEFAULT_REGISTRY_INDEX_PATCH_SOURCE};
 use crate::core::source::{GitReference, SourceId};
@@ -1206,7 +1209,7 @@ impl TomlManifest {
         };
         let profile_definition = profile_source.collect_profile_definition(profile.clone())?;
 
-        Self::verify_toml_cairo_section(&profile_definition)?;
+        Self::verify_toml_cairo_section(&profile, &profile_definition)?;
         let compiler_config = Self::collect_compiler_config(profile_definition.clone());
 
         let workspace_tool = workspace.tool.clone();
@@ -1592,17 +1595,19 @@ impl TomlManifest {
         Ok(Some(target))
     }
 
-    pub fn collect_profiles(&self) -> Result<Vec<Profile>> {
-        self.profile
-            .as_ref()
-            .map(|toml_profiles| {
-                toml_profiles
-                    .keys()
-                    .cloned()
-                    .map(Profile::try_new)
-                    .try_collect()
-            })
-            .unwrap_or(Ok(vec![]))
+    pub fn collect_profiles(&self) -> Result<Vec<Profile>, ManifestSemanticError> {
+        let Some(toml_profiles) = self.profile.as_ref() else {
+            return Ok(vec![]);
+        };
+
+        let mut profiles = Vec::with_capacity(toml_profiles.len());
+        for name in toml_profiles.keys() {
+            let profile = Profile::try_new(name.clone())
+                .map_err(|err| ProfileNameInvalid::new(name.clone(), err))?;
+            profiles.push(profile);
+        }
+
+        Ok(profiles)
     }
 
     /// Invariant: `self` is a workspace manifest or a manifest in a single package project.
@@ -1625,12 +1630,7 @@ impl TomlManifest {
                 }
             })?;
 
-        if parent_profile.is_custom() {
-            bail!(
-                "profile can inherit from `dev` or `release` only, found `{}`",
-                parent_profile.as_str()
-            );
-        }
+        Self::validate_profile_inheritance(&profile, &parent_profile)?;
 
         let parent_default = TomlProfile::default_for_builtin_profile(&parent_profile);
         let parent_definition = all_toml_profiles
@@ -1656,7 +1656,10 @@ impl TomlManifest {
         Ok(profile)
     }
 
-    fn verify_toml_cairo_section(profile_definition: &TomlProfile) -> Result<()> {
+    fn verify_toml_cairo_section(
+        profile: &Profile,
+        profile_definition: &TomlProfile,
+    ) -> std::result::Result<(), ManifestSemanticError> {
         let Some(cairo) = &profile_definition.cairo else {
             return Ok(());
         };
@@ -1667,11 +1670,20 @@ impl TomlManifest {
                 .as_ref()
                 .is_some_and(|inlining_strategy| inlining_strategy != &InliningStrategy::Avoid)
         {
-            bail!(formatdoc! {r#"
-                inlining-strategy field is set but its effects are overriden by skip-optimizations = true
-                if you want to skip compiler optimizations, unset the inlining-strategy or explicitly set it to "avoid"
-                "#,
-            })
+            return Err(CairoInliningStrategyConflict::new(profile.as_str()).into());
+        }
+
+        Ok(())
+    }
+
+    fn validate_profile_inheritance(
+        profile: &Profile,
+        parent_profile: &Profile,
+    ) -> std::result::Result<(), ManifestSemanticError> {
+        if parent_profile.is_custom() {
+            return Err(
+                ProfileInheritanceInvalid::new(profile.as_str(), parent_profile.as_str()).into(),
+            );
         }
 
         Ok(())

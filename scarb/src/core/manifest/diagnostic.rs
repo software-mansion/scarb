@@ -69,8 +69,10 @@ pub enum ManifestDiagnosticAnchor {
         field: Option<&'static str>,
     },
     /// A profile section or field, e.g. `[profile.release].inherits`.
+    /// `sub_table` allows targeting a nested sub-table, e.g. `Some("cairo")` resolves `[profile.release.cairo]`.
     Profile {
         name: String,
+        sub_table: Option<&'static str>,
         field: Option<&'static str>,
     },
     /// The root `[patch]` section itself.
@@ -115,8 +117,21 @@ impl ManifestDiagnosticAnchor {
     pub fn profile(name: impl Into<String>) -> Self {
         Self::Profile {
             name: name.into(),
+            sub_table: None,
             field: None,
         }
+    }
+
+    /// Refines the anchor to point at a nested sub-table within the profile,
+    /// e.g. `.with_sub_table("cairo")` targets `[profile.<name>.cairo]`.
+    pub fn with_sub_table(mut self, sub: &'static str) -> Self {
+        match &mut self {
+            Self::Profile { sub_table, .. } => {
+                *sub_table = Some(sub);
+            }
+            _ => panic!("with_sub_table is only valid for Profile anchors"),
+        }
+        self
     }
 
     /// Targets the `[patch]` section (or its first child if the header is implicit).
@@ -242,12 +257,19 @@ pub fn resolve_anchor_in_doc(
             table_at_path(root, table.path())
                 .and_then(|table| table_entry_span(table, name.as_str(), *field))
         }
-        ManifestDiagnosticAnchor::Profile { name, field } => {
-            table_at_path(root, &["profile", name.as_str()]).and_then(|table| {
-                field
-                    .and_then(|field| key_or_item_span(table, field))
-                    .or_else(|| table.span().map(ManifestDiagnosticSpan::from))
-            })
+        ManifestDiagnosticAnchor::Profile {
+            name,
+            sub_table,
+            field,
+        } => {
+            let profile_table = table_at_path(root, &["profile", name.as_str()])?;
+            let table = match sub_table {
+                Some(sub) => table_at_path(profile_table, &[sub])?,
+                None => profile_table,
+            };
+            field
+                .and_then(|field| key_or_item_span(table, field))
+                .or_else(|| table.span().map(ManifestDiagnosticSpan::from))
         }
         ManifestDiagnosticAnchor::PatchRoot => {
             let patch = table_at_path(root, &["patch"])?;

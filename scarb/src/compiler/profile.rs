@@ -1,8 +1,23 @@
-use anyhow::{Result, ensure};
+use anyhow::Result;
 use scarb_ui::args::ProfileSpec;
 use serde::{Deserialize, Serialize};
 use smol_str::{SmolStr, ToSmolStr};
 use std::fmt;
+use thiserror::Error;
+
+#[derive(Clone, Debug, Error, Eq, PartialEq)]
+pub enum ProfileValidationError {
+    #[error("cannot use empty string as profile name")]
+    EmptyName,
+    #[error("profile name `{name}` is not allowed")]
+    ReservedName { name: String },
+    #[error("profile name cannot start with `..` prefix")]
+    StartsWithDotDot,
+    #[error(
+        "profile name `{name}` is not allowed, only alphanumeric characters and `-` can be used"
+    )]
+    InvalidCharacters { name: String },
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
 pub struct Profile(SmolStr);
@@ -13,28 +28,27 @@ impl Profile {
 
     /// Create a new ` Profile ` struct.
     /// Validates a profile name to ensure it can be used as a valid subdirectory name.
-    pub fn try_new(name: SmolStr) -> Result<Self> {
-        ensure!(
-            name.as_str() != "",
-            "cannot use empty string as profile name"
-        );
-        ensure!(
-            ![
-                "_", "package", "build", "debug", "doc", "execute", "prove", "test"
-            ]
-            .contains(&name.as_str()),
-            format!("profile name `{name}` is not allowed")
-        );
-        ensure!(
-            !name.to_string().starts_with(".."),
-            "profile name cannot start with `..` prefix"
-        );
-        ensure!(
-            name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-'),
-            format!(
-                "profile name `{name}` is not allowed, only alphanumeric characters and `-` can be used"
-            )
-        );
+    pub fn try_new(name: SmolStr) -> Result<Self, ProfileValidationError> {
+        if name.as_str().is_empty() {
+            return Err(ProfileValidationError::EmptyName);
+        }
+        if [
+            "_", "package", "build", "debug", "doc", "execute", "prove", "test",
+        ]
+        .contains(&name.as_str())
+        {
+            return Err(ProfileValidationError::ReservedName {
+                name: name.to_string(),
+            });
+        }
+        if name.as_str().starts_with("..") {
+            return Err(ProfileValidationError::StartsWithDotDot);
+        }
+        if !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+            return Err(ProfileValidationError::InvalidCharacters {
+                name: name.to_string(),
+            });
+        }
         Ok(Self(name))
     }
 
