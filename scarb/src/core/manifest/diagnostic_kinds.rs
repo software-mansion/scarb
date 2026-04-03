@@ -1,7 +1,9 @@
 use crate::compiler::ProfileValidationError;
 use crate::core::PackageName;
+use camino::Utf8PathBuf;
 use thiserror::Error;
 use toml_edit::Table;
+use url::ParseError as UrlParseError;
 
 use super::ManifestDiagnosticData;
 use super::diagnostic::resolve_anchor_in_doc;
@@ -35,6 +37,12 @@ pub enum ManifestSemanticError {
     DependencyGitPathAmbiguous(#[from] DependencyGitPathAmbiguous),
     #[error(transparent)]
     DependencyGitRegistryAmbiguous(#[from] DependencyGitRegistryAmbiguous),
+    #[error(transparent)]
+    PatchNotInWorkspaceRoot(#[from] PatchNotInWorkspaceRoot),
+    #[error(transparent)]
+    PatchSourceConflict(#[from] PatchSourceConflict),
+    #[error(transparent)]
+    PatchSourceInvalidUrl(#[from] PatchSourceInvalidUrl),
 }
 
 impl ManifestSemanticError {
@@ -68,6 +76,9 @@ impl ManifestSemanticError {
             Self::DependencySourceMissing(e) => Some(e.primary_anchor()),
             Self::DependencyGitPathAmbiguous(e) => Some(e.primary_anchor()),
             Self::DependencyGitRegistryAmbiguous(e) => Some(e.primary_anchor()),
+            Self::PatchNotInWorkspaceRoot(e) => Some(e.primary_anchor()),
+            Self::PatchSourceConflict(e) => Some(e.primary_anchor()),
+            Self::PatchSourceInvalidUrl(e) => Some(e.primary_anchor()),
         }
     }
 
@@ -77,6 +88,7 @@ impl ManifestSemanticError {
             Self::DependencyGitReferenceAmbiguous(e) => e.related_anchors(),
             Self::DependencyGitPathAmbiguous(e) => e.related_anchors(),
             Self::DependencyGitRegistryAmbiguous(e) => e.related_anchors(),
+            Self::PatchSourceConflict(e) => e.related_anchors(),
             _ => vec![],
         }
     }
@@ -305,5 +317,79 @@ impl DependencyGitRegistryAmbiguous {
             message: "conflicts with this field".to_string(),
             anchor: self.anchor.clone().with_field("registry"),
         }]
+    }
+}
+
+// ── Patch errors ──────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Error)]
+#[error(
+    "the `[patch]` section can only be defined in the workspace root manifests\n\
+     section found in manifest: `{manifest_path}`\n\
+     workspace root manifest: `{workspace_manifest_path}`"
+)]
+pub struct PatchNotInWorkspaceRoot {
+    pub manifest_path: Utf8PathBuf,
+    pub workspace_manifest_path: Utf8PathBuf,
+}
+
+impl PatchNotInWorkspaceRoot {
+    pub fn new(manifest_path: Utf8PathBuf, workspace_manifest_path: Utf8PathBuf) -> Self {
+        Self {
+            manifest_path,
+            workspace_manifest_path,
+        }
+    }
+
+    fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
+        ManifestDiagnosticAnchor::patch_root()
+    }
+}
+
+#[derive(Debug, Clone, Error)]
+#[error("the `[patch]` section cannot specify both `{source_a}` and `{source_b}`")]
+pub struct PatchSourceConflict {
+    pub source_a: String,
+    pub source_b: String,
+}
+
+impl PatchSourceConflict {
+    pub fn new(source_a: impl Into<String>, source_b: impl Into<String>) -> Self {
+        Self {
+            source_a: source_a.into(),
+            source_b: source_b.into(),
+        }
+    }
+
+    fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
+        ManifestDiagnosticAnchor::patch_source(self.source_a.to_string())
+    }
+
+    fn related_anchors(&self) -> Vec<ManifestRelatedAnchor> {
+        vec![ManifestRelatedAnchor {
+            message: "conflicts with this source".to_string(),
+            anchor: ManifestDiagnosticAnchor::patch_source(self.source_b.to_string()),
+        }]
+    }
+}
+
+#[derive(Debug, Clone, Error)]
+#[error("failed to parse `{raw_source}` as patch source url")]
+pub struct PatchSourceInvalidUrl {
+    pub raw_source: String,
+    #[source]
+    pub cause: UrlParseError,
+}
+
+impl PatchSourceInvalidUrl {
+    pub fn new(raw_source: impl Into<String>, cause: UrlParseError) -> Self {
+        Self {
+            raw_source: raw_source.into(),
+            cause,
+        }
+    }
+
+    fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
+        ManifestDiagnosticAnchor::patch_source(self.raw_source.to_string())
     }
 }
