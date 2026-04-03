@@ -847,7 +847,7 @@ fn invalid_resolved_cairo_section() {
         error: failed to parse manifest at: [..]/Scarb.toml
 
         Caused by:
-            inlining-strategy field is set but its effects are overriden by skip-optimizations = true
+            inlining-strategy field is set but its effects are overridden by skip-optimizations = true
             if you want to skip compiler optimizations, unset the inlining-strategy or explicitly set it to "avoid"
         "#});
 }
