@@ -1,5 +1,5 @@
 use crate::compiler::ProfileValidationError;
-use crate::core::PackageName;
+use crate::core::{PackageName, TargetKind};
 use camino::Utf8PathBuf;
 use thiserror::Error;
 use toml_edit::Table;
@@ -43,6 +43,14 @@ pub enum ManifestSemanticError {
     PatchSourceConflict(#[from] PatchSourceConflict),
     #[error(transparent)]
     PatchSourceInvalidUrl(#[from] PatchSourceInvalidUrl),
+    #[error(transparent)]
+    ReadmePathInvalid(#[from] ReadmePathInvalid),
+    #[error(transparent)]
+    LicensePathInvalid(#[from] LicensePathInvalid),
+    #[error(transparent)]
+    DuplicateDefaultTargetDefinition(#[from] DuplicateDefaultTargetDefinition),
+    #[error(transparent)]
+    DuplicateNamedTargetDefinition(#[from] DuplicateNamedTargetDefinition),
 }
 
 impl ManifestSemanticError {
@@ -79,6 +87,10 @@ impl ManifestSemanticError {
             Self::PatchNotInWorkspaceRoot(e) => Some(e.primary_anchor()),
             Self::PatchSourceConflict(e) => Some(e.primary_anchor()),
             Self::PatchSourceInvalidUrl(e) => Some(e.primary_anchor()),
+            Self::ReadmePathInvalid(e) => e.primary_anchor(),
+            Self::LicensePathInvalid(e) => e.primary_anchor(),
+            Self::DuplicateDefaultTargetDefinition(e) => Some(e.primary_anchor()),
+            Self::DuplicateNamedTargetDefinition(e) => Some(e.primary_anchor()),
         }
     }
 
@@ -391,5 +403,95 @@ impl PatchSourceInvalidUrl {
 
     fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
         ManifestDiagnosticAnchor::patch_source(self.raw_source.to_string())
+    }
+}
+
+// ── File-path errors ──────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Error)]
+#[error("{message}")]
+pub struct ReadmePathInvalid {
+    pub message: String,
+    pub anchor: Option<ManifestDiagnosticAnchor>,
+}
+
+impl ReadmePathInvalid {
+    pub fn new(message: impl Into<String>, anchor: Option<ManifestDiagnosticAnchor>) -> Self {
+        Self {
+            message: message.into(),
+            anchor,
+        }
+    }
+
+    fn primary_anchor(&self) -> Option<ManifestDiagnosticAnchor> {
+        self.anchor.clone()
+    }
+}
+
+#[derive(Debug, Clone, Error)]
+#[error("{message}")]
+pub struct LicensePathInvalid {
+    pub message: String,
+    pub anchor: Option<ManifestDiagnosticAnchor>,
+}
+
+impl LicensePathInvalid {
+    pub fn new(message: impl Into<String>, anchor: Option<ManifestDiagnosticAnchor>) -> Self {
+        Self {
+            message: message.into(),
+            anchor,
+        }
+    }
+
+    fn primary_anchor(&self) -> Option<ManifestDiagnosticAnchor> {
+        self.anchor.clone()
+    }
+}
+
+// ── Target errors ─────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Error)]
+#[error(
+    "manifest contains duplicate target definitions `{kind}`, \
+     consider explicitly naming targets with the `name` field"
+)]
+pub struct DuplicateDefaultTargetDefinition {
+    pub kind: TargetKind,
+    pub name: String,
+}
+
+impl DuplicateDefaultTargetDefinition {
+    pub fn new(kind: TargetKind, name: impl Into<String>) -> Self {
+        Self {
+            kind,
+            name: name.into(),
+        }
+    }
+
+    fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
+        ManifestDiagnosticAnchor::target(self.kind.clone(), self.name.clone())
+    }
+}
+
+#[derive(Debug, Clone, Error)]
+#[error(
+    "manifest contains duplicate target definitions `{kind} ({name})`, \
+     use different target names to resolve the conflict"
+)]
+pub struct DuplicateNamedTargetDefinition {
+    pub kind: TargetKind,
+    pub name: String,
+}
+
+impl DuplicateNamedTargetDefinition {
+    pub fn new(kind: TargetKind, name: impl Into<String>) -> Self {
+        Self {
+            kind,
+            name: name.into(),
+        }
+    }
+
+    fn primary_anchor(&self) -> ManifestDiagnosticAnchor {
+        ManifestDiagnosticAnchor::target(self.kind.clone(), self.name.clone())
     }
 }
