@@ -9,10 +9,10 @@ use crate::core::manifest::target_defaults::{
 use crate::core::manifest::{
     CairoInliningStrategyConflict, DependencyGitPathAmbiguous, DependencyGitRefWithoutGit,
     DependencyGitReferenceAmbiguous, DependencyGitRegistryAmbiguous, DependencySourceMissing,
-    DependencyWorkspaceNotFound, ManifestDependency, ManifestDependencyTable,
+    DependencyWorkspaceNotFound, LicensePathInvalid, ManifestDependency, ManifestDependencyTable,
     ManifestDiagnosticAnchor, ManifestMetadata, ManifestSemanticError, PatchNotInWorkspaceRoot,
     PatchSourceConflict, PatchSourceInvalidUrl, ProfileInheritanceInvalid, ProfileNameInvalid,
-    Summary, Target,
+    ReadmePathInvalid, Summary, Target,
 };
 use crate::core::package::PackageId;
 use crate::core::registry::{DEFAULT_REGISTRY_INDEX, DEFAULT_REGISTRY_INDEX_PATCH_SOURCE};
@@ -346,7 +346,12 @@ impl PackageInheritableFields {
     get_field!(edition, Edition);
 
     pub fn readme(&self, workspace_root: &Utf8Path, package_root: &Utf8Path) -> Result<PathOrBool> {
-        let Ok(Some(readme)) = readme_for_package(workspace_root, self.readme.as_ref()) else {
+        let readme = readme_for_package(
+            workspace_root,
+            self.readme.as_ref(),
+            Some(ManifestDiagnosticAnchor::workspace_package_field("readme")),
+        )?;
+        let Some(readme) = readme else {
             bail!("`workspace.package.readme` was not defined");
         };
         diff_utf8_paths(
@@ -1276,14 +1281,29 @@ impl TomlManifest {
                 .clone()
                 .map(|mw| match mw {
                     MaybeWorkspace::Defined(license_rel_path) => {
-                        abs_canonical_path("license", manifest_path, &license_rel_path)
+                        let anchor = ManifestDiagnosticAnchor::package_field("license-file");
+                        abs_canonical_path("license", manifest_path, &license_rel_path).map_err(
+                            |message| {
+                                let err: ManifestSemanticError =
+                                    LicensePathInvalid::new(message.to_string(), Some(anchor))
+                                        .into();
+                                err.into()
+                            },
+                        )
                     }
                     MaybeWorkspace::Workspace(_) => mw.resolve("license_file", || {
+                        let anchor =
+                            ManifestDiagnosticAnchor::workspace_package_field("license-file");
                         abs_canonical_path(
                             "license",
                             workspace_manifest_path,
                             &inheritable_package.license_file()?,
                         )
+                        .map_err(|message| {
+                            let err: ManifestSemanticError =
+                                LicensePathInvalid::new(message.to_string(), Some(anchor)).into();
+                            err.into()
+                        })
                     }),
                 })
                 .transpose()?,
@@ -1299,6 +1319,7 @@ impl TomlManifest {
                     })
                     .transpose()?
                     .as_ref(),
+                Some(ManifestDiagnosticAnchor::package_field("readme")),
             )?,
             repository: package
                 .repository
@@ -1889,6 +1910,7 @@ fn merge_profile(target: &TomlProfile, source: &TomlProfile) -> Result<TomlProfi
 pub fn readme_for_package(
     package_root: &Utf8Path,
     readme: Option<&PathOrBool>,
+    anchor: Option<ManifestDiagnosticAnchor>,
 ) -> Result<Option<Utf8PathBuf>> {
     let file_name = match readme {
         None => default_readme_from_package_root(package_root.parent().unwrap()),
@@ -1901,7 +1923,18 @@ pub fn readme_for_package(
     };
 
     file_name
-        .map(|file_name| abs_canonical_path("readme", package_root, file_name))
+        .map(|file_name| {
+            abs_canonical_path("readme", package_root, file_name).map_err(|message| {
+                match anchor.clone() {
+                    Some(a) => {
+                        let err: ManifestSemanticError =
+                            ReadmePathInvalid::new(message.to_string(), Some(a)).into();
+                        err.into()
+                    }
+                    None => message,
+                }
+            })
+        })
         .transpose()
 }
 

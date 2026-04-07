@@ -88,7 +88,7 @@ pub enum ManifestDiagnosticAnchor {
     /// A target table or field, e.g. `[[target.starknet-contract]]` or its `name`.
     Target {
         kind: TargetKind,
-        name: Option<String>,
+        name: String,
         field: Option<&'static str>,
     },
 }
@@ -156,7 +156,7 @@ impl ManifestDiagnosticAnchor {
     }
 
     /// Targets a target section, e.g. `[[lib]]` or `[[test]]`.
-    pub fn target(kind: TargetKind, name: Option<String>) -> Self {
+    pub fn target(kind: TargetKind, name: String) -> Self {
         Self::Target {
             kind,
             name,
@@ -314,24 +314,16 @@ pub fn resolve_anchor_in_doc(
                 push_item_candidates(target_table.get(kind.as_str()), &mut candidates);
             }
 
-            let section = if let Some(name) = name.as_deref() {
-                candidates
-                    .iter()
-                    .copied()
-                    .find(|table| table.get("name").and_then(Item::as_str) == Some(name))
-                    .or_else(|| {
-                        field
-                            .is_none()
-                            .then(|| candidates.first().copied())
-                            .flatten()
-                    })?
-            } else {
-                // Example: `[test]`; if there is only one candidate of this kind, it can still
-                // be highlighted even without an explicit target name.
-                (candidates.len() == 1)
-                    .then(|| candidates.first().copied())
-                    .flatten()?
-            };
+            let section = candidates
+                .iter()
+                .copied()
+                .find(|table| table.get("name").and_then(Item::as_str) == Some(name.as_str()))
+                .or_else(|| {
+                    field
+                        .is_none()
+                        .then(|| candidates.first().copied())
+                        .flatten()
+                })?;
 
             if let Some(field) = field {
                 return key_or_item_span(section, field);
@@ -339,8 +331,7 @@ pub fn resolve_anchor_in_doc(
 
             // For named `[[target.<kind>]]` entries, highlight the `name` field instead of the
             // whole table, e.g. `[[target.executable]] name = "secondary"`.
-            if let Some(name) = name.as_deref()
-                && section.get("name").and_then(Item::as_str) == Some(name)
+            if section.get("name").and_then(Item::as_str) == Some(name.as_str())
                 && let Some(name_span) = key_or_item_span(section, "name")
             {
                 return Some(name_span);
