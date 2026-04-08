@@ -891,7 +891,7 @@ dependencies = [
  "indoc",
  "rayon",
  "salsa",
- "semver 1.0.27",
+ "semver 1.0.28",
  "smol_str",
  "thiserror 2.0.18",
 ]
@@ -1031,7 +1031,7 @@ dependencies = [
  "itertools 0.14.0",
  "path-clean",
  "salsa",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde",
  "smol_str",
  "toml 1.1.0+spec-1.1.0",
@@ -1625,7 +1625,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "salsa",
- "semver 1.0.27",
+ "semver 1.0.28",
  "tracing",
 ]
 
@@ -1677,7 +1677,7 @@ dependencies = [
  "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "scarb-proc-macro-server-types 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -1751,7 +1751,7 @@ checksum = "2c6b8354ca32d91aa3ebfb2a8e5469c39d0e7155e51badf83838987a4cd0979f"
 dependencies = [
  "anyhow",
  "clap",
- "semver 1.0.27",
+ "semver 1.0.28",
  "toml_edit 0.23.10+spec-1.0.0",
  "xshell",
 ]
@@ -1891,7 +1891,7 @@ checksum = "ef987d17b0a113becdd19d3d0022d04d7ef41f9efe4f3fb63ac44ba61df3ade9"
 dependencies = [
  "camino",
  "cargo-platform",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
@@ -6739,7 +6739,7 @@ version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
 dependencies = [
- "semver 1.0.27",
+ "semver 1.0.28",
 ]
 
 [[package]]
@@ -6970,7 +6970,7 @@ dependencies = [
  "scarb-test-support",
  "scarb-ui",
  "schemars",
- "semver 1.0.27",
+ "semver 1.0.28",
  "semver-pubgrub",
  "serde",
  "serde-untagged",
@@ -7012,7 +7012,7 @@ name = "scarb-build-metadata"
 version = "2.16.1"
 dependencies = [
  "cargo_metadata",
- "semver 1.0.27",
+ "semver 1.0.28",
 ]
 
 [[package]]
@@ -7192,7 +7192,7 @@ dependencies = [
  "camino",
  "derive_builder",
  "scarb-test-support",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde",
  "serde_json",
  "snapbox",
@@ -7206,7 +7206,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0a1448d2575cf5f127867379edeb64d0565a69207996a1310a7280c10314064"
 dependencies = [
  "camino",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
@@ -7309,7 +7309,7 @@ dependencies = [
  "scarb-fs-utils",
  "scarb-proc-macro-server-types 0.5.0",
  "scarb-ui",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde",
  "serde_json",
  "sha2 0.11.0",
@@ -7446,9 +7446,9 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "1.0.27"
+version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d767eb0aabc880b29956c35734170f26ed551a859dbd361d140cdbeca61ab1e2"
+checksum = "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd"
 dependencies = [
  "serde",
  "serde_core",
@@ -7469,7 +7469,7 @@ version = "0.1.0"
 source = "git+https://github.com/software-mansion-labs/semver-pubgrub.git#6c78141d940cda6d8e69aea794c2bf30cc3402df"
 dependencies = [
  "pubgrub",
- "semver 1.0.27",
+ "semver 1.0.28",
 ]
 
 [[package]]
@@ -9428,7 +9428,7 @@ dependencies = [
  "bitflags 2.10.0",
  "hashbrown 0.15.5",
  "indexmap",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde",
 ]
 
@@ -9441,7 +9441,7 @@ dependencies = [
  "bitflags 2.10.0",
  "hashbrown 0.15.5",
  "indexmap",
- "semver 1.0.27",
+ "semver 1.0.28",
 ]
 
 [[package]]
@@ -9485,7 +9485,7 @@ dependencies = [
  "pulley-interpreter",
  "rayon",
  "rustix 1.1.4",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde",
  "serde_derive",
  "serde_json",
@@ -9528,7 +9528,7 @@ dependencies = [
  "object",
  "postcard",
  "rustc-demangle",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde",
  "serde_derive",
  "smallvec",
@@ -10297,7 +10297,7 @@ dependencies = [
  "id-arena",
  "indexmap",
  "log",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde",
  "serde_derive",
  "serde_json",
@@ -10315,7 +10315,7 @@ dependencies = [
  "id-arena",
  "indexmap",
  "log",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde",
  "serde_derive",
  "serde_json",
@@ -10382,7 +10382,7 @@ dependencies = [
  "anyhow",
  "cairo-toolchain-xtasks",
  "clap",
- "semver 1.0.27",
+ "semver 1.0.28",
  "serde_json",
  "time",
  "walkdir",
