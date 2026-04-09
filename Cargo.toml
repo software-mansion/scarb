@@ -85,8 +85,8 @@ cairo-lang-syntax = "2.17.0"
 cairo-lang-test-plugin = "2.17.0"
 cairo-lang-test-runner = "2.17.0"
 cairo-lang-utils = { version = "2.17.0", features = ["tracing"] }
-cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "699dd1edaa9b98dbc980d09eeb0843329e546560" }
-cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "8155df69a76e13650a4fbfefc694ee200c601bb8" }
+cairo-language-server = "2.17.0"
+cairo-lint = "2.17.0"
 cairo-program-runner-lib = "1.2.2"
 cairo-vm = "3.2.0"
 camino = { version = "1", features = ["serde1"] }
