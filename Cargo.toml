@@ -126,7 +126,7 @@ pubgrub = { git = "https://github.com/software-mansion-labs/pubgrub.git", branch
 quote = "1"
 ra-ap-rustc_parse_format = "0"
 ra_ap_toolchain = "0"
-rayon = "1.11.0"
+rayon = "1.12.0"
 redb = "2.6.3"
 salsa = "0.26.0"
 schemars = { version = "1.2.1", features = ["smol_str03"] }
