@@ -10,13 +10,13 @@ use crate::core::{Target, Workspace};
 use anyhow::{Result, anyhow};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
-use cairo_lang_defs::db::{DefsGroup, defs_group_input};
+use cairo_lang_defs::db::{DefsGroup, set_inline_macro_plugin_overrides_for_input, set_macro_plugin_overrides_for_input};
 use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId, ModuleId};
 use cairo_lang_defs::plugin::MacroPlugin;
-use cairo_lang_filesystem::db::{CrateIdentifier, CrateSettings, DependencySettings, FilesGroup};
+use cairo_lang_filesystem::db::{CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, override_file_content_for_input};
 use cairo_lang_filesystem::ids::{CrateInput, CrateLongId, SmolStrId};
-use cairo_lang_filesystem::override_file_content;
-use cairo_lang_semantic::db::{SemanticGroup, semantic_group_input};
+use cairo_lang_semantic::db::SemanticGroup;
+use cairo_lang_semantic::db::set_analyzer_plugin_overrides_for_input;
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
@@ -113,42 +113,35 @@ pub fn set_override_crate_plugins_from_suite(
     crate_input: CrateInput,
     plugins: PluginSuite,
 ) {
-    let mut overrides = db.macro_plugin_overrides_input().clone();
-    overrides.insert(
+    set_macro_plugin_overrides_for_input(
+        db,
         crate_input.clone(),
-        plugins.plugins.into_iter().map(MacroPluginLongId).collect(),
+        Some(plugins.plugins.into_iter().map(MacroPluginLongId).collect()),
     );
-    defs_group_input(db)
-        .set_macro_plugin_overrides(db)
-        .to(Some(overrides));
 
-    let mut overrides = db.analyzer_plugin_overrides_input().clone();
-    overrides.insert(
+    set_analyzer_plugin_overrides_for_input(
+        db,
         crate_input.clone(),
-        plugins
-            .analyzer_plugins
-            .into_iter()
-            .map(AnalyzerPluginLongId)
-            .collect(),
+        Some(
+            plugins
+                .analyzer_plugins
+                .into_iter()
+                .map(AnalyzerPluginLongId)
+                .collect(),
+        ),
     );
-    semantic_group_input(db)
-        .set_analyzer_plugin_overrides(db)
-        .to(Some(overrides));
 
-    let mut overrides = db.inline_macro_plugin_overrides_input().clone();
-    overrides.insert(
+    set_inline_macro_plugin_overrides_for_input(
+        db,
         crate_input,
-        Arc::new(
+        Some(Arc::new(
             plugins
                 .inline_macro_plugins
                 .into_iter()
                 .map(|(key, value)| (key, InlineMacroExprPluginLongId(value)))
                 .collect(),
-        ),
+        )),
     );
-    defs_group_input(db)
-        .set_inline_macro_plugin_overrides(db)
-        .to(Some(overrides));
 }
 
 /// Generates a wrapper lib file for appropriate compilation units.
@@ -202,7 +195,8 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
         let module_id = ModuleId::CrateRoot(crate_id);
         let file_id = db.module_main_file(module_id).unwrap();
         // Inject virtual lib file wrapper.
-        override_file_content!(db, file_id, Some(Arc::from(content.as_str())));
+        let file_input = db.file_input(file_id).clone();
+        override_file_content_for_input(db, file_input, Some(Arc::from(content.as_str())));
     }
 
     Ok(())
