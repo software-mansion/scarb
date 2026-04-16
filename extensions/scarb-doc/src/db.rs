@@ -1,17 +1,19 @@
 use cairo_lang_compiler::project::{ProjectConfig, update_crate_roots_from_project_config};
-use cairo_lang_defs::db::{DefsGroup, defs_group_input, init_defs_group, init_external_files};
+use cairo_lang_defs::db::{
+    init_defs_group, init_external_files, set_inline_macro_plugin_overrides_for_input,
+    set_macro_plugin_overrides_for_input,
+};
 use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{FilesGroup, init_files_group};
 use cairo_lang_filesystem::ids::{CrateInput, CrateLongId, SmolStrId};
 use cairo_lang_semantic::db::{
-    PluginSuiteInput, SemanticGroup, init_semantic_group, semantic_group_input,
+    PluginSuiteInput, SemanticGroup, init_semantic_group, set_analyzer_plugin_overrides_for_input,
 };
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::inline_macros::get_default_plugin_suite;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_starknet::starknet_plugin_suite;
-use salsa::Setter;
 use std::sync::Arc;
 
 use salsa;
@@ -77,42 +79,35 @@ impl ScarbDocDatabase {
         crate_input: CrateInput,
         plugins: PluginSuite,
     ) {
-        let mut overrides = self.macro_plugin_overrides_input().clone();
-        overrides.insert(
+        set_macro_plugin_overrides_for_input(
+            self,
             crate_input.clone(),
-            plugins.plugins.into_iter().map(MacroPluginLongId).collect(),
+            Some(plugins.plugins.into_iter().map(MacroPluginLongId).collect()),
         );
-        defs_group_input(self)
-            .set_macro_plugin_overrides(self)
-            .to(Some(overrides));
 
-        let mut overrides = self.analyzer_plugin_overrides_input().clone();
-        overrides.insert(
+        set_analyzer_plugin_overrides_for_input(
+            self,
             crate_input.clone(),
-            plugins
-                .analyzer_plugins
-                .into_iter()
-                .map(AnalyzerPluginLongId)
-                .collect(),
+            Some(
+                plugins
+                    .analyzer_plugins
+                    .into_iter()
+                    .map(AnalyzerPluginLongId)
+                    .collect(),
+            ),
         );
-        semantic_group_input(self)
-            .set_analyzer_plugin_overrides(self)
-            .to(Some(overrides));
 
-        let mut overrides = self.inline_macro_plugin_overrides_input().clone();
-        overrides.insert(
+        set_inline_macro_plugin_overrides_for_input(
+            self,
             crate_input,
-            Arc::new(
+            Some(Arc::new(
                 plugins
                     .inline_macro_plugins
                     .into_iter()
                     .map(|(key, value)| (key, InlineMacroExprPluginLongId(value)))
                     .collect(),
-            ),
+            )),
         );
-        defs_group_input(self)
-            .set_inline_macro_plugin_overrides(self)
-            .to(Some(overrides));
     }
 }
 
