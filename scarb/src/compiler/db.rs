@@ -15,12 +15,11 @@ use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId, Modul
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, override_file_content_for_input};
 use cairo_lang_filesystem::ids::{CrateInput, CrateLongId, SmolStrId};
-use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::db::set_analyzer_plugin_overrides_for_input;
 use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
-use salsa::{Database, Setter};
+use salsa::Database;
 use smol_str::SmolStr;
 use std::collections::HashMap;
 use std::path::PathBuf;

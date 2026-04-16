@@ -19,12 +19,11 @@ use cairo_lang_filesystem::{
     ids::{CrateInput, CrateLongId, SmolStrId},
 };
 use cairo_lang_semantic::{
-    db::{SemanticGroup, set_analyzer_plugin_overrides_for_input},
+    db::set_analyzer_plugin_overrides_for_input,
     ids::AnalyzerPluginLongId,
     plugin::PluginSuite,
 };
 use cairo_lint::LinterAnalysisDatabase;
-use salsa::Setter;
 use std::{collections::HashMap, sync::Arc};
 
 /// Keep it in sync with [crate::compiler::db::build_scarb_root_database].
