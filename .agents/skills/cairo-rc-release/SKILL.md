@@ -101,6 +101,8 @@ Do not continue to the next mutating step until the user approves it.
 - Do not hand-edit `[patch.crates-io]`.
 - Verify with `cargo metadata --format-version 1` and a clean `cargo check`.
 - Push the same-named release branch and create a PR before asking for any tag or publish step.
+- Once CI is green and the user approves, publish the RC version to crates.io.
+- After publishing, create and push tag `v<version>` (e.g. `v2.18.0-rc.0`) pointing to the release commit.
 
 ### `cairo-lint`
 
@@ -110,6 +112,8 @@ Do not continue to the next mutating step until the user approves it.
 - Do not hand-edit `[patch.crates-io]`.
 - Verify with `cargo metadata --format-version 1` and a clean `cargo check`.
 - Push the same-named release branch and create a PR before asking for any tag or publish step.
+- Once CI is green and the user approves, publish the RC version to crates.io.
+- After publishing, create and push tag `v<version>` (e.g. `v2.18.0-rc.0`) pointing to the release commit.
 
 ### `cairols`
 
@@ -119,12 +123,13 @@ Do not continue to the next mutating step until the user approves it.
 - Do not hand-edit `[patch.crates-io]`.
 - Verify with `cargo metadata --format-version 1` and a clean `cargo check`.
 - Push the same-named release branch and create a PR first.
-- If the repo is tagged, create `v<version>` only after the PR exists, CI is green, and the user approves.
+- Once CI is green and the user approves, publish the RC version to crates.io.
+- After publishing, create and push tag `v<version>` (e.g. `v2.18.0-rc.0`) pointing to the release commit.
 
 ### `scarb`
 
 - Never do the release work on local `main`.
-- Keep the work on the same-named RC branch.
+- Keep the work on the RC-named branch - the convention is to use `release/<version>`.
 - Set `workspace.package.version` to the RC.
 - Use `cargo xtask upgrade cairo <VERSION>` to bump Cairo crates.
 - Use `cargo xtask upgrade cairo-lint <VERSION>` to bump the lint dependency if that xtask exists in the repo.
@@ -135,6 +140,7 @@ Do not continue to the next mutating step until the user approves it.
   - `cargo metadata --format-version 1`
   - `cargo check -p scarb-execute`
 - Push the same-named release branch so the user can open or update the release PR and wait for CI before any later release step.
+- Once CI is green and the user approves, create and push tag `v<version>` (e.g. `v2.18.0-rc.0`) pointing to the release commit.
 
 ## PR And CI Gate
 

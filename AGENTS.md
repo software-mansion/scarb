@@ -10,7 +10,7 @@
 ## Dependency Management
 
 - For upgrading Cairo dependencies from the Cairo repo, use `cargo xtask upgrade cairo`.
-- When upgrading dependencies, never use broad `cargo update`. Only update the specific packages requested using `--precise` and `--package` flags.
+- When upgrading dependencies, never use broad `cargo update` or don't delete the `Cargo.lock`. Only update the specific packages requested using `--precise` and `--package` flags.
 - Do not add or remove dependencies unless explicitly asked.
 - Run `git diff main` after changes and verify only the intended dependencies changed. If unrelated deps appear, revert those specific changes.
 
