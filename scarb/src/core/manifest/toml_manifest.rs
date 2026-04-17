@@ -1095,7 +1095,7 @@ impl TomlManifest {
                         let features = features
                             .clone()
                             .into_iter()
-                            .chain(ws_features.into_iter())
+                            .chain(ws_features)
                             .sorted()
                             .dedup()
                             .collect();
