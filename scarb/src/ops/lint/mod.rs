@@ -370,10 +370,7 @@ fn get_package_compilation_units<'a>(
                 });
 
         // If there is no compilation unit for the package, we skip it.
-        match found_compilation_unit {
-            Some(cu) => Some(vec![cu]),
-            None => None,
-        }
+        found_compilation_unit.map(|cu| vec![cu])
     }?;
 
     if target_names.is_empty() {
