@@ -2,7 +2,7 @@ use std::io::{Seek, SeekFrom};
 
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use camino::Utf8Path;
-use redb::{MultimapTableDefinition, TableDefinition};
+use redb::{MultimapTableDefinition, ReadableDatabase, TableDefinition};
 use semver::Version;
 use tokio::sync::OnceCell;
 use tokio::task::{block_in_place, spawn_blocking};
@@ -277,9 +277,7 @@ impl CacheDatabase {
         fn create(path: &Utf8Path, ui: &Ui) -> Result<redb::Database> {
             // We do need to repair the database in case of corruption, because this is just
             // a cache, and we can always re-download the data from the registry.
-            redb::Builder::new()
-                .set_repair_callback(|s| s.abort())
-                .create(path)
+            redb::Database::create(path)
                 .context("failed to open local registry cache, trying to recreate it")
                 .or_else(|error| {
                     ui.warn_anyhow(&error);
