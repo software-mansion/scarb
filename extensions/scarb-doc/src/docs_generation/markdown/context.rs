@@ -1,6 +1,7 @@
+use crate::doc_test::runner::ExecutionResults;
 use crate::docs_generation::common::{OutputFilesExtension, SummaryIndexMap};
 use crate::docs_generation::markdown::SUMMARY_FILENAME;
-use crate::docs_generation::markdown::traits::WithPath;
+use crate::docs_generation::markdown::traits::WithItemDataCommon;
 use crate::linking::RemoteDocLinkingData;
 use crate::location_links::DocLocationLink;
 use crate::types::crate_type::Crate;
@@ -9,7 +10,7 @@ use cairo_lang_doc::documentable_item::DocumentableItemId;
 use itertools::Itertools;
 use std::collections::HashMap;
 
-pub type IncludedItems<'a, 'db> = HashMap<DocumentableItemId<'db>, &'a dyn WithPath>;
+pub type IncludedItems<'a, 'db> = HashMap<DocumentableItemId<'db>, &'a dyn WithItemDataCommon>;
 
 pub struct MarkdownGenerationContext<'a, 'db> {
     included_items: IncludedItems<'a, 'db>,
@@ -17,6 +18,7 @@ pub struct MarkdownGenerationContext<'a, 'db> {
     pub(crate) files_extension: &'static str,
     /// Data necessary for linking to the remote repository.
     pub remote_linking_data: RemoteDocLinkingData,
+    execution_results: Option<ExecutionResults>,
 }
 
 pub trait Formatting {
@@ -109,6 +111,7 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
         crate_: &'a Crate<'db>,
         format: OutputFilesExtension,
         remote_linking_data: RemoteDocLinkingData,
+        execution_results: Option<ExecutionResults>,
     ) -> Self
     where
         'a: 'db,
@@ -125,6 +128,7 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
             formatting,
             files_extension: format.get_string(),
             remote_linking_data,
+            execution_results,
         }
     }
 
@@ -184,6 +188,10 @@ impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
     pub fn get_header_primitive(&self, header_level: usize, name: &str, full_path: &str) -> String {
         self.formatting
             .header_primitive(header_level, name, full_path)
+    }
+
+    pub fn execution_results(&self) -> Option<&ExecutionResults> {
+        self.execution_results.as_ref()
     }
 }
 
