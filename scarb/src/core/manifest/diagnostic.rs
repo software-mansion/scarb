@@ -1,6 +1,29 @@
 use crate::core::{PackageName, TargetKind};
+use scarb_manifest_schema::FieldPath;
 use serde::Serialize;
 use toml_edit::{Document, Item, Table};
+
+/// The serialized shape of a manifest diagnostic emitted in JSON output mode.
+/// Both the `metadata` command (for parse/semantic errors) and the workspace
+/// loader (for unknown-field warnings) use this type so the JSON output is
+/// uniform.
+#[derive(Serialize)]
+pub struct ManifestDiagnosticMessage {
+    pub kind: ManifestMessageKind,
+    pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub span: Option<ManifestDiagnosticSpan>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub related: Vec<ManifestRelatedLocation>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ManifestMessageKind {
+    ManifestDiagnostic,
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ManifestDiagnosticData {
@@ -91,6 +114,9 @@ pub enum ManifestDiagnosticAnchor {
         name: String,
         field: Option<&'static str>,
     },
+    /// A generic TOML key path, e.g. `["package", "unknown"]`.
+    /// Used for unknown-field warnings resolved by walking the key path directly.
+    RawTomlPath { path: FieldPath },
 }
 
 impl ManifestDiagnosticAnchor {
@@ -338,6 +364,16 @@ pub fn resolve_anchor_in_doc(
             }
 
             section.span().map(ManifestDiagnosticSpan::from)
+        }
+        ManifestDiagnosticAnchor::RawTomlPath { path } => {
+            let (key, parent_segments) = path.split_last()?;
+            let parent_refs: Vec<&str> = parent_segments.iter().map(String::as_str).collect();
+            let table = if parent_segments.is_empty() {
+                root
+            } else {
+                table_at_path(root, &parent_refs)?
+            };
+            key_or_item_span(table, key)
         }
     }
 }

@@ -80,6 +80,7 @@ scarb-extensions-cli = { path = "../utils/scarb-extensions-cli" }
 scarb-fs-utils = { path = "../utils/scarb-fs-utils" }
 scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }
 scarb-proc-macro-server-types = { path = "../utils/scarb-proc-macro-server-types" }
+scarb-manifest-schema = { path = "../utils/scarb-manifest-schema" }
 scarb-stable-hash = { path = "../utils/scarb-stable-hash" }
 scarb-ui = { path = "../utils/scarb-ui" }
 schemars.workspace = true
@@ -134,6 +135,7 @@ libc.workspace = true
 ntest.workspace = true
 predicates.workspace = true
 scarb-test-support = { path = "../utils/scarb-test-support", features = ["scarb-config", "proc-macro-server"] }
+serde_json.workspace = true
 serde_test.workspace = true
 similar-asserts.workspace = true
 snapbox.workspace = true

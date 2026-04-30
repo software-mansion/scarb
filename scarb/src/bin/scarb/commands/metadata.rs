@@ -1,37 +1,17 @@
 use anyhow::Result;
-use serde::Serialize;
 use std::error::Error;
 use toml::de::Error as TomlParseError;
 
 use scarb::core::Config;
 use scarb::core::errors::{ManifestErrorWithSource, ManifestParseError};
-use scarb::core::{ManifestDiagnosticSpan, ManifestRelatedLocation, ManifestSemanticError};
+use scarb::core::{
+    ManifestDiagnosticMessage, ManifestDiagnosticSpan, ManifestMessageKind, ManifestSemanticError,
+};
 use scarb::ops;
 use scarb_ui::OutputFormat;
 use scarb_ui::components::MachineMessage;
 
 use crate::args::MetadataArgs;
-
-#[derive(Serialize)]
-struct ManifestDiagnosticMessage {
-    kind: ManifestMessageKind,
-    message: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    file: Option<String>,
-    /// Semantic span when a typed [`ManifestSemanticError`] produced an anchor;
-    /// falls back to the raw TOML parse-error span for syntax errors.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    span: Option<ManifestDiagnosticSpan>,
-    /// Related diagnostic locations for errors that span multiple TOML positions.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    related: Vec<ManifestRelatedLocation>,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "snake_case")]
-enum ManifestMessageKind {
-    ManifestDiagnostic,
-}
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
