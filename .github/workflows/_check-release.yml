@@ -58,7 +58,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
-      - uses: foundry-rs/setup-snfoundry@v4
+      - uses: foundry-rs/setup-snfoundry@v6
       - run: cargo test --profile=ci --package scarb --test snforge_init new_simple -- --ignored
 
   test-prebuilt-plugins:
