@@ -299,5 +299,5 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: nextest-archive-ubuntu-latest
-      - uses: foundry-rs/setup-snfoundry@v4
+      - uses: foundry-rs/setup-snfoundry@v6
       - run: cargo nextest run --archive-file 'nextest-archive-ubuntu-latest.tar.zst' --run-ignored=all --filterset 'test(new_simple)'
