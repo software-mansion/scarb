@@ -241,7 +241,7 @@ fn supports_runnable_examples_with_starknet_contract() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello_world")
-        .edition("2023_01")
+        .edition("2023_11")
         .manifest_extra(indoc! {r#"
             [lib]
             [[target.starknet-contract]]
@@ -299,7 +299,7 @@ fn supports_runnable_examples_with_only_starknet_contract_target() {
             [..] Running 1 doc examples for `hello_world`
             warn: package `hello_world` has no `lib` target defined
             `hello_world` contents cannot be imported in the doc string definition
-            
+
             warn: hello_world_example_1 v0.1.0 ([..]Scarb.toml) ignoring invalid dependency `hello_world` which is missing a lib or cairo-plugin target
             [..] Compiling hello_world_example_1 v0.1.0 ([..])
             [..]  Finished `dev` profile target(s) in [..]

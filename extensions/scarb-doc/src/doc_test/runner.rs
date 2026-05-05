@@ -169,7 +169,8 @@ impl<'a> TestRunner<'a> {
         }
         // TODO(#3097): add struct with `impl Message` to display this
         if !failed_names.is_empty() {
-            self.ui.print("\nfailures:");
+            self.ui.print(NewLine::new());
+            self.ui.print("failures:");
             for display_name in &failed_names {
                 self.ui.print(format!("    {}", display_name));
             }

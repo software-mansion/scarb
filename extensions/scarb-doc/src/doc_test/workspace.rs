@@ -39,7 +39,12 @@ impl DocTestWorkspace {
             has_lib_target,
         };
         workspace.write_manifest(metadata)?;
-        workspace.write_src(&code_block.content, &metadata.name, ui)?;
+        workspace.write_src(
+            &code_block.content,
+            &metadata.name,
+            metadata.edition.as_deref(),
+            ui,
+        )?;
 
         Ok(workspace)
     }
@@ -86,7 +91,13 @@ impl DocTestWorkspace {
         Ok(())
     }
 
-    fn write_src(&self, content: &str, package_name: &str, ui: &Ui) -> Result<()> {
+    fn write_src(
+        &self,
+        content: &str,
+        package_name: &str,
+        edition: Option<&str>,
+        ui: &Ui,
+    ) -> Result<()> {
         let src_dir = self.root().join("src");
         fs::create_dir_all(&src_dir).context("failed to create src directory")?;
 
@@ -101,6 +112,10 @@ impl DocTestWorkspace {
 
         let is_function_body = db.parse_virtual(&wrapped_body_candidate).is_ok();
 
+        // Global `use` items with glob are not supported in the 2023_01 and 2023_10 editions.
+        // For those editions, inject the import as a local use statement inside fn main instead.
+        let global_use_supported = !matches!(edition, Some("2023_01") | Some("2023_10"));
+
         let package_import = if is_function_body && !self.has_lib_target {
             ui.warn(formatdoc!(
                 r#"
@@ -109,8 +124,10 @@ impl DocTestWorkspace {
             "#
             ));
             String::new()
-        } else {
+        } else if global_use_supported {
             format!("use {package_name}::*;")
+        } else {
+            String::new()
         };
 
         let body = if is_function_body {
