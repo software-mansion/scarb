@@ -182,7 +182,7 @@ impl<'c> RegistryClientCache<'c> {
             .get_or_try_init(|| async {
                 let ui = self.config.ui();
                 let fs = self.config.dirs().registry_dir().into_child("cache");
-                let filename = format!("{}.v1.redb", self.source_id.ident());
+                let filename = format!("{}.v2.redb", self.source_id.ident());
                 let db_path = fs.path_existent()?.join(filename.clone());
                 let lock = fs
                     .advisory_lock(format!("{filename}.lock"), "registry db cache", self.config)
