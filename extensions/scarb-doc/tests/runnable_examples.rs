@@ -505,6 +505,62 @@ fn show_run_output_prints_output_on_success() {
 }
 
 #[test]
+fn workspace_with_root_package_includes_it_as_doc_test_dep() {
+    let root_dir = TempDir::new().unwrap();
+    let pkg_a_dir = root_dir.child("pkg_a");
+
+    let pkg_root = ProjectBuilder::start()
+        .name("pkg_root")
+        .lib_cairo(indoc! {r#"
+            pub fn root_fn() -> u32 {
+                42
+            }
+        "#});
+
+    ProjectBuilder::start()
+        .name("pkg_a")
+        .lib_cairo(indoc! {r#"
+            /// Adds two numbers.
+            /// ```cairo,runnable
+            /// let _ = pkg_root::root_fn();
+            /// add(1_u32, 2_u32);
+            /// ```
+            pub fn add(a: u32, b: u32) -> u32 {
+                a + b
+            }
+        "#})
+        .build(&pkg_a_dir);
+
+    WorkspaceBuilder::start()
+        .add_member("pkg_a")
+        .package(pkg_root)
+        .build(&root_dir);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .arg("--workspace")
+        .arg("--disable-remote-linking")
+        .current_dir(&root_dir)
+        .assert()
+        .success()
+        .stdout_eq(formatdoc! {r#"
+            [..] Running 1 doc examples for `pkg_a`
+            [..] Compiling pkg_a_example_1 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            test pkg_a::add ... ok
+
+            test result: ok. 1 passed; 0 failed; 0 ignored
+            Saving output to: target/doc
+
+            Run the following to see the results: [..]
+            `mdbook serve target/doc`
+            (you will need to have mdbook installed)[..]
+
+            Or build html docs by running `scarb doc --build`
+        "#});
+}
+
+#[test]
 fn workspace_with_multiple_packages_each_has_doc_tests() {
     let root_dir = TempDir::new().unwrap();
     let pkg_a_dir = root_dir.child("pkg_a");

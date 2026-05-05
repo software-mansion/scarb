@@ -11,6 +11,16 @@ use std::fmt::Write;
 use std::fs;
 use tempfile::{TempDir, tempdir};
 
+/// Workspace dependency added to the temporary doc-test package, on top of the package being
+/// documented. Used to make sibling workspace members available when running doc tests for
+/// a workspace.
+#[derive(Debug, Clone)]
+pub struct WorkspaceDependency {
+    pub name: String,
+    /// Path to the directory containing the package's `Scarb.toml`.
+    pub package_dir: Utf8PathBuf,
+}
+
 pub struct DocTestWorkspace {
     _temp_dir: TempDir,
     root: Utf8PathBuf,
@@ -24,6 +34,7 @@ impl DocTestWorkspace {
         index: usize,
         code_block: &CodeBlock,
         has_lib_target: bool,
+        workspace_deps: &[WorkspaceDependency],
         ui: &Ui,
     ) -> Result<Self> {
         let temp_dir = tempdir().context("failed to create temporary workspace")?;
@@ -38,7 +49,8 @@ impl DocTestWorkspace {
             package_name,
             has_lib_target,
         };
-        workspace.write_manifest(metadata)?;
+
+        workspace.write_manifest(metadata, workspace_deps)?;
         workspace.write_src(
             &code_block.content,
             &metadata.name,
@@ -57,7 +69,11 @@ impl DocTestWorkspace {
         self.root.join("Scarb.toml")
     }
 
-    fn write_manifest(&self, metadata: &AdditionalMetadata) -> Result<()> {
+    fn write_manifest(
+        &self,
+        metadata: &AdditionalMetadata,
+        workspace_deps: &[WorkspaceDependency],
+    ) -> Result<()> {
         let package_dir = metadata
             .manifest_path
             .parent()
@@ -71,6 +87,19 @@ impl DocTestWorkspace {
             .clone()
             .unwrap_or_else(|| edition_variant(Edition::latest()));
 
+        let mut workspace_dep_lines = String::new();
+        for dep in workspace_deps {
+            // Skip the package being documented, it's already added above.
+            if dep.name == metadata.name {
+                continue;
+            }
+            writeln!(
+                workspace_dep_lines,
+                r#"{} = {{ path = "{}" }}"#,
+                dep.name, dep.package_dir
+            )?;
+        }
+
         let manifest = formatdoc! {r#"
             [package]
             name = "{name}"
@@ -79,7 +108,7 @@ impl DocTestWorkspace {
 
             [dependencies]
             {dep} = {{ path = "{dep_path}" }}
-            cairo_execute = "{CAIRO_VERSION}"
+            {workspace_dep_lines}cairo_execute = "{CAIRO_VERSION}"
 
             [cairo]
             enable-gas = false
