@@ -128,7 +128,7 @@ ra-ap-rustc_parse_format = "0"
 ra_ap_toolchain = "0"
 rayon = "1.12.0"
 redb = "4.1.0"
-salsa = "0.26.1"
+salsa = "0.26.2"
 schemars = { version = "1.2.1", features = ["smol_str03"] }
 semver = { version = "1", features = ["serde"] }
 semver-pubgrub = { git = "https://github.com/software-mansion-labs/semver-pubgrub.git" }
