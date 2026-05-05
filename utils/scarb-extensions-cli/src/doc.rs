@@ -49,6 +49,10 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub no_run: bool,
 
+    /// Print doc test output even for successful runs.
+    #[arg(long, default_value_t = false)]
+    pub show_run_output: bool,
+
     /// Open the generated documentation in a browser.
     ///
     /// Implies `--build`.

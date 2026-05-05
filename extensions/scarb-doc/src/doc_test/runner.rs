@@ -95,19 +95,26 @@ pub struct TestRunner<'a> {
     metadata: &'a AdditionalMetadata,
     has_lib_target: bool,
     ui: Ui,
+    print_success_output: bool,
     /// Target directory shared between all doc test runs within one package.
     /// This allows speeding up doc tests compilation by sharing incremental caches.
     target_dir: TempDir,
 }
 
 impl<'a> TestRunner<'a> {
-    pub fn new(metadata: &'a AdditionalMetadata, has_lib_target: bool, ui: Ui) -> Result<Self> {
+    pub fn new(
+        metadata: &'a AdditionalMetadata,
+        has_lib_target: bool,
+        print_success_output: bool,
+        ui: Ui,
+    ) -> Result<Self> {
         let target_dir =
             tempdir().context("failed to create directory for doc tests target directory")?;
         Ok(Self {
             metadata,
             has_lib_target,
             ui,
+            print_success_output,
             target_dir,
         })
     }
@@ -143,6 +150,10 @@ impl<'a> TestRunner<'a> {
                         Ok(res) => match res.status {
                             TestStatus::Passed => {
                                 summary.passed += 1;
+                                if self.print_success_output {
+                                    self.ui.print(res.print_output.clone());
+                                    self.ui.print(res.program_output.clone());
+                                }
                                 self.ui
                                     .print(TestResultStatus::Ok.display_for(&display_name));
                                 results.insert(block.id.clone(), res);

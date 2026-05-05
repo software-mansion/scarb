@@ -423,6 +423,43 @@ fn runnable_examples_not_duplicated_for_reexported_items() {
 }
 
 #[test]
+fn show_run_output_prints_output_on_success() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(CODE_WITH_RUNNABLE_CODE_BLOCKS)
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args(["--output-format", "markdown"])
+        .arg("--disable-remote-linking")
+        .arg("--show-run-output")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(formatdoc! {r#"
+            [..] Running 3 doc examples for `hello_world`
+            test hello_world::bar ... ignored
+            test hello_world::foo ... ignored
+            [..] Compiling hello_world_example_1 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            foo
+            bar
+            test hello_world::foo_bar ... ok
+
+            test result: ok. 1 passed; 0 failed; 2 ignored
+            Saving output to: target/doc/hello_world
+
+            Run the following to see the results:[..]
+            `mdbook serve target/doc/hello_world`
+            (you will need to have mdbook installed)
+
+            Or build html docs by running `scarb doc --build`
+        "#});
+}
+
+#[test]
 fn workspace_with_multiple_packages_each_has_doc_tests() {
     let root_dir = TempDir::new().unwrap();
     let pkg_a_dir = root_dir.child("pkg_a");
