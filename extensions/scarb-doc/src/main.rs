@@ -14,6 +14,7 @@ use scarb_doc::metadata::get_target_dir;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 use scarb_doc::{PackageInformation, generate_package_context, generate_package_information};
 use scarb_extensions_cli::doc::{Args, OutputFormat};
+use scarb_metadata::PackageMetadata;
 use scarb_metadata::{MetadataCommand, ScarbCommand};
 use scarb_ui::Ui;
 use scarb_ui::args::ToEnvVars;
@@ -27,6 +28,7 @@ static GLOBAL: MiMalloc = MiMalloc;
 const OUTPUT_DIR: &str = "doc";
 const JSON_OUTPUT_FILENAME: &str = "output.json";
 const LIB_TARGET_KIND: &str = "lib";
+const CAIRO_PLUGIN_TARGET_KIND: &str = "cairo-plugin";
 
 fn main_inner(args: Args, ui: Ui) -> Result<()> {
     ensure!(
@@ -40,6 +42,22 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         .exec()
         .map_err(MetadataCommandError::from)?;
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
+    let metadata_for_packages: Vec<PackageMetadata> = metadata_for_packages
+        .into_iter()
+        .filter(|pm| {
+            let is_cairo_plugin = pm
+                .targets
+                .iter()
+                .any(|target| target.kind == CAIRO_PLUGIN_TARGET_KIND);
+            if is_cairo_plugin {
+                ui.warn(format!(
+                    "skipping `{}`, generating docs for cairo plugins is not supported",
+                    pm.name
+                ));
+            }
+            !is_cairo_plugin
+        })
+        .collect();
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
     let workspace_root = metadata.workspace.root.clone();
     let doc_tests_enabled = !args.no_run;
