@@ -5,12 +5,16 @@ use crate::doc_test::code_blocks::{
 use crate::doc_test::ui::TestResultStatus;
 use crate::doc_test::workspace::DocTestWorkspace;
 use anyhow::{Context, Result};
+use fs_extra::dir::{CopyOptions, copy};
 use itertools::Itertools;
+use rayon::prelude::*;
 use scarb_metadata::ScarbCommand;
 use scarb_ui::Ui;
 use scarb_ui::components::{NewLine, Status};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
 use std::process::{Command, Stdio};
 use tempfile::TempDir;
 use tempfile::tempdir;
@@ -99,7 +103,12 @@ pub struct TestRunner<'a> {
     /// Target directory shared between all doc test runs within one package.
     /// This allows speeding up doc tests compilation by sharing incremental caches.
     target_dir: TempDir,
+    /// Build profile passed to `scarb build` / `scarb execute` and used to locate the
+    /// incremental cache directory (`target/<profile>/`).
+    profile: String,
 }
+
+type IndexedBlock<'b> = (usize, &'b CodeBlock);
 
 impl<'a> TestRunner<'a> {
     pub fn new(
@@ -110,12 +119,14 @@ impl<'a> TestRunner<'a> {
     ) -> Result<Self> {
         let target_dir =
             tempdir().context("failed to create directory for doc tests target directory")?;
+        let profile = std::env::var("SCARB_PROFILE").unwrap_or_else(|_| "dev".to_string());
         Ok(Self {
             metadata,
             has_lib_target,
             ui,
             print_success_output,
             target_dir,
+            profile,
         })
     }
 
@@ -126,56 +137,88 @@ impl<'a> TestRunner<'a> {
         let mut summary = TestSummary::default();
         let mut failed_names = Vec::new();
         let blocks_per_item = count_blocks_per_item(code_blocks);
+        let indexed_blocks = code_blocks
+            .iter()
+            .enumerate()
+            .collect::<Vec<IndexedBlock<'_>>>();
 
         self.ui.print(Status::new(
             "Running",
             &format!("{} doc examples for `{pkg_name}`", code_blocks.len()),
         ));
 
-        let mut idx = 0;
-        for block in code_blocks {
-            let strategy = block.run_strategy();
-            let total_in_item = *blocks_per_item.get(&block.id.item_full_path).unwrap_or(&1);
-            let display_name = block.id.display_name(total_in_item);
+        let execution_blocks: Vec<IndexedBlock> = indexed_blocks
+            .iter()
+            .filter(|(_, block)| block.run_strategy() != RunStrategy::Ignore)
+            .map(|(order, block)| (*order, *block))
+            .collect();
 
-            match strategy {
-                RunStrategy::Ignore => {
-                    summary.ignored += 1;
-                    self.ui
-                        .print(TestResultStatus::Ignored.display_for(&display_name));
-                }
-                _ => {
-                    idx += 1;
-                    match self.run_single(block, strategy, idx) {
-                        Ok(res) => match res.status {
-                            TestStatus::Passed => {
-                                summary.passed += 1;
-                                if self.print_success_output {
-                                    self.ui.print(res.print_output.clone());
-                                    self.ui.print(res.program_output.clone());
-                                }
-                                self.ui
-                                    .print(TestResultStatus::Ok.display_for(&display_name));
-                                results.insert(block.id.clone(), res);
-                            }
-                            TestStatus::Failed => {
-                                summary.failed += 1;
-                                self.ui.print(res.print_output.clone());
-                                self.ui.print(res.program_output.clone());
-                                self.ui
-                                    .print(TestResultStatus::Failed.display_for(&display_name));
-                                failed_names.push(display_name);
-                            }
-                        },
-                        Err(e) => {
-                            summary.failed += 1;
-                            self.ui
-                                .print(TestResultStatus::Failed.display_for(&display_name));
-                            failed_names.push(display_name);
-                            self.ui.error(format!("Error running example: {:#}", e));
-                        }
+        let mut run_results = HashMap::new();
+
+        // Run non-compile_fail blocks sequentially until the first successful compilation to warm
+        // the incremental cache. Compile_fail blocks are skipped here and always run in parallel.
+        for (order, block) in &execution_blocks {
+            if block.attributes.contains(&CodeBlockAttribute::CompileFail) {
+                continue;
+            }
+            let result = self.run_single(
+                block,
+                block.run_strategy(),
+                order + 1,
+                self.target_dir.path(),
+            );
+            let build_succeeded = matches!(
+                &result,
+                Ok(r) if r.outcome != ExecutionOutcome::CompileError
+            );
+            run_results.insert(*order, result);
+            if build_succeeded {
+                break;
+            }
+        }
+
+        self.run_remaining_in_parallel(&execution_blocks, &blocks_per_item, &mut run_results)?;
+
+        for (order, block) in indexed_blocks {
+            if block.run_strategy() == RunStrategy::Ignore {
+                summary.ignored += 1;
+                let display_name = Self::display_name(block, &blocks_per_item);
+                self.ui
+                    .print(TestResultStatus::Ignored.display_for(&display_name));
+                continue;
+            }
+
+            match run_results.remove(&order) {
+                Some(Ok(res)) if res.status == TestStatus::Passed => {
+                    summary.passed += 1;
+                    let display_name = Self::display_name(block, &blocks_per_item);
+                    if self.print_success_output {
+                        self.ui.print(res.print_output.clone());
+                        self.ui.print(res.program_output.clone());
                     }
+                    self.ui
+                        .print(TestResultStatus::Ok.display_for(&display_name));
+                    results.insert(block.id.clone(), res);
                 }
+                Some(Ok(res)) => {
+                    summary.failed += 1;
+                    let display_name = Self::display_name(block, &blocks_per_item);
+                    self.report_mismatch(block, res.outcome);
+                    self.ui.print(res.print_output.clone());
+                    self.ui.print(res.program_output.clone());
+                    self.ui
+                        .print(TestResultStatus::Failed.display_for(&display_name));
+                    failed_names.push(display_name);
+                }
+                Some(Err(e)) => {
+                    summary.failed += 1;
+                    let display_name = Self::display_name(block, &blocks_per_item);
+                    self.ui
+                        .print(TestResultStatus::Failed.display_for(&display_name));
+                    failed_names.push(display_name);
+                    self.ui.error(format!("Error running example: {:#}", e));
+                }
+                None => unreachable!("every non-ignored block is run before results are collected"),
             }
         }
         // TODO(#3097): add struct with `impl Message` to display this
@@ -192,11 +235,67 @@ impl<'a> TestRunner<'a> {
         Ok((summary, results))
     }
 
+    fn report_mismatch(&self, block: &CodeBlock, actual: ExecutionOutcome) {
+        if block.run_strategy() == RunStrategy::Build
+            && actual == ExecutionOutcome::BuildSuccess
+            && block.attributes.contains(&CodeBlockAttribute::CompileFail)
+        {
+            self.ui
+                .error("Test compiled successfully, but it's marked `compile_fail`.");
+        }
+        if block.run_strategy() == RunStrategy::Execute
+            && actual == ExecutionOutcome::RunSuccess
+            && block.attributes.contains(&CodeBlockAttribute::ShouldPanic)
+        {
+            self.ui
+                .error("Test executable succeeded, but it's marked `should_panic`.");
+        }
+    }
+
+    fn run_remaining_in_parallel(
+        &self,
+        execution_blocks: &[IndexedBlock<'_>],
+        blocks_per_item: &HashMap<String, usize>,
+        run_results: &mut HashMap<usize, Result<ExecutionResult>>,
+    ) -> Result<()> {
+        let parallel_results = execution_blocks
+            .iter()
+            .filter(|(order, _)| !run_results.contains_key(order))
+            .collect_vec()
+            .into_par_iter()
+            .map(|(order, block)| {
+                let target_dir = tempdir()
+                    .context("failed to create temporary target directory for doc test run")?;
+                let display_name = Self::display_name(block, blocks_per_item);
+                copy_incremental_cache(self.target_dir.path(), target_dir.path(), &self.profile)
+                    .context(format!(
+                        "failed to copy incremental cache for `{}`",
+                        display_name
+                    ))?;
+                let result =
+                    self.run_single(block, block.run_strategy(), *order + 1, target_dir.path());
+                Ok::<(usize, Result<ExecutionResult>), anyhow::Error>((*order, result))
+            })
+            .collect::<Vec<_>>();
+
+        for result in parallel_results {
+            let (order, run_result) = result?;
+            run_results.insert(order, run_result);
+        }
+        Ok(())
+    }
+
+    fn display_name(block: &CodeBlock, blocks_per_item: &HashMap<String, usize>) -> String {
+        let total_in_item = *blocks_per_item.get(&block.id.item_full_path).unwrap_or(&1);
+        block.id.display_name(total_in_item)
+    }
+
     fn run_single(
         &self,
         code_block: &CodeBlock,
         strategy: RunStrategy,
         index: usize,
+        target_dir: &Path,
     ) -> Result<ExecutionResult> {
         let ws = DocTestWorkspace::new(
             self.metadata,
@@ -205,8 +304,8 @@ impl<'a> TestRunner<'a> {
             self.has_lib_target,
             &self.ui,
         )?;
-        let (actual, print_output, program_output) = self.run_single_inner(&ws, strategy)?;
-
+        let (actual, print_output, program_output) =
+            self.run_single_inner(&ws, strategy, target_dir)?;
         let status = match (strategy, actual) {
             (RunStrategy::Build, ExecutionOutcome::CompileError) => {
                 if code_block
@@ -223,8 +322,6 @@ impl<'a> TestRunner<'a> {
                     .attributes
                     .contains(&CodeBlockAttribute::CompileFail)
                 {
-                    self.ui
-                        .error("Test compiled successfully, but it's marked `compile_fail`.");
                     TestStatus::Failed
                 } else {
                     TestStatus::Passed
@@ -235,8 +332,6 @@ impl<'a> TestRunner<'a> {
                     .attributes
                     .contains(&CodeBlockAttribute::ShouldPanic)
                 {
-                    self.ui
-                        .error("Test executable succeeded, but it's marked `should_panic`.");
                     TestStatus::Failed
                 } else {
                     TestStatus::Passed
@@ -254,7 +349,6 @@ impl<'a> TestRunner<'a> {
             }
             _ => TestStatus::Failed,
         };
-
         Ok(ExecutionResult {
             outcome: actual,
             status,
@@ -267,6 +361,7 @@ impl<'a> TestRunner<'a> {
         &self,
         ws: &DocTestWorkspace,
         strategy: RunStrategy,
+        target_dir: &Path,
     ) -> Result<(ExecutionOutcome, String, String)> {
         if strategy == RunStrategy::Ignore {
             unreachable!("the code block should be filtered out before reaching here");
@@ -274,10 +369,11 @@ impl<'a> TestRunner<'a> {
         let build_result = ScarbCommand::new()
             .arg("build")
             .current_dir(ws.root())
-            .env("SCARB_TARGET_DIR", self.target_dir.path())
+            .env("SCARB_TARGET_DIR", target_dir)
             .env("SCARB_UI_VERBOSITY", self.ui.verbosity().to_string())
             .env("SCARB_MANIFEST_PATH", ws.manifest_path().as_str())
             .env("SCARB_ALL_FEATURES", "true")
+            .env("SCARB_PROFILE", &self.profile)
             .run();
 
         if build_result.is_err() {
@@ -296,10 +392,11 @@ impl<'a> TestRunner<'a> {
                 "--print-program-output",
             ])
             .current_dir(ws.root())
-            .env("SCARB_TARGET_DIR", self.target_dir.path())
+            .env("SCARB_TARGET_DIR", target_dir)
             .env("SCARB_UI_VERBOSITY", "no-warnings")
             .env("SCARB_MANIFEST_PATH", ws.manifest_path().as_str())
             .env("SCARB_ALL_FEATURES", "true")
+            .env("SCARB_PROFILE", &self.profile)
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .output();
@@ -321,6 +418,33 @@ impl<'a> TestRunner<'a> {
             }
         }
     }
+}
+
+/// Copies only the `.fingerprints` and `incremental` subdirectories from
+/// `from/<profile>/` into `to/<profile>/`.
+/// This is enough to seed the incremental compilation cache for parallel doc test runs without
+/// copying large compiled artifacts.
+fn copy_incremental_cache(from: &Path, to: &Path, profile: &str) -> Result<()> {
+    let profile_from = from.join(profile);
+    let profile_to = to.join(profile);
+    for cache_dir in [".fingerprint", "incremental"] {
+        let src = profile_from.join(cache_dir);
+        if !src.exists() {
+            continue;
+        }
+        let dst = profile_to.join(cache_dir);
+        fs::create_dir_all(&dst)
+            .with_context(|| format!("failed to create `{}`", dst.display()))?;
+        copy(
+            &src,
+            &dst,
+            &CopyOptions {
+                content_only: true,
+                ..Default::default()
+            },
+        )?;
+    }
+    Ok(())
 }
 
 #[derive(Deserialize)]
