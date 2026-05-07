@@ -130,7 +130,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
                 .iter()
                 .any(|target| target.kind == LIB_TARGET_KIND);
             let execution_results = doc_tests_enabled
-                .then(|| run_doc_tests(&info, has_lib_target, &ui))
+                .then(|| run_doc_tests(&info, has_lib_target, args.show_run_output, &ui))
                 .transpose()?;
             output.write(info, execution_results)?;
         }
@@ -142,13 +142,19 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 fn run_doc_tests(
     package: &PackageInformation,
     has_lib_target: bool,
+    print_success_output: bool,
     ui: &Ui,
 ) -> Result<ExecutionResults> {
     let runnable_code_blocks = collect_code_blocks(&package.crate_);
     if runnable_code_blocks.is_empty() {
         Ok(Default::default())
     } else {
-        let runner = TestRunner::new(&package.metadata, has_lib_target, ui.clone())?;
+        let runner = TestRunner::new(
+            &package.metadata,
+            has_lib_target,
+            print_success_output,
+            ui.clone(),
+        )?;
         let (summary, execution_results) = runner.run_all(&runnable_code_blocks)?;
         ensure!(!summary.is_fail(), "doc tests failed");
         Ok(execution_results)
