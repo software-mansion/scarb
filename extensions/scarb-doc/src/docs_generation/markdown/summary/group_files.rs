@@ -1,11 +1,13 @@
 use crate::docs_generation::TopLevelItems;
+use crate::docs_generation::markdown::GROUP_CHAPTER_PREFIX;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::summary::files::{
     generate_doc_files_for_module_items, generate_modules_summary_files,
     generate_summary_files_for_module_items,
 };
 use crate::docs_generation::markdown::traits::generate_markdown_table_summary_for_top_level_subitems;
-use crate::docs_generation::markdown::{GROUP_CHAPTER_PREFIX, SummaryIndexMap};
+
+use crate::docs_generation::common::SummaryIndexMap;
 use crate::types::groups::Group;
 use itertools::Itertools;
 

@@ -1,6 +1,6 @@
 use crate::db::ScarbDocDatabase;
 use crate::docs_generation::markdown::context::IncludedItems;
-use crate::docs_generation::markdown::traits::WithPath;
+use crate::docs_generation::markdown::traits::WithItemDataCommon;
 use crate::types::item_data::{ItemData, SubItemData};
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_defs::ids::{
@@ -128,7 +128,12 @@ impl<'db> Enum<'db> {
     pub fn get_all_item_ids<'a>(&'a self) -> IncludedItems<'a, 'db> {
         self.variants
             .iter()
-            .map(|item| (item.item_data.id, &item.item_data as &dyn WithPath))
+            .map(|item| {
+                (
+                    item.item_data.id,
+                    &item.item_data as &dyn WithItemDataCommon,
+                )
+            })
             .collect()
     }
 }

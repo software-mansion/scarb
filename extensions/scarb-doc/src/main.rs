@@ -4,6 +4,8 @@ use clap::Parser;
 use mimalloc::MiMalloc;
 use scarb_doc::db::ScarbDocDatabase;
 use scarb_doc::diagnostics::print_diagnostics;
+use scarb_doc::doc_test::code_blocks::collect_code_blocks;
+use scarb_doc::doc_test::runner::{ExecutionResults, TestRunner};
 use scarb_doc::docs_generation::common::OutputFilesExtension;
 use scarb_doc::docs_generation::markdown::{MarkdownContent, WorkspaceMarkdownBuilder};
 use scarb_doc::errors::{MetadataCommandError, PackagesSerializationError};
@@ -24,6 +26,7 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 const OUTPUT_DIR: &str = "doc";
 const JSON_OUTPUT_FILENAME: &str = "output.json";
+const LIB_TARGET_KIND: &str = "lib";
 
 fn main_inner(args: Args, ui: Ui) -> Result<()> {
     ensure!(
@@ -39,6 +42,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
     let workspace_root = metadata.workspace.root.clone();
+    let doc_tests_enabled = !args.no_run;
 
     let remote_base_url_flag = args.remote_base_url.clone();
 
@@ -121,11 +125,34 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
                 },
             )?;
             print_diagnostics(&ui);
-            output.write(info)?;
+            let has_lib_target = pm
+                .targets
+                .iter()
+                .any(|target| target.kind == LIB_TARGET_KIND);
+            let execution_results = doc_tests_enabled
+                .then(|| run_doc_tests(&info, has_lib_target, &ui))
+                .transpose()?;
+            output.write(info, execution_results)?;
         }
         output.flush()?;
     }
     Ok(())
+}
+
+fn run_doc_tests(
+    package: &PackageInformation,
+    has_lib_target: bool,
+    ui: &Ui,
+) -> Result<ExecutionResults> {
+    let runnable_code_blocks = collect_code_blocks(&package.crate_);
+    if runnable_code_blocks.is_empty() {
+        Ok(Default::default())
+    } else {
+        let runner = TestRunner::new(&package.metadata, has_lib_target, ui.clone())?;
+        let (summary, execution_results) = runner.run_all(&runnable_code_blocks)?;
+        ensure!(!summary.is_fail(), "doc tests failed");
+        Ok(execution_results)
+    }
 }
 
 pub enum OutputEmit {
@@ -183,7 +210,11 @@ impl OutputEmit {
         }
     }
 
-    pub fn write(&mut self, package: PackageInformation) -> Result<()> {
+    pub fn write(
+        &mut self,
+        package: PackageInformation,
+        execution_results: Option<ExecutionResults>,
+    ) -> Result<()> {
         match self {
             OutputEmit::Markdown {
                 output_dir,
@@ -193,8 +224,8 @@ impl OutputEmit {
                 ui,
                 files_extension,
             } => {
-                let content = MarkdownContent::from_crate(&package, *files_extension)?;
-
+                let content =
+                    MarkdownContent::from_crate(&package, *files_extension, execution_results)?;
                 output_markdown(
                     content,
                     Some(package.metadata.name),
