@@ -64,7 +64,9 @@ impl DocTestWorkspace {
             .context("package manifest path has no parent directory")?;
 
         let dep = &metadata.name;
-        let dep_path = format!("{}", package_dir);
+        // Use forward slashes so the path is valid in a TOML basic string on Windows,
+        // where native separators are backslashes which TOML treats as escape characters.
+        let dep_path = package_dir.as_str().replace('\\', "/");
         let name = &self.package_name;
         let edition = metadata
             .edition
