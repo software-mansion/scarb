@@ -619,3 +619,66 @@ fn workspace_with_multiple_packages_each_has_doc_tests() {
             Saving output to: target/doc/output.json
         "#});
 }
+
+#[test]
+fn runnable_examples_skip_items_reexported_from_other_crates() {
+    let root_dir = TempDir::new().unwrap();
+    let pkg_a_dir = root_dir.child("pkg_a");
+    let pkg_b_dir = root_dir.child("pkg_b");
+
+    ProjectBuilder::start()
+        .name("pkg_a")
+        .lib_cairo(indoc! {r#"
+            /// Adds two numbers.
+            /// ```cairo,runnable
+            /// add(1_u32, 2_u32);
+            /// ```
+            pub fn add(a: u32, b: u32) -> u32 {
+                a + b
+            }
+        "#})
+        .build(&pkg_a_dir);
+
+    ProjectBuilder::start()
+        .name("pkg_b")
+        .dep("pkg_a", &pkg_a_dir)
+        .lib_cairo(indoc! {r#"
+            pub use pkg_a::add;
+
+            /// Doubles a number.
+            /// ```cairo,runnable
+            /// double(5_u32);
+            /// ```
+            pub fn double(a: u32) -> u32 {
+                a * 2
+            }
+        "#})
+        .build(&pkg_b_dir);
+
+    WorkspaceBuilder::start()
+        .add_member("pkg_a")
+        .add_member("pkg_b")
+        .build(&root_dir);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .args(["--workspace", "--output-format", "json"])
+        .current_dir(&root_dir)
+        .assert()
+        .success()
+        .stdout_eq(formatdoc! {r#"
+            [..] Running 1 doc examples for `pkg_a`
+            [..] Compiling pkg_a_example_1 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            test pkg_a::add ... ok
+
+            test result: ok. 1 passed; 0 failed; 0 ignored
+            [..] Running 1 doc examples for `pkg_b`
+            [..] Compiling pkg_b_example_1 v0.1.0 ([..])
+            [..]  Finished `dev` profile target(s) in [..]
+            test pkg_b::double ... ok
+
+            test result: ok. 1 passed; 0 failed; 0 ignored
+            Saving output to: target/doc/output.json
+        "#});
+}

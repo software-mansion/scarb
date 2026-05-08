@@ -111,9 +111,14 @@ impl CodeBlock {
 pub fn collect_code_blocks(crate_: &Crate<'_>) -> Vec<CodeBlock> {
     let mut runnable_code_blocks = Vec::new();
     collect_from_module(&crate_.root_module, &mut runnable_code_blocks);
-    for module in &crate_.foreign_crates {
-        collect_from_module(module, &mut runnable_code_blocks);
-    }
+    // Drop blocks from items re-exported (`pub use`) out of other crates. They reach the root
+    // module's `pub_uses` and `foreign_crates` but their `code_blocks` are written against the
+    // original crate's API and must not run as doc tests of the crate being documented.
+    let crate_path = &crate_.root_module.item_data.full_path;
+    let crate_prefix = format!("{crate_path}::");
+    runnable_code_blocks.retain(|block| {
+        block.id.item_full_path == *crate_path || block.id.item_full_path.starts_with(&crate_prefix)
+    });
     runnable_code_blocks.sort_by_key(|block| block.id.clone());
     runnable_code_blocks.dedup_by_key(|block| block.id.clone());
     runnable_code_blocks
