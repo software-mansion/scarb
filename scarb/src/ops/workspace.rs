@@ -13,12 +13,18 @@ use crate::MANIFEST_FILE_NAME;
 use crate::core::TomlManifest;
 use crate::core::config::Config;
 use crate::core::errors::{ManifestErrorWithSource, ManifestParseError};
+use crate::core::manifest::{
+    ManifestDiagnosticAnchor, ManifestDiagnosticMessage, ManifestDiagnosticSpan,
+    ManifestMessageKind, resolve_manifest_anchor,
+};
 use crate::core::package::Package;
 use crate::core::source::SourceId;
 use crate::core::workspace::Workspace;
 use crate::ops::find_workspace_manifest_path;
 use scarb_fs_utils as fsx;
 use scarb_fs_utils::{PathBufUtf8Ext, is_hidden};
+use scarb_ui::OutputFormat;
+use scarb_ui::components::MachineMessage;
 
 #[tracing::instrument(level = "debug", skip(config))]
 pub fn read_workspace<'c>(manifest_path: &Utf8Path, config: &'c Config) -> Result<Workspace<'c>> {
@@ -79,6 +85,7 @@ fn read_workspace_root<'c>(
         .with_context(|| format!("failed to read manifest at: {manifest_path}"))?;
     let toml_manifest = TomlManifest::read_from_str(&manifest_source)
         .map_err(|err| ManifestParseError::new(manifest_path, err))?;
+    warn_unknown_manifest_fields(manifest_path, &manifest_source, config);
     let toml_workspace = toml_manifest.get_workspace();
 
     let with_source = |err| {
@@ -131,6 +138,7 @@ fn read_workspace_root<'c>(
             .map(AsRef::as_ref)
             .map(|package_path| {
                 let package_manifest = TomlManifest::read_from_path(package_path)?;
+                warn_unknown_manifest_fields(package_path, &package_manifest.raw_content, config);
                 // Read the member package.
                 let manifest = package_manifest
                     .to_manifest(
@@ -184,6 +192,60 @@ fn read_workspace_root<'c>(
         })?;
         Workspace::from_single_package(package, config, profiles, patch)
     }
+}
+
+/// Checks a manifest source string for unknown fields (fields not declared in the JSON schema)
+/// and emits a warning for each one.
+///
+/// In text mode: `warn: unknown manifest field \`foo\` (path:line:col)`.
+/// In JSON mode: a `manifest_diagnostic` machine message with `file` and `span`.
+fn warn_unknown_manifest_fields(path: &Utf8Path, source: &str, config: &Config) {
+    let unknown = match scarb_manifest_schema::find_unknown_fields(source) {
+        Ok(paths) => paths,
+        Err(_) => return,
+    };
+    for field_path in unknown {
+        let path_str = field_path.join(".");
+        let anchor = ManifestDiagnosticAnchor::RawTomlPath { path: field_path };
+        let span = resolve_manifest_anchor(source, &anchor);
+
+        if config.ui().output_format() == OutputFormat::Json {
+            config
+                .ui()
+                .force_print(MachineMessage(ManifestDiagnosticMessage {
+                    kind: ManifestMessageKind::ManifestDiagnostic,
+                    message: format!("unknown manifest field `{path_str}`"),
+                    file: Some(path.to_string()),
+                    span,
+                    related: vec![],
+                }));
+        } else {
+            let location = span
+                .map(|s| format!(" {}", format_span_location(path, source, &s)))
+                .unwrap_or_default();
+            config
+                .ui()
+                .warn(format!("unknown manifest field `{path_str}`{location}"));
+        }
+    }
+}
+
+/// Converts a byte-offset span to a `(path:line:col)` locator string.
+fn format_span_location(path: &Utf8Path, source: &str, span: &ManifestDiagnosticSpan) -> String {
+    let (line, col) = byte_offset_to_line_col(source, span.start);
+    format!("({path}:{line}:{col})")
+}
+
+/// Converts a byte offset into a 1-based (line, column) pair.
+fn byte_offset_to_line_col(source: &str, offset: usize) -> (usize, usize) {
+    let offset = offset.min(source.len());
+    let before = &source[..offset];
+    let line = before.bytes().filter(|&b| b == b'\n').count() + 1;
+    let col = before
+        .rfind('\n')
+        .map(|pos| offset - pos)
+        .unwrap_or(offset + 1);
+    (line, col)
 }
 
 fn find_member_paths(

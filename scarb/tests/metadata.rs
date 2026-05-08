@@ -150,6 +150,10 @@ fn emits_manifest_diagnostic_ndjson_for_invalid_manifest_in_json_mode() {
         "#}
     );
     assert!(diagnostic["span"].is_object());
+    assert!(
+        diagnostic.get("severity").is_none(),
+        "did not expect severity field"
+    );
 }
 
 #[test]
