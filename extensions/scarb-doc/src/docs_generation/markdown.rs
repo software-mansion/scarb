@@ -79,7 +79,11 @@ impl WorkspaceMarkdownBuilder {
         }
     }
 
-    pub fn add_package(&mut self, package_information: &PackageInformation) -> Result<()> {
+    pub fn add_package(
+        &mut self,
+        package_information: &PackageInformation,
+        execution_results: Option<ExecutionResults>,
+    ) -> Result<()> {
         if self.book_toml.is_none() {
             self.book_toml = Some(generate_book_toml_content(&package_information.metadata));
         }
@@ -87,7 +91,7 @@ impl WorkspaceMarkdownBuilder {
             &package_information.crate_,
             self.output_format,
             &package_information.remote_linking_data,
-            None,
+            execution_results,
         )?;
         let current = std::mem::replace(&mut self.summary, SummaryIndexMap::new());
         self.summary = current.add(summary);

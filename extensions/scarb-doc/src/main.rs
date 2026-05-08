@@ -5,7 +5,7 @@ use mimalloc::MiMalloc;
 use scarb_doc::db::ScarbDocDatabase;
 use scarb_doc::diagnostics::print_diagnostics;
 use scarb_doc::doc_test::code_blocks::collect_code_blocks;
-use scarb_doc::doc_test::runner::{ExecutionResults, TestRunner};
+use scarb_doc::doc_test::runner::{ExecutionResults, TestRunner, WorkspaceDependency};
 use scarb_doc::docs_generation::common::OutputFilesExtension;
 use scarb_doc::docs_generation::markdown::{MarkdownContent, WorkspaceMarkdownBuilder};
 use scarb_doc::errors::{MetadataCommandError, PackagesSerializationError};
@@ -51,6 +51,21 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     if args.packages_filter.get_workspace() & !matches!(args.output_format, OutputFormat::Json) {
         let mut builder = WorkspaceMarkdownBuilder::new(args.output_format.into());
 
+        // All workspace members are made available as path dependencies to every doc-test
+        // package, so code examples can refer to sibling crates within the same workspace.
+        let workspace_deps: Vec<WorkspaceDependency> = metadata
+            .packages
+            .iter()
+            .filter(|p| {
+                metadata.workspace.members.contains(&p.id)
+                    || p.manifest_path == metadata.workspace.manifest_path
+            })
+            .map(|p| WorkspaceDependency {
+                name: p.name.clone(),
+                package_dir: p.root.clone(),
+            })
+            .collect();
+
         for pm in &metadata_for_packages {
             let ctx =
                 generate_package_context(&mut db, &metadata, pm, args.document_private_items)?;
@@ -69,7 +84,22 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
                 },
             )?;
             print_diagnostics(&ui);
-            builder.add_package(&package_info)?;
+            let has_lib_target = pm
+                .targets
+                .iter()
+                .any(|target| target.kind == LIB_TARGET_KIND);
+            let execution_results = doc_tests_enabled
+                .then(|| {
+                    run_doc_tests(
+                        &package_info,
+                        has_lib_target,
+                        workspace_deps.clone(),
+                        args.show_run_output,
+                        &ui,
+                    )
+                })
+                .transpose()?;
+            builder.add_package(&package_info, execution_results)?;
         }
         let content = builder.build()?;
         output_markdown(
@@ -130,7 +160,9 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
                 .iter()
                 .any(|target| target.kind == LIB_TARGET_KIND);
             let execution_results = doc_tests_enabled
-                .then(|| run_doc_tests(&info, has_lib_target, args.show_run_output, &ui))
+                .then(|| {
+                    run_doc_tests(&info, has_lib_target, Vec::new(), args.show_run_output, &ui)
+                })
                 .transpose()?;
             output.write(info, execution_results)?;
         }
@@ -142,6 +174,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 fn run_doc_tests(
     package: &PackageInformation,
     has_lib_target: bool,
+    workspace_deps: Vec<WorkspaceDependency>,
     print_success_output: bool,
     ui: &Ui,
 ) -> Result<ExecutionResults> {
@@ -152,6 +185,7 @@ fn run_doc_tests(
         let runner = TestRunner::new(
             &package.metadata,
             has_lib_target,
+            workspace_deps,
             print_success_output,
             ui.clone(),
         )?;

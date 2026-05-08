@@ -4,6 +4,7 @@ use crate::doc_test::code_blocks::{
 };
 use crate::doc_test::ui::TestResultStatus;
 use crate::doc_test::workspace::DocTestWorkspace;
+pub use crate::doc_test::workspace::WorkspaceDependency;
 use anyhow::{Context, Result};
 use fs_extra::dir::{CopyOptions, copy};
 use itertools::Itertools;
@@ -100,6 +101,9 @@ pub struct TestRunner<'a> {
     has_lib_target: bool,
     ui: Ui,
     print_success_output: bool,
+    /// Additional path dependencies (e.g. sibling workspace members) to add to each doc-test
+    /// package, on top of the package being documented.
+    workspace_deps: Vec<WorkspaceDependency>,
     /// Target directory shared between all doc test runs within one package.
     /// This allows speeding up doc tests compilation by sharing incremental caches.
     target_dir: TempDir,
@@ -114,6 +118,7 @@ impl<'a> TestRunner<'a> {
     pub fn new(
         metadata: &'a AdditionalMetadata,
         has_lib_target: bool,
+        workspace_deps: Vec<WorkspaceDependency>,
         print_success_output: bool,
         ui: Ui,
     ) -> Result<Self> {
@@ -125,6 +130,7 @@ impl<'a> TestRunner<'a> {
             has_lib_target,
             ui,
             print_success_output,
+            workspace_deps,
             target_dir,
             profile,
         })
@@ -302,6 +308,7 @@ impl<'a> TestRunner<'a> {
             index,
             code_block,
             self.has_lib_target,
+            &self.workspace_deps,
             &self.ui,
         )?;
         let (actual, print_output, program_output) =
