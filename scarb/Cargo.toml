@@ -152,3 +152,4 @@ zip.workspace = true
 [features]
 default = ["scarb-lint"]
 scarb-lint = ["dep:cairo-lint"]
+test-utils = []
