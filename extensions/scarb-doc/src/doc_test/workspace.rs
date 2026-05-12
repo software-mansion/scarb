@@ -98,7 +98,8 @@ impl DocTestWorkspace {
             writeln!(
                 workspace_dep_lines,
                 r#"{} = {{ path = "{}" }}"#,
-                dep.name, dep.package_dir
+                dep.name,
+                dep.package_dir.as_str().replace('\\', "/")
             )?;
         }
 
