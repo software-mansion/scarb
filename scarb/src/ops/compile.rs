@@ -20,6 +20,7 @@ use crate::ops;
 use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
 use anyhow::{Context, Error, Result, anyhow, bail, ensure};
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
+use cairo_lang_compiler::ensure_diagnostics;
 use camino::Utf8PathBuf;
 use indoc::formatdoc;
 use itertools::Itertools;
@@ -406,10 +407,9 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 &IncrementalContext::Disabled,
                 ws,
             );
-            let result = compiler_config
-                .diagnostics_reporter
-                .ensure(&db)
+            let result = ensure_diagnostics(&db, &mut compiler_config.diagnostics_reporter)
                 .map_err(|err| err.into());
+
             let _ = main_crate_ids;
             drop(compiler_config);
             let span = trace_span!("drop_db");
