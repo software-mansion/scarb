@@ -7,8 +7,10 @@ use crate::compiler::incremental::artifacts_fingerprint::{
     save_unit_artifacts_fingerprint, unit_artifacts_fingerprint_is_fresh,
 };
 use crate::compiler::incremental::{
-    CachedWarnings, IncrementalContext, load_incremental_artifacts, save_incremental_artifacts,
+    CachedWarnings, IncrementalContext, WarningCollector, load_incremental_artifacts,
+    save_incremental_artifacts,
 };
+use crate::compiler::incremental::{UnitCheckFingerprint, check_fingerprint_allowed};
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
 use crate::core::{
@@ -308,18 +310,22 @@ fn compile_cairo_unit_inner(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> R
                 .unwrap_or_default();
 
         let ctx = Arc::new(ctx);
-        if !is_fresh_unit_artifacts {
+        let warnings = if !is_fresh_unit_artifacts {
+            let warning_collector = WarningCollector::new();
             ws.config()
                 .compilers()
-                .compile(&unit, ctx.clone(), &offloader, &mut db, ws)?;
-            save_incremental_artifacts(&unit, &db, ctx.clone(), ws)?;
-
+                .compile(&unit, ctx.clone(), &offloader, &mut db, &warning_collector, ws)?;
+            let warnings = warning_collector.collect();
+            save_incremental_artifacts(&unit, &db, ctx.clone(), warnings.clone(), ws)?;
             for plugin in proc_macros {
                 plugin
                     .post_process(&db)
                     .context("procedural macro post processing callback failed")?;
             }
-        }
+            Some(warnings)
+        } else {
+            None
+        };
 
         let main_crate_is_cached = ctx.cached_crates().contains(&main_crate_input);
         // Replay cached warnings for the main crate when:
@@ -350,13 +356,18 @@ fn compile_cairo_unit_inner(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> R
             offloader.join()?;
         }
 
-        if artifacts_fingerprint_allowed()
-            && !is_fresh_unit_artifacts
-            && let Some(unit_fingerprint) = ctx.fingerprints()
-        {
-            let fingerprint =
-                UnitArtifactsFingerprint::new(&unit, unit_fingerprint, ctx.artifacts());
-            save_unit_artifacts_fingerprint(&unit, fingerprint, ws)?;
+        if let Some(ref warnings) = warnings {
+            if let Some(unit_fingerprint) = ctx.fingerprints() {
+                if artifacts_fingerprint_allowed() {
+                    let fingerprint =
+                        UnitArtifactsFingerprint::new(&unit, unit_fingerprint, ctx.artifacts());
+                    save_unit_artifacts_fingerprint(&unit, fingerprint, ws)?;
+                }
+                if check_fingerprint_allowed() {
+                    let check_fp = UnitCheckFingerprint::new(unit_fingerprint);
+                    check_fp.save(&unit, warnings.clone(), ws)?;
+                }
+            }
         }
 
         copy_assets(assets, &target_dir)?;
@@ -389,36 +400,14 @@ fn check_units(
 fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package_name = unit.main_package_id().name.clone();
 
-    ws.config()
-        .ui()
-        .print(Status::new("Checking", &unit.name()));
-
     let result = match unit {
-        CompilationUnit::ProcMacro(unit) => proc_macro::check_unit(unit, ws),
-        CompilationUnit::Cairo(unit) => {
-            let ScarbDatabase { db, .. } =
-                build_scarb_root_database(&unit, ws, Default::default())?;
-            let main_crate_ids = collect_main_crate_ids(&unit, &db);
-            check_starknet_dependency(&unit, ws, &db, &package_name);
-            let mut compiler_config = build_compiler_config(
-                &db,
-                &unit,
-                &main_crate_ids,
-                &IncrementalContext::Disabled,
-                ws,
-            );
-            let result = ensure_diagnostics(&db, &mut compiler_config.diagnostics_reporter)
-                .map_err(|err| err.into());
-
-            let _ = main_crate_ids;
-            drop(compiler_config);
-            let span = trace_span!("drop_db");
-            {
-                let _guard = span.enter();
-                drop(db);
-            }
-            result
+        CompilationUnit::ProcMacro(unit) => {
+            ws.config()
+                .ui()
+                .print(Status::new("Checking", &unit.name()));
+            proc_macro::check_unit(unit, ws)
         }
+        CompilationUnit::Cairo(unit) => check_cairo_unit(unit, ws),
     };
 
     result.map_err(|err| {
@@ -432,6 +421,62 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     })?;
 
     Ok(())
+}
+
+fn check_cairo_unit(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+    let check_fp = if check_fingerprint_allowed() {
+        let fp = UnitCheckFingerprint::compute(&unit, ws);
+        if fp.is_fresh(&unit, ws)? {
+            if let Some(result) = fp.load_result(&unit, ws)? {
+                for warning in &result.warnings {
+                    ws.config()
+                        .ui()
+                        .warn_maybe_with_code(&warning.message, &warning.code);
+                }
+            }
+            return Ok(());
+        }
+        Some(fp)
+    } else {
+        None
+    };
+
+    ws.config()
+        .ui()
+        .print(Status::new("Checking", &unit.name()));
+
+    let ScarbDatabase { db, .. } =
+        build_scarb_root_database(&unit, ws, Default::default())?;
+    let main_crate_ids = collect_main_crate_ids(&unit, &db);
+    check_starknet_dependency(&unit, ws, &db, &unit.main_package_id().name);
+
+    let warning_collector = WarningCollector::new();
+    let mut compiler_config = build_compiler_config(
+        &db,
+        &unit,
+        &main_crate_ids,
+        &IncrementalContext::Disabled,
+        Some(&warning_collector),
+        ws,
+    );
+    let result = ensure_diagnostics(&db, &mut compiler_config.diagnostics_reporter)
+        .map_err(|err| err.into());
+
+    let _ = main_crate_ids;
+    drop(compiler_config);
+    let span = trace_span!("drop_db");
+    {
+        let _guard = span.enter();
+        drop(db);
+    }
+
+    if result.is_ok() {
+        if let Some(fp) = check_fp {
+            fp.save(&unit, warning_collector.collect(), ws)?;
+        }
+    }
+
+    result
 }
 
 fn check_starknet_dependency(

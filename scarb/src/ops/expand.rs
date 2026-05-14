@@ -173,6 +173,7 @@ fn do_expand(
         compilation_unit,
         &[main_crate_id],
         &IncrementalContext::Disabled,
+        None,
         ws,
     );
     // Report diagnostics, but do not fail.

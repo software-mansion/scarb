@@ -47,6 +47,28 @@ pub enum CachedWarnings {
     Resolved(Vec<CachedWarning>),
 }
 
+pub struct WarningCollector(Mutex<Vec<CachedWarning>>);
+
+impl WarningCollector {
+    pub fn new() -> Self {
+        Self(Default::default())
+    }
+
+    pub fn add(&self, code: Option<String>, message: String) {
+        self.0
+            .lock()
+            .expect("failed to acquire warning collector mutex")
+            .push(CachedWarning { code, message });
+    }
+
+    pub fn collect(&self) -> Vec<CachedWarning> {
+        self.0
+            .lock()
+            .expect("failed to acquire warning collector mutex")
+            .clone()
+    }
+}
+
 pub struct EnabledIncrementalContext {
     fingerprints: UnitComponentsFingerprint,
     cached_crates: Vec<CrateInput>,
@@ -54,8 +76,6 @@ pub struct EnabledIncrementalContext {
     /// Present only for crates previously compiled as a main unit.
     /// An empty `Vec` means the crate compiled with no warnings.
     cached_crate_warnings: HashMap<CrateInput, Vec<CachedWarning>>,
-    /// Warnings collected during the current compilation pass (main component only).
-    collected_warnings: Mutex<Vec<CachedWarning>>,
     artifacts: Mutex<Vec<LocalFingerprint>>,
 }
 
@@ -96,30 +116,6 @@ impl IncrementalContext {
         match enabled.cached_crate_warnings.get(crate_input) {
             Some(v) => CachedWarnings::Resolved(v.clone()),
             None => CachedWarnings::Unresolved,
-        }
-    }
-
-    /// Records a warning emitted during the current compilation pass.
-    pub fn add_warning(&self, code: Option<String>, message: String) {
-        if let IncrementalContext::Enabled(enabled) = self {
-            enabled
-                .collected_warnings
-                .lock()
-                .expect("failed to acquire collected_warnings mutex")
-                .push(CachedWarning { code, message });
-        }
-    }
-
-    /// Returns all warnings collected during the current compilation pass.
-    pub fn collected_warnings(&self) -> Vec<CachedWarning> {
-        if let IncrementalContext::Enabled(enabled) = self {
-            enabled
-                .collected_warnings
-                .lock()
-                .expect("failed to acquire collected_warnings mutex")
-                .clone()
-        } else {
-            Vec::new()
         }
     }
 
@@ -244,7 +240,6 @@ pub fn load_incremental_artifacts(
             fingerprints,
             cached_crates,
             cached_crate_warnings,
-            collected_warnings: Default::default(),
             artifacts: Default::default(),
         },
     )))
@@ -324,9 +319,9 @@ pub fn save_incremental_artifacts(
     unit: &CairoCompilationUnit,
     db: &dyn CloneableDatabase,
     ctx: Arc<IncrementalContext>,
+    collected_warnings: Vec<CachedWarning>,
     ws: &Workspace<'_>,
 ) -> Result<()> {
-    let collected_warnings = ctx.collected_warnings();
     let Some(fingerprints) = ctx.fingerprints() else {
         return Ok(());
     };

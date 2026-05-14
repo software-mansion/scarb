@@ -1,7 +1,7 @@
 use crate::compiler::db::{has_plugin, is_executable_plugin};
 use crate::compiler::helpers::write_json;
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
-use crate::compiler::incremental::IncrementalContext;
+use crate::compiler::incremental::{IncrementalContext, WarningCollector};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::offloader::Offloader;
@@ -48,6 +48,7 @@ impl Compiler for ExecutableCompiler {
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &dyn CloneableDatabase,
+        warning_collector: &WarningCollector,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         ensure!(
@@ -68,7 +69,7 @@ impl Compiler for ExecutableCompiler {
         let props: Props = unit.main_component().targets.target_props()?;
 
         let main_crate_ids = collect_main_crate_ids(unit, db);
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, &ctx, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, &ctx, Some(warning_collector), ws);
         let span = trace_span!("compile_executable");
         let executable = {
             let _guard = span.enter();

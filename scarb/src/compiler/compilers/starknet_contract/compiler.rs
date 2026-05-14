@@ -28,7 +28,7 @@ use crate::compiler::compilers::starknet_contract::validations::{
 };
 use crate::compiler::compilers::{ArtifactsWriter, ensure_gas_enabled};
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
-use crate::compiler::incremental::IncrementalContext;
+use crate::compiler::incremental::{IncrementalContext, WarningCollector};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Workspace};
 use crate::internal::offloader::Offloader;
@@ -83,6 +83,7 @@ impl Compiler for StarknetContractCompiler {
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &dyn CloneableDatabase,
+        warning_collector: &WarningCollector,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;
@@ -110,7 +111,7 @@ impl Compiler for StarknetContractCompiler {
 
         let main_crate_ids = collect_main_crate_ids(unit, db);
 
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, &ctx, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, &ctx, Some(warning_collector), ws);
 
         let contracts = find_project_contracts(
             db,

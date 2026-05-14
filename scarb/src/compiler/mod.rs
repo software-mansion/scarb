@@ -1,4 +1,4 @@
-use crate::compiler::incremental::IncrementalContext;
+use crate::compiler::incremental::{IncrementalContext, WarningCollector};
 use crate::core::{TargetKind, Workspace};
 use crate::internal::offloader::Offloader;
 use anyhow::Result;
@@ -27,6 +27,7 @@ pub trait Compiler: Sync {
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &dyn CloneableDatabase,
+        warning_collector: &WarningCollector,
         ws: &Workspace<'_>,
     ) -> Result<()>;
 }

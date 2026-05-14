@@ -1,7 +1,7 @@
 use crate::compiler::compilers::{
     ExecutableCompiler, LibCompiler, StarknetContractCompiler, TestCompiler,
 };
-use crate::compiler::incremental::{IncrementalContext, warmup_incremental_cache};
+use crate::compiler::incremental::{IncrementalContext, WarningCollector, warmup_incremental_cache};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::Workspace;
 use crate::internal::offloader::Offloader;
@@ -51,6 +51,7 @@ impl CompilerRepository {
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &mut dyn CloneableDatabase,
+        warning_collector: &WarningCollector,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let target_kind = &unit.main_component().target_kind();
@@ -64,7 +65,7 @@ impl CompilerRepository {
         // block if needed.
         let warmup_db = db.dyn_clone();
         rayon::spawn(move || warmup_incremental_cache(warmup_db.as_ref(), cached_crates));
-        compiler.compile(unit, ctx, offloader, db, ws)?;
+        compiler.compile(unit, ctx, offloader, db, warning_collector, ws)?;
         Ok(())
     }
 }
