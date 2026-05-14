@@ -66,7 +66,8 @@ impl Compiler for LibCompiler {
 
         let main_crate_ids = collect_main_crate_ids(unit, db);
 
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, &ctx, ws);
+        let compiler_config =
+            build_compiler_config(db, unit, &main_crate_ids, &ctx, ctx.warning_collector(), ws);
 
         validate_compiler_config(db, &compiler_config, unit, ws);
 

@@ -64,7 +64,8 @@ impl Compiler for TestCompiler {
         };
 
         let diagnostics_reporter =
-            build_compiler_config(db, unit, &test_crate_ids, &ctx, ws).diagnostics_reporter;
+            build_compiler_config(db, unit, &test_crate_ids, &ctx, ctx.warning_collector(), ws)
+                .diagnostics_reporter;
 
         let span = trace_span!("compile_test");
         let test_compilation = {
@@ -172,7 +173,8 @@ fn compile_contracts<'db>(
         build_external_contracts,
         ..StarknetContractProps::default()
     };
-    let mut compiler_config = build_compiler_config(db, unit, &main_crate_ids, &ctx, ws);
+    let mut compiler_config =
+        build_compiler_config(db, unit, &main_crate_ids, &ctx, ctx.warning_collector(), ws);
     // We already did check the Db for diagnostics when compiling tests, so we can ignore them here.
     compiler_config.diagnostics_reporter = DiagnosticsReporter::ignoring()
         .allow_warnings()
