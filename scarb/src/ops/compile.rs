@@ -424,6 +424,10 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 }
 
 fn check_cairo_unit(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+    ws.config()
+        .ui()
+        .print(Status::new("Checking", &unit.name()));
+
     let check_fp = if check_fingerprint_allowed() {
         let fp = UnitCheckFingerprint::compute(&unit, ws);
         if fp.is_fresh(&unit, ws)? {
@@ -440,10 +444,6 @@ fn check_cairo_unit(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> Result<()
     } else {
         None
     };
-
-    ws.config()
-        .ui()
-        .print(Status::new("Checking", &unit.name()));
 
     let ScarbDatabase { db, .. } =
         build_scarb_root_database(&unit, ws, Default::default())?;
