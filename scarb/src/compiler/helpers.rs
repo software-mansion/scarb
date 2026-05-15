@@ -123,6 +123,7 @@ where
             .compiler_config
             .add_statements_code_locations_debug_info,
         add_functions_debug_info: unit.compiler_config.add_functions_debug_info,
+        add_type_names: unit.compiler_config.add_types_debug_info,
     }
 }
 
