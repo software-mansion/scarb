@@ -130,7 +130,7 @@ impl ExecutionResources {
             .map(|(k, v)| (k.to_string(), *v))
             .filter(|(_, v)| *v > 0)
             .collect::<Vec<_>>();
-        let syscalls = sort_by_value(&all_used_resources.syscalls)
+        let syscalls = sort_by_value(all_used_resources.syscalls.iter())
             .into_iter()
             .map(|(k, v)| (k.to_string(), *v))
             .collect::<Vec<_>>();
