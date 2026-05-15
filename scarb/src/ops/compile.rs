@@ -386,6 +386,7 @@ fn check_units(
     Ok(())
 }
 
+#[tracing::instrument(skip_all, level = "trace")]
 fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package_name = unit.main_package_id().name.clone();
 
@@ -407,9 +408,12 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 &IncrementalContext::Disabled,
                 ws,
             );
-            let result = ensure_diagnostics(&db, &mut compiler_config.diagnostics_reporter)
-                .map_err(|err| err.into());
-
+            let span = trace_span!("ensure_diagnostics");
+            let result = {
+                let _g = span.enter();
+                ensure_diagnostics(&db, &mut compiler_config.diagnostics_reporter)
+                    .map_err(|err| err.into())
+            };
             let _ = main_crate_ids;
             drop(compiler_config);
             let span = trace_span!("drop_db");
