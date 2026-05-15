@@ -149,9 +149,8 @@ fn check_twice_with_error() {
         "#
         });
 
-    // The freshness check creates hello-* as a side effect, but the fingerprint file inside it
-    // must not be written when compilation fails. core-* is never created since freshness is only
-    // checked for the main component.
+    // Freshness checks for all components create their sub-directories as a side effect of
+    // probing the fingerprint file, but no fingerprint files must be written when check fails.
     let fp_dir = t.child("target/dev/.fingerprint").path().to_path_buf();
     let hello_fp = std::fs::read_dir(&fp_dir)
         .unwrap()
@@ -160,12 +159,14 @@ fn check_twice_with_error() {
         .unwrap()
         .path()
         .join("hello");
-    let core_subdir = std::fs::read_dir(&fp_dir)
+    let core_fp = std::fs::read_dir(&fp_dir)
         .unwrap()
         .filter_map(|e| e.ok())
-        .find(|e| e.file_name().to_string_lossy().starts_with("core-"));
+        .find(|e| e.file_name().to_string_lossy().starts_with("core-"))
+        .map(|e| e.path().join("core"));
     assert!(!hello_fp.exists());
-    assert!(core_subdir.is_none());
+    // core-* directory may be created as a probe side-effect, but the fingerprint file must not.
+    assert!(core_fp.is_none_or(|p| !p.exists()));
 
     // Second check - should fail with same error
     Scarb::new()

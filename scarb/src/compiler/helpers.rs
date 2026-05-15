@@ -57,6 +57,12 @@ where
         .filter(|crate_id| !main_crate_ids.contains(crate_id))
         .map(|c| c.long(db).clone().into_crate_input(db))
         .collect_vec();
+    // Pre-compute CrateInputs for check-verified fresh deps so we can filter them out below.
+    let skip_crate_inputs = ctx
+        .fresh_dep_components()
+        .iter()
+        .map(|c| c.crate_input(db))
+        .collect_vec();
     // If a crate is cached, we do not need to check it for error diagnostics,
     // as the cache can only be produced if the crate is error-free.
     // So if there were any diagnostics here to show, it would mean that the cache is outdated - thus
@@ -72,14 +78,18 @@ where
                     ctx.cached_crate_warnings_for(&crate_input),
                     CachedWarnings::Unresolved
                 )
+        } else if skip_crate_inputs.contains(&crate_input) {
+            // Check-verified fresh dep: unchanged since last successful check, safe to skip.
+            false
         } else {
             true
         }
     });
+    let warning_collector = ctx.warning_collector();
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
 
-        |entry: FormattedDiagnosticEntry| {
+        move |entry: FormattedDiagnosticEntry| {
             let msg = entry
                 .message()
                 .strip_suffix('\n')
@@ -94,7 +104,9 @@ where
                 }
                 Severity::Warning => {
                     let code = entry.error_code().map(|c| c.as_str().to_string());
-                    ctx.add_warning(code.clone(), msg.to_string());
+                    if let Some(collector) = &warning_collector {
+                        collector.add(code.clone(), msg.to_string());
+                    }
                     if let Some(code) = code {
                         config.ui().warn_with_code(&code, msg)
                     } else {

@@ -7,7 +7,8 @@ use crate::compiler::incremental::artifacts_fingerprint::{
     save_unit_artifacts_fingerprint, unit_artifacts_fingerprint_is_fresh,
 };
 use crate::compiler::incremental::{
-    CachedWarnings, IncrementalContext, load_incremental_artifacts, save_incremental_artifacts,
+    CachedWarnings, IncrementalContext, load_check_artifacts, load_incremental_artifacts,
+    save_check_artifacts, save_incremental_artifacts,
 };
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
@@ -33,6 +34,7 @@ use smol_str::{SmolStr, ToSmolStr};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::thread;
+use tracing::debug;
 use tracing::{trace, trace_span};
 
 #[derive(Debug, Clone)]
@@ -312,7 +314,12 @@ fn compile_cairo_unit_inner(unit: CairoCompilationUnit, ws: &Workspace<'_>) -> R
             ws.config()
                 .compilers()
                 .compile(&unit, ctx.clone(), &offloader, &mut db, ws)?;
-            save_incremental_artifacts(&unit, &db, ctx.clone(), ws)?;
+            let collected_warnings = ctx
+                .warning_collector()
+                .as_ref()
+                .map(|c| c.collect())
+                .unwrap_or_default();
+            save_incremental_artifacts(&unit, &db, ctx.clone(), collected_warnings, ws)?;
 
             for plugin in proc_macros {
                 plugin
@@ -397,17 +404,28 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let result = match unit {
         CompilationUnit::ProcMacro(unit) => proc_macro::check_unit(unit, ws),
         CompilationUnit::Cairo(unit) => {
+            let ctx = load_check_artifacts(&unit, ws)?;
+
+            if let IncrementalContext::Check {
+                cached_warnings: Some(cached_warnings),
+                ..
+            } = &ctx
+            {
+                if ws.config().ui().verbosity().should_print_warnings() {
+                    for warning in cached_warnings {
+                        ws.config()
+                            .ui()
+                            .warn_maybe_with_code(&warning.message, &warning.code);
+                    }
+                }
+                return Ok(());
+            }
+
             let ScarbDatabase { db, .. } =
                 build_scarb_root_database(&unit, ws, Default::default())?;
             let main_crate_ids = collect_main_crate_ids(&unit, &db);
             check_starknet_dependency(&unit, ws, &db, &package_name);
-            let mut compiler_config = build_compiler_config(
-                &db,
-                &unit,
-                &main_crate_ids,
-                &IncrementalContext::Disabled,
-                ws,
-            );
+            let mut compiler_config = build_compiler_config(&db, &unit, &main_crate_ids, &ctx, ws);
             let span = trace_span!("ensure_diagnostics");
             let result = {
                 let _g = span.enter();
@@ -421,6 +439,16 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 let _guard = span.enter();
                 drop(db);
             }
+
+            if result.is_ok()
+                && let Some(collector) = ctx.warning_collector()
+            {
+                let collected_warnings = collector.collect();
+                if let Err(e) = save_check_artifacts(&unit, &ctx, collected_warnings, ws) {
+                    debug!("failed to save check cache: {e}");
+                }
+            }
+
             result
         }
     };

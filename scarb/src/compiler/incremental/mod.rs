@@ -4,7 +4,8 @@ mod fingerprint;
 mod source;
 
 pub use compilation::{
-    CachedWarnings, IncrementalContext, load_incremental_artifacts, save_incremental_artifacts,
+    CachedWarning, CachedWarnings, IncrementalContext, WarningCollector, load_check_artifacts,
+    load_incremental_artifacts, save_check_artifacts, save_incremental_artifacts,
     warmup_incremental_cache,
 };
 
