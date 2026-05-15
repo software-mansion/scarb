@@ -863,6 +863,11 @@ pub struct TomlCairo {
     /// Used by [cairo-debugger](https://github.com/software-mansion-labs/cairo-debugger).
     /// This feature is unstable and is subject to change.
     pub add_functions_debug_info: Option<bool>,
+    /// Add additional information about struct and enums: their names and names of their fields
+    /// and enum variants.
+    /// Used by [cairo-debugger](https://github.com/software-mansion-labs/cairo-debugger).
+    /// This feature is unstable and is subject to change.
+    pub add_types_debug_info: Option<bool>,
     /// Whether to add panic backtrace handling to the generated code.
     pub panic_backtrace: Option<bool>,
     /// Do not generate panic handling code. This might be useful for client side proving.
@@ -1784,10 +1789,13 @@ impl TomlManifest {
                 compiler_config.add_statements_code_locations_debug_info =
                     add_statements_code_locations_debug_info;
             }
-
             if let Some(add_functions_debug_info) = cairo.add_functions_debug_info {
                 compiler_config.add_functions_debug_info = add_functions_debug_info;
             }
+            if let Some(add_types_debug_info) = cairo.add_types_debug_info {
+                compiler_config.add_types_debug_info = add_types_debug_info;
+            }
+
             if let Some(panic_backtrace) = cairo.panic_backtrace {
                 compiler_config.panic_backtrace = panic_backtrace;
             }

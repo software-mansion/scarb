@@ -35,6 +35,11 @@ pub struct ManifestCompilerConfig {
     /// Used by [cairo-debugger](https://github.com/software-mansion-labs/cairo-debugger).
     /// This feature is unstable and is subject to change.
     pub add_functions_debug_info: bool,
+    /// Add additional information about struct and enums: their names and names of their fields
+    /// and enum variants.
+    /// Used by [cairo-debugger](https://github.com/software-mansion-labs/cairo-debugger).
+    /// This feature is unstable and is subject to change.
+    pub add_types_debug_info: bool,
     /// Whether to add panic backtrace handling to the generated code.
     pub panic_backtrace: bool,
     /// Do not generate panic handling code. This might be useful for client side proving.  
@@ -145,6 +150,7 @@ impl Default for ManifestCompilerConfig {
             add_statements_functions_debug_info: false,
             add_statements_code_locations_debug_info: false,
             add_functions_debug_info: false,
+            add_types_debug_info: false,
             panic_backtrace: false,
             unsafe_panic: false,
             compiler_optimizations: CompilerOptimizations::Enabled {
