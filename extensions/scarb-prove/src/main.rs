@@ -2,7 +2,6 @@
 #![deny(clippy::disallowed_methods)]
 
 use anyhow::{Context, Result, bail, ensure};
-use cairo_air::utils::ProofFormat;
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
@@ -105,7 +104,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         prover_input,
         false,
         proof_path.as_std_path().to_path_buf(),
-        ProofFormat::Json,
+        args.proof_format,
         None,
     )?;
 
