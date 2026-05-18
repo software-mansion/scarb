@@ -513,6 +513,23 @@ By default, this flag is set to `false`.
 add-functions-debug-info = false
 ```
 
+### `add-types-debug-info`
+
+> [!WARNING]
+> This is a highly experimental and unstable feature intended to be used by [cairo-debugger].
+> It will slow down the compilation and cause it to use more system memory.
+> It will also make the compilation artifacts larger.
+> It should not be used unless your tooling requires it.
+
+If enabled, during the project compilation, Scarb will add additional information about struct and enums used in your
+program - precisely their names and names of their fields and variants - to debug info.
+By default, this flag is set to `false`.
+
+```toml
+[cairo]
+add-types-debug-info = false
+```
+
 ## `[profile]`
 
 > [!WARNING]

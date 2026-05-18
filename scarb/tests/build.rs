@@ -1531,6 +1531,101 @@ fn add_functions_debug_info_to_tests() {
     );
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct SerializableTypeNamesDebugInfo {
+    pub structs: HashMap<SierraTypeId, StructInfo>,
+    pub enums: HashMap<SierraTypeId, EnumInfo>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct StructInfo {
+    pub name: String,
+    pub members: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct EnumInfo {
+    pub name: String,
+    pub variants: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct SierraTypeId(pub u64);
+
+#[test]
+fn add_types_debug_info() {
+    let t = setup_scarb_project_for_debug_info("add-types-debug-info");
+    Scarb::quick_command()
+        .arg("build")
+        .env("SCARB_INCREMENTAL", "false")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lib_sierra_string = t.child("target/dev/hello.sierra.json").read_to_string();
+    let contract_sierra_string = t
+        .child("target/dev/hello_HelloStarknet.contract_class.json")
+        .read_to_string();
+    let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
+    let contract_sierra = serde_json::from_str::<ContractClass>(&contract_sierra_string).unwrap();
+
+    let debug_info = lib_sierra
+        .into_v1()
+        .unwrap()
+        .debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion-labs/cairo-debugger/user-types")
+        .expect("Expected cairo-debugger/user-types annotations to exist");
+    assert!(
+        serde_json::from_value::<SerializableTypeNamesDebugInfo>(mappings.clone()).is_ok(),
+        "Expected type names debug info to be an object"
+    );
+
+    let debug_info = contract_sierra
+        .sierra_program_debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion-labs/cairo-debugger/user-types")
+        .expect("Expected cairo-debugger/user-types annotations to exist");
+    assert!(
+        serde_json::from_value::<SerializableTypeNamesDebugInfo>(mappings.clone()).is_ok(),
+        "Expected type names debug info to be an object"
+    );
+}
+
+#[test]
+fn add_types_debug_info_to_tests() {
+    let t = setup_scarb_project_for_debug_info("add-types-debug-info");
+    Scarb::quick_command()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lib_sierra_string = t
+        .child("target/dev/hello_unittest.test.sierra.json")
+        .read_to_string();
+    let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
+
+    let debug_info = lib_sierra
+        .into_v1()
+        .unwrap()
+        .debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion-labs/cairo-debugger/user-types")
+        .expect("Expected cairo-debugger/user-types annotations to exist");
+    assert!(
+        serde_json::from_value::<SerializableTypeNamesDebugInfo>(mappings.clone()).is_ok(),
+        "Expected type names debug info to be an object"
+    );
+}
+
 #[test]
 fn can_import_from_self_by_name() {
     let t = TempDir::new().unwrap();

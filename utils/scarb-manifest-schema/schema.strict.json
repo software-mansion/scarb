@@ -367,6 +367,13 @@
             "null"
           ]
         },
+        "add-types-debug-info": {
+          "description": "Add additional information about struct and enums: their names and names of their fields\nand enum variants.\nUsed by [cairo-debugger](https://github.com/software-mansion-labs/cairo-debugger).\nThis feature is unstable and is subject to change.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "allow-warnings": {
           "description": "Do not exit with error on compiler warnings.",
           "type": [
