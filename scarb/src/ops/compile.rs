@@ -10,6 +10,7 @@ use crate::compiler::incremental::{
     CachedWarnings, IncrementalContext, load_incremental_artifacts, save_incremental_artifacts,
 };
 use crate::compiler::plugin::proc_macro;
+use crate::compiler::structured_diagnostics::ensure_structured_json_diagnostics;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
 use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
@@ -27,6 +28,7 @@ use itertools::Itertools;
 use salsa::Database;
 use scarb_fs_utils as fsx;
 use scarb_ui::HumanDuration;
+use scarb_ui::OutputFormat;
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 use smol_str::{SmolStr, ToSmolStr};
@@ -400,18 +402,22 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 build_scarb_root_database(&unit, ws, Default::default())?;
             let main_crate_ids = collect_main_crate_ids(&unit, &db);
             check_starknet_dependency(&unit, ws, &db, &package_name);
-            let mut compiler_config = build_compiler_config(
-                &db,
-                &unit,
-                &main_crate_ids,
-                &IncrementalContext::Disabled,
-                ws,
-            );
-            let result = ensure_diagnostics(&db, &mut compiler_config.diagnostics_reporter)
-                .map_err(|err| err.into());
-
-            let _ = main_crate_ids;
-            drop(compiler_config);
+            let result = if ws.config().ui().output_format() == OutputFormat::Json {
+                ensure_structured_json_diagnostics(&db, &main_crate_ids, ws)
+                    .map_err(|err| err.into())
+            } else {
+                let mut compiler_config = build_compiler_config(
+                    &db,
+                    &unit,
+                    &main_crate_ids,
+                    &IncrementalContext::Disabled,
+                    ws,
+                );
+                let result = ensure_diagnostics(&db, &mut compiler_config.diagnostics_reporter)
+                    .map_err(|err| err.into());
+                drop(compiler_config);
+                result
+            };
             let span = trace_span!("drop_db");
             {
                 let _guard = span.enter();

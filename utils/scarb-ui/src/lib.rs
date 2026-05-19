@@ -173,6 +173,16 @@ impl Ui {
         self.print(TypedMessage::styled("error", "red", message.as_ref()))
     }
 
+    /// Record an error without printing a message.
+    pub fn record_error(&self) {
+        self.counter.error();
+    }
+
+    /// Record a warning without printing a message.
+    pub fn record_warning(&self) {
+        self.counter.warning();
+    }
+
     /// Print a warning to the user.
     pub fn warn_with_code(&self, code: impl AsRef<str>, message: impl AsRef<str>) {
         self.counter.warning();

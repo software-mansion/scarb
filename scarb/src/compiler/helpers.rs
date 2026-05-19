@@ -48,6 +48,16 @@ pub fn all_crate_inputs(db: &dyn Database) -> Vec<CrateInput> {
         .collect_vec()
 }
 
+pub fn non_main_crate_inputs<'db>(
+    db: &'db dyn Database,
+    main_crate_ids: &[CrateId<'db>],
+) -> Vec<CrateInput> {
+    db.crates()
+        .iter()
+        .filter(|crate_id| !main_crate_ids.contains(crate_id))
+        .map(|crate_id| crate_id.long(db).clone().into_crate_input(db))
+        .collect_vec()
+}
 pub fn build_compiler_config<'c, 'db>(
     db: &'db dyn Database,
     unit: &CairoCompilationUnit,
@@ -58,12 +68,7 @@ pub fn build_compiler_config<'c, 'db>(
 where
     'db: 'c,
 {
-    let ignore_warnings_crates = db
-        .crates()
-        .iter()
-        .filter(|crate_id| !main_crate_ids.contains(crate_id))
-        .map(|c| c.long(db).clone().into_crate_input(db))
-        .collect_vec();
+    let ignore_warnings_crates = non_main_crate_inputs(db, main_crate_ids);
     // If a crate is cached, we do not need to check it for error diagnostics,
     // as the cache can only be produced if the crate is error-free.
     // So if there were any diagnostics here to show, it would mean that the cache is outdated - thus

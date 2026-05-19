@@ -114,7 +114,7 @@ fn compile_with_syntax_error_json() {
         .code(1)
         .stdout_eq(indoc! {r#"
             {"status":"checking","message":"hello v0.1.0 ([..]Scarb.toml)"}
-            {"type":"error","message":"Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute./n --> [..]/lib.cairo:1:14/nnot_a_keyword/n             ^/n","code":"E1000"}
+            {"type":"diagnostic","severity":"error","message":"Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.","code":"E1000","file":"[..]/lib.cairo","span":{"start":13,"end":13}}
             {"type":"error","message":"could not check `hello` due to [..] previous error"}
         "#});
 }

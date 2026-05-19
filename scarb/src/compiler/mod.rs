@@ -16,6 +16,7 @@ pub mod incremental;
 pub mod plugin;
 mod profile;
 mod repository;
+pub mod structured_diagnostics;
 mod syntax;
 
 pub trait Compiler: Sync {
