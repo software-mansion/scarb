@@ -1,8 +1,7 @@
 use scarb_ui::components::MachineMessage;
 
-use super::core::{
-    StructuredDiagnosticMessage, StructuredDiagnosticSeverity, StructuredDiagnosticsSink,
-};
+use super::core::{StructuredDiagnosticMessage, StructuredDiagnosticsSink};
+use crate::core::MachineDiagnosticSeverity;
 
 pub struct ScarbUiStructuredDiagnosticsSink {
     ui: scarb_ui::Ui,
@@ -18,8 +17,8 @@ impl StructuredDiagnosticsSink for ScarbUiStructuredDiagnosticsSink {
     fn emit(&mut self, message: StructuredDiagnosticMessage) {
         let severity = message.severity();
         match severity {
-            StructuredDiagnosticSeverity::Error => self.ui.record_error(),
-            StructuredDiagnosticSeverity::Warning => self.ui.record_warning(),
+            MachineDiagnosticSeverity::Error => self.ui.record_error(),
+            MachineDiagnosticSeverity::Warning => self.ui.record_warning(),
         }
         self.ui.print(MachineMessage(message));
     }

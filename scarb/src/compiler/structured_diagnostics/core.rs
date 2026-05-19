@@ -1,3 +1,7 @@
+use crate::core::{
+    MachineDiagnostic, MachineDiagnosticKind, MachineDiagnosticSeverity, MachineDiagnosticSpan,
+    MachineRelatedLocation,
+};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_diagnostics::{
@@ -12,44 +16,12 @@ use cairo_lang_utils::Intern;
 use cairo_lang_utils::unordered_hash_set::UnorderedHashSet;
 use itertools::Itertools;
 use salsa::Database;
-use serde::Serialize;
 
-#[derive(Serialize)]
-pub struct StructuredDiagnosticMessage {
-    r#type: &'static str,
-    severity: StructuredDiagnosticSeverity,
-    message: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    code: Option<String>,
-    file: String,
-    span: StructuredDiagnosticSpan,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    related: Vec<StructuredDiagnosticRelated>,
-}
-
-#[derive(Clone, Copy, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum StructuredDiagnosticSeverity {
-    Error,
-    Warning,
-}
+pub type StructuredDiagnosticMessage = MachineDiagnostic;
 
 struct StructuredDiagnosticLocation {
     file: String,
-    span: StructuredDiagnosticSpan,
-}
-
-#[derive(Serialize)]
-struct StructuredDiagnosticSpan {
-    start: usize,
-    end: usize,
-}
-
-#[derive(Serialize)]
-struct StructuredDiagnosticRelated {
-    message: String,
-    file: String,
-    span: StructuredDiagnosticSpan,
+    span: MachineDiagnosticSpan,
 }
 
 pub trait StructuredDiagnosticsSink {
@@ -68,11 +40,45 @@ impl StructuredDiagnosticsReporter {
             crates,
         }
     }
+}
 
-    pub fn check(&mut self, db: &dyn Database, sink: &mut impl StructuredDiagnosticsSink) -> bool {
+impl StructuredDiagnosticMessage {
+    fn error(message: String, file: String) -> Self {
+        Self::new(
+            MachineDiagnosticKind::Diagnostic,
+            message,
+            MachineDiagnosticSeverity::Error,
+            file,
+            MachineDiagnosticSpan { start: 0, end: 0 },
+        )
+    }
+}
+
+impl StructuredDiagnosticLocation {
+    fn from_user_location(db: &dyn Database, location: SpanInFile<'_>) -> Self {
+        Self {
+            file: location.file_id.full_path(db),
+            span: MachineDiagnosticSpan {
+                start: location.span.start.as_u32() as usize,
+                end: location.span.end.as_u32() as usize,
+            },
+        }
+    }
+
+    fn into_related(self, message: String) -> MachineRelatedLocation {
+        MachineRelatedLocation {
+            message,
+            file: Some(self.file),
+            span: self.span,
+        }
+    }
+}
+
+impl StructuredDiagnosticsReporter {
+    pub fn check(&self, db: &dyn Database, sink: &mut impl StructuredDiagnosticsSink) -> bool {
         let mut found_diagnostics = false;
 
-        for crate_input in self.crates.clone() {
+        for crate_input in &self.crates {
             let crate_id = crate_input.clone().into_crate_long_id(db).intern(db);
             let Ok(module_file) = db.module_main_file(ModuleId::CrateRoot(crate_id)) else {
                 found_diagnostics = true;
@@ -92,7 +98,7 @@ impl StructuredDiagnosticsReporter {
                 found_diagnostics = true;
             }
 
-            let skip_warnings = self.ignore_warnings_crate_ids.contains(&crate_input);
+            let skip_warnings = self.ignore_warnings_crate_ids.contains(crate_input);
             let modules = db.crate_modules(crate_id);
             let mut processed_file_ids = UnorderedHashSet::<_>::default();
             for module_id in modules.iter() {
@@ -142,7 +148,7 @@ impl StructuredDiagnosticsReporter {
     }
 
     fn check_diag_group<'db, TEntry: DiagnosticEntry<'db> + salsa::Update>(
-        &mut self,
+        &self,
         db: &'db dyn Database,
         group: Diagnostics<'db, TEntry>,
         skip_warnings: bool,
@@ -161,44 +167,6 @@ impl StructuredDiagnosticsReporter {
             }
         }
         found
-    }
-}
-
-impl StructuredDiagnosticMessage {
-    fn error(message: String, file: String) -> Self {
-        Self {
-            r#type: "diagnostic",
-            severity: StructuredDiagnosticSeverity::Error,
-            message,
-            code: None,
-            file,
-            span: StructuredDiagnosticSpan { start: 0, end: 0 },
-            related: vec![],
-        }
-    }
-
-    pub fn severity(&self) -> StructuredDiagnosticSeverity {
-        self.severity
-    }
-}
-
-impl StructuredDiagnosticLocation {
-    fn from_user_location(db: &dyn Database, location: SpanInFile<'_>) -> Self {
-        Self {
-            file: location.file_id.full_path(db),
-            span: StructuredDiagnosticSpan {
-                start: location.span.start.as_u32() as usize,
-                end: location.span.end.as_u32() as usize,
-            },
-        }
-    }
-
-    fn into_related(self, message: String) -> StructuredDiagnosticRelated {
-        StructuredDiagnosticRelated {
-            message,
-            file: self.file,
-            span: self.span,
-        }
     }
 }
 
@@ -232,12 +200,12 @@ fn build_structured_diagnostic_message<'db, TEntry: DiagnosticEntry<'db>>(
     }
 
     Some(StructuredDiagnosticMessage {
-        r#type: "diagnostic",
-        severity: match entry.severity() {
-            Severity::Error => StructuredDiagnosticSeverity::Error,
-            Severity::Warning => StructuredDiagnosticSeverity::Warning,
-        },
+        kind: MachineDiagnosticKind::Diagnostic,
         message: entry.format(db),
+        severity: match entry.severity() {
+            Severity::Error => MachineDiagnosticSeverity::Error,
+            Severity::Warning => MachineDiagnosticSeverity::Warning,
+        },
         code: entry.error_code().map(|code| code.to_string()),
         file: primary.file,
         span: primary.span,
