@@ -10,16 +10,16 @@ use indoc::indoc;
 use tracing::trace;
 
 use crate::MANIFEST_FILE_NAME;
-use crate::core::TomlManifest;
 use crate::core::config::Config;
 use crate::core::errors::{ManifestErrorWithSource, ManifestParseError};
-use crate::core::manifest::{
-    ManifestDiagnosticAnchor, ManifestDiagnosticMessage, ManifestDiagnosticSpan,
-    ManifestMessageKind, resolve_manifest_anchor,
-};
+use crate::core::manifest::{ManifestDiagnosticAnchor, resolve_manifest_anchor};
 use crate::core::package::Package;
 use crate::core::source::SourceId;
 use crate::core::workspace::Workspace;
+use crate::core::{
+    MachineDiagnostic, MachineDiagnosticKind, MachineDiagnosticSeverity, MachineDiagnosticSpan,
+    TomlManifest,
+};
 use crate::ops::find_workspace_manifest_path;
 use scarb_fs_utils as fsx;
 use scarb_fs_utils::{PathBufUtf8Ext, is_hidden};
@@ -210,15 +210,16 @@ fn warn_unknown_manifest_fields(path: &Utf8Path, source: &str, config: &Config) 
         let span = resolve_manifest_anchor(source, &anchor);
 
         if config.ui().output_format() == OutputFormat::Json {
+            let span = span.unwrap_or(MachineDiagnosticSpan { start: 0, end: 0 });
             config
                 .ui()
-                .force_print(MachineMessage(ManifestDiagnosticMessage {
-                    kind: ManifestMessageKind::ManifestDiagnostic,
-                    message: format!("unknown manifest field `{path_str}`"),
-                    file: Some(path.to_string()),
+                .force_print(MachineMessage(MachineDiagnostic::new(
+                    MachineDiagnosticKind::ManifestDiagnostic,
+                    format!("unknown manifest field `{path_str}`"),
+                    MachineDiagnosticSeverity::Warning,
+                    path.to_string(),
                     span,
-                    related: vec![],
-                }));
+                )));
         } else {
             let location = span
                 .map(|s| format!(" {}", format_span_location(path, source, &s)))
@@ -231,7 +232,7 @@ fn warn_unknown_manifest_fields(path: &Utf8Path, source: &str, config: &Config) 
 }
 
 /// Converts a byte-offset span to a `(path:line:col)` locator string.
-fn format_span_location(path: &Utf8Path, source: &str, span: &ManifestDiagnosticSpan) -> String {
+fn format_span_location(path: &Utf8Path, source: &str, span: &MachineDiagnosticSpan) -> String {
     let (line, col) = byte_offset_to_line_col(source, span.start);
     format!("({path}:{line}:{col})")
 }

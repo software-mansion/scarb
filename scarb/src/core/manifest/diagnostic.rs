@@ -1,63 +1,10 @@
-use crate::core::{PackageName, TargetKind};
+use crate::core::{MachineDiagnosticSpan, PackageName, TargetKind};
 use scarb_manifest_schema::FieldPath;
-use serde::Serialize;
 use toml_edit::{Document, Item, Table};
-
-/// The serialized shape of a manifest diagnostic emitted in JSON output mode.
-/// Both the `metadata` command (for parse/semantic errors) and the workspace
-/// loader (for unknown-field warnings) use this type so the JSON output is
-/// uniform.
-#[derive(Serialize)]
-pub struct ManifestDiagnosticMessage {
-    pub kind: ManifestMessageKind,
-    pub message: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub file: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub span: Option<ManifestDiagnosticSpan>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub related: Vec<ManifestRelatedLocation>,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ManifestMessageKind {
-    ManifestDiagnostic,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ManifestDiagnosticData {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub span: Option<ManifestDiagnosticSpan>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub related: Vec<ManifestRelatedLocation>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ManifestRelatedLocation {
-    pub message: String,
-    pub span: ManifestDiagnosticSpan,
-}
-
 #[derive(Debug, Clone)]
 pub struct ManifestRelatedAnchor {
     pub message: String,
     pub anchor: ManifestDiagnosticAnchor,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ManifestDiagnosticSpan {
-    pub start: usize,
-    pub end: usize,
-}
-
-impl From<std::ops::Range<usize>> for ManifestDiagnosticSpan {
-    fn from(range: std::ops::Range<usize>) -> Self {
-        Self {
-            start: range.start,
-            end: range.end,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -207,11 +154,11 @@ impl ManifestDiagnosticAnchor {
 
 /// Returns the span of `key` in `table`, preferring the key token span over its value's span.
 /// Example: in `version = "1.0.0"`, resolves to `version` (or to `"1.0.0"` if the key span is unavailable).
-fn key_or_item_span(table: &Table, key: &str) -> Option<ManifestDiagnosticSpan> {
+fn key_or_item_span(table: &Table, key: &str) -> Option<MachineDiagnosticSpan> {
     let (key, item) = table.get_key_value(key)?;
     key.span()
-        .map(ManifestDiagnosticSpan::from)
-        .or_else(|| item.span().map(ManifestDiagnosticSpan::from))
+        .map(MachineDiagnosticSpan::from)
+        .or_else(|| item.span().map(MachineDiagnosticSpan::from))
 }
 
 /// Returns the span of an entry in `table` by `key`.
@@ -221,22 +168,22 @@ fn table_entry_span(
     table: &Table,
     key: &str,
     field: Option<&'static str>,
-) -> Option<ManifestDiagnosticSpan> {
+) -> Option<MachineDiagnosticSpan> {
     let (entry_key, entry_item) = table.get_key_value(key)?;
 
     let Some(field) = field else {
         return entry_key
             .span()
-            .map(ManifestDiagnosticSpan::from)
-            .or_else(|| entry_item.span().map(ManifestDiagnosticSpan::from));
+            .map(MachineDiagnosticSpan::from)
+            .or_else(|| entry_item.span().map(MachineDiagnosticSpan::from));
     };
 
     if let Some(inline_table) = entry_item.as_inline_table() {
         let (key, item) = inline_table.get_key_value(field)?;
         return key
             .span()
-            .map(ManifestDiagnosticSpan::from)
-            .or_else(|| item.span().map(ManifestDiagnosticSpan::from));
+            .map(MachineDiagnosticSpan::from)
+            .or_else(|| item.span().map(MachineDiagnosticSpan::from));
     }
 
     entry_item
@@ -261,7 +208,7 @@ fn patch_source_table<'a>(root: &'a Table, source: &str) -> Option<&'a Table> {
 pub fn resolve_manifest_anchor(
     source: &str,
     anchor: &ManifestDiagnosticAnchor,
-) -> Option<ManifestDiagnosticSpan> {
+) -> Option<MachineDiagnosticSpan> {
     let document = Document::parse(source).ok()?;
     resolve_anchor_in_doc(document.as_table(), anchor)
 }
@@ -270,7 +217,7 @@ pub fn resolve_manifest_anchor(
 pub fn resolve_anchor_in_doc(
     root: &Table,
     anchor: &ManifestDiagnosticAnchor,
-) -> Option<ManifestDiagnosticSpan> {
+) -> Option<MachineDiagnosticSpan> {
     match anchor {
         ManifestDiagnosticAnchor::PackageField { field } => {
             table_at_path(root, &["package"]).and_then(|table| key_or_item_span(table, field))
@@ -295,15 +242,15 @@ pub fn resolve_anchor_in_doc(
             };
             field
                 .and_then(|field| key_or_item_span(table, field))
-                .or_else(|| table.span().map(ManifestDiagnosticSpan::from))
+                .or_else(|| table.span().map(MachineDiagnosticSpan::from))
         }
         ManifestDiagnosticAnchor::PatchRoot => {
             let patch = table_at_path(root, &["patch"])?;
             if !patch.is_implicit() {
-                patch.span().map(ManifestDiagnosticSpan::from)
+                patch.span().map(MachineDiagnosticSpan::from)
             } else {
                 patch.iter().find_map(|(_, item)| match item {
-                    Item::Table(table) => table.span().map(ManifestDiagnosticSpan::from),
+                    Item::Table(table) => table.span().map(MachineDiagnosticSpan::from),
                     _ => None,
                 })
             }
@@ -311,7 +258,7 @@ pub fn resolve_anchor_in_doc(
         ManifestDiagnosticAnchor::PatchSource {
             source: patch_source,
         } => patch_source_table(root, patch_source.as_str())
-            .and_then(|t| t.span().map(ManifestDiagnosticSpan::from)),
+            .and_then(|t| t.span().map(MachineDiagnosticSpan::from)),
         ManifestDiagnosticAnchor::PatchDependency {
             source: patch_source,
             name,
@@ -363,7 +310,7 @@ pub fn resolve_anchor_in_doc(
                 return Some(name_span);
             }
 
-            section.span().map(ManifestDiagnosticSpan::from)
+            section.span().map(MachineDiagnosticSpan::from)
         }
         ManifestDiagnosticAnchor::RawTomlPath { path } => {
             let (key, parent_segments) = path.split_last()?;

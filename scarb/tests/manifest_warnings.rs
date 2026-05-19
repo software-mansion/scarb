@@ -278,8 +278,9 @@ fn json_mode_emits_manifest_diagnostic_for_unknown_top_level_section() {
     assert!(diag["file"].is_string(), "expected file field");
     assert!(diag["span"].is_object(), "expected span field");
     assert!(
-        diag.get("severity").is_none(),
-        "did not expect severity field"
+        diag["severity"] == "warning",
+        "unexpected severity: {}",
+        diag["severity"]
     );
 }
 
@@ -319,6 +320,7 @@ fn json_mode_emits_manifest_diagnostic_for_unknown_package_field() {
     );
     assert!(diag["file"].is_string(), "expected file field");
     assert!(diag["span"].is_object(), "expected span field");
+    assert_eq!(diag["severity"], "warning");
 }
 
 #[test]

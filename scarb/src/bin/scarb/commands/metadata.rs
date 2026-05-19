@@ -5,7 +5,8 @@ use toml::de::Error as TomlParseError;
 use scarb::core::Config;
 use scarb::core::errors::{ManifestErrorWithSource, ManifestParseError};
 use scarb::core::{
-    ManifestDiagnosticMessage, ManifestDiagnosticSpan, ManifestMessageKind, ManifestSemanticError,
+    MachineDiagnostic, MachineDiagnosticKind, MachineDiagnosticSeverity, MachineDiagnosticSpan,
+    MachineRelatedLocation, ManifestSemanticError,
 };
 use scarb::ops;
 use scarb_ui::OutputFormat;
@@ -42,7 +43,7 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
 }
 
 fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
-    let (file, message, span, related) = if let Some(sem) = error
+    let diagnostic = if let Some(sem) = error
         .chain()
         .find_map(|c| c.downcast_ref::<ManifestSemanticError>())
     {
@@ -59,7 +60,29 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
             })
             .unwrap_or_default();
         let file = src.map(|src| src.path.to_string());
-        (file, sem.to_string(), span, related)
+        let mut diagnostic = MachineDiagnostic::new(
+            MachineDiagnosticKind::ManifestDiagnostic,
+            sem.to_string(),
+            MachineDiagnosticSeverity::Error,
+            file.unwrap_or_else(|| "<unknown>".to_string()),
+            span.map(|span| MachineDiagnosticSpan {
+                start: span.start,
+                end: span.end,
+            })
+            .unwrap_or(MachineDiagnosticSpan { start: 0, end: 0 }),
+        );
+        diagnostic.related = related
+            .into_iter()
+            .map(|related| MachineRelatedLocation {
+                message: related.message,
+                file: None,
+                span: MachineDiagnosticSpan {
+                    start: related.span.start,
+                    end: related.span.end,
+                },
+            })
+            .collect();
+        diagnostic
     } else if let Some(parse_err) = error
         .chain()
         .find_map(|c| c.downcast_ref::<ManifestParseError>())
@@ -76,11 +99,21 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
         };
         let span = toml_err
             .and_then(|e| e.span())
-            .map(|s| ManifestDiagnosticSpan {
+            .map(|s| MachineDiagnosticSpan {
                 start: s.start,
                 end: s.end,
             });
-        (Some(parse_err.path().to_string()), message, span, vec![])
+        MachineDiagnostic::new(
+            MachineDiagnosticKind::ManifestDiagnostic,
+            message,
+            MachineDiagnosticSeverity::Error,
+            parse_err.path().to_string(),
+            span.map(|span| MachineDiagnosticSpan {
+                start: span.start,
+                end: span.end,
+            })
+            .unwrap_or(MachineDiagnosticSpan { start: 0, end: 0 }),
+        )
     } else if let Some(src) = error
         .chain()
         .find_map(|c| c.downcast_ref::<ManifestErrorWithSource>())
@@ -89,18 +122,16 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
             .source()
             .map(|err| err.to_string())
             .unwrap_or_else(|| error.to_string());
-        (Some(src.path.to_string()), message, None, vec![])
+        MachineDiagnostic::new(
+            MachineDiagnosticKind::ManifestDiagnostic,
+            message,
+            MachineDiagnosticSeverity::Error,
+            src.path.to_string(),
+            MachineDiagnosticSpan { start: 0, end: 0 },
+        )
     } else {
         return;
     };
 
-    config
-        .ui()
-        .force_print(MachineMessage(ManifestDiagnosticMessage {
-            kind: ManifestMessageKind::ManifestDiagnostic,
-            message,
-            file,
-            span,
-            related,
-        }));
+    config.ui().force_print(MachineMessage(diagnostic));
 }

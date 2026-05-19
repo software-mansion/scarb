@@ -9,7 +9,7 @@ use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
 use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_filesystem::ids::{CrateId, CrateInput};
 use itertools::Itertools;
 use salsa::Database;
 use serde::Serialize;
@@ -39,6 +39,13 @@ impl<W: Write> Write for CountingWriter<W> {
     fn flush(&mut self) -> std::io::Result<()> {
         self.inner.flush()
     }
+}
+
+pub fn all_crate_inputs(db: &dyn Database) -> Vec<CrateInput> {
+    db.crates()
+        .iter()
+        .map(|crate_id| crate_id.long(db).clone().into_crate_input(db))
+        .collect_vec()
 }
 
 pub fn build_compiler_config<'c, 'db>(

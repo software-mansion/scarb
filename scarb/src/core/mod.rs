@@ -5,6 +5,7 @@
 pub use checksum::*;
 pub use config::Config;
 pub use dirs::AppDirs;
+pub use machine_diagnostic::*;
 pub use manifest::*;
 pub use package::{Package, PackageId, PackageIdInner, PackageInner, PackageName};
 pub use resolver::Resolve;
@@ -16,6 +17,7 @@ pub(crate) mod config;
 mod dirs;
 pub mod errors;
 pub(crate) mod lockfile;
+mod machine_diagnostic;
 pub(crate) mod manifest;
 pub(crate) mod package;
 pub(crate) mod publishing;

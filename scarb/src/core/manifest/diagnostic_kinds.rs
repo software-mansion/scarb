@@ -1,16 +1,12 @@
 use crate::compiler::ProfileValidationError;
-use crate::core::{PackageName, TargetKind};
+use crate::core::{MachineDiagnosticData, MachineRelatedLocation, PackageName, TargetKind};
 use camino::Utf8PathBuf;
 use thiserror::Error;
 use toml_edit::Table;
 use url::ParseError as UrlParseError;
 
-use super::ManifestDiagnosticData;
 use super::diagnostic::resolve_anchor_in_doc;
-use super::{
-    ManifestDependencyTable, ManifestDiagnosticAnchor, ManifestRelatedAnchor,
-    ManifestRelatedLocation,
-};
+use super::{ManifestDependencyTable, ManifestDiagnosticAnchor, ManifestRelatedAnchor};
 
 /// Typed manifest validation errors that carry semantic anchors for diagnostic span resolution.
 ///
@@ -55,7 +51,7 @@ pub enum ManifestSemanticError {
 
 impl ManifestSemanticError {
     /// Resolves this error's anchor(s) to byte spans using the parsed manifest root table.
-    pub fn resolve(&self, root: &Table) -> ManifestDiagnosticData {
+    pub fn resolve(&self, root: &Table) -> MachineDiagnosticData {
         let span = self
             .primary_anchor()
             .and_then(|anchor| resolve_anchor_in_doc(root, &anchor));
@@ -63,14 +59,15 @@ impl ManifestSemanticError {
             .related_anchors()
             .into_iter()
             .filter_map(|r| {
-                resolve_anchor_in_doc(root, &r.anchor).map(|span| ManifestRelatedLocation {
+                resolve_anchor_in_doc(root, &r.anchor).map(|span| MachineRelatedLocation {
                     message: r.message,
+                    file: None,
                     span,
                 })
             })
             .collect();
 
-        ManifestDiagnosticData { span, related }
+        MachineDiagnosticData { span, related }
     }
 
     fn primary_anchor(&self) -> Option<ManifestDiagnosticAnchor> {
@@ -502,16 +499,16 @@ mod tests {
 
     use super::*;
     use crate::compiler::ProfileValidationError;
-    use crate::core::manifest::ManifestDiagnosticSpan;
+    use crate::core::MachineDiagnosticSpan;
 
     /// Parses `toml`, calls `resolve` on `err`, and returns the diagnostic data.
-    fn resolve_err(err: impl Into<ManifestSemanticError>, toml: &str) -> ManifestDiagnosticData {
+    fn resolve_err(err: impl Into<ManifestSemanticError>, toml: &str) -> MachineDiagnosticData {
         let doc = toml_edit::Document::parse(toml).expect("valid TOML");
         err.into().resolve(doc.as_table())
     }
 
     /// Slices `source` at `span`, panicking if `span` is `None`.
-    fn span_text(source: &str, span: Option<ManifestDiagnosticSpan>) -> &str {
+    fn span_text(source: &str, span: Option<MachineDiagnosticSpan>) -> &str {
         let span = span.expect("expected Some span, got None");
         &source[span.start..span.end]
     }

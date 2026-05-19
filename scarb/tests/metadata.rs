@@ -150,10 +150,7 @@ fn emits_manifest_diagnostic_ndjson_for_invalid_manifest_in_json_mode() {
         "#}
     );
     assert!(diagnostic["span"].is_object());
-    assert!(
-        diagnostic.get("severity").is_none(),
-        "did not expect severity field"
-    );
+    assert_eq!(diagnostic["severity"], "error");
 }
 
 #[test]
@@ -285,8 +282,9 @@ fn emits_manifest_diagnostic_for_semantic_manifest_error_without_span() {
         diagnostic["message"].as_str().unwrap(),
         "error inheriting `hello` from workspace root manifest's `workspace.scripts.hello`"
     );
+    assert_eq!(diagnostic["severity"], "error");
     assert!(diagnostic.get("code").is_none());
-    assert!(diagnostic.get("span").is_none());
+    assert_eq!(diagnostic["span"], json!({ "start": 0, "end": 0 }));
 }
 
 #[test]
