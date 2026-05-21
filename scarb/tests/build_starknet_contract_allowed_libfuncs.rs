@@ -142,7 +142,7 @@ fn pass_named_list() {
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
-            allowed-libfuncs-list.name = "all"
+            allowed-libfuncs-list.name = "audited"
         "#})
         .dep_starknet()
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
