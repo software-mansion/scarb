@@ -447,3 +447,105 @@ fn build_then_check_with_warning() {
         "#
         });
 }
+
+#[test]
+fn check_then_build() {
+    let cache_dir = TempDir::new().unwrap().child("c");
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .build(&t);
+
+    // Check should succeed
+    Scarb::new()
+        .cache(cache_dir.path())
+        .command()
+        .arg("check")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! { r#"
+        [..]Checking hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished checking `dev` profile target(s) in [..]
+        "#
+        });
+
+    assert_package_fingerprint_presence(&t, "hello", true);
+
+    // Build should succeed after check
+    Scarb::new()
+        .cache(cache_dir.path())
+        .command()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! { r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        "#
+        });
+
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::path::exists());
+}
+
+#[test]
+fn check_then_build_then_check() {
+    let cache_dir = TempDir::new().unwrap().child("c");
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .build(&t);
+
+    // Check should succeed
+    Scarb::new()
+        .cache(cache_dir.path())
+        .command()
+        .arg("check")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! { r#"
+        [..]Checking hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished checking `dev` profile target(s) in [..]
+        "#
+        });
+
+    assert_package_fingerprint_presence(&t, "hello", true);
+
+    // Build should succeed after check
+    Scarb::new()
+        .cache(cache_dir.path())
+        .command()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! { r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        "#
+        });
+
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::path::exists());
+
+    // Check should succeed after build
+    Scarb::new()
+        .cache(cache_dir.path())
+        .command()
+        .arg("check")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! { r#"
+        [..]Checking hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished checking `dev` profile target(s) in [..]
+        "#
+        });
+}
