@@ -371,14 +371,18 @@ fn check_units(
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let required_plugins = plugins_required_for_units(&units);
+    let workspace_members: HashSet<PackageId> = ws.members().map(|m| m.id).collect();
 
     for unit in units {
-        if matches!(unit, CompilationUnit::ProcMacro(_))
-            && required_plugins.contains(&unit.main_package_id())
-        {
-            // We compile proc macros that will be used by latter Cairo CUs.
-            // Note: this only works, because `process` maintains the order of units.
-            compile_unit(unit, ws)?;
+        if matches!(unit, CompilationUnit::ProcMacro(_)) {
+            if required_plugins.contains(&unit.main_package_id()) {
+                // We compile proc macros that will be used by latter Cairo CUs.
+                // Note: this only works, because `process` maintains the order of units.
+                compile_unit(unit, ws)?;
+            } else if workspace_members.contains(&unit.main_package_id()) {
+                // Run check on proc macros that are workspace members.
+                check_unit(unit, ws)?;
+            }
         } else {
             check_unit(unit, ws)?;
         }

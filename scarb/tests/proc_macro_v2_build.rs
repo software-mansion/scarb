@@ -102,6 +102,46 @@ fn can_check_cairo_project_with_plugins() {
 }
 
 #[test]
+fn check_skips_proc_macro_not_needed_by_checked_package() {
+    let temp = TempDir::new().unwrap();
+    // Create a proc macro package (external, not a workspace member).
+    let macro_dir = temp.child("some");
+    CairoPluginProjectBuilder::default().build(&macro_dir);
+    // Create a workspace with two Cairo packages:
+    // - `uses_macro` depends on the proc macro
+    // - `no_macro` has no proc macro dependency
+    let project = temp.child("project");
+    let uses_macro_dir = project.child("uses_macro");
+    ProjectBuilder::start()
+        .name("uses_macro")
+        .version("1.0.0")
+        .dep("some", &macro_dir)
+        .build(&uses_macro_dir);
+    let no_macro_dir = project.child("no_macro");
+    ProjectBuilder::start()
+        .name("no_macro")
+        .version("1.0.0")
+        .build(&no_macro_dir);
+    WorkspaceBuilder::start()
+        .add_member("uses_macro")
+        .add_member("no_macro")
+        .build(&project);
+    // Check only `no_macro` — the proc macro should be skipped entirely.
+    Scarb::quick_command()
+        .arg("check")
+        .arg("-p")
+        .arg("no_macro")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            [..]Checking no_macro v1.0.0 ([..]Scarb.toml)
+            [..]Finished checking `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
 fn resolve_fetched_plugins() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default().build(&t);
