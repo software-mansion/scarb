@@ -26,7 +26,7 @@ impl InMemoryIndex {
 /// and only considers fields that differentiate package or package source.
 ///
 /// This can be easily converted to and from `ManifestDependency` using the `From` trait.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ManifestDependencySourceKey(ManifestDependency);
 
 impl Hash for ManifestDependencySourceKey {
