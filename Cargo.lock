@@ -7432,7 +7432,6 @@ version = "2.18.0"
 dependencies = [
  "anyhow",
  "assert_fs",
- "cairo-air",
  "camino",
  "clap",
  "create-output-dir 1.0.0",
