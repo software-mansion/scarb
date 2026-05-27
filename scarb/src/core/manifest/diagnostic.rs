@@ -11,6 +11,7 @@ use toml_edit::{Document, Item, Table};
 pub struct ManifestDiagnosticMessage {
     pub kind: ManifestMessageKind,
     pub message: String,
+    pub error_code: ManifestDiagnosticCode,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub file: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -23,6 +24,48 @@ pub struct ManifestDiagnosticMessage {
 #[serde(rename_all = "snake_case")]
 pub enum ManifestMessageKind {
     ManifestDiagnostic,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+pub enum ManifestDiagnosticCode {
+    #[serde(rename = "SE0001")]
+    ParseError,
+    #[serde(rename = "SE0002")]
+    UnknownField,
+    #[serde(rename = "SE0003")]
+    ProfileNameInvalid,
+    #[serde(rename = "SE0004")]
+    ProfileInheritanceInvalid,
+    #[serde(rename = "SE0005")]
+    CairoInliningStrategyConflict,
+    #[serde(rename = "SE0006")]
+    DependencyWorkspaceNotFound,
+    #[serde(rename = "SE0007")]
+    DependencyGitRefWithoutGit,
+    #[serde(rename = "SE0008")]
+    DependencyGitReferenceAmbiguous,
+    #[serde(rename = "SE0009")]
+    DependencySourceMissing,
+    #[serde(rename = "SE0010")]
+    DependencyGitPathAmbiguous,
+    #[serde(rename = "SE0011")]
+    DependencyGitRegistryAmbiguous,
+    #[serde(rename = "SE0012")]
+    PatchNotInWorkspaceRoot,
+    #[serde(rename = "SE0013")]
+    PatchSourceConflict,
+    #[serde(rename = "SE0014")]
+    PatchSourceInvalidUrl,
+    #[serde(rename = "SE0015")]
+    ReadmePathInvalid,
+    #[serde(rename = "SE0016")]
+    LicensePathInvalid,
+    #[serde(rename = "SE0017")]
+    DuplicateDefaultTargetDefinition,
+    #[serde(rename = "SE0018")]
+    DuplicateNamedTargetDefinition,
+    #[serde(rename = "SE0019")]
+    Other,
 }
 
 #[derive(Debug, Clone, Serialize)]

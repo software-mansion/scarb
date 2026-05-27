@@ -14,8 +14,8 @@ use crate::core::TomlManifest;
 use crate::core::config::Config;
 use crate::core::errors::{ManifestErrorWithSource, ManifestParseError};
 use crate::core::manifest::{
-    ManifestDiagnosticAnchor, ManifestDiagnosticMessage, ManifestDiagnosticSpan,
-    ManifestMessageKind, resolve_manifest_anchor,
+    ManifestDiagnosticAnchor, ManifestDiagnosticCode, ManifestDiagnosticMessage,
+    ManifestDiagnosticSpan, ManifestMessageKind, resolve_manifest_anchor,
 };
 use crate::core::package::Package;
 use crate::core::source::SourceId;
@@ -215,6 +215,7 @@ fn warn_unknown_manifest_fields(path: &Utf8Path, source: &str, config: &Config) 
                 .force_print(MachineMessage(ManifestDiagnosticMessage {
                     kind: ManifestMessageKind::ManifestDiagnostic,
                     message: format!("unknown manifest field `{path_str}`"),
+                    error_code: ManifestDiagnosticCode::UnknownField,
                     file: Some(path.to_string()),
                     span,
                     related: vec![],

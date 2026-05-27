@@ -149,6 +149,7 @@ fn emits_manifest_diagnostic_ndjson_for_invalid_manifest_in_json_mode() {
             invalid type: integer `1`, expected a string
         "#}
     );
+    assert_eq!(diagnostic["error_code"].as_str().unwrap(), "SE0001");
     assert!(diagnostic["span"].is_object());
     assert!(
         diagnostic.get("severity").is_none(),
@@ -195,6 +196,7 @@ fn attributes_manifest_diagnostic_to_workspace_member_manifest() {
         diagnostic["file"].as_str().unwrap(),
         expected_path.to_str().unwrap()
     );
+    assert_eq!(diagnostic["error_code"].as_str().unwrap(), "SE0001");
     assert!(diagnostic["span"].is_object());
 }
 
@@ -239,7 +241,7 @@ fn emits_manifest_diagnostic_for_semantic_manifest_error_with_span() {
         diagnostic["message"].as_str().unwrap(),
         "profile name `test` is not allowed"
     );
-    assert!(diagnostic.get("code").is_none());
+    assert_eq!(diagnostic["error_code"].as_str().unwrap(), "SE0003");
     assert!(diagnostic["span"].is_object());
 }
 
@@ -285,7 +287,7 @@ fn emits_manifest_diagnostic_for_semantic_manifest_error_without_span() {
         diagnostic["message"].as_str().unwrap(),
         "error inheriting `hello` from workspace root manifest's `workspace.scripts.hello`"
     );
-    assert!(diagnostic.get("code").is_none());
+    assert_eq!(diagnostic["error_code"].as_str().unwrap(), "SE0019");
     assert!(diagnostic.get("span").is_none());
 }
 
