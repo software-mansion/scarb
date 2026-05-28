@@ -9,6 +9,7 @@ publish = false
 anyhow = { workspace = true, optional = true }
 clap.workspace = true
 camino = { workspace = true, optional = true }
+cairo-air = { workspace = true, optional = true }
 cairo-vm = { workspace = true, optional = true }
 scarb-ui = { path = "../scarb-ui", optional = true }
 
@@ -24,7 +25,7 @@ execute = [
     "cairo-vm/clap"
 ]
 mdbook = ["dep:camino", "dep:scarb-ui"]
-prove = ["execute", "dep:scarb-ui"]
+prove = ["execute", "dep:cairo-air", "dep:scarb-ui"]
 verify = ["dep:camino", "dep:scarb-ui"]
 default = [
     "cairo-language-server",

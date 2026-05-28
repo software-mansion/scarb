@@ -3,6 +3,7 @@
 //! Extension CLI arguments datastructures.
 
 use crate::execute::ExecutionArgs;
+use cairo_air::utils::ProofFormat;
 use clap::Parser;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 
@@ -50,6 +51,10 @@ pub struct Args {
     /// Print machine-readable output in NDJSON format.
     #[arg(long, env = "SCARB_OUTPUT_JSON")]
     pub json: bool,
+
+    /// Format used to serialize the generated proof.
+    #[arg(long, value_enum, default_value_t = ProofFormat::Json)]
+    pub proof_format: ProofFormat,
 
     /// Logging verbosity.
     #[command(flatten)]
