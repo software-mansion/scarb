@@ -81,7 +81,7 @@ cairo-lang-test-runner = "*"
 cairo-lang-utils = { version = "*", features = ["tracing"] }
 cairo-language-server = "*"
 cairo-lint = "*"
-cairo-program-runner-lib = { git = "https://github.com/software-mansion-labs/proving-utils.git", rev = "0ce4ace4f24d963fdcc379caafb084e7e2924769" }
+cairo-program-runner-lib = { git = "https://github.com/software-mansion-labs/proving-utils.git", rev = "5af1bd08a811b0ffb6bd512715ec8827ca1db140" }
 cairo-vm = "3.2.0"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
