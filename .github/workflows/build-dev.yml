@@ -36,10 +36,16 @@ on:
         type: boolean
         default: true
 
+permissions: {}
+
 jobs:
   dev-build:
     uses: ./.github/workflows/nightly.yml
-    secrets: inherit
+    permissions:
+      contents: write
+    secrets:
+      SCARB_NIGHTLIES_CONTENTS_WRITE: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
+      SLACK_NIGHTLY_FAILURE_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_FAILURE_WEBHOOK_URL }}
     with:
       dry_run: ${{ inputs.dry_run }}
       upgrade-cairo: ${{ inputs.upgrade-cairo }}

@@ -74,17 +74,18 @@ jobs:
           #- target: aarch64-pc-windows-msvc
           #  os: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           ref: ${{ inputs.ref }}
+          persist-credentials: false
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
         with:
           target: ${{ matrix.target }}
 
       - name: Install cross
         if: matrix.cross
-        uses: taiki-e/install-action@cross
+        uses: taiki-e/install-action@acd64fff6a014853b02d944cbf71c278fba2034d # cross
 
       - name: Enable cross-compilation
         if: matrix.cross
@@ -94,7 +95,7 @@ jobs:
       - name: Build
         run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove --exclude scarb-verify ${{ !inputs.include-cairols && '--exclude scarb-cairo-language-server' || ''}} --no-default-features ${{ inputs.include-lint && '--features scarb/scarb-lint' || ''}}
 
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         if: inputs.include-stwo
         with:
           target: ${{ matrix.target }}
@@ -102,7 +103,7 @@ jobs:
 
       - name: Install cross
         if: matrix.cross && inputs.include-stwo
-        uses: taiki-e/install-action@cross
+        uses: taiki-e/install-action@acd64fff6a014853b02d944cbf71c278fba2034d # cross
 
       - name: Enable cross-compilation
         if: matrix.cross && inputs.include-stwo
@@ -113,7 +114,7 @@ jobs:
         if: inputs.include-stwo
         run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} -p scarb-prove -p scarb-verify
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
         with:
           target: ${{ matrix.target }}
 
@@ -124,7 +125,7 @@ jobs:
           TARGET: ${{ matrix.target }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: build-${{ matrix.target }}
           path: scarb-${{ inputs.scarb-tag }}-${{ matrix.target }}.*
@@ -151,17 +152,18 @@ jobs:
             os: windows-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           ref: ${{ inputs.ref }}
+          persist-credentials: false
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
 
       - name: Build xtasks
         run: cargo build -p xtask
 
       - name: Download artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: build-${{ matrix.target }}
           path: target/verify
@@ -179,7 +181,7 @@ jobs:
     needs: build
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           path: artifacts-dl
 
@@ -195,7 +197,7 @@ jobs:
           cat checksums.sha256
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: checksums
           path: artifacts/checksums.*

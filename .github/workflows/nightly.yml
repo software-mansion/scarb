@@ -85,6 +85,8 @@ jobs:
       nightly_branch: ${{ steps.version.outputs.nightly_branch }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Configure Git for committing
@@ -200,11 +202,14 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: ${{ needs.prepare.outputs.nightly_branch }}
+          persist-credentials: false
 
       - name: Create source code archives
         run: |
-          git archive "--prefix=scarb-${{ needs.prepare.outputs.nightly_tag }}/" -o "scarb-${{ needs.prepare.outputs.nightly_tag }}.zip" HEAD
-          git archive "--prefix=scarb-${{ needs.prepare.outputs.nightly_tag }}/" -o "scarb-${{ needs.prepare.outputs.nightly_tag }}.tar.gz" HEAD
+          git archive "--prefix=scarb-${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}/" -o "scarb-${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}.zip" HEAD
+          git archive "--prefix=scarb-${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}/" -o "scarb-${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}.tar.gz" HEAD
+        env:
+          NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG: ${{ needs.prepare.outputs.nightly_tag }}
 
       - name: Download artifacts
         uses: actions/download-artifact@v8
@@ -221,20 +226,21 @@ jobs:
       - name: Create GitHub release
         run: |
           gh release create \
-            "${{ needs.prepare.outputs.nightly_tag }}" \
+            "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
             --repo software-mansion/scarb-nightlies \
             ${{ !inputs.is_dev && '--latest' || '--latest=false' }} \
-            --title "${{ needs.prepare.outputs.nightly_tag }}" \
+            --title "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
             --notes-file NIGHTLY_RELEASE_NOTES.md
         env:
           GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
+          NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG: ${{ needs.prepare.outputs.nightly_tag }}
 
       - name: Upload release assets
         run: |
           for file in \
             ./artifacts/* \
-            "scarb-${{ needs.prepare.outputs.nightly_tag }}.zip#Scarb source code (zip)" \
-            "scarb-${{ needs.prepare.outputs.nightly_tag }}.tar.gz#Scarb source code (tar.gz)"
+            "scarb-${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}.zip#Scarb source code (zip)" \
+            "scarb-${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}.tar.gz#Scarb source code (tar.gz)"
           do
             # If there isn't # in name, it means that it is a build artifact
             # and we need to remove version tag from the name, so it can be
@@ -251,12 +257,13 @@ jobs:
             fi
 
             gh release upload \
-              "${{ needs.prepare.outputs.nightly_tag }}" \
+              "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
               "$file" \
               --repo software-mansion/scarb-nightlies
           done
         env:
           GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
+          NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG: ${{ needs.prepare.outputs.nightly_tag }}
 
   cleanup:
     runs-on: ubuntu-latest
@@ -264,9 +271,13 @@ jobs:
     needs: [ prepare, upload ]
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Delete nightly branch
         run: |
-          git push origin -d ${{ needs.prepare.outputs.nightly_branch }}
+          git push origin -d ${NEEDS_PREPARE_OUTPUTS_NIGHTLY_BRANCH}
+        env:
+          NEEDS_PREPARE_OUTPUTS_NIGHTLY_BRANCH: ${{ needs.prepare.outputs.nightly_branch }}
 
   notify_failed:
     runs-on: ubuntu-latest
