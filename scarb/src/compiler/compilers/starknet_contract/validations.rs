@@ -10,7 +10,7 @@ use cairo_lang_filesystem::flag::{Flag, FlagsGroup};
 use cairo_lang_filesystem::ids::{FlagId, FlagLongId};
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::allowed_libfuncs::{
-    AllowedLibfuncsError, BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST, ListSelector,
+    AllowedLibfuncsError, BUILTIN_ALL_LIBFUNCS_LIST, ListSelector,
 };
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use indoc::{formatdoc, indoc, writedoc};
@@ -77,7 +77,7 @@ pub fn check_allowed_libfuncs<'db>(
                 // instructing how to do this. Otherwise, we know that user knows what they
                 // do, so we do not clutter compiler output.
                 if list_selector == Default::default() {
-                    let experimental = BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST;
+                    let all_libfuncs = BUILTIN_ALL_LIBFUNCS_LIST;
 
                     let scarb_toml = unit
                         .main_component()
@@ -88,10 +88,10 @@ pub fn check_allowed_libfuncs<'db>(
                     let _ = writedoc!(
                         &mut diagnostic,
                         r#"
-                            help: try compiling with the `{experimental}` list
+                            help: try compiling with the `{all_libfuncs}` list
                              --> {scarb_toml}
                                 [[target.starknet-contract]]
-                                allowed-libfuncs-list.name = "{experimental}"
+                                allowed-libfuncs-list.name = "{all_libfuncs}"
                         "#
                     );
                 }

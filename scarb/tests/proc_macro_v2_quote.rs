@@ -633,9 +633,9 @@ fn quote_macro_parse_incoming_token_stream() {
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             error[E2042]: Unexpected return type. Expected: "core::integer::u32", found: "core::bool".
-             --> [..]lib.cairo:2:14
-            fn main() -> u32 {
-                         ^^^
+             --> [..]lib.cairo:4:3
+              true
+              ^^^^
 
             error: could not check `hello` due to [..] previous error
         "#});
