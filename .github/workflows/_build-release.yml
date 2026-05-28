@@ -85,7 +85,9 @@ jobs:
 
       - name: Install cross
         if: matrix.cross
-        uses: taiki-e/install-action@acd64fff6a014853b02d944cbf71c278fba2034d # cross
+        uses: taiki-e/install-action@899b013517f9e7774591216672bf75a46bb9a481 # v2.9.4
+        with:
+          tool: cross
 
       - name: Enable cross-compilation
         if: matrix.cross
@@ -103,7 +105,9 @@ jobs:
 
       - name: Install cross
         if: matrix.cross && inputs.include-stwo
-        uses: taiki-e/install-action@acd64fff6a014853b02d944cbf71c278fba2034d # cross
+        uses: taiki-e/install-action@899b013517f9e7774591216672bf75a46bb9a481 # v2.9.4
+        with:
+          tool: cross
 
       - name: Enable cross-compilation
         if: matrix.cross && inputs.include-stwo
