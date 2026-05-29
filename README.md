@@ -1,3 +1,7 @@
+[![Ad](https://swm-delivery.com/www/images/zone-gh-scarb-1?n=1)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-scarb-1&n=1)
+[![Ad](https://swm-delivery.com/www/images/zone-gh-scarb-2?n=1)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-scarb-2&n=1)
+[![Ad](https://swm-delivery.com/www/images/zone-gh-scarb-3?n=1)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-scarb-3&n=1)
+
 # Scarb
 
 Scarb is the project management tool for the [Cairo] language.
