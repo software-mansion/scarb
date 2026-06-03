@@ -5,7 +5,8 @@ use toml::de::Error as TomlParseError;
 use scarb::core::Config;
 use scarb::core::errors::{ManifestErrorWithSource, ManifestParseError};
 use scarb::core::{
-    ManifestDiagnosticMessage, ManifestDiagnosticSpan, ManifestMessageKind, ManifestSemanticError,
+    ManifestDiagnosticCode, ManifestDiagnosticMessage, ManifestDiagnosticSpan, ManifestMessageKind,
+    ManifestSemanticError,
 };
 use scarb::ops;
 use scarb_ui::OutputFormat;
@@ -42,7 +43,7 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
 }
 
 fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
-    let (file, message, span, related) = if let Some(sem) = error
+    let (file, message, error_code, span, related) = if let Some(sem) = error
         .chain()
         .find_map(|c| c.downcast_ref::<ManifestSemanticError>())
     {
@@ -59,7 +60,7 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
             })
             .unwrap_or_default();
         let file = src.map(|src| src.path.to_string());
-        (file, sem.to_string(), span, related)
+        (file, sem.to_string(), sem.code(), span, related)
     } else if let Some(parse_err) = error
         .chain()
         .find_map(|c| c.downcast_ref::<ManifestParseError>())
@@ -80,7 +81,13 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
                 start: s.start,
                 end: s.end,
             });
-        (Some(parse_err.path().to_string()), message, span, vec![])
+        (
+            Some(parse_err.path().to_string()),
+            message,
+            ManifestDiagnosticCode::ParseError,
+            span,
+            vec![],
+        )
     } else if let Some(src) = error
         .chain()
         .find_map(|c| c.downcast_ref::<ManifestErrorWithSource>())
@@ -89,7 +96,13 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
             .source()
             .map(|err| err.to_string())
             .unwrap_or_else(|| error.to_string());
-        (Some(src.path.to_string()), message, None, vec![])
+        (
+            Some(src.path.to_string()),
+            message,
+            ManifestDiagnosticCode::Other,
+            None,
+            vec![],
+        )
     } else {
         return;
     };
@@ -99,6 +112,7 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
         .force_print(MachineMessage(ManifestDiagnosticMessage {
             kind: ManifestMessageKind::ManifestDiagnostic,
             message,
+            error_code,
             file,
             span,
             related,

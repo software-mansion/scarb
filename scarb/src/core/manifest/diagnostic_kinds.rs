@@ -8,8 +8,8 @@ use url::ParseError as UrlParseError;
 use super::ManifestDiagnosticData;
 use super::diagnostic::resolve_anchor_in_doc;
 use super::{
-    ManifestDependencyTable, ManifestDiagnosticAnchor, ManifestRelatedAnchor,
-    ManifestRelatedLocation,
+    ManifestDependencyTable, ManifestDiagnosticAnchor, ManifestDiagnosticCode,
+    ManifestRelatedAnchor, ManifestRelatedLocation,
 };
 
 /// Typed manifest validation errors that carry semantic anchors for diagnostic span resolution.
@@ -54,6 +54,43 @@ pub enum ManifestSemanticError {
 }
 
 impl ManifestSemanticError {
+    pub fn code(&self) -> ManifestDiagnosticCode {
+        match self {
+            Self::ProfileNameInvalid(_) => ManifestDiagnosticCode::ProfileNameInvalid,
+            Self::ProfileInheritanceInvalid(_) => ManifestDiagnosticCode::ProfileInheritanceInvalid,
+            Self::CairoInliningStrategyConflict(_) => {
+                ManifestDiagnosticCode::CairoInliningStrategyConflict
+            }
+            Self::DependencyWorkspaceNotFound(_) => {
+                ManifestDiagnosticCode::DependencyWorkspaceNotFound
+            }
+            Self::DependencyGitRefWithoutGit(_) => {
+                ManifestDiagnosticCode::DependencyGitRefWithoutGit
+            }
+            Self::DependencyGitReferenceAmbiguous(_) => {
+                ManifestDiagnosticCode::DependencyGitReferenceAmbiguous
+            }
+            Self::DependencySourceMissing(_) => ManifestDiagnosticCode::DependencySourceMissing,
+            Self::DependencyGitPathAmbiguous(_) => {
+                ManifestDiagnosticCode::DependencyGitPathAmbiguous
+            }
+            Self::DependencyGitRegistryAmbiguous(_) => {
+                ManifestDiagnosticCode::DependencyGitRegistryAmbiguous
+            }
+            Self::PatchNotInWorkspaceRoot(_) => ManifestDiagnosticCode::PatchNotInWorkspaceRoot,
+            Self::PatchSourceConflict(_) => ManifestDiagnosticCode::PatchSourceConflict,
+            Self::PatchSourceInvalidUrl(_) => ManifestDiagnosticCode::PatchSourceInvalidUrl,
+            Self::ReadmePathInvalid(_) => ManifestDiagnosticCode::ReadmePathInvalid,
+            Self::LicensePathInvalid(_) => ManifestDiagnosticCode::LicensePathInvalid,
+            Self::DuplicateDefaultTargetDefinition(_) => {
+                ManifestDiagnosticCode::DuplicateDefaultTargetDefinition
+            }
+            Self::DuplicateNamedTargetDefinition(_) => {
+                ManifestDiagnosticCode::DuplicateNamedTargetDefinition
+            }
+        }
+    }
+
     /// Resolves this error's anchor(s) to byte spans using the parsed manifest root table.
     pub fn resolve(&self, root: &Table) -> ManifestDiagnosticData {
         let span = self

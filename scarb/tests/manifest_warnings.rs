@@ -275,6 +275,7 @@ fn json_mode_emits_manifest_diagnostic_for_unknown_top_level_section() {
         "unexpected message: {}",
         diag["message"]
     );
+    assert_eq!(diag["error_code"].as_str().unwrap(), "SE0002");
     assert!(diag["file"].is_string(), "expected file field");
     assert!(diag["span"].is_object(), "expected span field");
     assert!(
@@ -317,6 +318,7 @@ fn json_mode_emits_manifest_diagnostic_for_unknown_package_field() {
         "unexpected message: {}",
         diag["message"]
     );
+    assert_eq!(diag["error_code"].as_str().unwrap(), "SE0002");
     assert!(diag["file"].is_string(), "expected file field");
     assert!(diag["span"].is_object(), "expected span field");
 }
