@@ -109,12 +109,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: run tests
-        run: cargo test --doc --workspace --exclude scarb-prove --exclude scarb-verify --exclude scarb-execute
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - name: run nightly tests
-        run: cargo test --doc -p scarb-prove -p scarb-verify -p scarb-execute
+        # We do not need to run doc tests for prove and execute, as they have no lib targets.
+        run: cargo test --doc --workspace --exclude scarb-prove --exclude scarb-verify
 
   scarb-metadata-compatibility:
     name: scarb-metadata compatibility check

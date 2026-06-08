@@ -140,7 +140,7 @@
                     "full_path": "hello_world::CircleSerde::serialize",
                     "group": null,
                     "name": "serialize",
-                    "signature": "fn serialize(self: Circle, ref output: Array<felt252>)"
+                    "signature": "fn serialize(self: @Circle, ref output: Array<felt252>)"
                   }
                 },
                 {
@@ -171,7 +171,7 @@
                     "full_path": "hello_world::CirclePartialEq::eq",
                     "group": null,
                     "name": "eq",
-                    "signature": "fn eq(lhs: Circle, rhs: Circle) -> bool"
+                    "signature": "fn eq(lhs: @Circle, rhs: @Circle) -> bool"
                   }
                 }
               ],
