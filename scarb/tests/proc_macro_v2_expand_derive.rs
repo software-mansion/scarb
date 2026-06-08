@@ -400,13 +400,13 @@ fn code_mappings_preserve_derive_error_locations() {
         .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            error[E3009]: The value does not fit within the range of type core::integer::u8.
+            error[E2008]: The value does not fit within the range of type core::integer::u8.
              --> [..]lib.cairo:5:1
             #[derive(CustomDerive, Drop)]
             ^
             note: this error originates in the derive macro: `CustomDerive`
 
-            error[E3009]: The value does not fit within the range of type core::integer::u8.
+            error[E2008]: The value does not fit within the range of type core::integer::u8.
              --> [..]lib.cairo:8:1
             #[derive(CustomDerive, Drop)]
             ^

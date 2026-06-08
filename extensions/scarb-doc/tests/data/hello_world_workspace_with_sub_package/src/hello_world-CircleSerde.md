@@ -10,7 +10,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[CircleSerde](./hello_wor
 
 Fully qualified path: [hello_world](./hello_world.md)::[CircleSerde](./hello_world-CircleSerde.md)::[serialize](./hello_world-CircleSerde.md#serialize)
 
-<pre><code class="language-cairo">fn serialize(self: Circle, ref output: Array&lt;felt252&gt;)</code></pre>
+<pre><code class="language-cairo">fn serialize(self: @Circle, ref output: Array&lt;felt252&gt;)</code></pre>
 
 
 ### deserialize
