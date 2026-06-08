@@ -37,7 +37,7 @@ impl ScriptDefinition {
             .join(" ");
         let full_script = format!("{manifest_script} {additional_args}");
         let script = full_script.trim().to_owned();
-        deno_task_shell::parser::parse(&script)
+        Ok(deno_task_shell::parser::parse(&script)?)
     }
 }
 
