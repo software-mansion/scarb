@@ -281,6 +281,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.SCARB_GITHUB_PUBLIC_API_TOKEN }}
 
+  link-check:
+    # Run the dedicated link check workflow on PRs, without Slack notifications.
+    uses: ./.github/workflows/link-check.yml
+    secrets: inherit
+    with:
+      silent: true
+
   snforge-init:
     runs-on: ubuntu-latest
     needs:
