@@ -7,10 +7,18 @@ on:
         description: "Silence Slack notifications"
         type: boolean
         default: false
+      docs_only:
+        description: "Only check internal documentation links (skip external URL checking)"
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       silent:
         description: "Silence Slack notifications"
+        type: boolean
+        default: false
+      docs_only:
+        description: "Only check internal documentation links (skip external URL checking)"
         type: boolean
         default: false
   schedule:
@@ -24,6 +32,9 @@ concurrency:
 jobs:
   link-check:
     runs-on: ubuntu-latest
+    # External URL checking is flaky/rate-limited, so it is skipped when only internal
+    # documentation links are requested (e.g. when reused from CI on pull requests).
+    if: ${{ !inputs.docs_only }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
