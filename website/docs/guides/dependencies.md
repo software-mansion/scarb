@@ -7,7 +7,7 @@ To add a dependency, simply declare it in your `Scarb.toml`.
 > Using Git repositories as a foundation for package management is not the recommended approach anymore.
 > Instead, [registries](../registries/overview.md) are now the primary way to manage dependencies.
 > For details on how to specify dependencies from the official registry,
-> see [here](../reference/specifying-dependencies#specifying-dependencies-from-official-registry).
+> see [here](../reference/specifying-dependencies#specifying-dependencies-from-registries).
 > If you want to rely on git dependencies instead of the recommended way, you can learn more
 > [here](../reference/specifying-dependencies#specifying-dependencies-from-git-repositories).
 
@@ -19,7 +19,7 @@ You can search for packages to use through the [scarbs.xyz registry website](htt
 
 This example adds a dependency on the [`openzeppelin_merkle_tree`](https://github.com/OpenZeppelin/cairo-contracts)
 package (note that OpenZeppelin is a collection of multiple packages, and we will use only one of them as an example in this guide).
-To see all available versions of some package, use [`scarb list`](#listing-available-versions-of-the-package) command, or visit the "Versions" pane on the package's [registry page](https://scarbs.xyz/packages/openzeppelin_merkle_tree).
+To see all available versions of some package, use [`scarb list`](#listing-available-versions-of-the-package-via-scarb-list) command, or visit the "Versions" pane on the package's [registry page](https://scarbs.xyz/packages/openzeppelin_merkle_tree).
 
 At the time of writing this guide, the latest version of the `openzeppelin_merkle_tree` package is `2.0.0`, which is the version we will use.
 

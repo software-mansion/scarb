@@ -34,7 +34,7 @@ If publishing to a registry, it's recommended to fill in additional fields:
 - [`repository`](#repository)
 - [`readme`](#readme)
 
-It would also be a good idea to include some [`keywords`](#keywords) and [`categories`](#ca), though they are not
+It would also be a good idea to include some [`keywords`](#keywords), though they are not
 required.
 
 If package is not intended to be published, it is recommended to set [`publish`](#publish) field to false.
