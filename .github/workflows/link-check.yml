@@ -7,11 +7,18 @@ on:
         description: "Silence Slack notifications"
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      silent:
+        description: "Silence Slack notifications"
+        type: boolean
+        default: false
   schedule:
     - cron: '0 5 * * 1'
 
 concurrency:
-  group: ${{ github.workflow }}
+  # Include the ref so concurrent CI runs (where this is reused) are not cancelled across branches/PRs.
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,11 +36,42 @@ jobs:
           args: --verbose --no-progress --user-agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36' --exclude-path='scarb/tests/*' --exclude-path='scarb/build.rs' --exclude-path='xtask/src/nightly_release_notes.rs' --exclude-path='extensions/scarb-doc/tests/*' --exclude-path='extensions/scarb-mdbook/tests/data/hello_world/output' --exclude='medium\.com' './**/*.md' './**/*.html' './**/*.rs'
           # This makes the pipeline fail if a broken link is found
           fail: true
+  docs-link-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./website
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '18.x'
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci
+      - run: npm run build
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCARB_GITHUB_PUBLIC_API_TOKEN }}
+      # The site is served under the `/scarb/` base path, so root-relative links
+      # (e.g. `/scarb/docs/...`) need that prefix to resolve against the built output.
+      - name: Map base path for documentation link check
+        run: ln -sfn .vitepress/dist scarb
+      - name: Link Checker
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # Validate cross-page links and heading anchors against the *built* HTML,
+          # so VitePress link rewriting and generated anchor ids are taken into account.
+          # `--offline` checks only internal links; external URLs are covered by the
+          # `link-check` job above.
+          args: --offline --include-fragments --no-progress --root-dir website './website/.vitepress/dist/**/*.html'
+          # This makes the pipeline fail if a broken link is found
+          fail: true
   notify_failed_check:
     runs-on: ubuntu-latest
     # Do not run on silent run or check success
-    if: always() && !(inputs.silent) && needs.link-check.result == 'failure'
-    needs: [ link-check ]
+    if: always() && !(inputs.silent) && (needs.link-check.result == 'failure' || needs.docs-link-check.result == 'failure')
+    needs: [ link-check, docs-link-check ]
     steps:
       - name: Notifying about check fail!
         uses: slackapi/slack-github-action@v3.0.3
