@@ -61,6 +61,7 @@ pub struct CairoPluginProjectBuilder {
     src: HashMap<Utf8PathBuf, String>,
     deps: Vec<String>,
     macro_version: CairoPluginProjectVersion,
+    needs_time_pin: bool,
 }
 
 impl CairoPluginProjectBuilder {
@@ -71,6 +72,7 @@ impl CairoPluginProjectBuilder {
             src: Default::default(),
             deps: Default::default(),
             macro_version: CairoPluginProjectVersion::default(),
+            needs_time_pin: false,
         }
     }
 
@@ -81,6 +83,7 @@ impl CairoPluginProjectBuilder {
             src: Default::default(),
             deps: Default::default(),
             macro_version: CairoPluginProjectVersion::V1,
+            needs_time_pin: false,
         }
     }
 
@@ -124,7 +127,12 @@ impl CairoPluginProjectBuilder {
                 format!("{{ path = {macro_lib_path}, version = \"0.2.0\" }}")
             }
         };
-        let time_version = &*WORKSPACE_TIME_VERSION;
+        let time_pin = if self.needs_time_pin {
+            let time_version = &*WORKSPACE_TIME_VERSION;
+            format!("time = \"={time_version}\"\n")
+        } else {
+            String::new()
+        };
         formatdoc! {r#"
                 [package]
                 name = "{name}"
@@ -137,8 +145,7 @@ impl CairoPluginProjectBuilder {
 
                 [dependencies]
                 cairo-lang-macro = {macro_lib_version_req}
-                time = "={time_version}"
-                {deps}
+                {time_pin}{deps}
                 "#}
     }
 
@@ -162,16 +169,20 @@ impl CairoPluginProjectBuilder {
 
     pub fn add_cairo_lang_parser_dep(self) -> Self {
         let rev = &*CAIRO_LANG_GIT_REV;
-        self.add_dep(format!(
+        let mut s = self.add_dep(format!(
             r#"cairo-lang-parser = {{ git = "https://github.com/starkware-libs/cairo", rev = "{rev}" }}"#
-        ))
+        ));
+        s.needs_time_pin = true;
+        s
     }
 
     pub fn add_cairo_lang_syntax_dep(self) -> Self {
         let rev = &*CAIRO_LANG_GIT_REV;
-        self.add_dep(format!(
+        let mut s = self.add_dep(format!(
             r#"cairo-lang-syntax = {{ git = "https://github.com/starkware-libs/cairo", rev = "{rev}" }}"#
-        ))
+        ));
+        s.needs_time_pin = true;
+        s
     }
 
     pub fn default_v1() -> Self {
