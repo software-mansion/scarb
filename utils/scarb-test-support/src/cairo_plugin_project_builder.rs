@@ -128,11 +128,11 @@ impl CairoPluginProjectBuilder {
     }
 
     pub fn add_cairo_lang_parser_dep(self) -> Self {
-        self.add_dep(r#"cairo-lang-parser = "2.13.1""#)
+        self.add_dep(r#"cairo-lang-parser = "2.18""#)
     }
 
     pub fn add_cairo_lang_syntax_dep(self) -> Self {
-        self.add_dep(r#"cairo-lang-syntax = "2.13.1""#)
+        self.add_dep(r#"cairo-lang-syntax = "2.18""#)
     }
 
     pub fn default_v1() -> Self {
