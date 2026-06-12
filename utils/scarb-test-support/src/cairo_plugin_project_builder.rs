@@ -17,6 +17,37 @@ static CAIRO_LANG_MACRO_PATH_V2: LazyLock<String> = LazyLock::new(|| {
     serde_json::to_string(&path).unwrap()
 });
 
+static CAIRO_LANG_GIT_REV: LazyLock<String> = LazyLock::new(|| {
+    let workspace_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../Cargo.toml");
+    let content = std::fs::read_to_string(&workspace_toml)
+        .expect("failed to read workspace Cargo.toml");
+    let doc: toml_edit::DocumentMut = content.parse().expect("invalid Cargo.toml");
+    doc["patch"]["crates-io"]["cairo-lang-parser"]["rev"]
+        .as_str()
+        .expect("cairo-lang-parser rev not found in workspace Cargo.toml")
+        .to_owned()
+});
+
+// tracing-subscriber 0.3.23 conflicts with time >= 0.3.48 (E0119 coherence error).
+// Pin time to the version locked in the workspace Cargo.lock, which is known-compatible.
+static WORKSPACE_TIME_VERSION: LazyLock<String> = LazyLock::new(|| {
+    let lock_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../Cargo.lock");
+    let content = std::fs::read_to_string(&lock_path)
+        .expect("failed to read workspace Cargo.lock");
+    let mut in_time = false;
+    for line in content.lines() {
+        match line.trim() {
+            "[[package]]" => in_time = false,
+            r#"name = "time""# => in_time = true,
+            _ if in_time && line.starts_with("version = ") => {
+                return line["version = \"".len()..].trim_end_matches('"').to_owned();
+            }
+            _ => {}
+        }
+    }
+    "0.3.47".to_owned()
+});
+
 #[derive(Debug, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum CairoPluginProjectVersion {
     V1,
@@ -93,6 +124,7 @@ impl CairoPluginProjectBuilder {
                 format!("{{ path = {macro_lib_path}, version = \"0.2.0\" }}")
             }
         };
+        let time_version = &*WORKSPACE_TIME_VERSION;
         formatdoc! {r#"
                 [package]
                 name = "{name}"
@@ -105,6 +137,7 @@ impl CairoPluginProjectBuilder {
 
                 [dependencies]
                 cairo-lang-macro = {macro_lib_version_req}
+                time = "={time_version}"
                 {deps}
                 "#}
     }
@@ -128,11 +161,17 @@ impl CairoPluginProjectBuilder {
     }
 
     pub fn add_cairo_lang_parser_dep(self) -> Self {
-        self.add_dep(r#"cairo-lang-parser = "2.18""#)
+        let rev = &*CAIRO_LANG_GIT_REV;
+        self.add_dep(format!(
+            r#"cairo-lang-parser = {{ git = "https://github.com/starkware-libs/cairo", rev = "{rev}" }}"#
+        ))
     }
 
     pub fn add_cairo_lang_syntax_dep(self) -> Self {
-        self.add_dep(r#"cairo-lang-syntax = "2.18""#)
+        let rev = &*CAIRO_LANG_GIT_REV;
+        self.add_dep(format!(
+            r#"cairo-lang-syntax = {{ git = "https://github.com/starkware-libs/cairo", rev = "{rev}" }}"#
+        ))
     }
 
     pub fn default_v1() -> Self {
