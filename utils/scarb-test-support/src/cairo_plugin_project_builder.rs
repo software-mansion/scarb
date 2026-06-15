@@ -153,6 +153,13 @@ impl CairoPluginProjectBuilder {
         t.child("Cargo.toml")
             .write_str(self.render_manifest().as_str())
             .unwrap();
+        if self.needs_time_pin {
+            // Git deps resolve transitive dependencies from scratch. Prevent network errors
+            // in CI by using only already-cached packages (populated by the workspace build).
+            t.child(".cargo/config.toml")
+                .write_str("[net]\noffline = true\n")
+                .unwrap();
+        }
         for (path, source) in &self.src {
             t.child(path).write_str(source).unwrap();
         }
