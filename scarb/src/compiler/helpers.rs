@@ -1,6 +1,6 @@
 //! Various utility functions helpful for interacting with Cairo compiler.
 
-use crate::compiler::incremental::{CachedWarnings, IncrementalContext};
+use crate::compiler::incremental::{CachedWarnings, IncrementalContext, WarningCollector};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
 use crate::core::{InliningStrategy, Workspace};
 use crate::flock::Filesystem;
@@ -14,6 +14,7 @@ use itertools::Itertools;
 use salsa::Database;
 use serde::Serialize;
 use std::io::{BufWriter, Write};
+use std::sync::Arc;
 
 pub struct CountingWriter<W> {
     inner: W,
@@ -46,6 +47,7 @@ pub fn build_compiler_config<'c, 'db>(
     unit: &CairoCompilationUnit,
     main_crate_ids: &[CrateId<'db>],
     ctx: &'db IncrementalContext,
+    warning_collector: Option<Arc<WarningCollector>>,
     ws: &Workspace<'c>,
 ) -> CompilerConfig<'c>
 where
@@ -79,7 +81,7 @@ where
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
 
-        |entry: FormattedDiagnosticEntry| {
+        move |entry: FormattedDiagnosticEntry| {
             let msg = entry
                 .message()
                 .strip_suffix('\n')
@@ -94,7 +96,9 @@ where
                 }
                 Severity::Warning => {
                     let code = entry.error_code().map(|c| c.as_str().to_string());
-                    ctx.add_warning(code.clone(), msg.to_string());
+                    if let Some(collector) = &warning_collector {
+                        collector.add(code.clone(), msg.to_string());
+                    }
                     if let Some(code) = code {
                         config.ui().warn_with_code(&code, msg)
                     } else {

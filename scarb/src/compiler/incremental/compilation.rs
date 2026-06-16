@@ -3,7 +3,7 @@ use crate::compiler::incremental::fingerprint::{
     ComponentFingerprint, Fingerprint, FreshnessCheck, LocalFingerprint, UnitComponentsFingerprint,
     is_fresh,
 };
-use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
+use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent, CompilationUnitComponentId};
 use crate::core::Workspace;
 use crate::process::is_truthy_env;
 use anyhow::{Context, Result};
@@ -19,7 +19,7 @@ use rayon::prelude::*;
 use salsa::Database;
 use scarb_fs_utils as fsx;
 use scarb_stable_hash::u64_hash;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::{BufReader, Write};
 use std::mem;
 use std::ops::Deref;
@@ -47,15 +47,46 @@ pub enum CachedWarnings {
     Resolved(Vec<CachedWarning>),
 }
 
+/// Collects warnings emitted during a compilation or check pass.
+pub struct WarningCollector(Mutex<Vec<CachedWarning>>);
+
+impl WarningCollector {
+    pub fn new() -> Self {
+        Self(Mutex::new(Vec::new()))
+    }
+
+    pub fn add(&self, code: Option<String>, message: String) {
+        self.0
+            .lock()
+            .expect("failed to acquire warning collector mutex")
+            .push(CachedWarning { code, message });
+    }
+
+    pub fn collect(&self) -> Vec<CachedWarning> {
+        self.0
+            .lock()
+            .expect("failed to acquire warning collector mutex")
+            .clone()
+    }
+}
+
+impl Default for WarningCollector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct EnabledIncrementalContext {
     fingerprints: UnitComponentsFingerprint,
     cached_crates: Vec<CrateInput>,
+    /// Components that were fresh but had no blob in their cache (written by `scarb check`).
+    blob_missing_crates: HashSet<CompilationUnitComponentId>,
     /// Known warnings per cached crate, keyed by `CrateInput`.
     /// Present only for crates previously compiled as a main unit.
     /// An empty `Vec` means the crate compiled with no warnings.
     cached_crate_warnings: HashMap<CrateInput, Vec<CachedWarning>>,
     /// Warnings collected during the current compilation pass (main component only).
-    collected_warnings: Mutex<Vec<CachedWarning>>,
+    warning_collector: Arc<WarningCollector>,
     artifacts: Mutex<Vec<LocalFingerprint>>,
 }
 
@@ -99,27 +130,18 @@ impl IncrementalContext {
         }
     }
 
-    /// Records a warning emitted during the current compilation pass.
-    pub fn add_warning(&self, code: Option<String>, message: String) {
-        if let IncrementalContext::Enabled(enabled) = self {
-            enabled
-                .collected_warnings
-                .lock()
-                .expect("failed to acquire collected_warnings mutex")
-                .push(CachedWarning { code, message });
-        }
+    /// Returns the warning collector for this context, if incremental is enabled.
+    pub fn warning_collector(&self) -> Option<Arc<WarningCollector>> {
+        self.enabled().map(|e| e.warning_collector.clone())
     }
 
-    /// Returns all warnings collected during the current compilation pass.
-    pub fn collected_warnings(&self) -> Vec<CachedWarning> {
+    /// Returns true if the component was fresh but had no blob in its cache
+    /// (i.e. was previously written by `scarb check`).
+    pub fn component_had_no_blob(&self, id: &CompilationUnitComponentId) -> bool {
         if let IncrementalContext::Enabled(enabled) = self {
-            enabled
-                .collected_warnings
-                .lock()
-                .expect("failed to acquire collected_warnings mutex")
-                .clone()
+            enabled.blob_missing_crates.contains(id)
         } else {
-            Vec::new()
+            false
         }
     }
 
@@ -153,9 +175,18 @@ impl IncrementalContext {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct ScarbComponentCache {
-    /// Warning state recorded when this component was last compiled.
+    /// Warning state recorded when this component was last compiled or checked.
     pub warnings: CachedWarnings,
-    pub blob: Vec<u8>,
+    /// Cairo lowering cache blob. `None` when written by `scarb check` (no compilation output).
+    pub blob: Option<Vec<u8>>,
+}
+
+/// Loaded result from a check incremental cache lookup.
+pub struct CheckIncrementalState {
+    /// `None` when incremental caching is disabled.
+    fingerprints: Option<UnitComponentsFingerprint>,
+    /// Cached warnings for the main component, or `None` on a cache miss.
+    pub cached_warnings: Option<Vec<CachedWarning>>,
 }
 
 #[tracing::instrument(skip_all, level = "info")]
@@ -205,6 +236,7 @@ pub fn load_incremental_artifacts(
 
     let span = trace_span!("set_crate_configs");
     let mut cached_crate_warnings: HashMap<CrateInput, Vec<CachedWarning>> = HashMap::new();
+    let mut blob_missing_crates: HashSet<CompilationUnitComponentId> = HashSet::new();
     let cached_crates = {
         let _guard = span.enter();
 
@@ -217,23 +249,30 @@ pub fn load_incremental_artifacts(
                     blob_content,
                     warnings,
                 } => {
-                    let crate_id = component.crate_id(db);
-                    if let Some(core_conf) = db.crate_config(crate_id) {
-                        set_crate_config!(
-                            db,
-                            crate_id,
-                            Some(CrateConfiguration {
-                                root: core_conf.root.clone(),
-                                settings: core_conf.settings.clone(),
-                                cache_file: Some(BlobLongId::Virtual(blob_content).intern(db)),
-                            })
-                        );
-                    }
                     let crate_input = component.crate_input(db);
                     if let CachedWarnings::Resolved(known_warnings) = warnings {
                         cached_crate_warnings.insert(crate_input.clone(), known_warnings);
                     }
-                    Some(crate_input)
+                    if let Some(blob) = blob_content {
+                        let crate_id = component.crate_id(db);
+                        if let Some(core_conf) = db.crate_config(crate_id) {
+                            set_crate_config!(
+                                db,
+                                crate_id,
+                                Some(CrateConfiguration {
+                                    root: core_conf.root.clone(),
+                                    settings: core_conf.settings.clone(),
+                                    cache_file: Some(BlobLongId::Virtual(blob).intern(db)),
+                                })
+                            );
+                        }
+                        Some(crate_input)
+                    } else {
+                        // Cache was written by `scarb check` — blob not available.
+                        // Track so build can generate and save the blob later.
+                        blob_missing_crates.insert(component.id.clone());
+                        None
+                    }
                 }
             })
             .collect_vec()
@@ -243,8 +282,9 @@ pub fn load_incremental_artifacts(
         EnabledIncrementalContext {
             fingerprints,
             cached_crates,
+            blob_missing_crates,
             cached_crate_warnings,
-            collected_warnings: Default::default(),
+            warning_collector: Arc::new(WarningCollector::new()),
             artifacts: Default::default(),
         },
     )))
@@ -315,7 +355,7 @@ enum CrateCache {
     Loaded {
         component: CompilationUnitComponent,
         warnings: CachedWarnings,
-        blob_content: Vec<u8>,
+        blob_content: Option<Vec<u8>>,
     },
 }
 
@@ -324,9 +364,9 @@ pub fn save_incremental_artifacts(
     unit: &CairoCompilationUnit,
     db: &dyn CloneableDatabase,
     ctx: Arc<IncrementalContext>,
+    collected_warnings: Vec<CachedWarning>,
     ws: &Workspace<'_>,
 ) -> Result<()> {
-    let collected_warnings = ctx.collected_warnings();
     let Some(fingerprints) = ctx.fingerprints() else {
         return Ok(());
     };
@@ -430,7 +470,9 @@ fn save_component_cache(
             ctx.cached_crate_warnings_for(&component.crate_input(db)),
             CachedWarnings::Unresolved
         );
-    if !is_fresh || force_save {
+    // Save when the component was previously written by `scarb check` without a blob.
+    let needs_blob = ctx.component_had_no_blob(&component.id);
+    if !is_fresh || force_save || needs_blob {
         debug!(
             "component `{}` is not fresh, saving new cache artifacts",
             component.target_name()
@@ -449,7 +491,7 @@ fn save_component_cache(
         };
         let component_cache = ScarbComponentCache {
             warnings,
-            blob: cache_blob,
+            blob: Some(cache_blob),
         };
         let cache_blob = postcard::to_allocvec(&component_cache)?;
         let cache_file = cache_dir.create_rw(
@@ -515,4 +557,199 @@ pub fn warmup_incremental_cache(db: &dyn CloneableDatabase, cached_crates: Vec<C
             db.cached_multi_lowerings(*crate_id);
         })
         .collect();
+}
+
+/// Loads the check incremental cache for a unit's main component.
+///
+/// Returns a [`CheckIncrementalState`] with cached warnings on a cache hit, or `None` on a miss.
+#[tracing::instrument(skip_all, level = "info")]
+pub fn load_check_artifacts(
+    unit: &CairoCompilationUnit,
+    ws: &Workspace<'_>,
+) -> Result<CheckIncrementalState> {
+    if !incremental_allowed(unit) {
+        return Ok(CheckIncrementalState {
+            fingerprints: None,
+            cached_warnings: None,
+        });
+    }
+
+    let fingerprints = ws
+        .config()
+        .tokio_handle()
+        .block_on(UnitComponentsFingerprint::new(unit, ws));
+
+    let main_component = unit.main_component();
+    let main_fingerprint = fingerprints
+        .get(&main_component.id)
+        .expect("component fingerprint must exist in unit fingerprints");
+
+    let cached_warnings = load_check_component_cache(main_fingerprint, unit, main_component, ws)?;
+
+    Ok(CheckIncrementalState {
+        fingerprints: Some(fingerprints),
+        cached_warnings,
+    })
+}
+
+fn load_check_component_cache(
+    fingerprint: Arc<ComponentFingerprint>,
+    unit: &CairoCompilationUnit,
+    component: &CompilationUnitComponent,
+    ws: &Workspace<'_>,
+) -> Result<Option<Vec<CachedWarning>>> {
+    let fingerprint = match fingerprint.deref() {
+        ComponentFingerprint::Library(lib) => lib,
+        ComponentFingerprint::Plugin(_) => {
+            unreachable!("we iterate through components not plugins");
+        }
+    };
+    let fingerprint_digest = fingerprint.digest();
+    let FreshnessCheck {
+        is_fresh,
+        file_guard: _guard,
+    } = is_fresh(
+        &unit
+            .fingerprint_dir(ws)
+            .child(component.fingerprint_dirname(fingerprint)),
+        &component.target_name(),
+        &fingerprint_digest,
+        ws.config(),
+    )?;
+
+    if !is_fresh {
+        return Ok(None);
+    }
+
+    let cache_dir = unit.incremental_cache_dir(ws);
+    let Ok(file) = cache_dir.open_ro(
+        component.cache_filename(fingerprint),
+        &component.cache_filename(fingerprint),
+        ws.config(),
+    ) else {
+        return Ok(None);
+    };
+    let mut reader = BufReader::new(file.deref());
+    let mut bytes = Vec::new();
+    std::io::Read::read_to_end(&mut reader, &mut bytes)?;
+    let Ok(decoded) = postcard::from_bytes::<ScarbComponentCache>(&bytes) else {
+        return Ok(None);
+    };
+
+    match decoded.warnings {
+        CachedWarnings::Resolved(warnings) => Ok(Some(warnings)),
+        CachedWarnings::Unresolved => Ok(None),
+    }
+}
+
+/// Saves a check-only incremental cache (no blob) for all components in the unit.
+///
+/// Only writes entries that are not already fresh — never overwrites an existing build cache.
+#[tracing::instrument(skip_all, level = "info")]
+pub fn save_check_artifacts(
+    unit: &CairoCompilationUnit,
+    state: &CheckIncrementalState,
+    collected_warnings: Vec<CachedWarning>,
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    let Some(fingerprints) = &state.fingerprints else {
+        return Ok(());
+    };
+
+    let main_component_id = &unit.main_component().id;
+
+    for component in &unit.components {
+        let fingerprint = fingerprints
+            .get(&component.id)
+            .expect("component fingerprint must exist in unit fingerprints");
+        let fingerprint = match fingerprint.deref() {
+            ComponentFingerprint::Library(lib) => lib,
+            ComponentFingerprint::Plugin(_) => {
+                unreachable!("we iterate through components not plugins");
+            }
+        };
+        let is_main = &component.id == main_component_id;
+        let warnings = if is_main {
+            CachedWarnings::Resolved(collected_warnings.clone())
+        } else {
+            CachedWarnings::Unresolved
+        };
+        // Force-save when the main component cache is fresh but warnings were not loaded.
+        // This covers the case where the component was previously checked only as a dependency
+        // and had `CachedWarnings::Unresolved`.
+        let force_save = is_main && state.cached_warnings.is_none();
+        save_check_component_cache(fingerprint, unit, component, warnings, force_save, ws)
+            .with_context(|| {
+                format!(
+                    "failed to save check cache for `{}` component",
+                    component.target_name()
+                )
+            })?;
+    }
+
+    Ok(())
+}
+
+fn save_check_component_cache(
+    fingerprint: &Fingerprint,
+    unit: &CairoCompilationUnit,
+    component: &CompilationUnitComponent,
+    warnings: CachedWarnings,
+    force_save: bool,
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    let fingerprint_digest = fingerprint.digest();
+    let FreshnessCheck {
+        is_fresh,
+        file_guard,
+    } = is_fresh(
+        &unit
+            .fingerprint_dir(ws)
+            .child(component.fingerprint_dirname(fingerprint)),
+        &component.target_name(),
+        &fingerprint_digest,
+        ws.config(),
+    )?;
+    drop(file_guard);
+
+    if is_fresh && !force_save {
+        // A cache already exists for this fingerprint (from a prior check or build).
+        // Don't overwrite it — a build cache with a blob is more valuable.
+        return Ok(());
+    }
+
+    let cache_dir = unit.incremental_cache_dir(ws);
+    let component_cache = ScarbComponentCache {
+        warnings,
+        blob: None,
+    };
+    let cache_bytes = postcard::to_allocvec(&component_cache)?;
+    let cache_file = cache_dir.create_rw(
+        component.cache_filename(fingerprint),
+        "cache file",
+        ws.config(),
+    )?;
+    cache_file
+        .deref()
+        .write_all(&cache_bytes)
+        .with_context(|| format!("failed to write check cache to `{}`", cache_file.path()))?;
+
+    let fingerprint_dir = unit.fingerprint_dir(ws);
+    let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(fingerprint));
+    let fingerprint_file = fingerprint_dir.create_rw(
+        component.target_name().as_str(),
+        "fingerprint file",
+        ws.config(),
+    )?;
+    fingerprint_file
+        .deref()
+        .write_all(fingerprint_digest.as_bytes())
+        .with_context(|| {
+            format!(
+                "failed to write fingerprint to `{}`",
+                fingerprint_file.path()
+            )
+        })?;
+
+    Ok(())
 }
