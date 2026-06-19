@@ -11,7 +11,7 @@ Please note that the official registry is still in development.
 
 You can already use it to discover and [add](#adding-dependencies) packages to your projects.
 
-To learn more about publishing packages to the registry, please visit section dedicated to [publishing](#packaging-and-publishing).
+To learn more about publishing packages to the registry, please visit section dedicated to [publishing](./publishing).
 
 ## Adding dependencies
 

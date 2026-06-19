@@ -8,7 +8,7 @@
 
 > [!WARNING]
 > The `stwo-cairo` prover can be significantly slower when used through Scarb.
-> See [performance](#Performance) section.
+> See [performance](#performance) section.
 
 Scarb integrates the [`stwo-cairo` prover](https://github.com/starkware-libs/stwo-cairo) which can be used through `scarb prove`
 and `scarb verify` commands.

@@ -550,7 +550,7 @@ fn tar(
 
                 // Although the `set_metadata_in_mode` call above should set `mtime` to a
                 // deterministic value, it fails to do so due to
-                // https://github.com/alexcrichton/tar-rs/issues/341.
+                // https://github.com/composefs/tar-rs/issues/341.
                 // Also, the constant value used there is funky and I do not feel convinced about
                 // its stability. Therefore, we use our own `mtime` value explicitly here.
                 //
