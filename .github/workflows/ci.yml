@@ -304,5 +304,21 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: nextest-archive-ubuntu-latest
+      - name: Resolve compatible Starknet Foundry version
+        id: snforge_std
+        run: |
+          set -euo pipefail
+          version="$(
+            curl --fail --silent --show-error --location \
+              https://scarbs.xyz/api/v1/index/sn/fo/snforge_std.json \
+              | jq -r '[.[].v | select(contains("-") | not)] | sort_by(split(".") | map(tonumber)) | last'
+          )"
+          if [[ -z "$version" || "$version" == "null" ]]; then
+            echo "failed to resolve latest snforge_std version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
       - uses: foundry-rs/setup-snfoundry@v6
+        with:
+          starknet-foundry-version: ${{ steps.snforge_std.outputs.version }}
       - run: cargo nextest run --archive-file 'nextest-archive-ubuntu-latest.tar.zst' --run-ignored=all --filterset 'test(new_simple)'
