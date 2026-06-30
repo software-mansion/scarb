@@ -11,6 +11,7 @@ use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::lsp_helpers::LspHelpers;
 use cairo_lang_semantic::resolve::{AsSegments, ResolutionContext, ResolvedGenericItem, Resolver};
 use cairo_lang_syntax::node::ast::{Expr, ExprPath};
+use cairo_lang_syntax::node::{SyntaxNode, TypedSyntaxNode};
 use cairo_lang_utils::Intern;
 
 use crate::db::ScarbDocDatabase;
@@ -57,12 +58,13 @@ fn parse_comment_link_path<'db>(db: &'db ScarbDocDatabase, path: &str) -> Option
     .intern(db);
 
     let content = db.file_content(virtual_file)?;
-    let expr = Parser::parse_file_expr(
+    let green = Parser::parse_file_expr_green(
         db,
         &mut DiagnosticsBuilder::default(),
         virtual_file,
         content,
     );
+    let expr = Expr::from_syntax_node(db, SyntaxNode::new_detached_root(db, virtual_file, green.0));
     if let Expr::Path(expr_path) = expr {
         Some(expr_path)
     } else {
