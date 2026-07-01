@@ -37,7 +37,7 @@ jobs:
     if: ${{ !inputs.docs_only }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Link Checker
         uses: lycheeverse/lychee-action@v2
         env:
@@ -54,7 +54,7 @@ jobs:
         working-directory: ./website
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: '18.x'

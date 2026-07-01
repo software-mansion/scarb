@@ -39,7 +39,7 @@ jobs:
           - name: windows x86-64
             os: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
       - uses: dtolnay/rust-toolchain@stable
@@ -56,7 +56,7 @@ jobs:
   snforge-init:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: foundry-rs/setup-snfoundry@v6
       - run: cargo test --profile=ci --package scarb --test snforge_init new_simple -- --ignored
@@ -75,7 +75,7 @@ jobs:
           - name: macos x86-64
             os: macos-15-intel
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - name: Run prebuilt plugin tests
         run: cargo test -p scarb --profile=ci --test proc_macro_v1_prebuilt proc_macro_v2_prebuilt
