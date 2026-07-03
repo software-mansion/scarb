@@ -10,6 +10,7 @@ use cairo_lang_semantic::expr::inference::InferenceId;
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::lsp_helpers::LspHelpers;
 use cairo_lang_semantic::resolve::{AsSegments, ResolutionContext, ResolvedGenericItem, Resolver};
+use cairo_lang_syntax::node::SyntaxNode;
 use cairo_lang_syntax::node::ast::{Expr, ExprPath};
 use cairo_lang_utils::Intern;
 
@@ -57,13 +58,19 @@ fn parse_comment_link_path<'db>(db: &'db ScarbDocDatabase, path: &str) -> Option
     .intern(db);
 
     let content = db.file_content(virtual_file)?;
-    let expr = Parser::parse_file_expr(
+
+    let expr_green = Parser::parse_file_expr_green(
         db,
         &mut DiagnosticsBuilder::default(),
         virtual_file,
         content,
     );
-    if let Expr::Path(expr_path) = expr {
+
+    let expr_node = SyntaxNode::new_detached_root(db, virtual_file, expr_green.0)
+        .cast::<Expr>(db)
+        .expect("detached root from ExprGreen should be Expr");
+
+    if let Expr::Path(expr_path) = expr_node {
         Some(expr_path)
     } else {
         None
