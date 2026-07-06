@@ -85,6 +85,8 @@ jobs:
       nightly_branch: ${{ steps.version.outputs.nightly_branch }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Configure Git for committing
@@ -269,6 +271,8 @@ jobs:
     needs: [ prepare, upload ]
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
       - name: Delete nightly branch
         run: |
           git push origin -d ${NEEDS_PREPARE_OUTPUTS_NIGHTLY_BRANCH}
