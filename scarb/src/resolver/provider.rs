@@ -524,11 +524,8 @@ impl DependencyProvider for PubGrubDependencyProvider {
                 // package) resolution rather than this locked shortcut - skip them here.
                 .filter_map(|dependency| {
                     let source = dependency.source?;
-                    let package_id = PackageId::new(
-                        dependency.name.clone(),
-                        dependency.version.clone(),
-                        source,
-                    );
+                    let package_id =
+                        PackageId::new(dependency.name.clone(), dependency.version.clone(), source);
                     Some((
                         package_id,
                         DependencyVersionReq::exact(&dependency.version.clone()),
