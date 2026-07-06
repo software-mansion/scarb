@@ -518,21 +518,23 @@ impl DependencyProvider for PubGrubDependencyProvider {
 
             let deps = deps
                 .iter()
-                .map(|dependency| {
+                // Path source dependencies (for example a `core` package redirected to a local
+                // path via `[patch]`) are not recorded with a source in the lockfile. Locking
+                // never occurs on path sources, so they are resolved through their own (main
+                // package) resolution rather than this locked shortcut - skip them here.
+                .filter_map(|dependency| {
+                    let source = dependency.source?;
                     let package_id = PackageId::new(
                         dependency.name.clone(),
                         dependency.version.clone(),
-                        dependency.source.expect(
-                            "source set to `None` is filtered out when searching the lockfile",
-                        ),
+                        source,
                     );
-                    Ok((
+                    Some((
                         package_id,
                         DependencyVersionReq::exact(&dependency.version.clone()),
                     ))
                 })
-                .collect::<Result<Vec<(PackageId, DependencyVersionReq)>, DependencyProviderError>>(
-                )?;
+                .collect_vec();
             let constraints = deps
                 .into_iter()
                 .map(|(package_id, req)| (package_id.into(), req.into()))
