@@ -1723,7 +1723,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.19.0"
-source = "git+https://github.com/software-mansion/cairols?rev=e651597#e651597017628b6002c72bd2baf606bdf4a53952"
+source = "git+https://github.com/software-mansion/cairols?branch=fix/assert-on-const-performance#b097bf24e5d52abca79084d58c8e5a64bbb2fd6d"
 dependencies = [
  "anyhow",
  "bincode 2.0.1",
@@ -1784,7 +1784,7 @@ dependencies = [
 [[package]]
 name = "cairo-lint"
 version = "2.15.0"
-source = "git+https://github.com/software-mansion/cairo-lint/?rev=9cdf2ba5e836c1998fa2efe87197ce1c148ab8c0#9cdf2ba5e836c1998fa2efe87197ce1c148ab8c0"
+source = "git+https://github.com/software-mansion/cairo-lint/?branch=fix/assert-on-const-performance#b03bf78e1eee93515f650e64e4e1d58a02be8d02"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1792,6 +1792,7 @@ dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
  "cairo-lang-formatter",
+ "cairo-lang-lowering",
  "cairo-lang-parser",
  "cairo-lang-semantic",
  "cairo-lang-syntax",
