@@ -84,7 +84,7 @@ jobs:
       nightly_version: ${{ steps.version.outputs.nightly_version }}
       nightly_branch: ${{ steps.version.outputs.nightly_branch }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Configure Git for committing
@@ -197,7 +197,7 @@ jobs:
     # Do not run on dry_run
     if: ${{ !(inputs.dry_run) }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           ref: ${{ needs.prepare.outputs.nightly_branch }}
           persist-credentials: false
@@ -268,7 +268,7 @@ jobs:
     if: always() && needs.prepare.result == 'success'
     needs: [ prepare, upload ]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       - name: Delete nightly branch
         run: |
           git push origin -d ${NEEDS_PREPARE_OUTPUTS_NIGHTLY_BRANCH}
