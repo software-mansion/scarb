@@ -644,6 +644,57 @@ fn patch_registry_with_registry() {
 }
 
 #[test]
+fn patch_core_with_registry() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("core")
+            .version("2.0.0")
+            .no_core()
+            .build(t);
+    });
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .build(&t.child("first"));
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .manifest_extra(formatdoc! {r#"
+            [patch.scarbs-xyz]
+            core = {}
+        "#, Dep.version("2").registry(&registry).build()})
+        .build(&t);
+    // Patching `core` should redirect it away from the bundled `std` source: no
+    // "unused patch" warning should be emitted, and the resolved `core` package
+    // should come from the patch registry, not `std`.
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(Data::from("").raw());
+    let metadata = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let packages = metadata
+        .packages
+        .into_iter()
+        .map(|p| p.id.to_string())
+        .sorted()
+        .collect_vec();
+    let expected = vec![
+        "core 2.0.0 (registry+file:[..])".to_string(),
+        "first 1.0.0 (path+file:[..]first[..]Scarb.toml)".to_string(),
+    ];
+    for (expected, real) in zip(&expected, packages) {
+        Assert::new().eq(real, expected);
+    }
+}
+
+#[test]
 fn cannot_define_default_registry_both_short_and_long_name() {
     let t = TempDir::new().unwrap();
     let patch = t.child("patch");
