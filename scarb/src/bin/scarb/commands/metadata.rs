@@ -43,7 +43,7 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
 }
 
 fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
-    let (file, message, error_code, span, related) = if let Some(sem) = error
+    let (file, message, error_code, span, related, data) = if let Some(sem) = error
         .chain()
         .find_map(|c| c.downcast_ref::<ManifestSemanticError>())
     {
@@ -51,16 +51,16 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
         let src = error
             .chain()
             .find_map(|c| c.downcast_ref::<ManifestErrorWithSource>());
-        let (span, related) = src
+        let (span, related, data) = src
             .and_then(|src| {
                 toml_edit::Document::parse(&src.content).ok().map(|doc| {
                     let data = sem.resolve(doc.as_table());
-                    (data.span, data.related)
+                    (data.span, data.related, data.extra)
                 })
             })
             .unwrap_or_default();
         let file = src.map(|src| src.path.to_string());
-        (file, sem.to_string(), sem.code(), span, related)
+        (file, sem.to_string(), sem.code(), span, related, data)
     } else if let Some(parse_err) = error
         .chain()
         .find_map(|c| c.downcast_ref::<ManifestParseError>())
@@ -87,6 +87,7 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
             ManifestDiagnosticCode::ParseError,
             span,
             vec![],
+            None,
         )
     } else if let Some(src) = error
         .chain()
@@ -102,6 +103,7 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
             ManifestDiagnosticCode::Other,
             None,
             vec![],
+            None,
         )
     } else {
         return;
@@ -116,5 +118,6 @@ fn emit_manifest_diagnostic(config: &Config, error: &anyhow::Error) {
             file,
             span,
             related,
+            data,
         }));
 }

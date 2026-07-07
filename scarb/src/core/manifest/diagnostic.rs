@@ -18,6 +18,8 @@ pub struct ManifestDiagnosticMessage {
     pub span: Option<ManifestDiagnosticSpan>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub related: Vec<ManifestRelatedLocation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<ManifestDiagnosticExtraData>,
 }
 
 #[derive(Serialize)]
@@ -74,6 +76,40 @@ pub struct ManifestDiagnosticData {
     pub span: Option<ManifestDiagnosticSpan>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub related: Vec<ManifestRelatedLocation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extra: Option<ManifestDiagnosticExtraData>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(untagged)]
+pub enum ManifestDiagnosticExtraData {
+    UnknownField {
+        field_path: Vec<String>,
+    },
+    ProfileInheritanceInvalid {
+        profile: String,
+        field_path: Vec<String>,
+        valid_values: Vec<String>,
+    },
+    CairoInliningStrategyConflict {
+        profile: String,
+        inlining_strategy_path: Vec<String>,
+        skip_optimizations_path: Vec<String>,
+    },
+    Dependency {
+        name: String,
+        table: Option<String>,
+        field: Option<String>,
+        field_path: Vec<String>,
+        fields: Vec<String>,
+    },
+    PatchNotInWorkspaceRoot {
+        manifest_path: String,
+        workspace_manifest_path: String,
+    },
+    PatchSourceConflict {
+        sources: Vec<String>,
+    },
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -111,6 +147,14 @@ pub enum ManifestDependencyTable {
 }
 
 impl ManifestDependencyTable {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Dependencies => "dependencies",
+            Self::DevDependencies => "dev-dependencies",
+            Self::WorkspaceDependencies => "workspace.dependencies",
+        }
+    }
+
     /// Returns the TOML key path for this dependency table,
     /// e.g. `["dependencies"]` or `["workspace", "dependencies"]`.
     pub fn path(&self) -> &'static [&'static str] {
@@ -245,6 +289,66 @@ impl ManifestDiagnosticAnchor {
             _ => panic!("Cannot create anchor to a field in a non-table entry"),
         }
         self
+    }
+
+    pub fn key_path(&self) -> Vec<String> {
+        match self {
+            Self::PackageField { field } => vec!["package".to_string(), field.to_string()],
+            Self::WorkspacePackageField { field } => {
+                vec![
+                    "workspace".to_string(),
+                    "package".to_string(),
+                    field.to_string(),
+                ]
+            }
+            Self::Dependency { table, name, field } => {
+                let mut path: Vec<String> = table
+                    .path()
+                    .iter()
+                    .map(|segment| segment.to_string())
+                    .collect();
+                path.push(name.to_string());
+                if let Some(field) = field {
+                    path.push(field.to_string());
+                }
+                path
+            }
+            Self::Profile {
+                name,
+                sub_table,
+                field,
+            } => {
+                let mut path = vec!["profile".to_string(), name.clone()];
+                if let Some(sub_table) = sub_table {
+                    path.push(sub_table.to_string());
+                }
+                if let Some(field) = field {
+                    path.push(field.to_string());
+                }
+                path
+            }
+            Self::PatchRoot => vec!["patch".to_string()],
+            Self::PatchSource { source } => vec!["patch".to_string(), source.clone()],
+            Self::PatchDependency {
+                source,
+                name,
+                field,
+            } => {
+                let mut path = vec!["patch".to_string(), source.clone(), name.to_string()];
+                if let Some(field) = field {
+                    path.push(field.to_string());
+                }
+                path
+            }
+            Self::Target { kind, name, field } => {
+                let mut path = vec!["target".to_string(), kind.to_string(), name.clone()];
+                if let Some(field) = field {
+                    path.push(field.to_string());
+                }
+                path
+            }
+            Self::RawTomlPath { path } => path.clone(),
+        }
     }
 }
 

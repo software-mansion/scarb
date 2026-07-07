@@ -278,6 +278,10 @@ fn json_mode_emits_manifest_diagnostic_for_unknown_top_level_section() {
     assert_eq!(diag["error_code"].as_str().unwrap(), "SE0002");
     assert!(diag["file"].is_string(), "expected file field");
     assert!(diag["span"].is_object(), "expected span field");
+    assert_eq!(
+        diag["data"]["field_path"],
+        serde_json::json!(["unknown-section"])
+    );
     assert!(
         diag.get("severity").is_none(),
         "did not expect severity field"
@@ -321,6 +325,10 @@ fn json_mode_emits_manifest_diagnostic_for_unknown_package_field() {
     assert_eq!(diag["error_code"].as_str().unwrap(), "SE0002");
     assert!(diag["file"].is_string(), "expected file field");
     assert!(diag["span"].is_object(), "expected span field");
+    assert_eq!(
+        diag["data"]["field_path"],
+        serde_json::json!(["package", "typo_field"])
+    );
 }
 
 #[test]

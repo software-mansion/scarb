@@ -14,8 +14,9 @@ use crate::core::TomlManifest;
 use crate::core::config::Config;
 use crate::core::errors::{ManifestErrorWithSource, ManifestParseError};
 use crate::core::manifest::{
-    ManifestDiagnosticAnchor, ManifestDiagnosticCode, ManifestDiagnosticMessage,
-    ManifestDiagnosticSpan, ManifestMessageKind, resolve_manifest_anchor,
+    ManifestDiagnosticAnchor, ManifestDiagnosticCode, ManifestDiagnosticExtraData,
+    ManifestDiagnosticMessage, ManifestDiagnosticSpan, ManifestMessageKind,
+    resolve_manifest_anchor,
 };
 use crate::core::package::Package;
 use crate::core::source::SourceId;
@@ -206,7 +207,9 @@ fn warn_unknown_manifest_fields(path: &Utf8Path, source: &str, config: &Config) 
     };
     for field_path in unknown {
         let path_str = field_path.join(".");
-        let anchor = ManifestDiagnosticAnchor::RawTomlPath { path: field_path };
+        let anchor = ManifestDiagnosticAnchor::RawTomlPath {
+            path: field_path.clone(),
+        };
         let span = resolve_manifest_anchor(source, &anchor);
 
         if config.ui().output_format() == OutputFormat::Json {
@@ -219,6 +222,7 @@ fn warn_unknown_manifest_fields(path: &Utf8Path, source: &str, config: &Config) 
                     file: Some(path.to_string()),
                     span,
                     related: vec![],
+                    data: Some(ManifestDiagnosticExtraData::UnknownField { field_path }),
                 }));
         } else {
             let location = span

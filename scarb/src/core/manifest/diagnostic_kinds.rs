@@ -1,4 +1,4 @@
-use crate::compiler::ProfileValidationError;
+use crate::compiler::{Profile, ProfileValidationError};
 use crate::core::{PackageName, TargetKind};
 use camino::Utf8PathBuf;
 use thiserror::Error;
@@ -9,7 +9,7 @@ use super::ManifestDiagnosticData;
 use super::diagnostic::resolve_anchor_in_doc;
 use super::{
     ManifestDependencyTable, ManifestDiagnosticAnchor, ManifestDiagnosticCode,
-    ManifestRelatedAnchor, ManifestRelatedLocation,
+    ManifestDiagnosticExtraData, ManifestRelatedAnchor, ManifestRelatedLocation,
 };
 
 /// Typed manifest validation errors that carry semantic anchors for diagnostic span resolution.
@@ -107,7 +107,11 @@ impl ManifestSemanticError {
             })
             .collect();
 
-        ManifestDiagnosticData { span, related }
+        ManifestDiagnosticData {
+            span,
+            related,
+            extra: self.extra_data(),
+        }
     }
 
     fn primary_anchor(&self) -> Option<ManifestDiagnosticAnchor> {
@@ -140,6 +144,79 @@ impl ManifestSemanticError {
             Self::PatchSourceConflict(e) => e.related_anchors(),
             _ => vec![],
         }
+    }
+
+    fn extra_data(&self) -> Option<ManifestDiagnosticExtraData> {
+        let data = match self {
+            Self::ProfileInheritanceInvalid(e) => {
+                ManifestDiagnosticExtraData::ProfileInheritanceInvalid {
+                    profile: e.profile.clone(),
+                    field_path: e.primary_anchor().key_path(),
+                    valid_values: vec![Profile::DEV.to_string(), Profile::RELEASE.to_string()],
+                }
+            }
+            Self::CairoInliningStrategyConflict(e) => {
+                ManifestDiagnosticExtraData::CairoInliningStrategyConflict {
+                    profile: e.profile.clone(),
+                    inlining_strategy_path: e.primary_anchor().key_path(),
+                    skip_optimizations_path: e.skip_optimizations_anchor().key_path(),
+                }
+            }
+            Self::DependencyGitRefWithoutGit(e) => {
+                dependency_data(&e.name, &e.anchor, Some(e.field), vec![e.field])
+            }
+            Self::DependencyGitReferenceAmbiguous(e) => dependency_data(
+                &e.name,
+                &e.anchor,
+                e.fields.first().copied(),
+                e.fields.clone(),
+            ),
+            Self::DependencyGitPathAmbiguous(e) => {
+                dependency_data(&e.name, &e.anchor, Some("git"), vec!["git", "path"])
+            }
+            Self::DependencyGitRegistryAmbiguous(e) => {
+                dependency_data(&e.name, &e.anchor, Some("git"), vec!["git", "registry"])
+            }
+            Self::PatchNotInWorkspaceRoot(e) => {
+                ManifestDiagnosticExtraData::PatchNotInWorkspaceRoot {
+                    manifest_path: e.manifest_path.to_string(),
+                    workspace_manifest_path: e.workspace_manifest_path.to_string(),
+                }
+            }
+            Self::PatchSourceConflict(e) => ManifestDiagnosticExtraData::PatchSourceConflict {
+                sources: vec![e.source_a.clone(), e.source_b.clone()],
+            },
+            _ => return None,
+        };
+
+        Some(data)
+    }
+}
+
+fn dependency_data(
+    name: &PackageName,
+    anchor: &ManifestDiagnosticAnchor,
+    field: Option<&'static str>,
+    fields: Vec<&'static str>,
+) -> ManifestDiagnosticExtraData {
+    let field_anchor = field
+        .map(|field| anchor.clone().with_field(field))
+        .unwrap_or_else(|| anchor.clone());
+
+    ManifestDiagnosticExtraData::Dependency {
+        name: name.to_string(),
+        table: dependency_table_name(anchor).map(str::to_string),
+        field: field.map(str::to_string),
+        field_path: field_anchor.key_path(),
+        fields: fields.into_iter().map(str::to_string).collect(),
+    }
+}
+
+fn dependency_table_name(anchor: &ManifestDiagnosticAnchor) -> Option<&'static str> {
+    match anchor {
+        ManifestDiagnosticAnchor::Dependency { table, .. } => Some(table.as_str()),
+        ManifestDiagnosticAnchor::PatchDependency { .. } => Some("patch"),
+        _ => None,
     }
 }
 
@@ -211,10 +288,14 @@ impl CairoInliningStrategyConflict {
     fn related_anchors(&self) -> Vec<ManifestRelatedAnchor> {
         vec![ManifestRelatedAnchor {
             message: "value enabling skip-optimizations".to_string(),
-            anchor: ManifestDiagnosticAnchor::profile(self.profile.clone())
-                .with_sub_table("cairo")
-                .with_field("skip-optimizations"),
+            anchor: self.skip_optimizations_anchor(),
         }]
+    }
+
+    fn skip_optimizations_anchor(&self) -> ManifestDiagnosticAnchor {
+        ManifestDiagnosticAnchor::profile(self.profile.clone())
+            .with_sub_table("cairo")
+            .with_field("skip-optimizations")
     }
 }
 
