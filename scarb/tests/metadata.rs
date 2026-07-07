@@ -12,6 +12,7 @@ use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+use test_case::test_case;
 
 fn packages_by_name(meta: Metadata) -> BTreeMap<String, PackageMetadata> {
     meta.packages
@@ -430,82 +431,88 @@ fn emits_manifest_diagnostic_data_for_cairo_inlining_strategy_conflict() {
     );
 }
 
-#[test]
-fn emits_manifest_diagnostic_data_for_dependency_git_ref_without_git() {
-    for (name, dependency, error_code, field, fields) in [
-        (
-            "dependency_git_ref_without_git",
-            r#"{ path = "../foo", branch = "main" }"#,
-            "SE0007",
-            "branch",
-            vec!["branch"],
-        ),
-        (
-            "dependency_git_reference_ambiguous",
-            r#"{ git = "https://example.com", branch = "main", tag = "v1" }"#,
-            "SE0008",
-            "branch",
-            vec!["branch", "tag"],
-        ),
-        (
-            "dependency_git_path_ambiguous",
-            r#"{ git = "https://example.com", path = "../foo" }"#,
-            "SE0010",
-            "git",
-            vec!["git", "path"],
-        ),
-        (
-            "dependency_git_registry_ambiguous",
-            r#"{ git = "https://example.com", registry = "https://example.com/registry" }"#,
-            "SE0011",
-            "git",
-            vec!["git", "registry"],
-        ),
-    ] {
-        let t = TempDir::new().unwrap();
-        t.child("Scarb.toml")
-            .write_str(&formatdoc! {r#"
-                [package]
-                name = "{name}"
-                version = "0.1.0"
-                edition = "2025_12"
+#[test_case(
+    "dependency_git_ref_without_git",
+    r#"{ path = "../foo", branch = "main" }"#,
+    "SE0007",
+    "branch",
+    &["branch"];
+    "dependency_git_ref_without_git"
+)]
+#[test_case(
+    "dependency_git_reference_ambiguous",
+    r#"{ git = "https://example.com", branch = "main", tag = "v1" }"#,
+    "SE0008",
+    "branch",
+    &["branch", "tag"];
+    "dependency_git_reference_ambiguous"
+)]
+#[test_case(
+    "dependency_git_path_ambiguous",
+    r#"{ git = "https://example.com", path = "../foo" }"#,
+    "SE0010",
+    "git",
+    &["git", "path"];
+    "dependency_git_path_ambiguous"
+)]
+#[test_case(
+    "dependency_git_registry_ambiguous",
+    r#"{ git = "https://example.com", registry = "https://example.com/registry" }"#,
+    "SE0011",
+    "git",
+    &["git", "registry"];
+    "dependency_git_registry_ambiguous"
+)]
+fn emits_manifest_diagnostic_data_for_dependency_git_ref_without_git(
+    name: &str,
+    dependency: &str,
+    error_code: &str,
+    field: &str,
+    fields: &[&str],
+) {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(&formatdoc! {r#"
+            [package]
+            name = "{name}"
+            version = "0.1.0"
+            edition = "2025_12"
 
-                [dependencies]
-                foo = {dependency}
-            "#})
-            .unwrap();
+            [dependencies]
+            foo = {dependency}
+        "#})
+        .unwrap();
 
-        let output = Scarb::quick_command()
-            .arg("--json")
-            .arg("metadata")
-            .arg("--format-version")
-            .arg("1")
-            .current_dir(&t)
-            .output()
-            .unwrap();
+    let output = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
+        .unwrap();
 
-        assert!(!output.status.success());
+    assert!(!output.status.success());
 
-        let stdout = String::from_utf8(output.stdout).unwrap();
-        let diagnostic = stdout
-            .lines()
-            .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
-            .find(|line| line["kind"] == "manifest_diagnostic")
-            .unwrap();
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let diagnostic = stdout
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .find(|line| line["kind"] == "manifest_diagnostic")
+        .unwrap();
 
-        assert_eq!(diagnostic["error_code"].as_str().unwrap(), error_code);
-        assert_eq!(diagnostic["data"]["name"].as_str().unwrap(), "foo");
-        assert_eq!(
-            diagnostic["data"]["table"].as_str().unwrap(),
-            "dependencies"
-        );
-        assert_eq!(diagnostic["data"]["field"].as_str().unwrap(), field);
-        assert_eq!(
-            diagnostic["data"]["field_path"],
-            serde_json::json!(["dependencies", "foo", field])
-        );
-        assert_eq!(diagnostic["data"]["fields"], serde_json::json!(fields));
-    }
+    assert_eq!(diagnostic["error_code"].as_str().unwrap(), error_code);
+    assert_eq!(diagnostic["data"]["name"].as_str().unwrap(), "foo");
+    assert_eq!(
+        diagnostic["data"]["table"].as_str().unwrap(),
+        "dependencies"
+    );
+    assert_eq!(diagnostic["data"]["field"].as_str().unwrap(), field);
+    assert_eq!(
+        diagnostic["data"]["field_path"],
+        serde_json::json!(["dependencies", "foo", field])
+    );
+    assert_eq!(diagnostic["data"]["fields"], serde_json::json!(fields));
 }
 
 #[test]
