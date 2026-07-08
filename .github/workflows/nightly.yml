@@ -86,7 +86,8 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
-          persist-credentials: false
+          # Credentials are persisted so this job can push the nightly branch.
+          persist-credentials: true # zizmor: ignore[artipacked]
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Configure Git for committing
@@ -272,7 +273,8 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
-          persist-credentials: false
+          # Credentials are persisted so this job can delete the nightly branch.
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Delete nightly branch
         run: |
           git push origin -d ${NEEDS_PREPARE_OUTPUTS_NIGHTLY_BRANCH}
