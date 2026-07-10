@@ -297,7 +297,7 @@ pub fn find_project_contracts<'db>(
                                     contract_path.replace(&exported_module_path, "");
                                 let exported_contract_path = format!(
                                     "{}::{exported_module_name}{exported_contract_path}",
-                                    &module_with_reexport
+                                    module_with_reexport
                                 );
                                 let selectors_used = external_contracts
                                     .iter()

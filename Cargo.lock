@@ -950,8 +950,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-casm"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-utils",
  "indoc",
@@ -963,8 +963,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-compiler"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "anyhow",
  "cairo-lang-defs",
@@ -989,8 +989,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-debug"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-utils",
  "id-arena",
@@ -999,8 +999,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-defs"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-diagnostics",
@@ -1009,7 +1009,7 @@ dependencies = [
  "cairo-lang-proc-macros",
  "cairo-lang-syntax",
  "cairo-lang-utils",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "postcard",
  "salsa",
  "serde",
@@ -1020,21 +1020,21 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-diagnostics"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
  "cairo-lang-proc-macros",
  "cairo-lang-utils",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "salsa",
 ]
 
 [[package]]
 name = "cairo-lang-doc"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1045,15 +1045,15 @@ dependencies = [
  "cairo-lang-semantic",
  "cairo-lang-syntax",
  "cairo-lang-utils",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "pulldown-cmark",
  "salsa",
 ]
 
 [[package]]
 name = "cairo-lang-eq-solver"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-utils",
  "good_lp",
@@ -1061,8 +1061,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-executable"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "anyhow",
  "cairo-lang-casm",
@@ -1077,7 +1077,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-utils",
  "cairo-vm",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "salsa",
  "serde",
  "serde_json",
@@ -1085,22 +1085,22 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-executable-plugin"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-defs",
  "cairo-lang-filesystem",
  "cairo-lang-semantic",
  "cairo-lang-syntax",
  "indoc",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "salsa",
 ]
 
 [[package]]
 name = "cairo-lang-execute-utils"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "anyhow",
  "cairo-lang-casm",
@@ -1114,13 +1114,13 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-filesystem"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-proc-macros",
  "cairo-lang-utils",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "path-clean",
  "salsa",
  "semver 1.0.28",
@@ -1131,8 +1131,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-formatter"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "anyhow",
  "cairo-lang-diagnostics",
@@ -1142,7 +1142,7 @@ dependencies = [
  "cairo-lang-utils",
  "diffy",
  "ignore",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "salsa",
  "serde",
  "thiserror 2.0.18",
@@ -1150,8 +1150,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-lowering"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "assert_matches",
  "cairo-lang-debug",
@@ -1164,7 +1164,7 @@ dependencies = [
  "cairo-lang-utils",
  "id-arena",
  "indent",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "log",
  "num-bigint",
  "num-integer",
@@ -1267,8 +1267,8 @@ checksum = "414b7ba40b5ec3f26101b5c76df5739190832834b95689a723f3f88ec1695fe3"
 
 [[package]]
 name = "cairo-lang-parser"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
@@ -1277,7 +1277,7 @@ dependencies = [
  "cairo-lang-syntax-codegen",
  "cairo-lang-utils",
  "colored",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "num-bigint",
  "num-traits",
  "salsa",
@@ -1286,8 +1286,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-plugins"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -1297,7 +1297,7 @@ dependencies = [
  "cairo-lang-utils",
  "indent",
  "indoc",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "salsa",
 ]
 
@@ -1309,8 +1309,8 @@ checksum = "123ac0ecadf31bacae77436d72b88fa9caef2b8e92c89ce63a125ae911a12fae"
 
 [[package]]
 name = "cairo-lang-proc-macros"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-debug",
  "proc-macro2",
@@ -1321,8 +1321,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-project"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-utils",
@@ -1355,8 +1355,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-runnable-utils"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-casm",
  "cairo-lang-sierra",
@@ -1371,8 +1371,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-runner"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "ark-ff 0.6.0",
  "ark-secp256k1",
@@ -1387,7 +1387,7 @@ dependencies = [
  "cairo-lang-utils",
  "cairo-vm",
  "clap",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "keccak 0.2.0",
  "num-bigint",
  "num-integer",
@@ -1402,8 +1402,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-semantic"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1417,7 +1417,7 @@ dependencies = [
  "cairo-lang-utils",
  "id-arena",
  "indoc",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "num-bigint",
  "num-integer",
  "num-traits",
@@ -1431,15 +1431,15 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "anyhow",
  "cairo-lang-utils",
  "const-fnv1a-hash",
  "convert_case 0.11.0",
  "derivative",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "lalrpop",
  "lalrpop-util",
  "num-bigint",
@@ -1456,14 +1456,14 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-ap-change"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
  "cairo-lang-sierra-type-size",
  "cairo-lang-utils",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "num-bigint",
  "num-traits",
  "thiserror 2.0.18",
@@ -1471,14 +1471,14 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-gas"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
  "cairo-lang-sierra-type-size",
  "cairo-lang-utils",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "num-bigint",
  "num-traits",
  "thiserror 2.0.18",
@@ -1486,8 +1486,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-generator"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1499,7 +1499,7 @@ dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-syntax",
  "cairo-lang-utils",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "num-traits",
  "rayon",
  "salsa",
@@ -1510,8 +1510,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-to-casm"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "assert_matches",
  "cairo-lang-casm",
@@ -1521,7 +1521,7 @@ dependencies = [
  "cairo-lang-sierra-type-size",
  "cairo-lang-utils",
  "indoc",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "num-bigint",
  "num-traits",
  "starknet-types-core",
@@ -1530,8 +1530,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-type-size"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-utils",
@@ -1539,8 +1539,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-starknet"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1559,7 +1559,7 @@ dependencies = [
  "const_format",
  "indent",
  "indoc",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "rayon",
  "salsa",
  "serde",
@@ -1571,8 +1571,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-starknet-classes"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-casm",
  "cairo-lang-sierra",
@@ -1580,7 +1580,7 @@ dependencies = [
  "cairo-lang-sierra-type-size",
  "cairo-lang-utils",
  "convert_case 0.11.0",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "num-bigint",
  "num-integer",
  "num-traits",
@@ -1594,15 +1594,15 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-syntax"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
  "cairo-lang-primitive-token",
  "cairo-lang-proc-macros",
  "cairo-lang-utils",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "num-bigint",
  "num-traits",
  "salsa",
@@ -1612,8 +1612,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-syntax-codegen"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "genco",
  "xshell",
@@ -1621,8 +1621,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-test-plugin"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1639,7 +1639,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "indoc",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "num-bigint",
  "num-traits",
  "salsa",
@@ -1649,8 +1649,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-test-runner"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1663,7 +1663,7 @@ dependencies = [
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
  "colored",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "num-traits",
  "rayon",
  "salsa",
@@ -1672,8 +1672,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-test-utils"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-proc-macros",
@@ -1685,12 +1685,12 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-utils"
-version = "2.19.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4315590#431559058b778e5d19ae18acbea7a0a34bd5a5ee"
+version = "2.19.2"
+source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac7741558fb12684609036f37#b585bc3ab77e7b6ac7741558fb12684609036f37"
 dependencies = [
  "hashbrown 0.17.0",
  "indexmap",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "num-bigint",
  "num-traits",
  "salsa",
@@ -1706,7 +1706,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-common"
 version = "2.15.0"
-source = "git+https://github.com/software-mansion/cairo-language-common?rev=e780ac2be99edda452643a8edb4b10acc7adccf1#e780ac2be99edda452643a8edb4b10acc7adccf1"
+source = "git+https://github.com/software-mansion/cairo-language-common?rev=994df676e5c52cb6e2241d4ac9184cf855b39b21#994df676e5c52cb6e2241d4ac9184cf855b39b21"
 dependencies = [
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -1722,8 +1722,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-language-server"
-version = "2.19.0"
-source = "git+https://github.com/software-mansion/cairols?rev=e651597#e651597017628b6002c72bd2baf606bdf4a53952"
+version = "2.19.2"
+source = "git+https://github.com/software-mansion/cairols?rev=6a93806f7f697bac4a67eb2c63721e0eca0cd89f#6a93806f7f697bac4a67eb2c63721e0eca0cd89f"
 dependencies = [
  "anyhow",
  "bincode 2.0.1",
@@ -1755,7 +1755,7 @@ dependencies = [
  "crossbeam",
  "governor",
  "indoc",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "jaro_winkler",
  "jod-thread",
  "libc",
@@ -1784,7 +1784,7 @@ dependencies = [
 [[package]]
 name = "cairo-lint"
 version = "2.15.0"
-source = "git+https://github.com/software-mansion/cairo-lint/?rev=9cdf2ba5e836c1998fa2efe87197ce1c148ab8c0#9cdf2ba5e836c1998fa2efe87197ce1c148ab8c0"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=149eb7cbd8bf61587373b942c1dbb4b21e824ea7#149eb7cbd8bf61587373b942c1dbb4b21e824ea7"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1792,6 +1792,7 @@ dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
  "cairo-lang-formatter",
+ "cairo-lang-lowering",
  "cairo-lang-parser",
  "cairo-lang-semantic",
  "cairo-lang-syntax",
@@ -1898,7 +1899,7 @@ dependencies = [
  "cap-primitives",
  "cap-std",
  "io-lifetimes",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1927,7 +1928,7 @@ dependencies = [
  "maybe-owned",
  "rustix 1.1.4",
  "rustix-linux-procfs",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
  "winx",
 ]
 
@@ -2115,7 +2116,7 @@ version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "faf9468729b8cbcea668e36183cb69d317348c2e08e994829fb56ebfdfbaac34"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3063,7 +3064,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3151,7 +3152,7 @@ checksum = "0ce92ff622d6dadf7349484f42c93271a0d49b7cc4d466a936405bacbe10aa78"
 dependencies = [
  "cfg-if",
  "rustix 1.1.4",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3293,7 +3294,7 @@ checksum = "94e7099f6313ecacbe1256e8ff9d617b75d1bcb16a6fddef94866d225a01a14a"
 dependencies = [
  "io-lifetimes",
  "rustix 1.1.4",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4245,11 +4246,11 @@ dependencies = [
 
 [[package]]
 name = "hashlink"
-version = "0.10.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7382cf6263419f2d8df38c55d7da83da5c18aef87fc7a7fc1fb1e344edfe14c1"
+checksum = "32069d97bb81e38fa67eab65e3393bf804bb85969f2bc06bf13f64aef5aba248"
 dependencies = [
- "hashbrown 0.15.5",
+ "hashbrown 0.17.0",
 ]
 
 [[package]]
@@ -4457,7 +4458,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.5.10",
+ "socket2 0.6.3",
  "system-configuration",
  "tokio",
  "tower-service",
@@ -4721,9 +4722,9 @@ dependencies = [
 
 [[package]]
 name = "intrusive-collections"
-version = "0.9.7"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "189d0897e4cbe8c75efedf3502c18c887b05046e59d28404d4d8e46cbc4d1e86"
+checksum = "4b719c59241cfaac1042a6d26787e28ed7ee4a4e21a5a907786f54222d1b0062"
 dependencies = [
  "memoffset",
 ]
@@ -4744,7 +4745,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2285ddfe3054097ef4b2fe909ef8c3bcd1ea52a8f0d274416caebeef39f04a65"
 dependencies = [
  "io-lifetimes",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4818,6 +4819,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b4baf93f58d4425749ca49a51c50ebab072c5df6994d08fed93541c331481dc"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4861,7 +4871,7 @@ dependencies = [
  "portable-atomic",
  "portable-atomic-util",
  "serde_core",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -5166,9 +5176,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.29"
+version = "0.4.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
+checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
 name = "lru"
@@ -5187,9 +5197,9 @@ checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
 
 [[package]]
 name = "lsp-server"
-version = "0.7.9"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d6ada348dbc2703cbe7637b2dda05cff84d3da2819c24abcb305dd613e0ba2e"
+checksum = "0ad8be6fe0ca81b8298bfbbe8a77e9fcd8895ad6c84cd7794d5ebadcbb09ae43"
 dependencies = [
  "crossbeam-channel",
  "log",
@@ -5876,7 +5886,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d8fae84b431384b68627d0f9b3b1245fcf9f46f6c0e3dc902e9dce64edd1967"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -6410,9 +6420,9 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.5.10",
+ "socket2 0.6.3",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -6972,7 +6982,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.4.15",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -6985,7 +6995,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.12.1",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -7059,9 +7069,9 @@ checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
 
 [[package]]
 name = "salsa"
-version = "0.26.2"
+version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4612ff789805e65c87e9b38cb749a293212a615af065bed8a2001086801498c3"
+checksum = "ffbaab832e2ea754afda4a738f987dd1e8bd30c9e5d8c981ee6a3934386095e2"
 dependencies = [
  "boxcar",
  "crossbeam-queue",
@@ -7085,15 +7095,15 @@ dependencies = [
 
 [[package]]
 name = "salsa-macro-rules"
-version = "0.26.2"
+version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58e354cbac6939b9b09cd9c11fb419a53e64b4a0f755d929f56a09f4cc752e41"
+checksum = "de6872462ac73d39969a836273c24163e6a26a4e08f5114fcd80e25af30ea9c6"
 
 [[package]]
 name = "salsa-macros"
-version = "0.26.2"
+version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3067861075c2b80608f84ad49fb88f2c7610b94cdf8b4201e79ddee87f8980c8"
+checksum = "76bc78ffaf65b1a9175818592c5130aa10b1bb245a905722fd4db87cea8a8457"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7112,7 +7122,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "2.19.0"
+version = "2.19.2"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7147,7 +7157,7 @@ dependencies = [
  "chrono",
  "clap",
  "clap_complete",
- "convert_case 0.10.0",
+ "convert_case 0.11.0",
  "create-output-dir 1.0.0",
  "crossbeam-channel",
  "data-encoding",
@@ -7231,7 +7241,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-build-metadata"
-version = "2.19.0"
+version = "2.19.2"
 dependencies = [
  "cargo_metadata",
  "semver 1.0.28",
@@ -7239,7 +7249,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "2.19.0"
+version = "2.19.2"
 dependencies = [
  "assert_fs",
  "cairo-language-server",
@@ -7251,7 +7261,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-test"
-version = "2.19.0"
+version = "2.19.2"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7277,7 +7287,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-doc"
-version = "2.19.0"
+version = "2.19.2"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7317,7 +7327,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-execute"
-version = "2.19.0"
+version = "2.19.2"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7354,7 +7364,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-extensions-cli"
-version = "2.19.0"
+version = "2.19.2"
 dependencies = [
  "anyhow",
  "cairo-air",
@@ -7408,7 +7418,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-mdbook"
-version = "2.19.0"
+version = "2.19.2"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7490,7 +7500,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-prove"
-version = "2.19.0"
+version = "2.19.2"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7578,7 +7588,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-verify"
-version = "2.19.0"
+version = "2.19.2"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -8648,7 +8658,7 @@ dependencies = [
  "fd-lock",
  "io-lifetimes",
  "rustix 0.38.44",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
  "winx",
 ]
 
@@ -8688,10 +8698,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.2",
  "once_cell",
  "rustix 1.1.4",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -10159,7 +10169,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -10472,7 +10482,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f3fd376f71958b862e7afb20cfe5a22830e1963462f3a17f49d82a6c1d1f42d"
 dependencies = [
  "bitflags 2.10.0",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]

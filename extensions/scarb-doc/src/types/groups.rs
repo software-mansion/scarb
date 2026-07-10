@@ -26,7 +26,7 @@ pub struct Group<'db> {
 
 impl<'db> Group<'db> {
     pub fn filename(&self, files_extension: &str) -> String {
-        format!("{}{files_extension}", &self.get_name_normalized())
+        format!("{}{files_extension}", self.get_name_normalized())
     }
     pub fn get_name_normalized(&self) -> String {
         self.name.replace(" ", "_")

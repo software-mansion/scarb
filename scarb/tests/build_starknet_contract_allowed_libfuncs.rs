@@ -5,6 +5,7 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 const EXPERIMENTAL_LIBFUNC: &str = indoc! {r#"
+    #[allow(extern_outside_corelib)]
     extern fn redeposit_gas() implicits(GasBuiltin) nopanic;
 
     #[starknet::contract]
