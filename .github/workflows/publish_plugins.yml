@@ -112,3 +112,19 @@ jobs:
           scarb publish --index=$DEV_REGISTRY_URL
         env:
           SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_DEV_REGISTRY_AUTH_TOKEN }}
+
+  notify-failed:
+    name: Notify about failed plugin publishing
+    runs-on: ubuntu-latest
+    if: always() && needs.publish.result == 'failure'
+    needs: [ publish ]
+    steps:
+      - name: Notifying about failed plugin publishing
+        uses: slackapi/slack-github-action@v3.0.3
+        with:
+          webhook: ${{ secrets.SLACK_PUBLISH_PLUGINS_FAILURE_WEBHOOK_URL }}
+          webhook-type: webhook-trigger
+          payload: |
+            {
+              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
