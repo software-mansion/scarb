@@ -118,7 +118,7 @@ fn find_corelib_local_path(compiler_package: &Package) -> Option<Utf8PathBuf> {
         // Corelib should be present in Cairo compiler repository root.
         .map(|p| p.join("corelib"))
         // Ensure path exists
-        .and_then(|p| if p.exists() { Some(p) } else { None })
+        .filter(|p| p.exists())
     // Note, that for registry source, we do not get whole Cairo repository in cache.
     // Thus the corelib will not be found - only the crate is downloaded.
 }

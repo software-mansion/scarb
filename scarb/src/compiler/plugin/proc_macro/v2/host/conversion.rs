@@ -92,11 +92,7 @@ pub fn find_encompassing_node<'db>(
 
     let mut current_node = root_syntax_node.lookup_offset(db, start_offset);
     while current_node.span(db).end < end_offset {
-        if let Some(parent) = current_node.parent(db) {
-            current_node = parent;
-        } else {
-            return None;
-        }
+        current_node = current_node.parent(db)?;
     }
     Some(current_node)
 }

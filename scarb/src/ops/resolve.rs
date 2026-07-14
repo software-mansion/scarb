@@ -124,9 +124,9 @@ impl WorkspaceResolve {
                         let Some(pid) = deps.iter().find(|p| p.name == *package_name) else {
                             bail!(
                                 "feature `{feature}` of package `{}` depends on feature `{}` from package `{package_name}`, which is not a dependency of `{}`",
-                                &package_id.name,
-                                &dependant.feature,
-                                &package_id.name
+                                package_id.name,
+                                dependant.feature,
+                                package_id.name
                             );
                         };
                         *pid

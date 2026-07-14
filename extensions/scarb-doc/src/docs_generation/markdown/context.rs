@@ -95,7 +95,7 @@ impl Formatting for MarkdownFormatting {
         let group_path = format!(
             "[{}](./{}{})",
             group_name,
-            &group_name.replace(" ", "_"),
+            group_name.replace(" ", "_"),
             OutputFilesExtension::Md.get_string()
         );
         format!("Part of the group: {group_path}\n")
@@ -220,7 +220,7 @@ fn format_signature(
                 .iter()
                 .find(|&link| i >= link.start && i < link.end)
             {
-                if index_map.contains_key(&format!("./{}{files_extension}", &link.full_path)) {
+                if index_map.contains_key(&format!("./{}{files_extension}", link.full_path)) {
                     let slice = escape_html(&input[link.start..link.end]);
                     escaped.push_str(&format!(
                         "<a href=\"{}.html\">{}</a>",

@@ -868,7 +868,7 @@ fn get_linked_path(full_path: &str, files_extension: &str) -> String {
             current_path.push('-');
         }
         current_path.push_str(element);
-        let formatted = format!("[{element}](./{}{files_extension})", &current_path,);
+        let formatted = format!("[{element}](./{}{files_extension})", current_path,);
         result.push(formatted);
     }
     result.join("::")
@@ -896,7 +896,7 @@ fn get_full_subitem_path<T: MarkdownDocItem + SubPathDocItem>(
         format!(
             "{}::[{}](./{})",
             get_linked_path(parent_path, files_extension),
-            &item_path,
+            item_path,
             last_path
         )
     } else {
