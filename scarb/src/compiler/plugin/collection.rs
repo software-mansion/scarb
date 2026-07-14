@@ -12,7 +12,7 @@ use std::vec::IntoIter;
 use super::proc_macro::{DeclaredProcMacroInstances, ProcMacroHostPlugin, ProcMacroInstance};
 use crate::compiler::incremental::PluginFingerprint;
 use crate::compiler::plugin::CairoPlugin;
-use crate::core::PackageId;
+use crate::core::{PackageId, SourceId};
 use crate::{
     compiler::{CairoCompilationUnit, CompilationUnitComponentId, CompilationUnitDependency},
     core::Workspace,
@@ -163,7 +163,7 @@ fn collect_builtin_plugins(
                 continue;
             }
 
-            let package_id = plugin.package.id;
+            let package_id = plugin.package.id.with_source_id(SourceId::for_std());
             let plugin = workspace.config().cairo_plugins().fetch(package_id)?;
             component_suite.add_builtin(plugin)?;
         }

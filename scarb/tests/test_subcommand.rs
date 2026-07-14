@@ -2,9 +2,11 @@ use assert_fs::TempDir;
 use indoc::indoc;
 use snapbox::Data;
 
+use scarb_build_metadata::CAIRO_VERSION;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::filesystem::{path_with_temp_dir, write_simple_hello_script};
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
+use scarb_test_support::registry::local::LocalRegistry;
 
 #[test]
 #[cfg_attr(
@@ -89,6 +91,42 @@ fn assert_macros_available() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .dev_dep_builtin("assert_macros")
+        .dep_cairo_test()
+        .lib_cairo(indoc! {r#"
+            #[test]
+            fn some() {
+                assert_eq!(1, 1);
+            }
+        "#})
+        .build(&t);
+    Scarb::quick_command()
+        .args(["build", "--test"])
+        .current_dir(&t)
+        .assert()
+        .success();
+}
+
+#[test]
+fn registry_sourced_builtin_assert_macros_available() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("assert_macros")
+            .version(CAIRO_VERSION)
+            .no_core()
+            .manifest_extra(indoc! {r#"
+                [cairo-plugin]
+                builtin = true
+            "#})
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .dev_dep(
+            "assert_macros",
+            Dep.version(CAIRO_VERSION).registry(&registry),
+        )
         .dep_cairo_test()
         .lib_cairo(indoc! {r#"
             #[test]
