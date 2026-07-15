@@ -55,6 +55,11 @@ You might need to swiftly pause the [Website Deploy] workflow to prevent publish
 
 ### Write release notes
 
+Only write release notes for stable releases, not release candidates.
+Other releases should include auto-generated notes only.
+For a stable release, compare the changes against the previous stable release in semver order,
+not against the most recent release candidate.
+
 Upon completion, the [Release] workflow should draft a release on GitHub.
 Now comes the most tedious and time-consuming part that nobody likes: writing release notes!
 We take an inspiration from the awesome release notes that [Visual Studio Code][vscode-relnotes] does.
