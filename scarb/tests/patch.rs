@@ -845,6 +845,35 @@ fn default_registry_patched_builtin_assert_macros_available() {
 }
 
 #[test]
+fn default_registry_patched_builtin_assert_macros_incompatible_requirement() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .dev_dep("starknet", Dep.version("2.17.0"))
+        .dep_cairo_test()
+        .manifest_extra(indoc! {r#"
+            [patch.scarbs-xyz]
+            starknet = "=1.0.0"
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[test]
+            fn some() {
+            }
+        "#})
+        .build(&t);
+    Scarb::quick_command()
+        .args(["build", "--test"])
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: cannot get dependencies of `pkg0@1.0.0`
+
+            Caused by:
+                cannot find package `starknet =1.0.0`
+        "#});
+}
+
+#[test]
 fn patch_builtin_to_other_registry_is_not_rewritten() {
     let mut registry = LocalRegistry::create();
     registry.publish(|t| {
