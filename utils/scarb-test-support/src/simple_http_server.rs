@@ -49,7 +49,7 @@ pub struct HttpLog {
 #[derive(Clone)]
 pub struct HttpPostResponse {
     pub code: u16,
-    pub message: String,
+    pub message: Option<String>,
 }
 
 impl SimpleHttpServer {
@@ -128,15 +128,20 @@ async fn post_handler(post_response: Option<HttpPostResponse>, body: Body) -> im
         ),
         None => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            "POST request received".to_string(),
+            Some("POST request received".to_string()),
         ),
     };
-    let json_response = json!({
-        "status": status_code.as_u16(),
-        "error": message
-    });
 
-    (status_code, json_response.to_string())
+    let body = match message{
+        None => String::new(),
+        Some(message) =>
+            json!({
+                "status": status_code.as_u16(),
+                "error": message
+            }).to_string()
+    };
+
+    (status_code, body)
 }
 
 async fn logger(
