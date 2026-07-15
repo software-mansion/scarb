@@ -132,13 +132,13 @@ async fn post_handler(post_response: Option<HttpPostResponse>, body: Body) -> im
         ),
     };
 
-    let body = match message{
+    let body = match message {
         None => String::new(),
-        Some(message) =>
-            json!({
-                "status": status_code.as_u16(),
-                "error": message
-            }).to_string()
+        Some(message) => json!({
+            "status": status_code.as_u16(),
+            "error": message
+        })
+        .to_string(),
     };
 
     (status_code, body)
