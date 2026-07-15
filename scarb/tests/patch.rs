@@ -2,6 +2,7 @@ use assert_fs::TempDir;
 use assert_fs::prelude::PathChild;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
+use scarb_build_metadata::CAIRO_VERSION;
 use scarb_metadata::Metadata;
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::gitx;
@@ -29,7 +30,7 @@ fn can_only_be_defined_in_root() {
         .failure()
         .stdout_eq(indoc! {r#"
             error: failed to parse manifest at: [..]Scarb.toml
-    
+
             Caused by:
                 the `[patch]` section can only be defined in the workspace root manifests
                 section found in manifest: `[..]first[..]Scarb.toml`
@@ -644,6 +645,149 @@ fn patch_registry_with_registry() {
 }
 
 #[test]
+fn patch_builtin_with_default_registry_keeps_std_source() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .dep("starknet", Dep.version("2.11.0"))
+        .manifest_extra(formatdoc! {r#"
+            [patch.scarbs-xyz]
+            starknet = "{CAIRO_VERSION}"
+        "#})
+        .build(&t);
+
+    // A same-registry patch overrides the builtin package version requirement, but the package
+    // itself is still provided by the `std` source bundled with Scarb.
+    let metadata = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let packages = metadata
+        .packages
+        .into_iter()
+        .map(|p| p.id.to_string())
+        .sorted()
+        .collect_vec();
+    let expected = vec![
+        format!("core {CAIRO_VERSION} (std)"),
+        "first 1.0.0 (path+file:[..]Scarb.toml)".to_string(),
+        format!("starknet {CAIRO_VERSION} (std)"),
+    ];
+    for (expected, real) in zip(&expected, packages) {
+        Assert::new().eq(real, expected);
+    }
+}
+
+#[test]
+fn patch_core_with_registry() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("core")
+            .version("2.0.0")
+            .no_core()
+            .build(t);
+    });
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .build(&t.child("first"));
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .manifest_extra(formatdoc! {r#"
+            [patch.scarbs-xyz]
+            core = {}
+        "#, Dep.version("2").registry(&registry).build()})
+        .build(&t);
+    // Patching `core` should redirect it away from the bundled `std` source: no
+    // "unused patch" warning should be emitted, and the resolved `core` package
+    // should come from the patch registry, not `std`.
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(Data::from("").raw());
+    let metadata = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let packages = metadata
+        .packages
+        .into_iter()
+        .map(|p| p.id.to_string())
+        .sorted()
+        .collect_vec();
+    let expected = vec![
+        "core 2.0.0 (registry+file:[..])".to_string(),
+        "first 1.0.0 (path+file:[..]first[..]Scarb.toml)".to_string(),
+    ];
+    for (expected, real) in zip(&expected, packages) {
+        Assert::new().eq(real, expected);
+    }
+}
+
+#[test]
+fn patch_core_with_self() {
+    // A regular registry package implicitly depends on `core` (the bundled `std` corelib).
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("dep")
+            .version("1.0.0")
+            .build(t);
+    });
+    // The compiled package is itself named `core` and patches `core` to point at itself, so the
+    // implicit `core` dependency of `dep` is redirected to this local package instead of the
+    // bundled `std` source.
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("core")
+        .version("2.0.0")
+        .no_core()
+        .dep("dep", Dep.version("1").registry(&registry))
+        .manifest_extra(indoc! {r#"
+            [patch.scarbs-xyz]
+            core = { path = "." }
+        "#})
+        .build(&t);
+    // The first resolution writes a lockfile in which the patched `core` is recorded as a path
+    // source (i.e. without a `source` entry). The second resolution reads it back, exercising the
+    // locked-dependency shortcut for `dep` whose (locked) `core` dependency has no source.
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+    let metadata = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let packages = metadata
+        .packages
+        .into_iter()
+        .map(|p| p.id.to_string())
+        .sorted()
+        .collect_vec();
+    // `dep`'s implicit `core` dependency must resolve to the local package, so there is a single
+    // `core` in the graph (the local `2.0.0` one) and no `core` coming from the `std` source.
+    let expected = vec![
+        "core 2.0.0 (path+file:[..]Scarb.toml)".to_string(),
+        "dep 1.0.0 (registry+file:[..])".to_string(),
+    ];
+    assert_eq!(packages.len(), expected.len());
+    for (expected, real) in zip(&expected, packages) {
+        Assert::new().eq(real, expected);
+    }
+}
+
+#[test]
 fn cannot_define_default_registry_both_short_and_long_name() {
     let t = TempDir::new().unwrap();
     let patch = t.child("patch");
@@ -674,4 +818,69 @@ fn cannot_define_default_registry_both_short_and_long_name() {
             Caused by:
                 the `[patch]` section cannot specify both `scarbs-xyz` and `https://scarbs.xyz/`
         "#});
+}
+
+#[test]
+fn default_registry_patched_builtin_assert_macros_available() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .dev_dep("assert_macros", Dep.version("2.11.0"))
+        .dep_cairo_test()
+        .manifest_extra(formatdoc! {r#"
+            [patch.scarbs-xyz]
+            assert_macros = "{CAIRO_VERSION}"
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[test]
+            fn some() {
+                assert_eq!(1, 1);
+            }
+        "#})
+        .build(&t);
+    Scarb::quick_command()
+        .args(["build", "--test"])
+        .current_dir(&t)
+        .assert()
+        .success();
+}
+
+#[test]
+fn patch_builtin_to_other_registry_is_not_rewritten() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("assert_macros")
+            .version(CAIRO_VERSION)
+            .no_core()
+            .manifest_extra(indoc! {r#"
+                [cairo-plugin]
+                builtin = true
+            "#})
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .dev_dep("assert_macros", Dep.version("2.11.0"))
+        .manifest_extra(formatdoc! {r#"
+            [patch.scarbs-xyz]
+            assert_macros = {}
+        "#, Dep.version(CAIRO_VERSION).registry(&registry).build()})
+        .build(&t);
+
+    let metadata = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let assert_macros = metadata
+        .packages
+        .into_iter()
+        .find(|package| package.name == "assert_macros")
+        .unwrap();
+    assert_eq!(
+        assert_macros.source.to_string(),
+        format!("registry+{}", registry.url)
+    );
 }
