@@ -22,6 +22,7 @@ use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
 use crate::ops::{FeaturesOpts, FeaturesSelector};
 use crate::resolver::SelectedPackages;
+use crate::sources::canonical_url::CanonicalUrl;
 use crate::{DEFAULT_SOURCE_PATH, resolver};
 use anyhow::{Result, bail};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
@@ -265,50 +266,62 @@ pub fn resolve_workspace_with_opts(
             // override them, e.g. to redirect `core` itself to a custom source.
             let cairo_version = crate::version::get().cairo.version.parse().unwrap();
             let version_req = DependencyVersionReq::exact(&cairo_version);
+            let builtin_patches = [
+                ManifestDependency::builder()
+                    .name(PackageName::CORE)
+                    .source_id(SourceId::for_std())
+                    .version_req(version_req.clone())
+                    .kind(DepKind::Normal)
+                    .build(),
+                ManifestDependency::builder()
+                    .name(PackageName::STARKNET)
+                    .version_req(version_req.clone())
+                    .source_id(SourceId::for_std())
+                    .kind(DepKind::Normal)
+                    .build(),
+                ManifestDependency::builder()
+                    .name(PackageName::EXECUTABLE)
+                    .version_req(version_req.clone())
+                    .source_id(SourceId::for_std())
+                    .kind(DepKind::Normal)
+                    .build(),
+                ManifestDependency::builder()
+                    .kind(DepKind::Target(TargetKind::TEST))
+                    .name(PackageName::TEST_PLUGIN)
+                    .version_req(version_req.clone())
+                    .source_id(SourceId::for_std())
+                    .build(),
+                ManifestDependency::builder()
+                    .kind(DepKind::Target(TargetKind::TEST))
+                    .name(PackageName::TEST_ASSERTS_PLUGIN)
+                    .version_req(version_req.clone())
+                    .source_id(SourceId::for_std())
+                    .build(),
+            ];
             patch_map.insert(
                 SourceId::default().canonical_url.clone(),
-                [
-                    ManifestDependency::builder()
-                        .name(PackageName::CORE)
-                        .source_id(SourceId::for_std())
-                        .version_req(version_req.clone())
-                        .kind(DepKind::Normal)
-                        .build(),
-                    ManifestDependency::builder()
-                        .name(PackageName::STARKNET)
-                        .version_req(version_req.clone())
-                        .source_id(SourceId::for_std())
-                        .kind(DepKind::Normal)
-                        .build(),
-                    ManifestDependency::builder()
-                        .name(PackageName::EXECUTABLE)
-                        .version_req(version_req.clone())
-                        .source_id(SourceId::for_std())
-                        .kind(DepKind::Normal)
-                        .build(),
-                    ManifestDependency::builder()
-                        .kind(DepKind::Target(TargetKind::TEST))
-                        .name(PackageName::TEST_PLUGIN)
-                        .version_req(version_req.clone())
-                        .source_id(SourceId::for_std())
-                        .build(),
-                    ManifestDependency::builder()
-                        .kind(DepKind::Target(TargetKind::TEST))
-                        .name(PackageName::TEST_ASSERTS_PLUGIN)
-                        .version_req(version_req.clone())
-                        .source_id(SourceId::for_std())
-                        .build(),
-                ],
+                builtin_patches.iter().cloned(),
             );
 
             for (source, patches) in ws.patch() {
-                patch_map.insert(source.clone(), patches.clone());
+                patch_map.insert(
+                    source.clone(),
+                    patches
+                        .iter()
+                        .map(|patch| merge_builtin_patch_source(source, patch, &builtin_patches)),
+                );
             }
 
             if let Some(custom_source_patches) = ws.config().custom_source_patches() {
                 patch_map.insert(
                     SourceId::default().canonical_url.clone(),
-                    custom_source_patches.clone(),
+                    custom_source_patches.iter().map(|patch| {
+                        merge_builtin_patch_source(
+                            &SourceId::default().canonical_url,
+                            patch,
+                            &builtin_patches,
+                        )
+                    }),
                 );
             }
 
@@ -369,6 +382,39 @@ pub fn resolve_workspace_with_opts(
 
             Ok(WorkspaceResolve { resolve, packages })
         }))
+}
+
+/// Compose a user-defined patch with Scarb's implicit patch for packages bundled in the `std`
+/// source.
+///
+/// A patch from the default registry back to the default registry only overrides the package
+/// selection (for example, its version requirement). The package still has to be loaded from
+/// `std`, because builtin packages are not available from the registry. An explicit redirect to a
+/// path, Git repository, or another registry replaces the implicit patch completely.
+fn merge_builtin_patch_source(
+    patched_source: &CanonicalUrl,
+    patch: &ManifestDependency,
+    builtin_patches: &[ManifestDependency],
+) -> ManifestDependency {
+    let default_registry = SourceId::default();
+    let is_default_registry_patch =
+        patched_source == &default_registry.canonical_url && patch.source_id == default_registry;
+    let builtin_patch = builtin_patches
+        .iter()
+        .find(|builtin_patch| builtin_patch.name == patch.name);
+
+    let Some(builtin_patch) = builtin_patch.filter(|_| is_default_registry_patch) else {
+        return patch.clone();
+    };
+
+    ManifestDependency::builder()
+        .name(patch.name.clone())
+        .version_req(patch.version_req.clone())
+        .source_id(builtin_patch.source_id)
+        .kind(patch.kind.clone())
+        .features(patch.features.clone())
+        .default_features(patch.default_features)
+        .build()
 }
 
 /// Gather [`Package`] instances from this resolver result, by asking the [`RegistryCache`]
