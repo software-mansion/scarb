@@ -18,6 +18,13 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'release' ||
+      (
+        github.event.release.draft == false &&
+        github.event.release.prerelease == false &&
+        !contains(github.event.release.tag_name, '-rc')
+      )
     defaults:
       run:
         working-directory: ./website
@@ -43,6 +50,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    if: needs.build.result == 'success'
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
