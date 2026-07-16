@@ -261,10 +261,9 @@ pub fn resolve_workspace_with_opts(
         .block_on(TryFutureExt::into_future(async {
             let mut patch_map = PatchMap::new();
 
-            for (source, patches) in ws.patch() {
-                patch_map.insert(source.clone(), patches.clone());
-            }
-
+            // Insert the implicit patches that redirect `core`/`starknet`/etc. to the bundled
+            // `std` source first, so that user-defined `[patch]` entries (inserted below) can
+            // override them, e.g. to redirect `core` itself to a custom source.
             let cairo_version = crate::version::get().cairo.version.parse().unwrap();
             let version_req = DependencyVersionReq::exact(&cairo_version);
             let builtin_patches = [
