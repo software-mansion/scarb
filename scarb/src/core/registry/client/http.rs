@@ -192,7 +192,7 @@ impl RegistryClient for HttpRegistryClient<'_> {
             StatusCode::OK => RegistryUpload::Success,
             status => {
                 let headers = response.headers().clone();
-                let error_body: serde_json::Value = response.json().await?;
+                let error_body: serde_json::Value = response.json().await.unwrap_or_default();
                 let error_message = error_body
                     .get("error")
                     .and_then(|e| e.as_str())

@@ -14,7 +14,7 @@ fn publish() {
     // 200 -> StatusCode::OK
     let registry = HttpRegistry::serve(Some(HttpPostResponse {
         code: 200,
-        message: "published".to_string(),
+        message: Some("published".to_string()),
     }));
 
     let t = TempDir::new().unwrap();
@@ -86,8 +86,8 @@ fn auth_token_missing() {
         Some(
             HttpPostResponse {
                 code: 200,
-                message: "missing authentication token. help: make sure SCARB_REGISTRY_AUTH_TOKEN environment variable is set"
-                    .to_string()
+                message: Some("missing authentication token. help: make sure SCARB_REGISTRY_AUTH_TOKEN environment variable is set"
+                    .to_string())
             }
         ));
 
@@ -126,7 +126,7 @@ fn error_from_registry() {
     // 400 -> StatusCode::BAD_REQUEST
     let registry = HttpRegistry::serve(Some(HttpPostResponse {
         code: 400,
-        message: "Version '1.0.0' of package 'bar' already exists.".to_string(),
+        message: Some("Version '1.0.0' of package 'bar' already exists.".to_string()),
     }));
 
     let t = TempDir::new().unwrap();
@@ -189,4 +189,43 @@ fn error_from_registry() {
     etag: ...
     "]];
     expected.assert_eq(&registry.logs());
+}
+
+#[test]
+fn too_many_requests_empty_body() {
+    // Rate limiters and proxies often respond with `429` and no body, which is not valid JSON.
+    let registry = HttpRegistry::serve(Some(HttpPostResponse {
+        code: 429,
+        message: None,
+    }));
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("bar")
+        .version("1.0.0")
+        .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("publish")
+        .arg("--index")
+        .arg(&registry.url)
+        .arg("--no-verify")
+        .env("SCARB_REGISTRY_AUTH_TOKEN", "scrb_supersecrettoken")
+        .current_dir(&t)
+        .timeout(Duration::from_secs(60))
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+        [..] Packaging bar v1.0.0 ([..])
+        warn: manifest has no readme
+        warn: manifest has no description
+        warn: manifest has no license or license-file
+        warn: manifest has no documentation or homepage or repository
+        see [..]
+        [..]
+        [..] Packaged [..]
+        [..] Uploading bar v1.0.0 (registry+http[..])
+        error: upload failed with status code: `429 Too Many Requests`, `missing error field in the registry response`
+        "#});
 }
