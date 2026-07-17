@@ -1732,7 +1732,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.19.2"
-source = "git+https://github.com/software-mansion/cairols?rev=6a93806f7f697bac4a67eb2c63721e0eca0cd89f#6a93806f7f697bac4a67eb2c63721e0eca0cd89f"
+source = "git+https://github.com/software-mansion/cairols?branch=fix/proc-macro-server-unbounded-channel#a9a43277281529a4c7095fd868b999a73bc52256"
 dependencies = [
  "anyhow",
  "bincode 2.0.1",
