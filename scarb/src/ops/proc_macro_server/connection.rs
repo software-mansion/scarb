@@ -13,7 +13,7 @@ pub struct Connection {
 
 impl Connection {
     pub fn new() -> Self {
-        let (reader_sender, reader_receiver) = crossbeam_channel::bounded(0);
+        let (reader_sender, reader_receiver) = crossbeam_channel::unbounded();
         let (writer_sender, writer_receiver) = crossbeam_channel::bounded(0);
 
         let reader = std::thread::spawn(move || {
