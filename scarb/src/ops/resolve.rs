@@ -268,34 +268,34 @@ pub fn resolve_workspace_with_opts(
             let version_req = DependencyVersionReq::exact(&cairo_version);
             let builtin_patches = [
                 ManifestDependency::builder()
+                    .kind(DepKind::Normal)
                     .name(PackageName::CORE)
                     .source_id(SourceId::for_std())
                     .version_req(version_req.clone())
-                    .kind(DepKind::Normal)
                     .build(),
                 ManifestDependency::builder()
+                    .kind(DepKind::Normal)
                     .name(PackageName::STARKNET)
-                    .version_req(version_req.clone())
                     .source_id(SourceId::for_std())
-                    .kind(DepKind::Normal)
+                    .version_req(version_req.clone())
                     .build(),
                 ManifestDependency::builder()
-                    .name(PackageName::EXECUTABLE)
-                    .version_req(version_req.clone())
-                    .source_id(SourceId::for_std())
                     .kind(DepKind::Normal)
+                    .name(PackageName::EXECUTABLE)
+                    .source_id(SourceId::for_std())
+                    .version_req(version_req.clone())
                     .build(),
                 ManifestDependency::builder()
                     .kind(DepKind::Target(TargetKind::TEST))
                     .name(PackageName::TEST_PLUGIN)
-                    .version_req(version_req.clone())
                     .source_id(SourceId::for_std())
+                    .version_req(version_req.clone())
                     .build(),
                 ManifestDependency::builder()
                     .kind(DepKind::Target(TargetKind::TEST))
                     .name(PackageName::TEST_ASSERTS_PLUGIN)
-                    .version_req(version_req.clone())
                     .source_id(SourceId::for_std())
+                    .version_req(version_req.clone())
                     .build(),
             ];
             patch_map.insert(
