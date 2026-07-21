@@ -990,7 +990,7 @@ dependencies = [
  "cairo-lang-utils",
  "indoc",
  "rayon",
- "salsa",
+ "salsa 0.27.2",
  "semver 1.0.28",
  "smol_str",
  "thiserror 2.0.18",
@@ -1003,7 +1003,7 @@ source = "git+https://github.com/starkware-libs/cairo?rev=b585bc3ab77e7b6ac77415
 dependencies = [
  "cairo-lang-utils",
  "id-arena",
- "salsa",
+ "salsa 0.27.2",
 ]
 
 [[package]]
@@ -1020,7 +1020,7 @@ dependencies = [
  "cairo-lang-utils",
  "itertools 0.15.0",
  "postcard",
- "salsa",
+ "salsa 0.27.2",
  "serde",
  "thiserror 2.0.18",
  "typetag",
@@ -1037,7 +1037,7 @@ dependencies = [
  "cairo-lang-proc-macros",
  "cairo-lang-utils",
  "itertools 0.15.0",
- "salsa",
+ "salsa 0.27.2",
 ]
 
 [[package]]
@@ -1056,7 +1056,7 @@ dependencies = [
  "cairo-lang-utils",
  "itertools 0.15.0",
  "pulldown-cmark",
- "salsa",
+ "salsa 0.27.2",
 ]
 
 [[package]]
@@ -1087,7 +1087,7 @@ dependencies = [
  "cairo-lang-utils",
  "cairo-vm",
  "itertools 0.15.0",
- "salsa",
+ "salsa 0.27.2",
  "serde",
  "serde_json",
 ]
@@ -1103,7 +1103,7 @@ dependencies = [
  "cairo-lang-syntax",
  "indoc",
  "itertools 0.15.0",
- "salsa",
+ "salsa 0.27.2",
 ]
 
 [[package]]
@@ -1131,7 +1131,7 @@ dependencies = [
  "cairo-lang-utils",
  "itertools 0.15.0",
  "path-clean",
- "salsa",
+ "salsa 0.27.2",
  "semver 1.0.28",
  "serde",
  "smol_str",
@@ -1152,7 +1152,7 @@ dependencies = [
  "diffy",
  "ignore",
  "itertools 0.15.0",
- "salsa",
+ "salsa 0.27.2",
  "serde",
  "thiserror 2.0.18",
 ]
@@ -1178,7 +1178,7 @@ dependencies = [
  "num-bigint",
  "num-integer",
  "num-traits",
- "salsa",
+ "salsa 0.27.2",
  "serde",
  "starknet-types-core",
  "thiserror 2.0.18",
@@ -1289,7 +1289,7 @@ dependencies = [
  "itertools 0.15.0",
  "num-bigint",
  "num-traits",
- "salsa",
+ "salsa 0.27.2",
  "unescaper",
 ]
 
@@ -1307,7 +1307,7 @@ dependencies = [
  "indent",
  "indoc",
  "itertools 0.15.0",
- "salsa",
+ "salsa 0.27.2",
 ]
 
 [[package]]
@@ -1324,7 +1324,7 @@ dependencies = [
  "cairo-lang-debug",
  "proc-macro2",
  "quote",
- "salsa",
+ "salsa 0.27.2",
  "syn 2.0.117",
 ]
 
@@ -1402,7 +1402,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "rand 0.10.0",
- "salsa",
+ "salsa 0.27.2",
  "serde",
  "sha2 0.11.0",
  "starknet-types-core",
@@ -1430,7 +1430,7 @@ dependencies = [
  "num-bigint",
  "num-integer",
  "num-traits",
- "salsa",
+ "salsa 0.27.2",
  "serde",
  "sha3 0.12.0",
  "starknet-types-core",
@@ -1511,7 +1511,7 @@ dependencies = [
  "itertools 0.15.0",
  "num-traits",
  "rayon",
- "salsa",
+ "salsa 0.27.2",
  "serde",
  "serde_json",
  "smol_str",
@@ -1570,7 +1570,7 @@ dependencies = [
  "indoc",
  "itertools 0.15.0",
  "rayon",
- "salsa",
+ "salsa 0.27.2",
  "serde",
  "serde_json",
  "starknet-types-core",
@@ -1614,7 +1614,7 @@ dependencies = [
  "itertools 0.15.0",
  "num-bigint",
  "num-traits",
- "salsa",
+ "salsa 0.27.2",
  "serde",
  "unescaper",
 ]
@@ -1651,7 +1651,7 @@ dependencies = [
  "itertools 0.15.0",
  "num-bigint",
  "num-traits",
- "salsa",
+ "salsa 0.27.2",
  "serde",
  "starknet-types-core",
 ]
@@ -1675,7 +1675,7 @@ dependencies = [
  "itertools 0.15.0",
  "num-traits",
  "rayon",
- "salsa",
+ "salsa 0.27.2",
  "starknet-types-core",
 ]
 
@@ -1702,7 +1702,7 @@ dependencies = [
  "itertools 0.15.0",
  "num-bigint",
  "num-traits",
- "salsa",
+ "salsa 0.27.2",
  "schemars",
  "serde",
  "smol_str",
@@ -1724,7 +1724,7 @@ dependencies = [
  "cairo-lang-semantic",
  "cairo-lang-syntax",
  "cairo-lang-utils",
- "salsa",
+ "salsa 0.27.2",
  "semver 1.0.28",
  "tracing",
 ]
@@ -1772,7 +1772,7 @@ dependencies = [
  "lsp-types",
  "memchr",
  "mimalloc",
- "salsa",
+ "salsa 0.27.2",
  "scarb-manifest-schema 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "scarb-proc-macro-server-types 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1813,7 +1813,7 @@ dependencies = [
  "itertools 0.14.0",
  "log",
  "num-bigint",
- "salsa",
+ "salsa 0.27.2",
  "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile",
  "tracing",
@@ -7059,8 +7059,34 @@ dependencies = [
  "portable-atomic",
  "rayon",
  "rustc-hash",
- "salsa-macro-rules",
- "salsa-macros",
+ "salsa-macro-rules 0.27.2",
+ "salsa-macros 0.27.2",
+ "smallvec",
+ "thin-vec",
+ "tracing",
+ "typeid",
+]
+
+[[package]]
+name = "salsa"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63ad5919b18c2deaf18921fffd5c84d6e41416d1ef80b6b541d629aa30ce8556"
+dependencies = [
+ "boxcar",
+ "crossbeam-queue",
+ "crossbeam-utils",
+ "hashbrown 0.17.0",
+ "hashlink",
+ "indexmap",
+ "intrusive-collections",
+ "inventory",
+ "parking_lot",
+ "portable-atomic",
+ "rayon",
+ "rustc-hash",
+ "salsa-macro-rules 0.28.0",
+ "salsa-macros 0.28.0",
  "smallvec",
  "thin-vec",
  "tracing",
@@ -7074,6 +7100,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de6872462ac73d39969a836273c24163e6a26a4e08f5114fcd80e25af30ea9c6"
 
 [[package]]
+name = "salsa-macro-rules"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d50068b1f8b1ac7567a4a70eb6cc15daa9dc997b73a6b5aa3248dd960755cddb"
+
+[[package]]
 name = "salsa-macros"
 version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7083,6 +7115,17 @@ dependencies = [
  "quote",
  "syn 2.0.117",
  "synstructure",
+]
+
+[[package]]
+name = "salsa-macros"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b26cb1c61fc424f7ff36e0606491429f58d1738bb0917cd999d680baae0c52c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
 ]
 
 [[package]]
@@ -7165,7 +7208,7 @@ dependencies = [
  "rayon",
  "redb",
  "reqwest",
- "salsa",
+ "salsa 0.28.0",
  "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-fs-utils",
@@ -7286,7 +7329,7 @@ dependencies = [
  "mimalloc",
  "opener",
  "rayon",
- "salsa",
+ "salsa 0.28.0",
  "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
