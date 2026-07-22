@@ -1370,10 +1370,17 @@ struct SierraFunctionId(u64);
 struct SierraVarId(u64);
 
 #[derive(Serialize, Deserialize)]
+struct CairoVariableDefinition {
+    name: String,
+    span: SourceCodeSpan,
+}
+
+#[derive(Serialize, Deserialize)]
 struct SerializableFunctionDebugInfo {
     function_file_path: SourceFileFullPath,
     function_code_span: SourceCodeSpan,
     sierra_to_cairo_variable: HashMap<SierraVarId, (String, SourceCodeSpan)>,
+    parameters: HashMap<SierraVarId, CairoVariableDefinition>,
 }
 
 #[test]
