@@ -109,7 +109,7 @@ include_dir = "0.7"
 indicatif = "0.18"
 indoc = "2"
 io_tee = "0.1"
-itertools = "0.14"
+itertools = "0.15"
 libc = "0.2"
 libloading = "0"
 linkme = "0.3"
@@ -148,7 +148,7 @@ snapbox = { version = "1.2", features = ["cmd", "path", "diff"] }
 starknet-core = "0.16.0"
 stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "467d5c6d" }
 stwo-cairo-prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "467d5c6d" }
-syn = { version = "2", default-features = false }
+syn = { version = "3", default-features = false }
 tar = "0.4"
 target-triple = "1.0"
 tempfile = "3"
