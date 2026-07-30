@@ -1,12 +1,9 @@
 name: Publish Built-in Plugins
 on:
+  release:
+    types:
+      - published
   workflow_dispatch:
-    inputs:
-      version_tag:
-        required: false
-        type: string
-        description: Scarb version to publish from.
-  workflow_call:
     inputs:
       version_tag:
         required: false
