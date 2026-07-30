@@ -5,8 +5,7 @@ on:
     tags:
       - v[0-9]+.*
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   check:
@@ -53,11 +52,3 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.ref_name }}
-
-  publish_plugins:
-    name: publish plugins
-    needs: [ draft ]
-    uses: ./.github/workflows/publish_plugins.yml
-    with:
-      version_tag: ${{ github.ref_name }}
-    secrets: inherit
