@@ -84,7 +84,7 @@ jobs:
       nightly_version: ${{ steps.version.outputs.nightly_version }}
       nightly_branch: ${{ steps.version.outputs.nightly_branch }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # Credentials are persisted so this job can push the nightly branch.
           persist-credentials: true # zizmor: ignore[artipacked]
@@ -200,7 +200,7 @@ jobs:
     # Do not run on dry_run
     if: ${{ !(inputs.dry_run) }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.prepare.outputs.nightly_branch }}
           persist-credentials: false
@@ -271,7 +271,7 @@ jobs:
     if: always() && needs.prepare.result == 'success'
     needs: [ prepare, upload ]
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # Credentials are persisted so this job can delete the nightly branch.
           persist-credentials: true # zizmor: ignore[artipacked]
