@@ -85,7 +85,7 @@ jobs:
     needs: [ link-check, docs-link-check ]
     steps:
       - name: Notifying about check fail!
-        uses: slackapi/slack-github-action@v4.0.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
           webhook: ${{ secrets.SLACK_LINKS_CHECK_FAILURE_WEBHOOK_URL }}
           webhook-type: webhook-trigger
