@@ -2711,9 +2711,9 @@ dependencies = [
 
 [[package]]
 name = "deno_task_shell"
-version = "0.33.2"
+version = "0.33.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b77b869fae867756e2f2ab0bfa8480c2a33f4146102739dc03302a21334a677"
+checksum = "8ac466d733d16a8ab5268b7e83a407289b25060a8f96dadc5cb96232a67c5282"
 dependencies = [
  "bitflags 2.10.0",
  "deno_path_util",
@@ -7703,7 +7703,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b55fb86dfd3a2f5f76ea78310a88f96c4ea21a3031f8d212443d56123fd0521"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
