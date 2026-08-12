@@ -4,7 +4,7 @@ use std::io::{BufReader, BufWriter, Seek, SeekFrom};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Error, Result, ensure};
+use anyhow::{Context, Error, Result, anyhow, ensure};
 use async_trait::async_trait;
 use tokio::task::spawn_blocking;
 use tracing::trace;
@@ -158,6 +158,21 @@ impl RegistryClient for LocalRegistryClient<'_> {
         spawn_blocking(move || publish_impl(summary, tarball, records_path, dl_path))
             .await
             .with_context(|| format!("failed to publish package: {package}"))?
+    }
+
+    async fn supports_publish_docs(&self) -> Result<bool> {
+        Ok(false)
+    }
+
+    async fn publish_docs(
+        &self,
+        _package: PackageId,
+        _tarball: LockedFile,
+        _force: bool,
+    ) -> Result<RegistryUpload> {
+        Ok(RegistryUpload::Failure(anyhow!(
+            "local registry does not support docs upload"
+        )))
     }
 }
 

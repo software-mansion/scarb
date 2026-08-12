@@ -562,6 +562,10 @@ pub struct PublishArgs {
     /// Do not error on `cairo-version` mismatch.
     #[arg(long, env = "SCARB_IGNORE_CAIRO_VERSION")]
     pub ignore_cairo_version: bool,
+
+    /// Do not generate and upload documentation.
+    #[arg(long, env = "SCARB_PUBLISH_NO_DOCS")]
+    pub no_docs: bool,
 }
 
 /// Arguments accepted by the `lint` command.

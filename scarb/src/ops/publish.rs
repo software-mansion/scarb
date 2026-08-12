@@ -14,6 +14,7 @@ use super::PackageOpts;
 pub struct PublishOpts {
     pub index_url: Url,
     pub package_opts: PackageOpts,
+    pub docs: bool,
 }
 
 #[tracing::instrument(level = "debug", skip(opts, ws))]
@@ -43,7 +44,20 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
         "publishing packages is not supported by registry: {source_id}"
     );
 
+    let supports_publish_docs = ws
+        .config()
+        .tokio_handle()
+        .block_on(registry_client.supports_publish_docs())
+        .with_context(|| {
+            format!("failed to check if registry supports publishing docs: {source_id}")
+        })?;
+
     let tarball = ops::package_one(package_id, &opts.package_opts, ws)?;
+    let docs_tarball = if opts.docs && supports_publish_docs {
+        Some(ops::package_docs_one(&package_id, ws)?)
+    } else {
+        None
+    };
 
     let dest_package_id = package_id.with_source_id(source_id);
 
@@ -59,6 +73,19 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
                     "Published",
                     format!("{}", dest_package_id).as_str(),
                 ));
+
+                // Upload docs if they were generated and the registry supports it.
+                if let Some(docs_tarball) = docs_tarball {
+                    let upload_docs = registry_client
+                        .publish_docs(package_id, docs_tarball, false)
+                        .await;
+                    match upload_docs {
+                        Ok(RegistryUpload::Success) => {
+                            ws.config().ui().print(Status::new("Published", "docs"));
+                        }
+                        Ok(RegistryUpload::Failure(e)) | Err(e) => return Err(e),
+                    }
+                }
                 Ok(())
             }
             Ok(RegistryUpload::Failure(e)) => Err(e),

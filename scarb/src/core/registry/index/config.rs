@@ -15,6 +15,7 @@ use crate::core::registry::index::{BaseUrl, TemplateUrl};
 ///   "dl": "https://example.com/api/v1/download/{package}/{version}",
 ///   "upload": "https://example.com/api/v1/packages/new",
 ///   "index": "https://example.com/index/{prefix}/{package}.json"
+///   "docs-upload": "https://example.com/api/v1/docs/{package}/{version}"
 /// }
 /// ```
 ///
@@ -48,6 +49,11 @@ pub struct IndexConfig {
     ///
     /// If this is `None`, the registry does not support package uploads.
     pub upload: Option<Url>,
+
+    /// Docs upload endpoint for all docs.
+    ///
+    /// If this is `None`, the registry does not support docs uploads.
+    pub docs_upload: Option<TemplateUrl>,
 }
 
 impl IndexConfig {
@@ -87,6 +93,9 @@ mod tests {
             upload: Some("https://example.com/api/v1/packages/new".parse().unwrap()),
             dl: TemplateUrl::new("https://example.com/api/v1/download/{package}/{version}"),
             index: TemplateUrl::new("https://example.com/index/{prefix}/{package}.json"),
+            docs_upload: Some(TemplateUrl::new(
+                "https://example.com/api/v1/docs/{package}/{version}",
+            )),
         };
 
         let actual: IndexConfig = serde_json::from_str(
@@ -95,7 +104,8 @@ mod tests {
               "api": "https://example.com/api/v1",
               "upload": "https://example.com/api/v1/packages/new",
               "dl": "https://example.com/api/v1/download/{package}/{version}",
-              "index": "https://example.com/index/{prefix}/{package}.json"
+              "index": "https://example.com/index/{prefix}/{package}.json",
+              "docs-upload": "https://example.com/api/v1/docs/{package}/{version}"
             }"#,
         )
         .unwrap();
