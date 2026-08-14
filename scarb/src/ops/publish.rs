@@ -9,7 +9,9 @@ use crate::core::{PackageId, SourceId, Workspace};
 use crate::ops;
 use crate::sources::RegistrySource;
 
-use super::PackageOpts;
+use crate::ops::PackageOpts;
+use crate::ops::PublishDocsOpts;
+use crate::ops::publish_docs;
 
 pub struct PublishOpts {
     pub index_url: Url,
@@ -44,28 +46,14 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
         "publishing packages is not supported by registry: {source_id}"
     );
 
-    let supports_publish_docs = ws
-        .config()
-        .tokio_handle()
-        .block_on(registry_client.supports_publish_docs())
-        .with_context(|| {
-            format!("failed to check if registry supports publishing docs: {source_id}")
-        })?;
-
     let tarball = ops::package_one(package_id, &opts.package_opts, ws)?;
-    let docs_tarball = if opts.docs && supports_publish_docs {
-        Some(ops::package_docs_one(&package_id, ws)?)
-    } else {
-        None
-    };
-
     let dest_package_id = package_id.with_source_id(source_id);
 
     ws.config()
         .ui()
         .print(Status::new("Uploading", &dest_package_id.to_string()));
 
-    ws.config().tokio_handle().block_on(async {
+    let upload_result = ws.config().tokio_handle().block_on(async {
         let upload = registry_client.publish(package, tarball).await;
         match upload {
             Ok(RegistryUpload::Success) => {
@@ -73,27 +61,6 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
                     "Published",
                     format!("{}", dest_package_id).as_str(),
                 ));
-
-                // Upload docs if they were generated and the registry supports it.
-                if let Some(docs_tarball) = docs_tarball {
-                    ws.config().ui().print(Status::new(
-                        "Uploading",
-                        &format!("docs for {}", dest_package_id),
-                    ));
-
-                    let upload_docs = registry_client
-                        .publish_docs(package_id, docs_tarball, false)
-                        .await;
-                    match upload_docs {
-                        Ok(RegistryUpload::Success) => {
-                            ws.config().ui().print(Status::new(
-                                "Published",
-                                format!("docs for {}", dest_package_id).as_str(),
-                            ));
-                        }
-                        Ok(RegistryUpload::Failure(e)) | Err(e) => return Err(e),
-                    }
-                }
                 Ok(())
             }
             Ok(RegistryUpload::Failure(e)) => Err(e),
@@ -101,5 +68,17 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
         }
 
         // TODO(mkaput): Wait for publish here.
-    })
+    });
+
+    // Upload docs if they were generated and the registry supports it.
+    if opts.docs && upload_result.is_ok(){
+        let docs_opts = PublishDocsOpts {
+            index_url: opts.index_url.clone(),
+            force: false,
+            allow_dirty: opts.package_opts.allow_dirty,
+        };
+        return publish_docs(package_id, &docs_opts, ws);
+    }
+
+    return upload_result;
 }

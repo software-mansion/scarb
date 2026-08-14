@@ -204,6 +204,13 @@ pub enum Command {
         registry. Use `--no-docs` to skip documentation generation and upload.
     ")]
     Publish(PublishArgs),
+    /// Upload a package's documentation to the registry.
+    #[command(after_help = "\
+        This command will generate a distributable, compressed `.tar.zst` archive \
+        containing the package's documentation in the `target/docs` directory \
+        and upload it to a registry.
+    ")]
+    PublishDocs(PublishDocsArgs),
     /// Checks a package to catch common mistakes and improve your Cairo code.
     Lint(LintArgs),
     /// Run arbitrary package scripts.
@@ -567,6 +574,26 @@ pub struct PublishArgs {
     /// Do not generate and upload documentation.
     #[arg(long, env = "SCARB_PUBLISH_NO_DOCS")]
     pub no_docs: bool,
+}
+
+///Arguments accepted by the `publish-docs` command.
+#[derive(Parser, Clone, Debug)]
+pub struct PublishDocsArgs {
+    /// Registry index URL to upload the package to.
+    #[arg(long, value_name = "URL")]
+    pub index: Option<Url>,
+
+    /// Foce publish docs if there is already uploaded docs for the same version.
+    #[arg(long, env = "SCARB_PUBLISH_DOCS_FORCE")]
+    pub force: bool,
+
+    /// Allow working directories with uncommitted VCS changes to be packaged.
+    #[arg(long, env = "SCARB_PUBLISH_DOCS_ALLOW_DIRTY")]
+    pub allow_dirty: bool,
+
+    /// Specify package(s) to operate on.
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
 }
 
 /// Arguments accepted by the `lint` command.
