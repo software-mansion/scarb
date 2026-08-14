@@ -41,7 +41,8 @@ impl HttpRegistry {
             "version": 1,
             "upload": format!("{url}api/v1/packages/new"),
             "dl": format!("{url}{{package}}-{{version}}.tar.zst"),
-            "index": format!("{url}index/{{prefix}}/{{package}}.json")
+            "index": format!("{url}index/{{prefix}}/{{package}}.json"),
+            "docs-upload": format!("{url}api/v1/docs/{{package}}/{{version}}"),
         });
         local
             .t
