@@ -14,7 +14,7 @@ use crate::core::registry::index::{BaseUrl, TemplateUrl};
 ///   "api": "https://example.com/api/v1",
 ///   "dl": "https://example.com/api/v1/download/{package}/{version}",
 ///   "upload": "https://example.com/api/v1/packages/new",
-///   "index": "https://example.com/index/{prefix}/{package}.json"
+///   "index": "https://example.com/index/{prefix}/{package}.json",
 ///   "docs-upload": "https://example.com/api/v1/docs/{package}/{version}"
 /// }
 /// ```
