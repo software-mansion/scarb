@@ -79,7 +79,7 @@ pub fn package_docs_one(package_id: &PackageId, ws: &Workspace<'_>) -> Result<Lo
     ws.config().ui().print(Status::new(
         "Packaged",
         &format!(
-            "DOCS {} files, {:.1} ({:.1} compressed)",
+            "docs {} files, {:.1} ({:.1} compressed)",
             HumanCount(num_files as u64),
             HumanBytes(uncompressed_size),
             HumanBytes(compressed_size),
