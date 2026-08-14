@@ -76,12 +76,20 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
 
                 // Upload docs if they were generated and the registry supports it.
                 if let Some(docs_tarball) = docs_tarball {
+                    ws.config().ui().print(Status::new(
+                        "Uploading",
+                        &format!("DOCS for {}", dest_package_id),
+                    ));
+
                     let upload_docs = registry_client
                         .publish_docs(package_id, docs_tarball, false)
                         .await;
                     match upload_docs {
                         Ok(RegistryUpload::Success) => {
-                            ws.config().ui().print(Status::new("Published", "docs"));
+                            ws.config().ui().print(Status::new(
+                                "Published",
+                                format!("DOCS for {}", dest_package_id).as_str(),
+                            ));
                         }
                         Ok(RegistryUpload::Failure(e)) | Err(e) => return Err(e),
                     }

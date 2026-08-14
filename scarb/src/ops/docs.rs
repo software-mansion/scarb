@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use camino::Utf8Path;
 use camino::Utf8PathBuf;
 use scarb_ui::HumanBytes;
+use scarb_ui::HumanCount;
 use scarb_ui::components::Status;
 use std::fs::File;
 use std::io::Seek;
@@ -44,6 +45,19 @@ fn tar(src: &Utf8Path, dst: &mut File) -> Result<()> {
     Ok(())
 }
 
+fn dir_stats(src: &Utf8Path) -> Result<(usize, u64)> {
+    let mut count = 0;
+    let mut size = 0;
+    for entry in walkdir::WalkDir::new(src) {
+        let entry = entry?;
+        if entry.file_type().is_file() {
+            count += 1;
+            size += entry.metadata()?.len();
+        }
+    }
+    Ok((count, size))
+}
+
 pub fn package_docs_one(package_id: &PackageId, ws: &Workspace<'_>) -> Result<LockedFile> {
     let docs_path = generate_docs(package_id, ws)?;
 
@@ -53,19 +67,20 @@ pub fn package_docs_one(package_id: &PackageId, ws: &Workspace<'_>) -> Result<Lo
     let mut dst = target_dir.create_rw(&filename, "docs tarball", ws.config())?;
 
     tar(&docs_path, &mut dst)?;
-    let uncompressed_size = 0; //TODO(hakiers)
 
     dst.seek(SeekFrom::Start(0))?;
     let dst_metadata = dst
         .metadata()
         .with_context(|| format!("failed to get metadata for {}", dst.path()))?;
+
+    let (num_files, uncompressed_size) = dir_stats(&docs_path)?;
     let compressed_size = dst_metadata.len();
 
     ws.config().ui().print(Status::new(
         "Packaged",
         &format!(
-            "docs for {} (uncompressed size: {}, compressed size: {})",
-            package_id.name,
+            "DOCS {} files, {:.1} ({:.1} compressed)",
+            HumanCount(num_files as u64),
             HumanBytes(uncompressed_size),
             HumanBytes(compressed_size),
         ),
