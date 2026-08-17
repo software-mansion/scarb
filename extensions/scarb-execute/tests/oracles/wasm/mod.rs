@@ -1,6 +1,8 @@
 //! These tests rely on prebuilt wasm fixtures committed to the repository.
 //! To regenerate them, run the build-fixtures.sh script.
 
+mod echo_server;
+
 use crate::support::CheckBuilder;
 use assert_fs::prelude::*;
 use indoc::indoc;
@@ -9,6 +11,7 @@ use predicates::prelude::*;
 #[test]
 fn wasip2() {
     let t = CheckBuilder::default()
+        .env(echo_server::ECHO_SERVER_ADDRESS_ENV, echo_server::spawn())
         .lib_cairo(indoc! {r#"
             #[executable]
             fn main() {{

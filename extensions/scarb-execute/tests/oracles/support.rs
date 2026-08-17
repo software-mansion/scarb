@@ -17,6 +17,9 @@ pub struct Check {
     stderr_contains: String,
 
     #[builder(default, setter(custom))]
+    envs: Vec<(String, String)>,
+
+    #[builder(default, setter(custom))]
     pb_ops: Vec<Box<dyn FnOnce(ProjectBuilder) -> ProjectBuilder>>,
 
     #[builder(default, setter(custom))]
@@ -27,6 +30,17 @@ pub struct Check {
 impl CheckBuilder {
     pub fn check(self) -> TempDir {
         self.build().unwrap().check()
+    }
+
+    /// Sets an environment variable for the `scarb execute` invocation.
+    ///
+    /// Wasm oracles inherit the environment of the executor process, so this is also a way to
+    /// pass values into the guest.
+    pub fn env(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.envs
+            .get_or_insert_default()
+            .push((key.into(), value.into()));
+        self
     }
 
     pub fn pb_op(mut self, op: impl FnOnce(ProjectBuilder) -> ProjectBuilder + 'static) -> Self {
@@ -79,10 +93,14 @@ impl Check {
             op(&t);
         }
 
-        let snapbox = Scarb::quick_command()
+        let mut snapbox = Scarb::quick_command()
             .env("RUST_BACKTRACE", "0")
             .arg("execute")
             .current_dir(&t);
+
+        for (key, value) in self.envs {
+            snapbox = snapbox.env(key, value);
+        }
 
         let assert = snapbox.assert().success().stdout_eq(self.stdout_matches);
 

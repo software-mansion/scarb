@@ -18,6 +18,11 @@ wit_bindgen::generate!({
     "#
 });
 
+/// Environment variable carrying the `host:port` address of the echo server used by `network`.
+///
+/// Keep in sync with the constant of the same name in the test harness.
+const ECHO_SERVER_ADDRESS_ENV: &str = "SCARB_TEST_ECHO_SERVER_ADDRESS";
+
 struct MyOracle;
 
 impl Guest for MyOracle {
@@ -40,7 +45,12 @@ impl Guest for MyOracle {
         fs::read_to_string("read_file.txt").map_err(|e| e.to_string())
     }
     fn network() -> Result<String, String> {
-        let mut stream = TcpStream::connect("tcpbin.com:4242").map_err(|e| e.to_string())?;
+        // The test harness runs a local echo server and passes its address here, so that this
+        // test does not depend on any third-party service being reachable.
+        let address = std::env::var(ECHO_SERVER_ADDRESS_ENV)
+            .map_err(|e| format!("{ECHO_SERVER_ADDRESS_ENV}: {e}"))?;
+
+        let mut stream = TcpStream::connect(&address).map_err(|e| e.to_string())?;
         let message = "tcp connectivity works";
         stream.write_all(message.as_bytes()).map_err(|e| e.to_string())?;
         
