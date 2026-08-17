@@ -583,7 +583,7 @@ pub struct PublishDocsArgs {
     #[arg(long, value_name = "URL")]
     pub index: Option<Url>,
 
-    /// Foce publish docs if there is already uploaded docs for the same version.
+    /// Force publish docs if there is already uploaded docs for the same version.
     #[arg(long, env = "SCARB_PUBLISH_DOCS_FORCE")]
     pub force: bool,
 

@@ -39,9 +39,10 @@ pub fn publish_docs(
     let docs_tarball = docs::package_docs_one(&package, opts.allow_dirty, ws)?;
     let dest_package_id = package_id.with_source_id(source_id);
 
-    ws.config()
-        .ui()
-        .print(Status::new("Uploading", format!("docs for {}", dest_package_id).as_str(),));
+    ws.config().ui().print(Status::new(
+        "Uploading",
+        format!("docs for {}", dest_package_id).as_str(),
+    ));
 
     ws.config().tokio_handle().block_on(async {
         let upload_docs = registry_client

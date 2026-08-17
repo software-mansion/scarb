@@ -69,9 +69,9 @@ pub fn package_docs_one(
     if let Ok(repo) = PackageRepository::open(package) {
         ensure_clean_or_allow_dirty(&repo, allow_dirty)?;
     }
-    let package_id = package.id.clone();
+    let package_id = &package.id;
 
-    let docs_path = generate_docs(&package_id, ws)?;
+    let docs_path = generate_docs(package_id, ws)?;
 
     let filename = format!("docs.{}", package_id.tarball_name());
     let target_dir = ws.target_dir().child("doc");

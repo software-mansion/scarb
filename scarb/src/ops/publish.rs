@@ -71,14 +71,20 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
     });
 
     // Upload docs if they were generated and the registry supports it.
-    if opts.docs && upload_result.is_ok(){
+    if opts.docs && upload_result.is_ok() {
         let docs_opts = PublishDocsOpts {
             index_url: opts.index_url.clone(),
             force: false,
             allow_dirty: opts.package_opts.allow_dirty,
         };
-        return publish_docs(package_id, &docs_opts, ws);
+        let docs_result = publish_docs(package_id, &docs_opts, ws);
+        if let Err(e) = docs_result {
+            ws.config().ui().print(Status::new(
+                "Failed to publish docs:",
+                format!("{}", e).as_str(),
+            ));
+        }
     }
 
-    return upload_result;
+    upload_result
 }
