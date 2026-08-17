@@ -104,7 +104,7 @@ fn auth_token_missing() {
 
 #[test]
 fn error_from_registry() {
-    // 400 -> StatusCode::BAD_REQUEST
+    // 409 -> StatusCode::CONFLICT
     let registry = HttpRegistry::serve(Some(HttpPostResponse {
         code: 409,
         message: Some("Docs for 'bar' already exist. Use force to overwrite.".to_string()),
