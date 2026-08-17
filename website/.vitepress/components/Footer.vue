@@ -49,7 +49,14 @@
         >
         2023.
       </span>
-      All trademarks and copyrights belong to their respective owners.
+      All trademarks and copyrights belong to their respective owners. Read about
+      our
+      <a
+        href="https://swmansion.com/privacy/policy/"
+        rel="noopener noreferrer"
+        target="_blank"
+        >Privacy Policy</a
+      >.
     </span>
   </footer>
 </template>
@@ -65,6 +72,7 @@ footer {
   justify-content: center;
   line-height: 20px;
   padding: 32px 24px;
+  text-align: center;
 }
 
 .copy {
