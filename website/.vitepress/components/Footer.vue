@@ -1,4 +1,6 @@
-<script setup></script>
+<script setup>
+const year = new Date().getFullYear();
+</script>
 
 <template>
   <footer class="vp-doc">
@@ -47,7 +49,7 @@
           target="_blank"
           >Software Mansion</a
         >
-        2023.
+        {{ year }}.
       </span>
       All trademarks and copyrights belong to their respective owners. Read about
       our
