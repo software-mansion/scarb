@@ -79,10 +79,13 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
         };
         let docs_result = publish_docs(package_id, &docs_opts, ws);
         if let Err(e) = docs_result {
-            ws.config().ui().print(Status::new(
-                "Failed to publish docs:",
-                format!("{}", e).as_str(),
-            ));
+            ws.config().ui().warn(formatdoc! {
+                r#"
+                    Failed to upload docs for package {package_id}: {e:?}
+                    help: you can try to upload docs manually with `scarb publish-docs` or disable docs publishing with `--no-docs`
+                "#,
+                package_id = package_id
+            });
         }
     }
 

@@ -312,7 +312,9 @@ fn publish_with_docs() {
         [..]  Packaged [..]
         [..] Uploading {name} v{version} (registry+file://[..]/index/)
         [..] Published {name} v{version} (registry+file://[..]/index/)
-        Failed to publish docs: publishing docs is not supported by registry: registry+file://[..]/index/
+        warn: Failed to upload docs for package foobar v1.0.0 [..]
+        help: you can try to upload docs manually with `scarb publish-docs` or disable docs publishing with `--no-docs`
+        [..]
         "#});
 }
 
