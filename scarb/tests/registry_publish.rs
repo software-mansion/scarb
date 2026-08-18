@@ -10,7 +10,7 @@ use scarb_test_support::registry::http::HttpRegistry;
 use scarb_test_support::simple_http_server::HttpPostResponse;
 
 #[test]
-fn publish() {
+fn publish_with_docs() {
     // 200 -> StatusCode::OK
     let registry = HttpRegistry::serve(Some(HttpPostResponse {
         code: 200,
@@ -98,7 +98,7 @@ fn publish() {
 }
 
 #[test]
-fn publish_with_docs() {
+fn publish() {
     // 200 -> StatusCode::OK
     let registry = HttpRegistry::serve(Some(HttpPostResponse {
         code: 200,
