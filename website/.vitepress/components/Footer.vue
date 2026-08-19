@@ -7,7 +7,7 @@ const year = new Date().getFullYear();
     <a
       class="logo"
       href="https://swmansion.com/"
-      rel="noopener noreferrer"
+      rel="noopener"
       target="_blank"
     >
       <svg
@@ -43,19 +43,16 @@ const year = new Date().getFullYear();
     <span
       ><span class="copy">
         &copy;
-        <a
-          href="https://swmansion.com/"
-          rel="noopener noreferrer"
-          target="_blank"
+        <a href="https://swmansion.com/" rel="noopener" target="_blank"
           >Software Mansion</a
         >
         {{ year }}.
       </span>
-      All trademarks and copyrights belong to their respective owners. Read about
-      our
+      All trademarks and copyrights belong to their respective owners. Read
+      about our
       <a
         href="https://swmansion.com/privacy/policy/"
-        rel="noopener noreferrer"
+        rel="noopener"
         target="_blank"
         >Privacy Policy</a
       >.
