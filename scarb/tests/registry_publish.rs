@@ -10,7 +10,7 @@ use scarb_test_support::registry::http::HttpRegistry;
 use scarb_test_support::simple_http_server::HttpPostResponse;
 
 #[test]
-fn publish() {
+fn publish_with_docs() {
     // 200 -> StatusCode::OK
     let registry = HttpRegistry::serve(Some(HttpPostResponse {
         code: 200,
@@ -98,7 +98,7 @@ fn publish() {
 }
 
 #[test]
-fn publish_without_docs() {
+fn publish() {
     // 200 -> StatusCode::OK
     let registry = HttpRegistry::serve(Some(HttpPostResponse {
         code: 200,
@@ -169,7 +169,7 @@ fn publish_without_docs() {
 }
 
 #[test]
-fn auth_token_missing_without_docs() {
+fn auth_token_missing() {
     // 200 -> StatusCode::OK
     let registry = HttpRegistry::serve(
         Some(
@@ -212,7 +212,7 @@ fn auth_token_missing_without_docs() {
 }
 
 #[test]
-fn error_from_registry_without_docs() {
+fn error_from_registry() {
     // 400 -> StatusCode::BAD_REQUEST
     let registry = HttpRegistry::serve(Some(HttpPostResponse {
         code: 400,
@@ -283,7 +283,7 @@ fn error_from_registry_without_docs() {
 }
 
 #[test]
-fn too_many_requests_empty_body_without_docs() {
+fn too_many_requests_empty_body() {
     // Rate limiters and proxies often respond with `429` and no body, which is not valid JSON.
     let registry = HttpRegistry::serve(Some(HttpPostResponse {
         code: 429,
