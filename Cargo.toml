@@ -36,7 +36,7 @@ exclude = [
 ]
 
 [workspace.package]
-version = "2.20.0"
+version = "2.20.1-rc.0"
 edition = "2024"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
