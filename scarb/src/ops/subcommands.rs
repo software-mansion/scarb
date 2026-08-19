@@ -12,7 +12,7 @@ use tracing::debug;
 
 use crate::core::{Config, Package, ScriptDefinition, Workspace};
 use crate::ops;
-use crate::process::exec_replace;
+use crate::process::{exec, exec_replace};
 use crate::subcommands::{EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV, get_env_vars};
 use itertools::Itertools;
 use scarb_fs_utils::is_executable;
@@ -112,6 +112,30 @@ pub fn execute_test_subcommand(
             Some(env),
         )
     }
+}
+
+/// Prepare environment and execute an external subcommand, waiting for it to finish.
+#[tracing::instrument(level = "debug", skip(config))]
+pub fn execute_external_subcommand_and_wait(
+    cmd: &str,
+    args: &[OsString],
+    custom_env: Option<HashMap<OsString, OsString>>,
+    config: &Config,
+    target_dir: Option<Utf8PathBuf>,
+) -> Result<()> {
+    let subcommand_dirs = SubcommandDirs::try_from(config)?;
+    let Some(cmd) = find_external_subcommand(cmd, &subcommand_dirs)? else {
+        bail!("no such command: `{cmd}`");
+    };
+
+    let mut cmd = Command::new(cmd);
+    cmd.args(args);
+    cmd.envs(get_env_vars(config, target_dir)?);
+    if let Some(env) = custom_env {
+        cmd.envs(env);
+    }
+
+    exec(&mut cmd, config)
 }
 
 /// Find an external subcommand executable.

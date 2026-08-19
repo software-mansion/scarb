@@ -215,6 +215,80 @@ impl RegistryClient for HttpRegistryClient<'_> {
         };
         Ok(result)
     }
+
+    async fn supports_publish_docs(&self) -> Result<bool> {
+        Ok(self.index_config.load().await?.docs_upload.is_some())
+    }
+
+    async fn publish_docs(
+        &self,
+        package: PackageId,
+        tarball: LockedFile,
+        force: bool,
+    ) -> Result<RegistryUpload> {
+        let auth_token = env::var("SCARB_REGISTRY_AUTH_TOKEN").map_err(|_| {
+            anyhow!(
+                "missing authentication token. \
+            help: make sure SCARB_REGISTRY_AUTH_TOKEN environment variable is set"
+            )
+        })?;
+
+        let index_config = self.index_config.load().await?;
+        let mut docs_upload_url = match &index_config.docs_upload {
+            Some(url) => url.expand(package.into())?,
+            None => {
+                return Ok(RegistryUpload::Failure(anyhow!(
+                    "registry does not support docs upload"
+                )));
+            }
+        };
+
+        if force {
+            docs_upload_url.set_query(Some("force=true"));
+        }
+
+        let file = tarball.into_async();
+
+        let file_part = Part::stream(Body::from(file.try_clone().await?))
+            .file_name(format!("docs_{}_{}", package.name, package.version));
+        let form = Form::new().part("file", file_part);
+
+        let response = self
+            .config
+            .online_http()?
+            .post(docs_upload_url)
+            .header(AUTHORIZATION, format!("Bearer {auth_token}"))
+            .multipart(form)
+            .send()
+            .await?;
+
+        let result = match response.status() {
+            StatusCode::OK => RegistryUpload::Success,
+            status => {
+                let headers = response.headers().clone();
+                let error_body: serde_json::Value = response.json().await.unwrap_or_default();
+                let error_message = error_body
+                    .get("error")
+                    .and_then(|e| e.as_str())
+                    .unwrap_or("missing error field in the registry response");
+
+                let trace_id = headers
+                    .get("x-cloud-trace-context")
+                    .and_then(|v| v.to_str().ok());
+
+                let error_message = match trace_id {
+                    Some(id) => format!(
+                        "upload failed with status code: `{status}`, `{error_message}` (trace-id: {id:?})"
+                    ),
+                    None => {
+                        format!("upload failed with status code: `{status}`, `{error_message}`",)
+                    }
+                };
+                RegistryUpload::Failure(anyhow!(error_message))
+            }
+        };
+        Ok(result)
+    }
 }
 
 impl HttpCacheKey {

@@ -198,9 +198,10 @@ pub enum Command {
     ProcMacroServer,
     /// Upload a package to the registry.
     #[command(after_help = "\
-        This command will create distributable, compressed `.tar.zst` archive containing source \
-        code of the package in `target/package` directory (using `scarb package`) and upload it \
-        to a registry.
+        This command will create a distributable, compressed `.tar.zst` archive \
+        containing the package's source code in the `target/package` directory \
+        (using `scarb package`), generate its documentation, and upload both to a \
+        registry. Use `--no-docs` to skip documentation generation and upload.
     ")]
     Publish(PublishArgs),
     /// Checks a package to catch common mistakes and improve your Cairo code.
@@ -562,6 +563,10 @@ pub struct PublishArgs {
     /// Do not error on `cairo-version` mismatch.
     #[arg(long, env = "SCARB_IGNORE_CAIRO_VERSION")]
     pub ignore_cairo_version: bool,
+
+    /// Do not generate and upload documentation.
+    #[arg(long, env = "SCARB_PUBLISH_NO_DOCS")]
+    pub no_docs: bool,
 }
 
 /// Arguments accepted by the `lint` command.
