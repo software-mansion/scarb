@@ -27,6 +27,7 @@ pub mod new;
 pub mod package;
 mod proc_macro_server;
 pub mod publish;
+pub mod publish_docs;
 pub mod remove;
 pub mod run;
 pub mod test;
@@ -57,6 +58,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         Package(args) => package::run(args, config),
         ProcMacroServer => proc_macro_server::run(config),
         Publish(args) => publish::run(args, config),
+        PublishDocs(args) => publish_docs::run(args, config),
         Lint(args) => lint::run(args, config),
         List(args) => list::run(args, config),
         Remove(args) => remove::run(args, config),

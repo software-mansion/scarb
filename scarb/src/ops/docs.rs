@@ -1,7 +1,10 @@
+use crate::core::Package;
 use crate::core::PackageId;
 use crate::core::Workspace;
 use crate::flock::LockedFile;
+use crate::ops::ensure_clean_or_allow_dirty;
 use crate::ops::subcommands::execute_external_subcommand_and_wait;
+use crate::sources::client::PackageRepository;
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use camino::Utf8PathBuf;
@@ -58,7 +61,16 @@ fn dir_stats(src: &Utf8Path) -> Result<(usize, u64)> {
     Ok((count, size))
 }
 
-pub fn package_docs_one(package_id: &PackageId, ws: &Workspace<'_>) -> Result<LockedFile> {
+pub fn package_docs_one(
+    package: &Package,
+    allow_dirty: bool,
+    ws: &Workspace<'_>,
+) -> Result<LockedFile> {
+    if let Ok(repo) = PackageRepository::open(package) {
+        ensure_clean_or_allow_dirty(&repo, allow_dirty)?;
+    }
+    let package_id = &package.id;
+
     let docs_path = generate_docs(package_id, ws)?;
 
     let filename = format!("docs.{}", package_id.tarball_name());

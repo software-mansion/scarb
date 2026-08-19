@@ -43,9 +43,9 @@ fn publish() {
         see [..]
         [..]
         [..] Packaged [..]
-        [..] Packaged [..]
         [..] Uploading bar v1.0.0 (registry+http[..])
         [..] Published bar v1.0.0 (registry+http[..])
+        [..] Packaged [..]
         [..] Uploading docs for bar v1.0.0 (registry+http[..])
         [..] Published docs for bar v1.0.0 (registry+http[..])
         "#});

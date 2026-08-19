@@ -203,6 +203,7 @@ fn publish() {
             .arg("publish")
             .arg("--index")
             .arg(Url::from_directory_path(&index).unwrap().to_string())
+            .arg("--no-docs")
             .current_dir(&t)
             .assert()
             .success()
@@ -276,6 +277,48 @@ fn publish() {
 }
 
 #[test]
+fn publish_with_docs() {
+    let t = TempDir::new().unwrap();
+    let index = t.child("index");
+    index.create_dir_all().unwrap();
+
+    let name = "foobar";
+    let version = "1.0.0";
+    ProjectBuilder::start()
+        .name(name)
+        .edition("2023_01")
+        .version(version)
+        .lib_cairo("fn main() -> felt252 { 0 }")
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("publish")
+        .arg("--index")
+        .arg(Url::from_directory_path(&index).unwrap().to_string())
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(formatdoc! {r#"
+        [..] Packaging {name} v{version} ([..])
+        warn: manifest has no [..]
+        warn: manifest has no [..]
+        warn: manifest has no [..]
+        warn: manifest has no [..]
+        see [..] for more info
+        [..]
+        [..] Verifying {name}-{version}.tar.zst
+        [..] Compiling {name} v{version} ([..])
+        [..]  Finished `dev` profile target(s) in [..]
+        [..]  Packaged [..]
+        [..] Uploading {name} v{version} (registry+file://[..]/index/)
+        [..] Published {name} v{version} (registry+file://[..]/index/)
+        warn: Failed to upload docs for package foobar v1.0.0 [..]
+        help: you can try to upload docs manually with `scarb publish-docs` or disable docs publishing with `--no-docs`
+        [..]
+        "#});
+}
+
+#[test]
 fn publish_disabled() {
     let t = TempDir::new().unwrap();
     let index = TempDir::new().unwrap();
@@ -292,6 +335,7 @@ fn publish_disabled() {
         .arg("--no-verify")
         .arg("--index")
         .arg(Url::from_directory_path(&index).unwrap().to_string())
+        .arg("--no-docs")
         .current_dir(&t)
         .assert()
         .failure()
@@ -318,6 +362,7 @@ fn publish_overwrites_existing() {
         .arg("--no-verify")
         .arg("--index")
         .arg(Url::from_directory_path(&index).unwrap().to_string())
+        .arg("--no-docs")
         .current_dir(&t)
         .assert()
         .success();
@@ -347,6 +392,7 @@ fn publish_overwrites_existing() {
         .arg("publish")
         .arg("--index")
         .arg(Url::from_directory_path(&index).unwrap().to_string())
+        .arg("--no-docs")
         .current_dir(&t)
         .assert()
         .success();
