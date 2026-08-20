@@ -1,11 +1,13 @@
-<script setup></script>
+<script setup>
+const year = new Date().getFullYear();
+</script>
 
 <template>
   <footer class="vp-doc">
     <a
       class="logo"
       href="https://swmansion.com/"
-      rel="noopener noreferrer"
+      rel="noopener"
       target="_blank"
     >
       <svg
@@ -41,15 +43,19 @@
     <span
       ><span class="copy">
         &copy;
-        <a
-          href="https://swmansion.com/"
-          rel="noopener noreferrer"
-          target="_blank"
+        <a href="https://swmansion.com/" rel="noopener" target="_blank"
           >Software Mansion</a
         >
-        2023.
+        {{ year }}.
       </span>
-      All trademarks and copyrights belong to their respective owners.
+      All trademarks and copyrights belong to their respective owners. Read
+      about our
+      <a
+        href="https://swmansion.com/privacy/policy/"
+        rel="noopener"
+        target="_blank"
+        >Privacy Policy</a
+      >.
     </span>
   </footer>
 </template>
@@ -65,6 +71,7 @@ footer {
   justify-content: center;
   line-height: 20px;
   padding: 32px 24px;
+  text-align: center;
 }
 
 .copy {
