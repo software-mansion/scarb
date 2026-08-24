@@ -95,6 +95,7 @@ sha2.workspace = true
 shell-words.workspace = true
 smallvec.workspace = true
 smol_str.workspace = true
+starknet-core.workspace = true
 tar.workspace = true
 target-triple.workspace = true
 thiserror.workspace = true

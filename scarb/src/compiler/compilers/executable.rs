@@ -47,7 +47,7 @@ impl Compiler for ExecutableCompiler {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn CloneableDatabase,
+        db: &mut dyn CloneableDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         ensure!(

@@ -6,7 +6,6 @@ use cairo_lang_semantic::items::module::ModuleSemantic;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::Visibility;
 use cairo_lang_semantic::resolve::ResolvedGenericItem::Module;
-use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::{ContractDeclaration, find_contracts, module_contract};
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_syntax::node::TypedSyntaxNode;
@@ -18,16 +17,17 @@ use salsa::Database;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::Arc;
-use tracing::{debug, trace, trace_span};
+use tracing::{debug, trace_span};
 
 use super::contract_selector::ContractSelector;
 use crate::compiler::compilers::starknet_contract::artifacts_writer::Artifacts;
 use crate::compiler::compilers::starknet_contract::contract_selector::GLOB_PATH_SELECTOR;
+use crate::compiler::compilers::starknet_contract::forwarding::compile_with_forwarding;
 use crate::compiler::compilers::starknet_contract::validations::{
     check_allowed_libfuncs, check_compiler_config,
 };
 use crate::compiler::compilers::{ArtifactsWriter, ensure_gas_enabled};
-use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
+use crate::compiler::helpers::collect_main_crate_ids;
 use crate::compiler::incremental::IncrementalContext;
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Workspace};
@@ -48,6 +48,7 @@ pub struct Props {
     pub allowed_libfuncs_deny: bool,
     pub allowed_libfuncs_list: Option<SerdeListSelector>,
     pub build_external_contracts: Option<Vec<ContractSelector>>,
+    pub forwarding: bool,
 }
 
 impl Default for Props {
@@ -60,6 +61,7 @@ impl Default for Props {
             allowed_libfuncs_deny: false,
             allowed_libfuncs_list: None,
             build_external_contracts: None,
+            forwarding: false,
         }
     }
 }
@@ -82,7 +84,7 @@ impl Compiler for StarknetContractCompiler {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn CloneableDatabase,
+        db: &mut dyn CloneableDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;
@@ -108,29 +110,16 @@ impl Compiler for StarknetContractCompiler {
 
         let target_dir = unit.target_dir(ws);
 
-        let main_crate_ids = collect_main_crate_ids(unit, db);
-
-        let compiler_config =
-            build_compiler_config(db, unit, &main_crate_ids, &ctx, ctx.warning_collector(), ws);
-
+        let forwarding =
+            compile_with_forwarding(db, unit, &ctx, ws, props.build_external_contracts.clone())?;
         let contracts = find_project_contracts(
             db,
             ws.config().ui(),
             unit,
-            main_crate_ids.clone(),
+            collect_main_crate_ids(unit, db),
             props.build_external_contracts.clone(),
         )?;
-
-        let contract_paths = contracts
-            .iter()
-            .map(|decl| decl.module_id().full_path(db))
-            .collect::<Vec<_>>();
-        trace!(contracts = ?contract_paths);
-        let span = trace_span!("compile_starknet");
-        let classes = {
-            let _guard = span.enter();
-            compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
-        };
+        let (contract_paths, classes) = (forwarding.contract_paths, forwarding.classes);
 
         check_allowed_libfuncs(&props, &contracts, &classes, db, unit, ws)?;
 
@@ -190,6 +179,27 @@ pub fn find_project_contracts<'db>(
     unit: &CairoCompilationUnit,
     main_crate_ids: Vec<CrateId<'db>>,
     external_contracts: Option<Vec<ContractSelector>>,
+) -> Result<Vec<ContractDeclaration<'db>>> {
+    find_project_contracts_inner(db, ui, unit, main_crate_ids, external_contracts, true)
+}
+
+pub(super) fn find_project_contracts_silent<'db>(
+    db: &'db dyn Database,
+    ui: Ui,
+    unit: &CairoCompilationUnit,
+    main_crate_ids: Vec<CrateId<'db>>,
+    external_contracts: Option<Vec<ContractSelector>>,
+) -> Result<Vec<ContractDeclaration<'db>>> {
+    find_project_contracts_inner(db, ui, unit, main_crate_ids, external_contracts, false)
+}
+
+fn find_project_contracts_inner<'db>(
+    db: &'db dyn Database,
+    ui: Ui,
+    unit: &CairoCompilationUnit,
+    main_crate_ids: Vec<CrateId<'db>>,
+    external_contracts: Option<Vec<ContractSelector>>,
+    warn_unmatched_external_contracts: bool,
 ) -> Result<Vec<ContractDeclaration<'db>>> {
     let span = trace_span!("find_internal_contracts");
     let internal_contracts = {
@@ -321,7 +331,7 @@ pub fn find_project_contracts<'db>(
             .iter()
             .filter(|selector| !matched_selectors.contains(*selector))
             .collect_vec();
-        if !never_matched.is_empty() {
+        if warn_unmatched_external_contracts && !never_matched.is_empty() {
             let never_matched = never_matched
                 .iter()
                 .map(|selector| selector.full_path())

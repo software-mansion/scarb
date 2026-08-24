@@ -26,7 +26,7 @@ pub trait Compiler: Sync {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn CloneableDatabase,
+        db: &mut dyn CloneableDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()>;
 }

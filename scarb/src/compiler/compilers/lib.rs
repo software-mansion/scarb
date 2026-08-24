@@ -51,7 +51,7 @@ impl Compiler for LibCompiler {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn CloneableDatabase,
+        db: &mut dyn CloneableDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;
