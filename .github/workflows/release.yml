@@ -59,6 +59,7 @@ jobs:
         run: |
           gh release create \
             "${RELEASE_TAG}" \
+            ./artifacts/* \
             --draft \
             --title "${RELEASE_TAG}" \
             --generate-notes \
