@@ -50,7 +50,7 @@ jobs:
             --title "${RELEASE_TAG}" \
             --generate-notes \
             --verify-tag \
-            --notes-start-tag ${RELEASE_NOTES_START_TAG} \
+            --notes-start-tag "${RELEASE_NOTES_START_TAG}" \
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.ref_name }}
