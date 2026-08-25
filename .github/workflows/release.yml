@@ -42,13 +42,12 @@ jobs:
           ls -lh artifacts/
 
       - name: Determine release notes start tag
-        id: release-notes-start-tag
         run: |
           if [[ "$RELEASE_TAG" == *-rc* ]]; then
-        # because the release is a release candidate, we want to include pre-releases when determining the start tag for the release notes
+            # because the release is a release candidate, we want to include pre-releases when determining the start tag for the release notes
             RELEASE_NOTES_START_TAG =$(gh release list --json tagName --limit 1 --exclude-drafts --jq '.[0].tagName')
           else
-        # because the release is not a release candidate, we want to exclude pre-releases when determining the start tag for the release notes
+            # because the release is not a release candidate, we want to exclude pre-releases when determining the start tag for the release notes
             RELEASE_NOTES_START_TAG=$(gh release list --json tagName --limit 1 --exclude-pre-releases --exclude-drafts --jq '.[0].tagName')
           fi
           echo "RELEASE_NOTES_START_TAG=${RELEASE_NOTES_START_TAG}" >> $GITHUB_ENV
