@@ -9,24 +9,37 @@ permissions:
   contents: read
 
 jobs:
-  #check:
-  #  uses: ./.github/workflows/_check-release.yml
+  check:
+    uses: ./.github/workflows/_check-release.yml
 
-  #release:
-  #  uses: ./.github/workflows/_build-release.yml
-  #  with:
-  #    scarb-tag: ${{ github.ref_name }}
-  #    full-verify: true
+  release:
+    uses: ./.github/workflows/_build-release.yml
+    with:
+      scarb-tag: ${{ github.ref_name }}
+      full-verify: true
 
   draft:
     name: draft release
     runs-on: ubuntu-latest
+    needs: [ check, release ]
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          path: artifacts-dl
+
+      - name: Unpack artifacts to staging directory
+        run: |
+          mkdir -p artifacts
+          mv artifacts-dl/build-*/scarb-* artifacts/
+          mv artifacts-dl/checksums/* artifacts/
+          ls -lh artifacts/
 
       - name: Determine release notes start tag
         run: |
@@ -55,15 +68,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.ref_name }}
 
-  #publish_plugins:
-  #  name: publish plugins
-  #  needs: [ draft ]
-  #  permissions:
-  #    contents: read
-  #  uses: ./.github/workflows/publish_plugins.yml
-  #  with:
-  #    version_tag: ${{ github.ref_name }}
-  #  secrets:
-  #    SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_REGISTRY_AUTH_TOKEN }}
-  #    SCARB_DEV_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_DEV_REGISTRY_AUTH_TOKEN }}
-  #    SLACK_PUBLISH_PLUGINS_FAILURE_WEBHOOK_URL: ${{ secrets.SLACK_PUBLISH_PLUGINS_FAILURE_WEBHOOK_URL }}
+  publish_plugins:
+    name: publish plugins
+    needs: [ draft ]
+    permissions:
+      contents: read
+    uses: ./.github/workflows/publish_plugins.yml
+    with:
+      version_tag: ${{ github.ref_name }}
+    secrets:
+      SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_REGISTRY_AUTH_TOKEN }}
+      SCARB_DEV_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_DEV_REGISTRY_AUTH_TOKEN }}
+      SLACK_PUBLISH_PLUGINS_FAILURE_WEBHOOK_URL: ${{ secrets.SLACK_PUBLISH_PLUGINS_FAILURE_WEBHOOK_URL }}
