@@ -28,18 +28,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Download artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          path: artifacts-dl
-
-      - name: Unpack artifacts to staging directory
-        run: |
-          mkdir -p artifacts
-          mv artifacts-dl/build-*/scarb-* artifacts/
-          mv artifacts-dl/checksums/* artifacts/
-          ls -lh artifacts/
-
       - name: Determine release notes start tag
         run: |
           if [[ "$RELEASE_TAG" == *-rc* ]]; then
@@ -58,7 +46,6 @@ jobs:
         run: |
           gh release create \
             "${RELEASE_TAG}" \
-            ./artifacts/* \
             --draft \
             --title "${RELEASE_TAG}" \
             --generate-notes \
