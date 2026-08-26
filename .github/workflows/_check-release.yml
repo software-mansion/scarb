@@ -61,7 +61,7 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
       - uses: foundry-rs/setup-snfoundry@v6
-      - run: cargo test --profile=ci --package scarb --test snforge_init new_simple -- --ignored
+      - run: cargo test --profile=ci --package scarb --test main snforge_init:: -- --ignored
 
   test-prebuilt-plugins:
     name: test prebuilt plugins ${{ matrix.platform.name }}
@@ -82,4 +82,6 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
       - name: Run prebuilt plugin tests
-        run: cargo test -p scarb --profile=ci --test proc_macro_v1_prebuilt proc_macro_v2_prebuilt
+        run: |
+          cargo test -p scarb --profile=ci --test main proc_macro_v1_prebuilt::
+          cargo test -p scarb --profile=ci --test main proc_macro_v2_prebuilt::
