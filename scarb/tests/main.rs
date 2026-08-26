@@ -1,0 +1,70 @@
+//! Integration tests for Scarb.
+//!
+//! All integration tests live in a single test binary, so that the (rather heavy) Scarb test
+//! support code and its dependencies are linked only once instead of once per test file.
+//! Each file in this directory is a module registered below.
+
+mod add;
+mod audits;
+mod build;
+mod build_assets;
+mod build_script;
+mod build_starknet_contract;
+mod build_starknet_contract_allowed_libfuncs;
+mod build_starknet_external_contracts;
+mod build_targets;
+mod cache;
+mod cairo_plugin_re_exports;
+mod check;
+mod clean;
+mod completions;
+mod examples;
+mod expand;
+mod features;
+mod fetch;
+mod flock;
+mod fmt;
+mod gas_cfg;
+mod git_source;
+mod git_source_network;
+mod http_registry;
+mod incremental;
+mod lint;
+mod list;
+mod local_registry;
+mod lockfile;
+mod lockfile_checksums;
+mod manifest_path;
+mod manifest_warnings;
+mod metadata;
+mod new_and_init;
+mod package;
+mod patch;
+mod proc_macro_v1;
+mod proc_macro_v1_and_v2;
+mod proc_macro_v1_and_v2_server;
+mod proc_macro_v1_prebuilt;
+mod proc_macro_v2_build;
+mod proc_macro_v2_executable;
+mod proc_macro_v2_expand_attribute;
+mod proc_macro_v2_expand_derive;
+mod proc_macro_v2_expand_inline;
+mod proc_macro_v2_metadata;
+mod proc_macro_v2_prebuilt;
+mod proc_macro_v2_quote;
+mod proc_macro_v2_reexport;
+mod profiles;
+mod registry_checksums;
+mod registry_publish;
+mod registry_publish_docs;
+mod remove;
+mod resolver;
+mod resolver_with_git;
+mod scripts;
+mod snforge_init;
+mod subcommand;
+mod test_subcommand;
+mod tree;
+mod unit_artifacts_fingerprint;
+mod workspace;
+mod yanked;
