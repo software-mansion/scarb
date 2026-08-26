@@ -85,6 +85,9 @@ jobs:
     needs:
       - setup-matrix
       - build-test
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     strategy:
       fail-fast: false
       matrix:
@@ -95,6 +98,28 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
+      # Note this is complementary to the `rust-cache` step, not redundant with it.
+      #
+      #
+      # The rust-cache caches: two directories — ~/.cargo (registry index, downloaded .crate files)
+      # and the workspace ./target. It restores them at job start and saves them at job end.
+      #
+      # Proc macro plugin fixtures are built by Cargo at test runtime, into a Cargo target
+      # directory nested under `SCARB_CACHE` - and the test harness allocates a fresh temporary
+      # `SCARB_CACHE` for every `Scarb` command it runs (see `scarb-test-support`). That
+      # directory is neither `~/.cargo` nor the workspace `./target`, so `rust-cache` never sees
+      # it, and it is deleted with the test's temporary directory before `rust-cache` would get
+      # to save anything anyway.
+      #
+      # `sccache` caches individual `rustc` invocations instead of directories, keyed by
+      # compiler, flags and source hash rather than by location on disk. One compilation of a
+      # given dependency is therefore reused by all of those temporary target directories, as
+      # well as across test partitions and across workflow runs.
+      #
+      # Must run before any step that may invoke Cargo, as it puts `sccache` on `PATH`.
+      - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
+        with:
+          version: "v0.17.0"
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@v2.85.11
         with:
@@ -104,6 +129,9 @@ jobs:
           name: nextest-archive-${{ matrix.platform.os }}
       - name: nextest partition ${{ matrix.partition }}/4
         run: cargo nextest run --partition 'count:${{ matrix.partition }}/4' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
+      - name: sccache stats
+        if: always()
+        run: sccache --show-stats
 
   test-doc:
     name: doc tests
