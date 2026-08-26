@@ -136,6 +136,10 @@ jobs:
         with:
           version: "v0.17.0"
       - uses: Swatinem/rust-cache@v2
+        with:
+          # This job runs tests from the prebuilt nextest archive and never compiles the
+          # workspace, so its `./target` stays empty.
+          cache-targets: false
       - uses: taiki-e/install-action@v2.85.11
         with:
           tool: nextest@0.9.143
