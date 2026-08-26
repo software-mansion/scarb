@@ -60,6 +60,9 @@ jobs:
     name: build test ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
     needs: setup-matrix
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
@@ -68,7 +71,16 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
+      # Must run before any step that may invoke Cargo, as it puts `sccache` on `PATH`.
+      - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
+        with:
+          version: "v0.17.0"
       - uses: Swatinem/rust-cache@v2
+        with:
+          # `sccache` is the compile cache for this job
+          cache-targets: false
+          # Still save the dependency caches when compilation fails.
+          cache-on-failure: true
       - uses: taiki-e/install-action@v2.85.11
         with:
           tool: nextest@0.9.98
@@ -78,6 +90,9 @@ jobs:
         with:
           name: nextest-archive-${{ matrix.platform.os }}
           path: nextest-archive-${{ matrix.platform.os }}.tar.zst
+      - name: sccache stats
+        if: always()
+        run: sccache --show-stats
 
   test:
     name: test ${{ matrix.platform.name }} ${{ matrix.partition }}/4
