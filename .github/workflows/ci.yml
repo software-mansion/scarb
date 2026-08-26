@@ -83,7 +83,7 @@ jobs:
           cache-on-failure: true
       - uses: taiki-e/install-action@v2.85.11
         with:
-          tool: nextest@0.9.98
+          tool: nextest@0.9.143
       - name: nextest archive
         run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude cairo-lang-macro
       - uses: actions/upload-artifact@v7
@@ -138,12 +138,12 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@v2.85.11
         with:
-          tool: nextest@0.9.98
+          tool: nextest@0.9.143
       - uses: actions/download-artifact@v8
         with:
           name: nextest-archive-${{ matrix.platform.os }}
       - name: nextest partition ${{ matrix.partition }}/4
-        run: cargo nextest run --partition 'count:${{ matrix.partition }}/4' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
+        run: cargo nextest run --partition 'slice:${{ matrix.partition }}/4' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
       - name: sccache stats
         if: always()
         run: sccache --show-stats
@@ -197,7 +197,7 @@ jobs:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - uses: taiki-e/install-action@v2.85.11
         with:
-          tool: nextest@0.9.98
+          tool: nextest@0.9.143
       - uses: Swatinem/rust-cache@v2
       - name: nextest archive
         run: cargo nextest archive --all-features --cargo-profile ci --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --package scarb-prove --package scarb-verify
@@ -227,7 +227,7 @@ jobs:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - uses: taiki-e/install-action@v2.85.11
         with:
-          tool: nextest@0.9.98
+          tool: nextest@0.9.143
       - uses: Swatinem/rust-cache@v2
       - name: Download stable build artifacts  
         uses: actions/download-artifact@v8
@@ -367,7 +367,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@v2.85.11
         with:
-          tool: nextest@0.9.98
+          tool: nextest@0.9.143
       - uses: actions/download-artifact@v8
         with:
           name: nextest-archive-ubuntu-latest
