@@ -53,16 +53,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.ref_name }}
-
-  publish_plugins:
-    name: publish plugins
-    needs: [ draft ]
-    permissions:
-      contents: read
-    uses: ./.github/workflows/publish_plugins.yml
-    with:
-      version_tag: ${{ github.ref_name }}
-    secrets:
-      SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_REGISTRY_AUTH_TOKEN }}
-      SCARB_DEV_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_DEV_REGISTRY_AUTH_TOKEN }}
-      SLACK_PUBLISH_PLUGINS_FAILURE_WEBHOOK_URL: ${{ secrets.SLACK_PUBLISH_PLUGINS_FAILURE_WEBHOOK_URL }}
+          
