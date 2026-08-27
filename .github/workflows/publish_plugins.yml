@@ -9,19 +9,6 @@ on:
         required: false
         type: string
         description: Scarb version to publish from.
-  workflow_call:
-    inputs:
-      version_tag:
-        required: false
-        type: string
-        description: Scarb version to publish from.
-    secrets:
-      SCARB_REGISTRY_AUTH_TOKEN:
-        required: true
-      SCARB_DEV_REGISTRY_AUTH_TOKEN:
-        required: true
-      SLACK_PUBLISH_PLUGINS_FAILURE_WEBHOOK_URL:
-        required: true
 
 permissions:
   contents: read
