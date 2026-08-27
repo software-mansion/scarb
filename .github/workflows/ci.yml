@@ -85,11 +85,13 @@ jobs:
         with:
           tool: nextest@0.9.143
       - name: nextest archive
-        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude cairo-lang-macro
+        run: cargo nextest archive --workspace --all-features --cargo-profile ci --zstd-level 10 --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude cairo-lang-macro
       - uses: actions/upload-artifact@v7
         with:
           name: nextest-archive-${{ matrix.platform.os }}
           path: nextest-archive-${{ matrix.platform.os }}.tar.zst
+          # The archive is already Zstandard-compressed.
+          compression-level: 0
       - name: sccache stats
         if: always()
         run: sccache --show-stats
@@ -209,6 +211,8 @@ jobs:
         with:
           name: nextest-nightly-archive-${{ matrix.platform.os }}
           path: nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst
+          # The archive is already Zstandard-compressed.
+          compression-level: 0
 
   test-nightly:
     name: test nightly ${{ matrix.platform.name }}
