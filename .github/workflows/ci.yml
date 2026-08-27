@@ -60,6 +60,9 @@ jobs:
     name: build test ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
     needs: setup-matrix
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
@@ -68,16 +71,28 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
+      # Must run before any step that may invoke Cargo, as it puts `sccache` on `PATH`.
+      - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
+        with:
+          version: "v0.17.0"
       - uses: Swatinem/rust-cache@v2
+        with:
+          # `sccache` is the compile cache for this job
+          cache-targets: false
+          # Still save the dependency caches when compilation fails.
+          cache-on-failure: true
       - uses: taiki-e/install-action@v2.85.11
         with:
-          tool: nextest@0.9.98
+          tool: nextest@0.9.143
       - name: nextest archive
         run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude cairo-lang-macro
       - uses: actions/upload-artifact@v7
         with:
           name: nextest-archive-${{ matrix.platform.os }}
           path: nextest-archive-${{ matrix.platform.os }}.tar.zst
+      - name: sccache stats
+        if: always()
+        run: sccache --show-stats
 
   test:
     name: test ${{ matrix.platform.name }} ${{ matrix.partition }}/4
@@ -85,6 +100,9 @@ jobs:
     needs:
       - setup-matrix
       - build-test
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     strategy:
       fail-fast: false
       matrix:
@@ -95,15 +113,44 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
+      # Note this is complementary to the `rust-cache` step, not redundant with it.
+      #
+      #
+      # The rust-cache caches: two directories — ~/.cargo (registry index, downloaded .crate files)
+      # and the workspace ./target. It restores them at job start and saves them at job end.
+      #
+      # Proc macro plugin fixtures are built by Cargo at test runtime, into a Cargo target
+      # directory nested under `SCARB_CACHE` - and the test harness allocates a fresh temporary
+      # `SCARB_CACHE` for every `Scarb` command it runs (see `scarb-test-support`). That
+      # directory is neither `~/.cargo` nor the workspace `./target`, so `rust-cache` never sees
+      # it, and it is deleted with the test's temporary directory before `rust-cache` would get
+      # to save anything anyway.
+      #
+      # `sccache` caches individual `rustc` invocations instead of directories, keyed by
+      # compiler, flags and source hash rather than by location on disk. One compilation of a
+      # given dependency is therefore reused by all of those temporary target directories, as
+      # well as across test partitions and across workflow runs.
+      #
+      # Must run before any step that may invoke Cargo, as it puts `sccache` on `PATH`.
+      - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
+        with:
+          version: "v0.17.0"
       - uses: Swatinem/rust-cache@v2
+        with:
+          # This job runs tests from the prebuilt nextest archive and never compiles the
+          # workspace, so its `./target` stays empty.
+          cache-targets: false
       - uses: taiki-e/install-action@v2.85.11
         with:
-          tool: nextest@0.9.98
+          tool: nextest@0.9.143
       - uses: actions/download-artifact@v8
         with:
           name: nextest-archive-${{ matrix.platform.os }}
       - name: nextest partition ${{ matrix.partition }}/4
-        run: cargo nextest run --partition 'count:${{ matrix.partition }}/4' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
+        run: cargo nextest run --partition 'slice:${{ matrix.partition }}/4' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
+      - name: sccache stats
+        if: always()
+        run: sccache --show-stats
 
   test-doc:
     name: doc tests
@@ -154,7 +201,7 @@ jobs:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - uses: taiki-e/install-action@v2.85.11
         with:
-          tool: nextest@0.9.98
+          tool: nextest@0.9.143
       - uses: Swatinem/rust-cache@v2
       - name: nextest archive
         run: cargo nextest archive --all-features --cargo-profile ci --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --package scarb-prove --package scarb-verify
@@ -184,7 +231,7 @@ jobs:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - uses: taiki-e/install-action@v2.85.11
         with:
-          tool: nextest@0.9.98
+          tool: nextest@0.9.143
       - uses: Swatinem/rust-cache@v2
       - name: Download stable build artifacts  
         uses: actions/download-artifact@v8
@@ -324,7 +371,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@v2.85.11
         with:
-          tool: nextest@0.9.98
+          tool: nextest@0.9.143
       - uses: actions/download-artifact@v8
         with:
           name: nextest-archive-ubuntu-latest
