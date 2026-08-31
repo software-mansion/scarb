@@ -85,3 +85,18 @@ jobs:
         run: |
           cargo test -p scarb --profile=ci --test main proc_macro_v1_prebuilt::
           cargo test -p scarb --profile=ci --test main proc_macro_v2_prebuilt::
+
+  ciaro-lang-check:
+    name: ciaro-lang check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Fail if cairo-lang uses wildcard versions in Cargo.toml
+        run: |
+          ! grep -E 'cairo-lang-.*=\s*"\*"' Cargo.toml 
+          
+      - name: Fail if cairo-lang uses direct git dependencies in Cargo.toml
+        run: |
+          ! grep -E 'cairo-lang-.*=\s*\{.*git"' Cargo.toml
+
