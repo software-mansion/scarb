@@ -122,14 +122,19 @@ struct VcsInfo {
     path_in_vcs: String,
 }
 
-fn extract_vcs_info(repo: PackageRepository, opts: &PackageOpts) -> Result<Option<VcsInfo>> {
+pub fn ensure_clean_or_allow_dirty(repo: &PackageRepository, allow_dirty: bool) -> Result<()> {
     ensure!(
-        opts.allow_dirty || repo.is_clean()?,
+        allow_dirty || repo.is_clean()?,
         indoc! {r#"
             cannot package a repository containing uncommitted changes
             help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
         "#}
     );
+    Ok(())
+}
+
+fn extract_vcs_info(repo: PackageRepository, opts: &PackageOpts) -> Result<Option<VcsInfo>> {
+    ensure_clean_or_allow_dirty(&repo, opts.allow_dirty)?;
 
     // If the HEAD commit cannot be determined, we assume the repository is empty.
     // In that case there is no VCS info to return.

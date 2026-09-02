@@ -26,6 +26,8 @@ updates:
           - "salsa"
           - "cairo-vm"
           - "bincode"
+    ignore:
+      - dependency-name: "salsa"
 
   - package-ecosystem: "github-actions"
     directory: "/"

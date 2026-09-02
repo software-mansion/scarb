@@ -29,6 +29,7 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
             features: features_opts,
             ignore_cairo_version: args.ignore_cairo_version,
         },
+        docs: !args.no_docs,
     };
 
     ops::publish(package.id, &ops, &ws)

@@ -10,6 +10,9 @@ on:
         type: string
         description: Scarb version to publish from.
 
+permissions:
+  contents: read
+
 jobs:
   publish:
     name: Publish plugins

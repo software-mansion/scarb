@@ -63,6 +63,13 @@ impl SimpleHttpServer {
             .fallback_service(ServeDir::new(dir))
             .route(
                 "/api/v1/packages/new",
+                post({
+                    let post_response = post_response.clone();
+                    move |body| post_handler(post_response.clone(), body)
+                }),
+            )
+            .route(
+                "/api/v1/docs/{package}/{version}",
                 post(move |body| post_handler(post_response.clone(), body)),
             )
             .layer(middleware::from_fn(set_etag))

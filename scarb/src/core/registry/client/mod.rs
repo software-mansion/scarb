@@ -98,4 +98,19 @@ pub trait RegistryClient: Send + Sync {
     /// The client is free to use information within `package` to send to the registry.
     /// Package source is not required to match the registry the package is published to.
     async fn publish(&self, package: Package, tarball: LockedFile) -> Result<RegistryUpload>;
+
+    /// State whether documentation can be published to this registry.
+    async fn supports_publish_docs(&self) -> Result<bool> {
+        Ok(false)
+    }
+
+    /// Publish documentation for a package to this registry.
+    ///    
+    /// This function can only be called if [`RegistryClient::supports_publish_docs`] returns `true`.
+    async fn publish_docs(
+        &self,
+        package: PackageId,
+        tarball: LockedFile,
+        force: bool,
+    ) -> Result<RegistryUpload>;
 }

@@ -3,6 +3,8 @@ name = "scarb"
 version.workspace = true
 edition.workspace = true
 publish = false
+# All integration tests are compiled into a single `tests/main.rs` binary.
+autotests = false
 
 authors.workspace = true
 categories = ["command-line-utilities", "development-tools"]
@@ -154,3 +156,7 @@ zip.workspace = true
 default = ["scarb-lint"]
 scarb-lint = ["dep:cairo-lint"]
 test-utils = []
+
+[[test]]
+name = "main"
+path = "tests/main.rs"

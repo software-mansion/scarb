@@ -9,11 +9,14 @@ use crate::core::{PackageId, SourceId, Workspace};
 use crate::ops;
 use crate::sources::RegistrySource;
 
-use super::PackageOpts;
+use crate::ops::PackageOpts;
+use crate::ops::PublishDocsOpts;
+use crate::ops::publish_docs;
 
 pub struct PublishOpts {
     pub index_url: Url,
     pub package_opts: PackageOpts,
+    pub docs: bool,
 }
 
 #[tracing::instrument(level = "debug", skip(opts, ws))]
@@ -44,14 +47,13 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
     );
 
     let tarball = ops::package_one(package_id, &opts.package_opts, ws)?;
-
     let dest_package_id = package_id.with_source_id(source_id);
 
     ws.config()
         .ui()
         .print(Status::new("Uploading", &dest_package_id.to_string()));
 
-    ws.config().tokio_handle().block_on(async {
+    let upload_result = ws.config().tokio_handle().block_on(async {
         let upload = registry_client.publish(package, tarball).await;
         match upload {
             Ok(RegistryUpload::Success) => {
@@ -66,5 +68,26 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
         }
 
         // TODO(mkaput): Wait for publish here.
-    })
+    });
+
+    // Upload docs if they were generated and the registry supports it.
+    if opts.docs && upload_result.is_ok() {
+        let docs_opts = PublishDocsOpts {
+            index_url: opts.index_url.clone(),
+            force: false,
+            allow_dirty: opts.package_opts.allow_dirty,
+        };
+        let docs_result = publish_docs(package_id, &docs_opts, ws);
+        if let Err(e) = docs_result {
+            ws.config().ui().warn(formatdoc! {
+                r#"
+                    Failed to upload docs for package {package_id}: {e:?}
+                    help: you can try to upload docs manually with `scarb publish-docs` or disable docs publishing with `--no-docs`
+                "#,
+                package_id = package_id
+            });
+        }
+    }
+
+    upload_result
 }

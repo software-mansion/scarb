@@ -3,6 +3,7 @@ use crate::project_builder::ProjectBuilder;
 use assert_fs::fixture::{FileWriteStr, PathChild};
 use camino::Utf8PathBuf;
 use indoc::{formatdoc, indoc};
+use scarb_build_metadata::CAIRO_VERSION;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::LazyLock;
@@ -128,11 +129,17 @@ impl CairoPluginProjectBuilder {
     }
 
     pub fn add_cairo_lang_parser_dep(self) -> Self {
-        self.add_dep(r#"cairo-lang-parser = "2.13.1""#)
+        self.add_cairo_lang_dep("cairo-lang-parser")
     }
 
     pub fn add_cairo_lang_syntax_dep(self) -> Self {
-        self.add_dep(r#"cairo-lang-syntax = "2.13.1""#)
+        self.add_cairo_lang_dep("cairo-lang-syntax")
+    }
+
+    /// Add a dependency on a `cairo-lang-*` crate, pinned to the exact Cairo version this
+    /// Scarb resolved against.
+    fn add_cairo_lang_dep(self, name: &str) -> Self {
+        self.add_dep(format!(r#"{name} = "={CAIRO_VERSION}""#))
     }
 
     pub fn default_v1() -> Self {

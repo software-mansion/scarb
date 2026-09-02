@@ -5,7 +5,8 @@ on:
     tags:
       - v[0-9]+.*
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   check:
@@ -40,6 +41,20 @@ jobs:
           mv artifacts-dl/checksums/* artifacts/
           ls -lh artifacts/
 
+      - name: Determine release notes start tag
+        run: |
+          if [[ "$RELEASE_TAG" == *-rc* ]]; then
+            # because the release is a release candidate, we want to include pre-releases when determining the start tag for the release notes
+            RELEASE_NOTES_START_TAG=$(gh release list --json tagName --limit 1 --exclude-drafts --jq '.[0].tagName')
+          else
+            # because the release is not a release candidate, we want to exclude pre-releases when determining the start tag for the release notes
+            RELEASE_NOTES_START_TAG=$(gh release list --json tagName --limit 1 --exclude-pre-releases --exclude-drafts --jq '.[0].tagName')
+          fi
+          echo "RELEASE_NOTES_START_TAG=${RELEASE_NOTES_START_TAG}" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+
       - name: Draft GitHub release
         run: |
           gh release create \
@@ -48,7 +63,9 @@ jobs:
             --draft \
             --title "${RELEASE_TAG}" \
             --generate-notes \
-            --verify-tag
+            --verify-tag \
+            --notes-start-tag "${RELEASE_NOTES_START_TAG}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.ref_name }}
+          
