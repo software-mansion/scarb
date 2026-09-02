@@ -174,11 +174,16 @@ jobs:
 
       - name: Verify archive
         shell: bash
-        run: |
-          archive=$(find target/verify -name 'scarb-*.zip' -o -name 'scarb-*.tar.gz')
-          cargo xtask verify-archive --archive "$archive" ${{ inputs.full-verify && '--full' || ''}}
         env:
           EXPECTED_VERSION: ${{ inputs.scarb-tag }}
+          FULL_VERIFY: ${{ inputs.full-verify }}
+        run: |
+          archive=$(find target/verify -name 'scarb-*.zip' -o -name 'scarb-*.tar.gz')
+          EXTRA_FLAGS=""
+          if [ "$FULL_VERIFY" = "true" ]; then
+            EXTRA_FLAGS="--full"
+          fi
+          cargo xtask verify-archive --archive "$archive" $EXTRA_FLAGS
 
   checksums:
     runs-on: ubuntu-latest
