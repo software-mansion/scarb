@@ -750,11 +750,20 @@ fn patch_core_with_self() {
         .version("2.0.0")
         .no_core()
         .dep("dep", Dep.version("1").registry(&registry))
-        .manifest_extra(indoc! {r#"
+        .build(&t);
+    let manifest_path = t.child("Scarb.toml");
+    let unpatched_manifest = std::fs::read_to_string(manifest_path.path()).unwrap();
+    std::fs::write(
+        manifest_path.path(),
+        format!(
+            "{unpatched_manifest}\n{}",
+            indoc! {r#"
             [patch.scarbs-xyz]
             core = { path = "." }
-        "#})
-        .build(&t);
+        "#}
+        ),
+    )
+    .unwrap();
     // The first resolution writes a lockfile in which the patched `core` is recorded as a path
     // source (i.e. without a `source` entry). The second resolution reads it back, exercising the
     // locked-dependency shortcut for `dep` whose (locked) `core` dependency has no source.
@@ -785,6 +794,20 @@ fn patch_core_with_self() {
     for (expected, real) in zip(&expected, packages) {
         Assert::new().eq(real, expected);
     }
+
+    // Removing the patch must invalidate the old path-based dependency edge. The registry package
+    // once again depends on `core` from `std`, which conflicts with the root path package.
+    std::fs::write(manifest_path.path(), unpatched_manifest).unwrap();
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: found dependencies on the same package `core` coming from incompatible sources:
+            source 1: [..]Scarb.toml
+            source 2: std
+        "#});
 }
 
 #[test]

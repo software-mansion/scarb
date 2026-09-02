@@ -182,7 +182,10 @@ impl PubGrubDependencyProvider {
     pub fn request_dependency(&self, dependency: ManifestDependency) {
         if (self.require_audits
             || !dependency.source_id.is_registry()
-            || !self.lockfile.locks_dependency(dependency.clone()))
+            || self
+                .locked_registry_package(&dependency)
+                .and_then(|locked| self.complete_locked_dependencies(locked))
+                .is_none())
             && self
                 .state
                 .index
@@ -333,6 +336,48 @@ impl PubGrubDependencyProvider {
                     })
                     .unwrap_or_default()
         })
+    }
+
+    /// Find a registry package matching a manifest dependency in the lockfile.
+    fn locked_registry_package<'a>(
+        &'a self,
+        dependency: &ManifestDependency,
+    ) -> Option<&'a PackageLock> {
+        self.lockfile
+            .packages_by_name(&dependency.name)
+            .find(|package| {
+                dependency.matches_name_and_version(&package.name, &package.version)
+                    && package
+                        .source
+                        .map(|source| {
+                            source.is_registry() && source.can_lock_source_id(dependency.source_id)
+                        })
+                        .unwrap_or_default()
+            })
+    }
+
+    /// Return locked dependencies only when the lockfile has enough source information to rebuild
+    /// the dependency edges without consulting the current package summary.
+    fn complete_locked_dependencies<'a>(
+        &'a self,
+        locked: &PackageLock,
+    ) -> Option<Vec<&'a PackageLock>> {
+        let dependency_names = locked.dependencies.iter().collect::<HashSet<_>>();
+        let dependencies = self
+            .lockfile
+            .packages()
+            .filter(|package| dependency_names.contains(&package.name))
+            .collect_vec();
+        let locked_dependency_names = dependencies
+            .iter()
+            .map(|dependency| &dependency.name)
+            .collect::<HashSet<_>>();
+
+        (locked_dependency_names == dependency_names
+            && dependencies
+                .iter()
+                .all(|dependency| dependency.source.is_some()))
+        .then_some(dependencies)
     }
 }
 
@@ -491,52 +536,51 @@ impl DependencyProvider for PubGrubDependencyProvider {
             })
             .copied();
 
-        if let Some(locked) = locked.as_ref() {
-            // If the package is locked, all of it's dependencies are locked as well.
-            let dep_names = locked.dependencies.iter().collect::<HashSet<_>>();
-            let deps = self
-                .lockfile
-                .packages()
-                .filter(|package| dep_names.contains(&package.name))
-                .collect_vec();
-
+        // Path packages do not record their source in the lockfile. If one appears among the
+        // locked dependencies, the old graph does not contain enough information to tell whether
+        // the current manifest still patches that dependency to the path package. Fall back to the
+        // package summary so the current patch map is applied.
+        if let Some(deps) = locked
+            .as_ref()
+            .and_then(|locked| self.complete_locked_dependencies(locked))
+        {
             if let Some(priority) = self_priority {
                 let mut write_lock = self
                     .priority
                     .write()
                     .expect("locking resolver state for write failed");
                 for dependency in deps.iter() {
-                    if let Some(source_id) = dependency.source {
-                        let package: PubGrubPackage = PubGrubPackage {
-                            name: dependency.name.clone(),
-                            source_id,
-                        };
-                        write_lock.insert(package, priority + 1);
-                    }
+                    let package: PubGrubPackage = PubGrubPackage {
+                        name: dependency.name.clone(),
+                        source_id: dependency.source.expect("source checked above"),
+                    };
+                    write_lock.insert(package, priority + 1);
                 }
             }
 
-            let deps = deps
+            let constraints = deps
                 .iter()
-                // Path source dependencies (for example a `core` package redirected to a local
-                // path via `[patch]`) are not recorded with a source in the lockfile. Locking
-                // never occurs on path sources, so they are resolved through their own (main
-                // package) resolution rather than this locked shortcut - skip them here.
-                .filter_map(|dependency| {
-                    let source = dependency.source?;
+                .map(|dependency| {
+                    let source = dependency.source.expect("source checked above");
                     let package_id =
                         PackageId::new(dependency.name.clone(), dependency.version.clone(), source);
-                    Some((
-                        package_id,
-                        DependencyVersionReq::exact(&dependency.version.clone()),
-                    ))
+                    (
+                        package_id.into(),
+                        DependencyVersionReq::exact(&dependency.version).into(),
+                    )
                 })
-                .collect_vec();
-            let constraints = deps
-                .into_iter()
-                .map(|(package_id, req)| (package_id.into(), req.into()))
                 .collect();
             return Ok(Dependencies::Available(constraints));
+        }
+
+        // A locked version normally does not have its summary requested. If the lockfile shortcut
+        // was rejected above, request that exact version before waiting for its current dependency
+        // metadata.
+        if locked.is_some() {
+            self.request_dependency(ManifestDependency::exact_for_package_id(
+                package_id,
+                DepKind::Normal,
+            ));
         }
 
         // Query summary.
