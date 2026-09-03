@@ -13,6 +13,7 @@ use std::sync::Arc;
 use tracing::{trace, trace_span};
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
+use crate::compiler::compilers::starknet_contract::{ClassHashUsage, ensure_forwarding_unused};
 use crate::compiler::compilers::{
     Artifacts, ArtifactsWriter, ContractSelector, ensure_gas_enabled, find_project_contracts,
 };
@@ -35,7 +36,8 @@ impl Compiler for TestCompiler {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn CloneableDatabase,
+        db: &mut dyn CloneableDatabase,
+        default_class_hash_usage: &ClassHashUsage,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let target_dir = unit.target_dir(ws);
@@ -143,6 +145,10 @@ impl Compiler for TestCompiler {
             )?;
         }
 
+        ensure_forwarding_unused(
+            default_class_hash_usage,
+            "Static forwarding is not supported in test targets.",
+        )?;
         Ok(())
     }
 }

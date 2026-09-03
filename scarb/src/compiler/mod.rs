@@ -1,3 +1,4 @@
+use crate::compiler::compilers::starknet_contract::ClassHashUsage;
 use crate::compiler::incremental::IncrementalContext;
 use crate::core::{TargetKind, Workspace};
 use crate::internal::offloader::Offloader;
@@ -26,7 +27,8 @@ pub trait Compiler: Sync {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn CloneableDatabase,
+        db: &mut dyn CloneableDatabase,
+        default_class_hash_usage: &ClassHashUsage,
         ws: &Workspace<'_>,
     ) -> Result<()>;
 }

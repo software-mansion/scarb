@@ -11,6 +11,7 @@ mod build_assets;
 mod build_script;
 mod build_starknet_contract;
 mod build_starknet_contract_allowed_libfuncs;
+mod build_starknet_contract_forwarding;
 mod build_starknet_external_contracts;
 mod build_targets;
 mod cache;

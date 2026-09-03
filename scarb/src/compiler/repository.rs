@@ -1,3 +1,4 @@
+use crate::compiler::compilers::starknet_contract::install_default_class_hash_plugin;
 use crate::compiler::compilers::{
     ExecutableCompiler, LibCompiler, StarknetContractCompiler, TestCompiler,
 };
@@ -57,6 +58,8 @@ impl CompilerRepository {
         let Some(compiler) = self.compilers.get(target_kind.as_str()) else {
             bail!("unknown compiler for target `{target_kind}`");
         };
+        // Installed here so every compiler gets a properly wired handle, not one a caller made up.
+        let default_class_hash_usage = install_default_class_hash_plugin(db);
         let cached_crates = ctx.cached_crates().to_vec();
         // We run incremental cache warmup in parallel with the compilation.
         // This operation is "fire and forget".
@@ -64,7 +67,7 @@ impl CompilerRepository {
         // block if needed.
         let warmup_db = db.dyn_clone();
         rayon::spawn(move || warmup_incremental_cache(warmup_db.as_ref(), cached_crates));
-        compiler.compile(unit, ctx, offloader, db, ws)?;
+        compiler.compile(unit, ctx, offloader, db, &default_class_hash_usage, ws)?;
         Ok(())
     }
 }
