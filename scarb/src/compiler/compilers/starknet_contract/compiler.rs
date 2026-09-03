@@ -6,8 +6,10 @@ use cairo_lang_semantic::items::module::ModuleSemantic;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::Visibility;
 use cairo_lang_semantic::resolve::ResolvedGenericItem::Module;
+use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::{ContractDeclaration, find_contracts, module_contract};
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
+use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_syntax::node::TypedSyntaxNode;
 use cairo_lang_syntax::node::ast::OptionAliasClause;
 use cairo_lang_utils::{CloneableDatabase, Intern};
@@ -17,17 +19,19 @@ use salsa::Database;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::Arc;
-use tracing::{debug, trace_span};
+use tracing::{debug, trace, trace_span};
 
 use super::contract_selector::ContractSelector;
 use crate::compiler::compilers::starknet_contract::artifacts_writer::Artifacts;
 use crate::compiler::compilers::starknet_contract::contract_selector::GLOB_PATH_SELECTOR;
-use crate::compiler::compilers::starknet_contract::forwarding::compile_with_forwarding;
+use crate::compiler::compilers::starknet_contract::forwarding::{
+    ClassHashUsage, compile_with_forwarding, ensure_forwarding_unused,
+};
 use crate::compiler::compilers::starknet_contract::validations::{
     check_allowed_libfuncs, check_compiler_config,
 };
 use crate::compiler::compilers::{ArtifactsWriter, ensure_gas_enabled};
-use crate::compiler::helpers::collect_main_crate_ids;
+use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::incremental::IncrementalContext;
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Workspace};
@@ -85,6 +89,7 @@ impl Compiler for StarknetContractCompiler {
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &mut dyn CloneableDatabase,
+        default_class_hash_usage: &ClassHashUsage,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;
@@ -110,16 +115,34 @@ impl Compiler for StarknetContractCompiler {
 
         let target_dir = unit.target_dir(ws);
 
-        let forwarding =
-            compile_with_forwarding(db, unit, &ctx, ws, props.build_external_contracts.clone())?;
-        let contracts = find_project_contracts(
-            db,
-            ws.config().ui(),
-            unit,
-            collect_main_crate_ids(unit, db),
-            props.build_external_contracts.clone(),
-        )?;
-        let (contract_paths, classes) = (forwarding.contract_paths, forwarding.classes);
+        // Each branch fetches contracts (the loud, warn-on-unmatched-selectors variant) exactly
+        // once, to avoid doubling that warning.
+        let (contracts, contract_paths, classes) = if props.forwarding {
+            let forwarding = compile_with_forwarding(
+                db,
+                unit,
+                &ctx,
+                ws,
+                props.build_external_contracts.clone(),
+            )?;
+            let contracts = find_project_contracts(
+                db,
+                ws.config().ui(),
+                unit,
+                collect_main_crate_ids(unit, db),
+                props.build_external_contracts.clone(),
+            )?;
+            (contracts, forwarding.contract_paths, forwarding.classes)
+        } else {
+            compile_without_forwarding(
+                db,
+                unit,
+                &ctx,
+                ws,
+                props.build_external_contracts.clone(),
+                default_class_hash_usage,
+            )?
+        };
 
         check_allowed_libfuncs(&props, &contracts, &classes, db, unit, ws)?;
 
@@ -171,6 +194,47 @@ impl Compiler for StarknetContractCompiler {
 
         Ok(())
     }
+}
+
+/// The non-forwarding compile path: a single parallel batch, as before this feature existed.
+#[allow(clippy::type_complexity)]
+fn compile_without_forwarding<'db>(
+    db: &'db dyn CloneableDatabase,
+    unit: &CairoCompilationUnit,
+    ctx: &Arc<IncrementalContext>,
+    ws: &Workspace<'_>,
+    external_contracts: Option<Vec<ContractSelector>>,
+    default_class_hash_usage: &ClassHashUsage,
+) -> Result<(
+    Vec<ContractDeclaration<'db>>,
+    Vec<String>,
+    Vec<ContractClass>,
+)> {
+    let main_crate_ids = collect_main_crate_ids(unit, db);
+    let compiler_config =
+        build_compiler_config(db, unit, &main_crate_ids, ctx, ctx.warning_collector(), ws);
+    let contracts = find_project_contracts(
+        db,
+        ws.config().ui(),
+        unit,
+        main_crate_ids.clone(),
+        external_contracts,
+    )?;
+    let contract_paths = contracts
+        .iter()
+        .map(|decl| decl.module_id().full_path(db).to_string())
+        .collect_vec();
+    trace!(contracts = ?contract_paths);
+    let span = trace_span!("compile_starknet");
+    let classes = {
+        let _guard = span.enter();
+        compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
+    };
+    ensure_forwarding_unused(
+        default_class_hash_usage,
+        "Set `forwarding = true` on this target.",
+    )?;
+    Ok((contracts, contract_paths, classes))
 }
 
 pub fn find_project_contracts<'db>(

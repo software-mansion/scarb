@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::{debug, trace_span};
 
+use crate::compiler::compilers::starknet_contract::ClassHashUsage;
 use crate::compiler::helpers::{
     build_compiler_config, collect_main_crate_ids, write_json, write_string,
 };
@@ -52,6 +53,9 @@ impl Compiler for LibCompiler {
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &mut dyn CloneableDatabase,
+        // A `lib` target compiles every free function regardless of reachability, so it's
+        // expected to touch any contract's unused class-hash accessor; never checked here.
+        _default_class_hash_usage: &ClassHashUsage,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;

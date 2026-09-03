@@ -26,7 +26,13 @@ impl CairoPlugin for BuiltinStarknetPlugin {
 struct BuiltinStarknetPluginInstance;
 impl CairoPluginInstance for BuiltinStarknetPluginInstance {
     fn plugin_suite(&self) -> PluginSuite {
-        starknet_plugin_suite()
+        // Travels with the real Starknet plugin so it reaches every component depending on
+        // `starknet`, including external ones, not just the main package.
+        let mut suite = starknet_plugin_suite();
+        suite.add(
+            crate::compiler::plugin::class_hash_forwarding::class_hash_forwarding_plugin_suite(),
+        );
+        suite
     }
 }
 
