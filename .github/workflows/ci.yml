@@ -81,7 +81,7 @@ jobs:
           cache-targets: false
           # Still save the dependency caches when compilation fails.
           cache-on-failure: true
-      - uses: taiki-e/install-action@v2.85.11
+      - uses: taiki-e/install-action@v2.87.1
         with:
           tool: nextest@0.9.143
       - name: nextest archive
@@ -142,7 +142,7 @@ jobs:
           # This job runs tests from the prebuilt nextest archive and never compiles the
           # workspace, so its `./target` stays empty.
           cache-targets: false
-      - uses: taiki-e/install-action@v2.85.11
+      - uses: taiki-e/install-action@v2.87.1
         with:
           tool: nextest@0.9.143
       - uses: actions/download-artifact@v8
@@ -201,7 +201,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - uses: taiki-e/install-action@v2.85.11
+      - uses: taiki-e/install-action@v2.87.1
         with:
           tool: nextest@0.9.143
       - uses: Swatinem/rust-cache@v2
@@ -233,7 +233,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - uses: taiki-e/install-action@v2.85.11
+      - uses: taiki-e/install-action@v2.87.1
         with:
           tool: nextest@0.9.143
       - uses: Swatinem/rust-cache@v2
@@ -373,7 +373,7 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@v2.85.11
+      - uses: taiki-e/install-action@v2.87.1
         with:
           tool: nextest@0.9.143
       - uses: actions/download-artifact@v8
