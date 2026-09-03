@@ -85,3 +85,4 @@ jobs:
         run: |
           cargo test -p scarb --profile=ci --test main proc_macro_v1_prebuilt::
           cargo test -p scarb --profile=ci --test main proc_macro_v2_prebuilt::
+
