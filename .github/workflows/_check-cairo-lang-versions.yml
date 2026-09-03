@@ -77,11 +77,16 @@ jobs:
           # A crate fails the check if it resolved to more than one version, more
           # than one source, or any source that isn't the crates.io registry
           # (e.g. a leftover git dependency).
-          jq -e '
+          bad=$(jq -c '
             map(select(
               (.versions | length) > 1
               or (.sources | length) > 1
               or (.sources[0] | startswith("registry+") | not)
             ))
-            | length == 0
-          ' <<< "$summary"
+          ' <<< "$summary")
+
+          if [ "$bad" != "[]" ]; then
+            echo "Cairo toolchain crates do not resolve to a single, registry-sourced version in Cargo.lock:"
+            jq . <<< "$bad"
+            exit 1
+          fi
