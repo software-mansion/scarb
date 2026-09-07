@@ -357,7 +357,7 @@ impl PubGrubDependencyProvider {
     }
 
     /// Return locked dependencies only when the lockfile has enough source information to rebuild
-    /// the dependency edges without consulting the current package summary.
+    /// the dependency edges unambiguously without consulting the current package summary.
     fn complete_locked_dependencies<'a>(
         &'a self,
         locked: &PackageLock,
@@ -374,6 +374,7 @@ impl PubGrubDependencyProvider {
             .collect::<HashSet<_>>();
 
         (locked_dependency_names == dependency_names
+            && dependencies.len() == dependency_names.len()
             && dependencies
                 .iter()
                 .all(|dependency| dependency.source.is_some()))
@@ -743,4 +744,62 @@ pub enum DependencyProviderError {
         "dependency `{name}` from `{source_kind}` source is not allowed when audit requirement is enabled"
     )]
     AuditRequirementInvalidSource { name: String, source_kind: String },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn complete_locked_dependencies_requires_one_entry_per_name() {
+        let dependency = PackageLock::builder()
+            .name(PackageName::new("dep"))
+            .version(Version::new(1, 0, 0))
+            .source(Some(SourceId::default_registry()))
+            .build();
+        let locked = PackageLock::builder()
+            .name(PackageName::new("parent"))
+            .version(Version::new(1, 0, 0))
+            .dependencies([dependency.name.clone()])
+            .build();
+        let newer = PackageLock {
+            version: Version::new(2, 0, 0),
+            ..dependency.clone()
+        };
+        let path_dependency = PackageLock {
+            source: None,
+            ..dependency.clone()
+        };
+        let other = PackageLock {
+            name: PackageName::new("other"),
+            ..dependency.clone()
+        };
+
+        for (packages, complete) in [
+            (vec![dependency.clone()], true),
+            (vec![dependency.clone(), other.clone()], true),
+            (vec![dependency.clone(), newer.clone()], false),
+            (vec![newer, dependency.clone()], false),
+            (vec![path_dependency], false),
+            (vec![], false),
+            (vec![other], false),
+        ] {
+            let (request_sink, _request_stream) = mpsc::channel(1);
+            let provider = PubGrubDependencyProvider::new(
+                HashSet::new(),
+                Arc::default(),
+                request_sink,
+                PatchMap::default(),
+                Lockfile::new(packages),
+                HashSet::new(),
+                false,
+                HashSet::new(),
+            );
+            let result = provider.complete_locked_dependencies(&locked);
+            assert_eq!(result.is_some(), complete, "{:?}", provider.lockfile);
+            if let Some(dependencies) = result {
+                assert_eq!(dependencies, vec![&dependency]);
+            }
+        }
+    }
 }
