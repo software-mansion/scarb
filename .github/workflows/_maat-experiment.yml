@@ -4,6 +4,8 @@ on:
     workflows: ["Publish Built-in Plugins"]
     types: [completed]
 
+permissions: {}
+
 jobs:
   trigger-maat-experiment:
     name: Trigger Maat experiment
