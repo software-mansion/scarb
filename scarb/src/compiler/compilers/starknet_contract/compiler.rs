@@ -115,8 +115,6 @@ impl Compiler for StarknetContractCompiler {
 
         let target_dir = unit.target_dir(ws);
 
-        // Each branch fetches contracts (the loud, warn-on-unmatched-selectors variant) exactly
-        // once, to avoid doubling that warning.
         let (contracts, contract_paths, classes) = if props.forwarding {
             let forwarding = compile_with_forwarding(
                 db,
@@ -247,7 +245,7 @@ pub fn find_project_contracts<'db>(
     find_project_contracts_inner(db, ui, unit, main_crate_ids, external_contracts, true)
 }
 
-pub(super) fn find_project_contracts_silent<'db>(
+pub fn find_project_contracts_silent<'db>(
     db: &'db dyn Database,
     ui: Ui,
     unit: &CairoCompilationUnit,

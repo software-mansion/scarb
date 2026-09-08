@@ -5,6 +5,7 @@
 use cairo_lang_defs::plugin::{
     MacroPlugin, MacroPluginMetadata, PluginGeneratedFile, PluginResult,
 };
+use indoc::formatdoc;
 use cairo_lang_filesystem::ids::SmolStrId;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
@@ -48,21 +49,24 @@ impl MacroPlugin for ClassHashForwardingPlugin {
         }
         let contract_name = item_module.name(db).text(db).long(db);
         let module_name = format!("{contract_name}{CLASS_HASH_MODULE_SUFFIX}");
-        let content = format!(
-            "#[doc(hidden)]\npub mod {module_name} {{\n\
-             \x20   #[allow(extern_outside_corelib)]\n\
-             \x20   extern fn {EXTERNALLY_PROVIDED_CONST}() -> starknet::ClassHash nopanic;\n\n\
-             \x20   pub fn class_hash() -> starknet::ClassHash {{\n\
-             \x20       {EXTERNALLY_PROVIDED_CONST}()\n\
-             \x20   }}\n\n\
-             \x20   #[feature(\"forward-impl\")]\n\
-             \x20   pub impl ForwardingClassHashImpl<T> of starknet::ForwardingClassHash<T> {{\n\
-             \x20       fn class_hash(self: @T) -> starknet::ClassHash {{\n\
-             \x20           class_hash()\n\
-             \x20       }}\n\
-             \x20   }}\n\
-             }}\n"
-        );
+        let content = formatdoc! {"
+            #[doc(hidden)]
+            pub mod {module_name} {{
+                #[allow(extern_outside_corelib)]
+                extern fn {EXTERNALLY_PROVIDED_CONST}() -> starknet::ClassHash nopanic;
+
+                pub fn class_hash() -> starknet::ClassHash {{
+                    {EXTERNALLY_PROVIDED_CONST}()
+                }}
+
+                #[feature(\"forward-impl\")]
+                pub impl ForwardingClassHashImpl<T> of starknet::ForwardingClassHash<T> {{
+                    fn class_hash(self: @T) -> starknet::ClassHash {{
+                        class_hash()
+                    }}
+                }}
+            }}
+        "};
         PluginResult {
             code: Some(PluginGeneratedFile {
                 name: format!("{contract_name}_class_hash"),

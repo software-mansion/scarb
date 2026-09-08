@@ -31,7 +31,7 @@ use crate::compiler::incremental::IncrementalContext;
 use crate::compiler::plugin::class_hash_forwarding::CLASS_HASH_MODULE_SUFFIX;
 use crate::core::Workspace;
 
-pub(super) struct ForwardingCompilation {
+pub struct ForwardingCompilation {
     pub contract_paths: Vec<String>,
     pub classes: Vec<ContractClass>,
 }
@@ -41,7 +41,7 @@ struct DiscoveredContract {
     class: ContractClass,
 }
 
-pub(super) fn compile_with_forwarding(
+pub fn compile_with_forwarding(
     db: &mut dyn CloneableDatabase,
     unit: &CairoCompilationUnit,
     ctx: &Arc<IncrementalContext>,
@@ -288,7 +288,7 @@ fn describe_key(key: &str) -> String {
 
 /// Handle returned by [`install_default_class_hash_plugin`], shared with (not reinstalled by) any
 /// caller that later wants to check it via [`ensure_forwarding_unused`].
-pub(crate) type ClassHashUsage = Arc<Mutex<HashSet<String>>>;
+pub type ClassHashUsage = Arc<Mutex<HashSet<String>>>;
 
 /// Default fallback so the class-hash extern always resolves to *something* (a contract's
 /// `class_hash()` can get compiled even when unused, e.g. by a `lib` target). Answers `0` and
@@ -298,7 +298,7 @@ pub(crate) type ClassHashUsage = Arc<Mutex<HashSet<String>>>;
 /// Call once per db (`CompilerRepository::compile` does this) and reuse the returned handle -
 /// installing a second plugin on the same db has caused a process abort when that db later loads
 /// cached incremental artifacts.
-pub(crate) fn install_default_class_hash_plugin(db: &mut dyn CloneableDatabase) -> ClassHashUsage {
+pub fn install_default_class_hash_plugin(db: &mut dyn CloneableDatabase) -> ClassHashUsage {
     let recorded = Arc::new(Mutex::new(HashSet::new()));
     install_recording_plugin(db, recorded.clone());
     recorded
@@ -307,7 +307,7 @@ pub(crate) fn install_default_class_hash_plugin(db: &mut dyn CloneableDatabase) 
 /// Errors if the class-hash extern was actually used, i.e. some contract really does forward.
 /// Only call after a reachability-scoped compile (starknet-contract, test, executable) - never
 /// after a whole-program one (`lib`), which would false-positive on any unused accessor.
-pub(crate) fn ensure_forwarding_unused(recorded: &ClassHashUsage, help: &str) -> Result<()> {
+pub fn ensure_forwarding_unused(recorded: &ClassHashUsage, help: &str) -> Result<()> {
     let used = recorded.lock().expect("recording provider mutex poisoned");
     let contracts = used
         .iter()

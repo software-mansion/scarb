@@ -5,5 +5,5 @@ pub use test::*;
 
 mod executable;
 mod lib;
-pub(crate) mod starknet_contract;
+pub mod starknet_contract;
 mod test;
