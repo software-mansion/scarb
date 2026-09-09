@@ -5,11 +5,11 @@
 use cairo_lang_defs::plugin::{
     MacroPlugin, MacroPluginMetadata, PluginGeneratedFile, PluginResult,
 };
-use indoc::formatdoc;
 use cairo_lang_filesystem::ids::SmolStrId;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::{Terminal, ast};
+use indoc::formatdoc;
 use salsa::Database;
 
 /// Attribute Cairo's Starknet plugin uses to mark a contract module (stable, kept as a literal).
