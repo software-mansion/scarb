@@ -1,3 +1,4 @@
+use crate::compiler::compilers::starknet_contract::{ClassHashUsage, ensure_forwarding_unused};
 use crate::compiler::db::{has_plugin, is_executable_plugin};
 use crate::compiler::helpers::write_json;
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
@@ -47,7 +48,8 @@ impl Compiler for ExecutableCompiler {
         unit: &CairoCompilationUnit,
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
-        db: &dyn CloneableDatabase,
+        db: &mut dyn CloneableDatabase,
+        default_class_hash_usage: &ClassHashUsage,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         ensure!(
@@ -88,6 +90,10 @@ impl Compiler for ExecutableCompiler {
                 },
             )?)
         };
+        ensure_forwarding_unused(
+            default_class_hash_usage,
+            "Static forwarding is not supported in executable targets.",
+        )?;
 
         let span = trace_span!("serialize_executable_json");
         {

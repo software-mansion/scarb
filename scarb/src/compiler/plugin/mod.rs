@@ -15,6 +15,7 @@ use crate::core::{Package, PackageId, TargetKind, Workspace};
 use self::builtin::{BuiltinStarknetPlugin, BuiltinTestPlugin};
 
 pub mod builtin;
+pub mod class_hash_forwarding;
 pub mod collection;
 pub mod proc_macro;
 

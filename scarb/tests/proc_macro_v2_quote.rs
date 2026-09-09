@@ -519,13 +519,13 @@ fn quote_macro_with_cairo_specific_syntax() {
                       let expected = Square { side_length: 8 };
                       assert!(
                           result == expected,
-                          "Rectangle with equal width and height should be convertible to a square.",
+                          "Rectangle with equal width and height should be convertible to a square."
                       );
                       let rectangle = Rectangle { width: 5, height: 8 };
                       let result: Option<Square> = rectangle.try_into();
                       assert!(
                           result.is_none(),
-                          "Rectangle with different width and height should not be convertible to a square.",
+                          "Rectangle with different width and height should not be convertible to a square."
                       );
                   }
                   trait Circle {
@@ -632,7 +632,7 @@ fn quote_macro_parse_incoming_token_stream() {
         .stdout_eq(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
-            error[E2042]: Unexpected return type. Expected: "core::integer::u32", found: "core::bool".
+            error[E2042]: Unexpected return type. Expected: "u32", found: "bool".
              --> [..]lib.cairo:4:3
               true
               ^^^^
