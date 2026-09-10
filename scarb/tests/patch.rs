@@ -750,11 +750,20 @@ fn patch_core_with_self() {
         .version("2.0.0")
         .no_core()
         .dep("dep", Dep.version("1").registry(&registry))
-        .manifest_extra(indoc! {r#"
+        .build(&t);
+    let manifest_path = t.child("Scarb.toml");
+    let unpatched_manifest = std::fs::read_to_string(manifest_path.path()).unwrap();
+    std::fs::write(
+        manifest_path.path(),
+        format!(
+            "{unpatched_manifest}\n{}",
+            indoc! {r#"
             [patch.scarbs-xyz]
             core = { path = "." }
-        "#})
-        .build(&t);
+        "#}
+        ),
+    )
+    .unwrap();
     // The first resolution writes a lockfile in which the patched `core` is recorded as a path
     // source (i.e. without a `source` entry). The second resolution reads it back, exercising the
     // locked-dependency shortcut for `dep` whose (locked) `core` dependency has no source.
@@ -777,6 +786,153 @@ fn patch_core_with_self() {
         .collect_vec();
     // `dep`'s implicit `core` dependency must resolve to the local package, so there is a single
     // `core` in the graph (the local `2.0.0` one) and no `core` coming from the `std` source.
+    let expected = vec![
+        "core 2.0.0 (path+file:[..]Scarb.toml)".to_string(),
+        "dep 1.0.0 (registry+file:[..])".to_string(),
+    ];
+    assert_eq!(packages.len(), expected.len());
+    for (expected, real) in zip(&expected, packages) {
+        Assert::new().eq(real, expected);
+    }
+
+    // Removing the patch must invalidate the old path-based dependency edge. The registry package
+    // once again depends on `core` from `std`, which conflicts with the root path package.
+    std::fs::write(manifest_path.path(), unpatched_manifest).unwrap();
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: found dependencies on the same package `core` coming from incompatible sources:
+            source 1: [..]Scarb.toml
+            source 2: std
+        "#});
+}
+
+#[test]
+fn patch_core_with_self_via_dev_dep() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("dep")
+            .version("1.0.0")
+            .build(t);
+    });
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("core")
+        .version("2.0.0")
+        .no_core()
+        .dev_dep("dep", Dep.version("1").registry(&registry))
+        .build(&t);
+    let manifest_path = t.child("Scarb.toml");
+    let unpatched_manifest = std::fs::read_to_string(manifest_path.path()).unwrap();
+    // Without the patch, the local `core` and `dep`'s implicit `core` from `std` conflict.
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: found dependencies on the same package `core` coming from incompatible sources:
+            source 1: [..]Scarb.toml
+            source 2: std
+        "#});
+    std::fs::write(
+        manifest_path.path(),
+        format!(
+            "{unpatched_manifest}\n{}",
+            indoc! {r#"
+            [patch.scarbs-xyz]
+            core = { path = "." }
+        "#}
+        ),
+    )
+    .unwrap();
+    // With the patch, the lockfile is written with `core` as a path source (no `source` entry).
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+    // Removing the patch must not silently reuse the stale locked path-based edge.
+    std::fs::write(manifest_path.path(), unpatched_manifest).unwrap();
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: found dependencies on the same package `core` coming from incompatible sources:
+            source 1: [..]Scarb.toml
+            source 2: std
+        "#});
+}
+
+#[test]
+fn patch_core_with_self_readded_after_removal() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("dep")
+            .version("1.0.0")
+            .build(t);
+    });
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("core")
+        .version("2.0.0")
+        .no_core()
+        .dep("dep", Dep.version("1").registry(&registry))
+        .build(&t);
+    let manifest_path = t.child("Scarb.toml");
+    let unpatched_manifest = std::fs::read_to_string(manifest_path.path()).unwrap();
+    let patched_manifest = format!(
+        "{unpatched_manifest}\n{}",
+        indoc! {r#"
+        [patch.scarbs-xyz]
+        core = { path = "." }
+    "#}
+    );
+    // Build with patch — success.
+    std::fs::write(manifest_path.path(), &patched_manifest).unwrap();
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+    // Remove patch — must detect the source conflict even with the lockfile present.
+    std::fs::write(manifest_path.path(), &unpatched_manifest).unwrap();
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: found dependencies on the same package `core` coming from incompatible sources:
+            source 1: [..]Scarb.toml
+            source 2: std
+        "#});
+    // Re-add the patch — must succeed again, reusing the lockfile.
+    std::fs::write(manifest_path.path(), &patched_manifest).unwrap();
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+    let metadata = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let packages = metadata
+        .packages
+        .into_iter()
+        .map(|p| p.id.to_string())
+        .sorted()
+        .collect_vec();
     let expected = vec![
         "core 2.0.0 (path+file:[..]Scarb.toml)".to_string(),
         "dep 1.0.0 (registry+file:[..])".to_string(),
