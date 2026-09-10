@@ -103,7 +103,8 @@ jobs:
       - setup-matrix
       - build-test
     env:
-      SCCACHE_GHA_ENABLED: "true"
+      # Note there is no `SCCACHE_GHA_ENABLED` here on purpose - see the note on the `sccache`
+      # step below.
       RUSTC_WRAPPER: "sccache"
     strategy:
       fail-fast: false
@@ -130,8 +131,15 @@ jobs:
       #
       # `sccache` caches individual `rustc` invocations instead of directories, keyed by
       # compiler, flags and source hash rather than by location on disk. One compilation of a
-      # given dependency is therefore reused by all of those temporary target directories, as
-      # well as across test partitions and across workflow runs.
+      # given dependency is therefore reused by all of those temporary target directories.
+      #
+      # This deliberately uses sccache's local, on-runner cache only, without
+      # `SCCACHE_GHA_ENABLED`. Measured over the runs that followed #3238, the GitHub Actions
+      # backend bought this job no cross-run reuse at all: the hit rate sat at 36-50% and never
+      # improved, with the cold first run scoring highest of all - meaning the hits are in-job
+      # deduplication, which the local cache gives us for free. In exchange it wrote ~2900 cache
+      # objects per run, which pushed the repository over GitHub's 10 GB Actions cache quota and
+      # evicted the entries that do pay off (see the `build-test` job).
       #
       # Must run before any step that may invoke Cargo, as it puts `sccache` on `PATH`.
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
@@ -157,6 +165,12 @@ jobs:
   test-doc:
     name: doc tests
     runs-on: ubuntu-latest
+    env:
+      # Nothing in this job reads debug info, and it is what made this job's `rust-cache`
+      # archive one of the three largest in the repository (3.7 GB of the 10 GB Actions cache
+      # quota between them). `sccache` cannot take over here - neither `clippy-driver` nor
+      # `rustdoc` invocations are cacheable by it - so keep the target cache, just make it small.
+      CARGO_PROFILE_DEV_DEBUG: "0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -277,6 +291,12 @@ jobs:
 
   check-rust:
     runs-on: ubuntu-latest
+    env:
+      # Nothing in this job reads debug info, and it is what made this job's `rust-cache`
+      # archive one of the three largest in the repository (3.7 GB of the 10 GB Actions cache
+      # quota between them). `sccache` cannot take over here - neither `clippy-driver` nor
+      # `rustdoc` invocations are cacheable by it - so keep the target cache, just make it small.
+      CARGO_PROFILE_DEV_DEBUG: "0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -316,6 +336,12 @@ jobs:
   check-rust-nightly:
     name: check-rust (nightly)
     runs-on: ubuntu-latest
+    env:
+      # Nothing in this job reads debug info, and it is what made this job's `rust-cache`
+      # archive one of the three largest in the repository (3.7 GB of the 10 GB Actions cache
+      # quota between them). `sccache` cannot take over here - neither `clippy-driver` nor
+      # `rustdoc` invocations are cacheable by it - so keep the target cache, just make it small.
+      CARGO_PROFILE_DEV_DEBUG: "0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
