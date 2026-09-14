@@ -417,7 +417,7 @@ fn compile_fail() {
         filtered,
         indoc! {r#"
             [..] Running 2 doc examples for `hello_world`
-            error[E2041]: Unexpected argument type. Expected: "core::integer::i32", found: "core::bool".
+            error[E2041]: Unexpected argument type. Expected: "i32", found: "bool".
              --> [..]lib.cairo[..]
                 is_odd(true);
                        ^^^^
