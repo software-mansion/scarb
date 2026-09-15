@@ -150,7 +150,7 @@ stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev
 stwo-cairo-prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "467d5c6d" }
 syn = { version = "3", default-features = false }
 tar = "0.4"
-target-triple = "1.0"
+target-triple = "2.0"
 tempfile = "3"
 test-case = "3"
 thiserror = "2"
@@ -178,7 +178,7 @@ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System"
 xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "8", default-features = false, features = ["deflate"] }
-zstd = "0.13"
+zstd = "0.14"
 
 [workspace.dependencies.reqwest]
 version = "0.12"
