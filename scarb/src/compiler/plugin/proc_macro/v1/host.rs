@@ -1,4 +1,4 @@
-use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
+use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind};
 use crate::compiler::plugin::proc_macro::v1::FromSyntaxNode;
 use crate::compiler::plugin::proc_macro::{
     DeclaredProcMacroInstances, ExpansionQuery, FULL_PATH_MARKER_KEY, ProcMacroInstance,

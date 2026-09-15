@@ -1,17 +1,17 @@
 use anyhow::{Context, Result};
 use std::sync::{Arc, Mutex};
 
-use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
-use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
-use scarb_proc_macro_server_types::conversions::{diagnostic_v1_to_v2, token_stream_v2_to_v1};
-use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandAttribute};
+use cairo_lang_macro::{TextSpan, TokenStream};
+use scarb_proc_macro_server_types::methods::{ProcMacroResult, SpannedTokenStream, expand::ExpandAttribute};
 
-use super::{Handler, interface_code_mapping_from_cairo};
-use crate::compiler::plugin::proc_macro::v2::generate_code_mappings;
+use super::Handler;
 use crate::compiler::plugin::proc_macro::{
     ExpansionKind, ExpansionQuery, ProcMacroApiVersion, ProcMacroInstance,
 };
 use crate::core::Config;
+use crate::ops::proc_macro_server::conversions::{
+    diagnostic_v1_to_v2, token_stream_span, token_stream_v1_to_spanned, token_stream_v2_to_v1,
+};
 use crate::ops::store::ProcMacroStore;
 
 impl Handler for ExpandAttribute {
@@ -37,13 +37,9 @@ impl Handler for ExpandAttribute {
             })?;
 
         match proc_macro_instance.api_version() {
-            ProcMacroApiVersion::V1 => expand_attribute_v1(
-                &proc_macro_instance,
-                hash,
-                attr,
-                token_stream_v2_to_v1(&args),
-                token_stream_v2_to_v1(&item),
-            ),
+            ProcMacroApiVersion::V1 => {
+                expand_attribute_v1(&proc_macro_instance, hash, attr, args, item)
+            }
             ProcMacroApiVersion::V2 => expand_attribute_v2(
                 &proc_macro_instance,
                 hash,
@@ -60,17 +56,21 @@ fn expand_attribute_v1(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     fingerprint: u64,
     attr: String,
-    args: TokenStreamV1,
-    item: TokenStreamV1,
+    args: TokenStream,
+    item: TokenStream,
 ) -> Result<ProcMacroResult> {
-    let result = proc_macro_instance
-        .try_v1()?
-        .generate_code(attr.into(), args, item);
+    // A v1 macro sees the item as flat text, so the whole expansion is attributed back to the
+    // whole item it was applied to.
+    let origin = token_stream_span(&item).unwrap_or_else(|| TextSpan::new(0, 0));
+    let result = proc_macro_instance.try_v1()?.generate_code(
+        attr.into(),
+        token_stream_v2_to_v1(&args),
+        token_stream_v2_to_v1(&item),
+    );
 
     Ok(ProcMacroResult {
-        token_stream: result.token_stream,
+        token_stream: token_stream_v1_to_spanned(&result.token_stream, origin),
         diagnostics: result.diagnostics.iter().map(diagnostic_v1_to_v2).collect(),
-        code_mappings: None,
         fingerprint,
     })
 }
@@ -80,26 +80,17 @@ fn expand_attribute_v2(
     fingerprint: u64,
     attr: String,
     adapted_call_site: TextSpan,
-    args: TokenStreamV2,
-    item: TokenStreamV2,
+    args: TokenStream,
+    item: TokenStream,
 ) -> Result<ProcMacroResult> {
-    let result = proc_macro_instance.try_v2()?.generate_code(
-        attr.into(),
-        adapted_call_site.clone(),
-        args,
-        item,
-    );
+    let result =
+        proc_macro_instance
+            .try_v2()?
+            .generate_code(attr.into(), adapted_call_site, args, item);
 
-    let code_mappings = generate_code_mappings(&result.token_stream, adapted_call_site);
     Ok(ProcMacroResult {
-        token_stream: token_stream_v2_to_v1(&result.token_stream),
+        token_stream: SpannedTokenStream::from_token_stream(&result.token_stream),
         diagnostics: result.diagnostics,
-        code_mappings: Some(
-            code_mappings
-                .into_iter()
-                .map(interface_code_mapping_from_cairo)
-                .collect(),
-        ),
         fingerprint,
     })
 }

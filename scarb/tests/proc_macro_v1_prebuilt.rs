@@ -2,9 +2,9 @@ use assert_fs::TempDir;
 use assert_fs::fixture::{ChildPath, FileWriteStr, PathCreateDir};
 use assert_fs::prelude::PathChild;
 use cairo_lang_macro::{TextSpan, Token, TokenStream as TokenStreamV2, TokenTree};
-use cairo_lang_macro_v1::TokenStream;
 use indoc::indoc;
 use libloading::library_filename;
+use scarb_proc_macro_server_types::methods::SpannedTokenStream;
 use scarb_proc_macro_server_types::methods::expand::{ExpandInline, ExpandInlineMacroParams};
 use scarb_proc_macro_server_types::scope::{ProcMacroScope, Workspace};
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
@@ -239,10 +239,12 @@ fn load_prebuilt_proc_macros() {
             },
             name: "some".to_string(),
             args,
-            call_site: span,
+            call_site: span.clone(),
         })
         .unwrap();
 
     assert_eq!(response.diagnostics, vec![]);
-    assert_eq!(response.token_stream, TokenStream::new("42".to_string()));
+    // This macro uses the v1 api, which reports no spans, so the server attributes the whole
+    // expansion to the macro call.
+    assert_eq!(response.token_stream, SpannedTokenStream::unspanned("42", span));
 }

@@ -1,4 +1,4 @@
-use crate::compiler::plugin::proc_macro::v2::{ProcMacroHostPlugin, ProcMacroId};
+use crate::compiler::plugin::proc_macro::v2::{DylibBackend, ProcMacroId};
 use crate::core::PackageId;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::GeneratedFileAuxData;
@@ -76,7 +76,7 @@ impl IntoIterator for EmittedAuxData {
     }
 }
 
-impl ProcMacroHostPlugin {
+impl DylibBackend {
     #[tracing::instrument(level = "trace", skip_all)]
     pub(crate) fn collect_aux_data(
         &self,

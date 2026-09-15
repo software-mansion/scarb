@@ -16,7 +16,6 @@ pub mod incremental;
 pub mod plugin;
 mod profile;
 mod repository;
-mod syntax;
 
 pub trait Compiler: Sync {
     fn target_kind(&self) -> TargetKind;

@@ -1,22 +1,12 @@
-mod attribute;
-mod aux_data;
-mod conversion;
-pub mod derive;
-mod inline;
-mod post;
-mod span_utils;
+pub(crate) mod attribute;
+pub(crate) mod derive;
+pub(crate) mod inline;
+
+use std::collections::HashSet;
+use std::fmt::Debug;
+use std::sync::Arc;
 
 use attribute::*;
-pub use aux_data::ProcMacroAuxData;
-use inline::*;
-use serde::{Deserialize, Serialize};
-
-use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
-use crate::compiler::plugin::proc_macro::{
-    DeclaredProcMacroInstances, ExpansionQuery, ProcMacroInstance,
-};
-use crate::core::{PackageId, edition_variant};
-use anyhow::{Result, ensure};
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
 use cairo_lang_filesystem::db::Edition;
 use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin, SmolStrId};
@@ -28,80 +18,33 @@ use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::node::ast::{MaybeImplBody, MaybeTraitBody};
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::{TypedStablePtr, TypedSyntaxNode, ast};
+use inline::expand_module_level_inline_macro;
+pub use inline::ProcMacroInlinePlugin;
 use itertools::Itertools;
 use salsa::Database;
 use scarb_stable_hash::short_hash;
-use std::collections::{HashMap, HashSet};
-use std::fmt::Debug;
-use std::sync::{Arc, RwLock};
 
-const DERIVE_ATTR: &str = "derive";
+use crate::backend::{ExpansionId, ProcMacroBackend};
+use crate::expansion::ExpansionQuery;
+
+pub(crate) const DERIVE_ATTR: &str = "derive";
 
 /// A Cairo compiler plugin controlling the procedural macro execution.
 ///
 /// This plugin decides which macro plugins (if any) should be applied to the processed AST item.
 /// It then redirects the item to the appropriate macro plugin for code expansion.
 #[derive(Debug)]
-pub struct ProcMacroHostPlugin {
-    instances: Vec<Arc<ProcMacroInstance>>,
-    full_path_markers: RwLock<HashMap<PackageId, Vec<String>>>,
+pub struct ProcMacroHostPlugin<B: ProcMacroBackend> {
+    backend: Arc<B>,
 }
 
-impl DeclaredProcMacroInstances for ProcMacroHostPlugin {
-    fn instances(&self) -> &[Arc<ProcMacroInstance>] {
-        &self.instances
+impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
+    pub fn new(backend: Arc<B>) -> Self {
+        Self { backend }
     }
-}
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct ProcMacroId {
-    pub package_id: PackageId,
-    pub expansion: Expansion,
-}
-
-impl ProcMacroId {
-    pub fn new(package_id: PackageId, expansion: Expansion) -> Self {
-        Self {
-            package_id,
-            expansion,
-        }
-    }
-}
-
-impl ProcMacroHostPlugin {
-    pub fn try_new(macros: Vec<Arc<ProcMacroInstance>>) -> Result<Self> {
-        // Validate expansions.
-        let mut expansions = macros
-            .iter()
-            .flat_map(|m| {
-                m.get_expansions()
-                    .iter()
-                    .map(|e| ProcMacroId::new(m.package_id(), e.clone()))
-                    .collect_vec()
-            })
-            .collect::<Vec<_>>();
-        expansions.sort_unstable_by_key(|e| (e.expansion.cairo_name.clone(), e.package_id));
-        ensure!(
-            expansions
-                .windows(2)
-                .all(|w| w[0].expansion.cairo_name != w[1].expansion.cairo_name),
-            "duplicate expansions defined for procedural macros: {duplicates}",
-            duplicates = expansions
-                .windows(2)
-                .filter(|w| w[0].expansion.cairo_name == w[1].expansion.cairo_name)
-                .map(|w| format!(
-                    "{} ({} and {})",
-                    w[0].expansion.cairo_name.as_str(),
-                    w[0].package_id,
-                    w[1].package_id
-                ))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-        Ok(Self {
-            instances: macros,
-            full_path_markers: RwLock::new(Default::default()),
-        })
+    pub fn backend(&self) -> &B {
+        &self.backend
     }
 
     fn uses_proc_macros<'db>(
@@ -136,7 +79,7 @@ impl ProcMacroHostPlugin {
             _ => Default::default(),
         };
 
-        if !DeclaredProcMacroInstances::declared_attributes(self).into_iter().any(|declared_attr|
+        if !self.backend.declared_attributes().into_iter().any(|declared_attr|
             item_ast.has_attr(db, &declared_attr) || inner_attrs.contains(&SmolStrId::from(db, declared_attr))
         )
             // Plugins can implement own derives.
@@ -149,38 +92,35 @@ impl ProcMacroHostPlugin {
         true
     }
 
-    pub(crate) fn find_expansion(&self, query: &ExpansionQuery) -> Option<ProcMacroId> {
-        let instance = self.find_instance_with_expansion(query)?;
-        let expansion = instance.find_expansion(query)?;
-        Some(ProcMacroId::new(instance.package_id(), expansion.clone()))
+    pub fn find_expansion(&self, query: &ExpansionQuery) -> Option<B::Id> {
+        self.backend.find_expansion(query)
     }
 
     pub fn build_plugin_suite(macro_host: Arc<Self>) -> PluginSuite {
         let mut suite = PluginSuite::default();
         // Register inline macro plugins.
-        for proc_macro in &macro_host.instances {
-            let expansions = proc_macro
-                .get_expansions()
-                .iter()
-                .filter(|exp| matches!(exp.kind, ExpansionKind::Inline));
-            for expansion in expansions {
-                let plugin = Arc::new(ProcMacroInlinePlugin::new(
-                    proc_macro.clone(),
-                    expansion.clone(),
-                ));
-                suite.add_inline_macro_plugin_ex(expansion.cairo_name.as_str(), plugin);
-            }
+        for id in macro_host.backend.inline_macros() {
+            let cairo_name = id.expansion().cairo_name.clone();
+            let plugin = Arc::new(ProcMacroInlinePlugin::new(macro_host.backend.clone(), id));
+            suite.add_inline_macro_plugin_ex(cairo_name.as_str(), plugin);
         }
         // Register procedural macro host plugin.
         suite.add_plugin_ex(macro_host);
         suite
     }
 
-    pub fn instance(&self, package_id: PackageId) -> &ProcMacroInstance {
-        self.instances
-            .iter()
-            .find(|m| m.package_id() == package_id)
-            .expect("procedural macro must be registered in proc macro host")
+    pub(crate) fn expand(
+        &self,
+        db: &dyn Database,
+        id: &B::Id,
+        call_site: MacroTextSpan,
+        args: TokenStream,
+        item: TokenStream,
+        aux_data: &mut B::AuxData,
+    ) -> cairo_lang_macro::ProcMacroResult {
+        let result = self.backend.expand(db, id, call_site, args, item);
+        self.backend.on_expanded(id, &result, aux_data);
+        result
     }
 
     fn calculate_metadata<'db>(
@@ -196,7 +136,16 @@ impl ProcMacroHostPlugin {
     }
 }
 
-impl MacroPlugin for ProcMacroHostPlugin {
+/// Name of the edition, as understood by procedural macros.
+fn edition_variant(edition: Edition) -> String {
+    let edition = serde_json::to_value(edition).unwrap();
+    let serde_json::Value::String(edition) = edition else {
+        panic!("Edition should always be a string.")
+    };
+    edition
+}
+
+impl<B: ProcMacroBackend> MacroPlugin for ProcMacroHostPlugin<B> {
     #[tracing::instrument(level = "trace", skip_all)]
     fn generate_code<'db>(
         &self,
@@ -277,28 +226,31 @@ impl MacroPlugin for ProcMacroHostPlugin {
     }
 
     fn declared_attributes<'db>(&self, db: &'db dyn Database) -> Vec<SmolStrId<'db>> {
-        DeclaredProcMacroInstances::declared_attributes(self)
+        self.backend
+            .declared_attributes()
             .into_iter()
             .map(|s| SmolStrId::from(db, s))
             .collect()
     }
 
     fn declared_derives<'db>(&self, db: &'db dyn Database) -> Vec<SmolStrId<'db>> {
-        DeclaredProcMacroInstances::declared_derives(self)
+        self.backend
+            .declared_derives()
             .into_iter()
             .map(|s| SmolStrId::from(db, s))
             .collect()
     }
 
     fn executable_attributes<'db>(&self, db: &'db dyn Database) -> Vec<SmolStrId<'db>> {
-        DeclaredProcMacroInstances::executable_attributes(self)
+        self.backend
+            .executable_attributes()
             .into_iter()
             .map(|s| SmolStrId::from(db, s))
             .collect()
     }
 }
 
-pub fn generate_code_mappings(
+pub(crate) fn generate_code_mappings(
     token_stream: &TokenStream,
     call_site: MacroTextSpan,
 ) -> Vec<CodeMapping> {

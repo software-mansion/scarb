@@ -31,7 +31,9 @@ impl ProcMacroHostPlugin {
                 proc_macro::v1::ProcMacroHostPlugin::try_new(instances)?,
             )),
             ProcMacroApiVersion::V2 => Self::V2(Arc::new(
-                proc_macro::v2::ProcMacroHostPlugin::try_new(instances)?,
+                proc_macro::v2::ProcMacroHostPlugin::new(Arc::new(
+                    proc_macro::v2::DylibBackend::try_new(instances)?,
+                )),
             )),
         })
     }
@@ -39,7 +41,7 @@ impl ProcMacroHostPlugin {
     pub fn post_process(&self, db: &dyn SemanticGroup) -> Result<()> {
         match self {
             ProcMacroHostPlugin::V1(host) => host.post_process(db),
-            ProcMacroHostPlugin::V2(host) => host.post_process(db),
+            ProcMacroHostPlugin::V2(host) => host.backend().post_process(db),
         }
     }
 
@@ -148,7 +150,7 @@ impl DeclaredProcMacroInstances for ProcMacroHostPlugin {
     fn instances(&self) -> &[Arc<ProcMacroInstance>] {
         match self {
             ProcMacroHostPlugin::V1(host) => host.instances(),
-            ProcMacroHostPlugin::V2(host) => host.instances(),
+            ProcMacroHostPlugin::V2(host) => host.backend().instances(),
         }
     }
 }
