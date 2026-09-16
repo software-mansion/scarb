@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, ensure};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleId, NamedLanguageElementId};
-use cairo_lang_filesystem::ids::{CrateId, CrateLongId, SmolStrId};
+use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId, SmolStrId};
 use cairo_lang_semantic::items::module::ModuleSemantic;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::Visibility;
@@ -17,7 +17,7 @@ use itertools::Itertools;
 use rayon::prelude::*;
 use salsa::Database;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tracing::{debug, trace, trace_span};
 
@@ -116,21 +116,21 @@ impl Compiler for StarknetContractCompiler {
         let target_dir = unit.target_dir(ws);
 
         let (contracts, contract_paths, classes) = if props.forwarding {
-            let forwarding = compile_with_forwarding(
+            // Forwarding mutates the db between passes, which the declarations borrow, so it works
+            // on an owned selection and the declarations are looked up again afterwards.
+            let selected = SelectedContracts::new(
                 db,
-                unit,
-                &ctx,
-                ws,
-                props.build_external_contracts.clone(),
-            )?;
-            let contracts = find_project_contracts(
-                db,
-                ws.config().ui(),
-                unit,
-                collect_main_crate_ids(unit, db),
-                props.build_external_contracts.clone(),
-            )?;
-            (contracts, forwarding.contract_paths, forwarding.classes)
+                &find_project_contracts(
+                    db,
+                    ws.config().ui(),
+                    unit,
+                    collect_main_crate_ids(unit, db),
+                    props.build_external_contracts.clone(),
+                )?,
+            );
+            let classes = compile_with_forwarding(db, unit, &ctx, ws, &selected)?.classes;
+            let contracts = selected.declarations(db)?;
+            (contracts, selected.paths, classes)
         } else {
             compile_without_forwarding(
                 db,
@@ -235,33 +235,75 @@ fn compile_without_forwarding<'db>(
     Ok((contracts, contract_paths, classes))
 }
 
+/// Contracts found by [`find_project_contracts`], held without borrowing the db.
+///
+/// Contract declarations borrow the db, so a caller that mutates it in between - e.g. static
+/// forwarding, which swaps the class-hash plugin between passes - keeps this instead and looks the
+/// declarations up again afterwards.
+pub struct SelectedContracts {
+    /// Full paths of the contract modules, in the order the contracts were found.
+    pub paths: Vec<String>,
+    crates: Vec<CrateInput>,
+}
+
+impl SelectedContracts {
+    pub fn new<'db>(db: &'db dyn Database, contracts: &[ContractDeclaration<'db>]) -> Self {
+        Self {
+            paths: contracts
+                .iter()
+                .map(|decl| decl.module_id().full_path(db))
+                .collect_vec(),
+            crates: contracts
+                .iter()
+                .map(|decl| {
+                    decl.module_id()
+                        .owning_crate(db)
+                        .long(db)
+                        .clone()
+                        .into_crate_input(db)
+                })
+                .unique()
+                .collect_vec(),
+        }
+    }
+
+    /// All selected contracts' declarations, in `paths` order.
+    pub fn declarations<'db>(
+        &self,
+        db: &'db dyn Database,
+    ) -> Result<Vec<ContractDeclaration<'db>>> {
+        self.declarations_of(db, &self.paths)
+    }
+
+    /// Declarations of the selected contracts at `paths`, in that order.
+    pub fn declarations_of<'db>(
+        &self,
+        db: &'db dyn Database,
+        paths: &[String],
+    ) -> Result<Vec<ContractDeclaration<'db>>> {
+        let crate_ids = CrateInput::into_crate_ids(db, self.crates.iter().cloned());
+        let by_path: HashMap<String, ContractDeclaration<'db>> = find_contracts(db, &crate_ids)
+            .into_iter()
+            .map(|decl| (decl.module_id().full_path(db), decl))
+            .collect();
+        paths
+            .iter()
+            .map(|path| {
+                by_path
+                    .get(path)
+                    .cloned()
+                    .with_context(|| format!("failed to find contract `{path}`"))
+            })
+            .collect()
+    }
+}
+
 pub fn find_project_contracts<'db>(
     db: &'db dyn Database,
     ui: Ui,
     unit: &CairoCompilationUnit,
     main_crate_ids: Vec<CrateId<'db>>,
     external_contracts: Option<Vec<ContractSelector>>,
-) -> Result<Vec<ContractDeclaration<'db>>> {
-    find_project_contracts_inner(db, ui, unit, main_crate_ids, external_contracts, true)
-}
-
-pub fn find_project_contracts_silent<'db>(
-    db: &'db dyn Database,
-    ui: Ui,
-    unit: &CairoCompilationUnit,
-    main_crate_ids: Vec<CrateId<'db>>,
-    external_contracts: Option<Vec<ContractSelector>>,
-) -> Result<Vec<ContractDeclaration<'db>>> {
-    find_project_contracts_inner(db, ui, unit, main_crate_ids, external_contracts, false)
-}
-
-fn find_project_contracts_inner<'db>(
-    db: &'db dyn Database,
-    ui: Ui,
-    unit: &CairoCompilationUnit,
-    main_crate_ids: Vec<CrateId<'db>>,
-    external_contracts: Option<Vec<ContractSelector>>,
-    warn_unmatched_external_contracts: bool,
 ) -> Result<Vec<ContractDeclaration<'db>>> {
     let span = trace_span!("find_internal_contracts");
     let internal_contracts = {
@@ -393,7 +435,7 @@ fn find_project_contracts_inner<'db>(
             .iter()
             .filter(|selector| !matched_selectors.contains(*selector))
             .collect_vec();
-        if warn_unmatched_external_contracts && !never_matched.is_empty() {
+        if !never_matched.is_empty() {
             let never_matched = never_matched
                 .iter()
                 .map(|selector| selector.full_path())

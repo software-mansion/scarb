@@ -1502,9 +1502,12 @@ impl TomlManifest {
             }
         } else if auto_detect {
             // Auto-detect test target.
-            let mut external_contracts = targets
+            let contract_targets = targets
                 .iter()
                 .filter(|target| target.kind == TargetKind::STARKNET_CONTRACT)
+                .collect_vec();
+            let mut external_contracts = contract_targets
+                .iter()
                 .filter_map(|target| target.params.get("build-external-contracts"))
                 .filter_map(|value| value.as_array())
                 .flatten()
@@ -1512,6 +1515,10 @@ impl TomlManifest {
                 .sorted()
                 .dedup()
                 .collect_vec();
+            let forwarding = contract_targets
+                .iter()
+                .filter_map(|target| target.params.get("forwarding"))
+                .any(|value| value.as_bool() == Some(true));
             let source_path = self.lib.as_ref().and_then(|l| l.source_path.clone());
             let target_name: SmolStr = format!("{package_name}_unittest").into();
             let target_config = TomlTarget::<TomlExternalTargetParams> {
@@ -1519,6 +1526,7 @@ impl TomlManifest {
                 source_path,
                 params: TestTargetProps::default()
                     .with_build_external_contracts(external_contracts.clone())
+                    .with_forwarding(forwarding)
                     .try_into()?,
             };
             targets.extend(self.collect_target::<TomlExternalTargetParams>(
@@ -1550,6 +1558,7 @@ impl TomlManifest {
                         source_path: Some(source_path),
                         params: TestTargetProps::new(TestTargetType::Integration)
                             .with_build_external_contracts(external_contracts.clone())
+                            .with_forwarding(forwarding)
                             .try_into()?,
                     });
                 result

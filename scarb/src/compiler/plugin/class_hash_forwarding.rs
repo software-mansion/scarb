@@ -7,6 +7,7 @@ use cairo_lang_defs::plugin::{
 };
 use cairo_lang_filesystem::ids::SmolStrId;
 use cairo_lang_semantic::plugin::PluginSuite;
+use cairo_lang_sierra_generator::db::EXTERNALLY_PROVIDED_CONST;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::{Terminal, ast};
 use indoc::formatdoc;
@@ -19,9 +20,6 @@ const CONTRACT_ATTR: &str = "starknet::contract";
 /// A sibling, not a nested submodule: generated code attaches to the module *containing* the
 /// declaration that triggered it, not inside the declared module itself.
 pub const CLASS_HASH_MODULE_SUFFIX: &str = "__class_hash__";
-
-/// Must match `cairo_lang_sierra_generator::db::EXTERNALLY_PROVIDED_CONST`.
-const EXTERNALLY_PROVIDED_CONST: &str = "__externally_provided_const__";
 
 /// Plugin suite generating the class-hash sibling module for every Starknet contract.
 pub fn class_hash_forwarding_plugin_suite() -> PluginSuite {

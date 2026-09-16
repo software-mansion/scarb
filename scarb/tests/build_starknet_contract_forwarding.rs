@@ -1,5 +1,6 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
+use cairo_lang_sierra::program::{GenericArg, VersionedProgram};
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_utils::bigint::BigUintAsHex;
@@ -394,37 +395,6 @@ fn compile_test_target_with_contract_without_forwarding() {
     assert_eq!(tests.len(), 1);
 }
 
-#[test]
-fn compile_lib_target_with_contract_without_forwarding() {
-    let t = assert_fs::TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .edition("2023_01")
-        .version("0.1.0")
-        .manifest_extra(indoc! {r#"
-            [[target.lib]]
-        "#})
-        .dep_starknet()
-        .lib_cairo(indoc! {r#"
-            #[starknet::contract]
-            pub mod plain_contract {
-                #[storage]
-                struct Storage {}
-            }
-        "#})
-        .build(&t);
-
-    Scarb::quick_command()
-        .arg("build")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_eq(indoc! {r#"
-        [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished `dev` profile target(s) in [..]
-        "#});
-}
-
 // Regression: forwarding without `forwarding = true` used to silently embed `0` instead of erroring.
 
 const FORWARDING_CONTRACTS: &str = indoc! {r#"
@@ -487,7 +457,7 @@ fn starknet_contract_without_forwarding_flag_errors_instead_of_silently_wrong() 
 }
 
 #[test]
-fn test_target_cannot_use_forwarding() {
+fn test_target_without_forwarding_flag_errors() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
@@ -506,7 +476,169 @@ fn test_target_cannot_use_forwarding() {
         .failure()
         .stdout_eq(indoc! {r#"
         [..]
-        error: contract(s) use static forwarding but it did not run for this build: hello::counter_contract. Static forwarding is not supported in test targets.
+        error: contract(s) use static forwarding but it did not run for this build: hello::counter_contract. Set `forwarding = true` on the package's `starknet-contract` target (auto-detected test targets inherit it) or on this test target.
+        [..]
+        "#});
+}
+
+// Auto-detected test targets inherit `forwarding` from the `starknet-contract` target, so the
+// contracts built for tests (e.g. by `snforge`) embed the same class hashes as the real build.
+#[test]
+fn test_target_inherits_forwarding_and_embeds_target_class_hash() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+            forwarding = true
+        "#})
+        .dep_starknet()
+        .dep_cairo_test()
+        .lib_cairo(format!(
+            "{FORWARDING_CONTRACTS}\n{}",
+            indoc! {r#"
+            #[cfg(test)]
+            mod tests {
+                #[test]
+                fn proxy_knows_counter() {
+                    let hash: felt252 = super::counter_contract__class_hash__::class_hash().into();
+                    assert!(hash != 0);
+                }
+            }
+        "#}
+        ))
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+        [..] Compiling test(hello_unittest) hello v0.1.0 ([..])
+        [..]  Finished `dev` profile target(s) in [..]
+        "#});
+
+    let counter = t
+        .child("target/dev/hello_unittest_counter_contract.test.contract_class.json")
+        .assert_is_json::<ContractClass>();
+    let proxy = t
+        .child("target/dev/hello_unittest_static_proxy.test.contract_class.json")
+        .assert_is_json::<ContractClass>();
+    let real_hash = class_hash(&counter);
+    assert!(
+        proxy
+            .sierra_program
+            .contains(&BigUintAsHex::from(real_hash.to_biguint())),
+        "proxy's compiled program should contain counter_contract's real class hash"
+    );
+
+    // The test program itself embeds the same hash, not the `0` fallback.
+    let test_program = t
+        .child("target/dev/hello_unittest.test.sierra.json")
+        .read_to_string();
+    let test_program = serde_json::from_str::<VersionedProgram>(&test_program)
+        .unwrap()
+        .into_v1()
+        .unwrap()
+        .program;
+    let embedded = GenericArg::Value(real_hash.to_biguint().into());
+    assert!(
+        test_program
+            .type_declarations
+            .iter()
+            .any(|decl| decl.long_id.generic_args.contains(&embedded)),
+        "test program should contain counter_contract's real class hash"
+    );
+}
+
+#[test]
+fn explicit_test_target_can_enable_forwarding() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [[test]]
+            forwarding = true
+        "#})
+        .dep_starknet()
+        .dep_cairo_test()
+        .lib_cairo(FORWARDING_CONTRACTS)
+        .build(&t);
+
+    Scarb::quick_command()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/hello_static_proxy.test.contract_class.json")
+        .assert_is_json::<ContractClass>();
+}
+
+// Test code forwarding to a dependency's contract that is not in `build-external-contracts`.
+#[test]
+fn test_target_forwarding_to_unselected_contract_errors() {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let world = t.child("world");
+
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(indoc! {r#"
+            #[starknet::contract]
+            pub mod counter_contract {
+                #[storage]
+                struct Storage {}
+            }
+        "#})
+        .build(&hello);
+
+    ProjectBuilder::start()
+        .name("world")
+        .edition("2023_01")
+        .version("0.1.0")
+        .dep("hello", &hello)
+        .dep_starknet()
+        .dep_cairo_test()
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+            forwarding = true
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(test)]
+            mod tests {
+                #[test]
+                fn uses_dependency_class_hash() {
+                    let hash: felt252 = hello::counter_contract__class_hash__::class_hash().into();
+                    assert!(hash != 0);
+                }
+            }
+        "#})
+        .build(&world);
+
+    Scarb::quick_command()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&world)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+        [..]
+        error: forwarding to contract(s) that are not included in this build: hello::counter_contract. Add them with `build-external-contracts` or fix the forwarding target.
         [..]
         "#});
 }

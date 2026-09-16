@@ -9,22 +9,22 @@ use cairo_lang_defs::ids::{ExternFunctionId, TopLevelLanguageElementId};
 use cairo_lang_diagnostics::Maybe;
 use cairo_lang_semantic::TypeId;
 use cairo_lang_semantic::items::constant::ConstValueId;
-use cairo_lang_sierra_generator::db::{ExternalConstPlugin, SierraGenGroup};
+use cairo_lang_sierra_generator::db::{
+    EXTERNALLY_PROVIDED_CONST, ExternalConstPlugin, SierraGenGroup,
+};
 use cairo_lang_starknet::compile::compile_prepared_db;
-use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_utils::CloneableDatabase;
-use cairo_lang_utils::bigint::BigIntAsHex;
+use cairo_lang_utils::bigint::{BigIntAsHex, BigUintAsHex};
 use itertools::Itertools;
 use salsa::Database;
-use scarb_ui::Ui;
 use starknet_core::types::contract::SierraClass;
+use starknet_core::utils::starknet_keccak;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use tracing::{trace, trace_span};
 
-use super::compiler::find_project_contracts_silent;
-use super::contract_selector::ContractSelector;
+use super::compiler::SelectedContracts;
 use crate::compiler::CairoCompilationUnit;
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::incremental::IncrementalContext;
@@ -32,8 +32,11 @@ use crate::compiler::plugin::class_hash_forwarding::CLASS_HASH_MODULE_SUFFIX;
 use crate::core::Workspace;
 
 pub struct ForwardingCompilation {
-    pub contract_paths: Vec<String>,
+    /// Compiled classes, in the order of the selected contracts.
     pub classes: Vec<ContractClass>,
+    /// Class-hash accessors asked for on this db after the forwarding passes that do not belong
+    /// to any selected contract (see [`compile_with_forwarding`]).
+    pub unresolved: ClassHashUsage,
 }
 
 struct DiscoveredContract {
@@ -41,62 +44,40 @@ struct DiscoveredContract {
     class: ContractClass,
 }
 
+/// Compiles `contracts` with their forwarded class hashes resolved: contracts are compiled in
+/// dependency order, each pass supplying the hashes computed by the previous ones.
+///
+/// Leaves the resolved hashes installed on `db`, so anything compiled on it afterwards (e.g. a test
+/// program embedding these contracts) sees the same values. Requests for contracts outside
+/// `contracts` fall through to the returned `unresolved` handle instead of failing.
 pub fn compile_with_forwarding(
     db: &mut dyn CloneableDatabase,
     unit: &CairoCompilationUnit,
     ctx: &Arc<IncrementalContext>,
     ws: &Workspace<'_>,
-    external_contracts: Option<Vec<ContractSelector>>,
+    contracts: &SelectedContracts,
 ) -> Result<ForwardingCompilation> {
-    let main_crate_ids = collect_main_crate_ids(unit, db);
-    let contract_paths = {
-        let contracts = find_project_contracts_silent(
-            db,
-            ws.config().ui(),
-            unit,
-            main_crate_ids.clone(),
-            external_contracts.clone(),
-        )?;
-        contracts
-            .iter()
-            .map(|decl| decl.module_id().full_path(db).to_string())
-            .collect_vec()
-    };
-    trace!(contracts = ?contract_paths);
+    trace!(contracts = ?contracts.paths);
 
     {
+        let main_crate_ids = collect_main_crate_ids(unit, db);
         let mut diagnostics_config =
             build_compiler_config(db, unit, &main_crate_ids, ctx, ctx.warning_collector(), ws);
         ensure_diagnostics(db, &mut diagnostics_config.diagnostics_reporter)?;
     }
 
     let span = trace_span!("compile_starknet");
-    let classes = {
-        let _guard = span.enter();
-        compile_contracts_in_forwarding_order(
-            db,
-            unit,
-            ws.config().ui(),
-            external_contracts.clone(),
-            &contract_paths,
-        )?
-    };
-    install_default_class_hash_plugin(db);
-
-    Ok(ForwardingCompilation {
-        contract_paths,
-        classes,
-    })
+    let _guard = span.enter();
+    compile_contracts_in_forwarding_order(db, unit, contracts)
 }
 
 fn compile_contracts_in_forwarding_order(
     db: &mut dyn CloneableDatabase,
     unit: &CairoCompilationUnit,
-    ui: Ui,
-    external_contracts: Option<Vec<ContractSelector>>,
-    contract_paths: &[String],
-) -> Result<Vec<ContractClass>> {
-    let target_keys = contract_paths
+    contracts: &SelectedContracts,
+) -> Result<ForwardingCompilation> {
+    let target_keys = contracts
+        .paths
         .iter()
         .map(|contract_path| {
             (
@@ -106,32 +87,33 @@ fn compile_contracts_in_forwarding_order(
         })
         .collect::<HashMap<_, _>>();
 
-    // Discovery: compile each contract solo, answering 0 to any forwarding request while
-    // recording what was asked. Sequential and deliberately so: mutating a cloned db's plugin
-    // list from a parallel worker deadlocked (Salsa blocks a writer until sibling clones drop).
-    let mut discovered = HashMap::<String, DiscoveredContract>::new();
-    for contract_path in contract_paths {
-        let recorded = Arc::new(Mutex::new(HashSet::<String>::new()));
-        install_recording_plugin(db, recorded.clone());
-        let contract = find_project_contract_by_path(
-            db,
-            ui.clone(),
-            unit,
-            external_contracts.clone(),
-            contract_path,
-        )?;
-        let class = compile_prepared_db(db, &[&contract], silent_compiler_config(unit))?
-            .into_iter()
-            .exactly_one()?;
-        let deps = recorded
-            .lock()
-            .expect("recording provider mutex poisoned")
-            .clone();
-        discovered.insert(
-            class_hash_provider_key(contract_path),
-            DiscoveredContract { deps, class },
-        );
-    }
+    // Discovery: compile every contract in one parallel batch, answering each class-hash request
+    // with a placeholder unique to the requested contract. The plugin cannot tell which contract
+    // is asking, but a placeholder present in a compiled class is that class's dependency.
+    let discovery = Arc::new(DiscoveryConstPlugin::default());
+    db.set_external_const_plugins(vec![discovery.clone()]);
+    let classes = compile_prepared_db(
+        db,
+        &contracts.declarations(db)?.iter().collect_vec(),
+        silent_compiler_config(unit),
+    )?;
+    let placeholders = discovery.placeholders();
+    let discovered = contracts
+        .paths
+        .iter()
+        .zip(classes)
+        .map(|(contract_path, class)| {
+            let deps = placeholders
+                .iter()
+                .filter(|(_, placeholder)| class.sierra_program.contains(placeholder))
+                .map(|(key, _)| key.clone())
+                .collect();
+            (
+                class_hash_provider_key(contract_path),
+                DiscoveredContract { deps, class },
+            )
+        })
+        .collect::<HashMap<_, _>>();
 
     for (key, contract) in discovered.iter() {
         let contract_path = target_keys.get(key).expect("key exists");
@@ -159,7 +141,7 @@ fn compile_contracts_in_forwarding_order(
     let mut classes_by_key = HashMap::<String, ContractClass>::new();
     for (key, contract) in discovered.iter() {
         if contract.deps.is_empty() {
-            // Never invoked the recording provider, so this artifact is unaffected by it.
+            // Contains no placeholder, so this artifact is already final.
             known.insert(
                 key.clone(),
                 BigIntAsHex::from(starknet_class_hash(&contract.class)?.to_biguint()),
@@ -168,10 +150,10 @@ fn compile_contracts_in_forwarding_order(
         }
     }
 
-    let mut remaining = contract_paths
-        .iter()
-        .map(|contract| class_hash_provider_key(contract))
-        .filter(|key| !classes_by_key.contains_key(key))
+    let mut remaining = target_keys
+        .keys()
+        .filter(|key| !classes_by_key.contains_key(*key))
+        .cloned()
         .collect::<HashSet<_>>();
 
     while !remaining.is_empty() {
@@ -200,25 +182,22 @@ fn compile_contracts_in_forwarding_order(
 
         // A round's contracts only depend on prior rounds, never each other, so one install
         // covers the whole batch, compiled together like the non-forwarding path.
-        install_resolving_plugin(db, known.clone());
-        let ready_contracts = ready
+        db.set_external_const_plugins(vec![Arc::new(ResolvingConstPlugin {
+            known: known.clone(),
+        })]);
+        let ready_paths = ready
             .iter()
             .map(|key| {
-                let contract_path = target_keys
+                target_keys
                     .get(key)
-                    .expect("ready key must refer to a contract");
-                find_project_contract_by_path(
-                    db,
-                    ui.clone(),
-                    unit,
-                    external_contracts.clone(),
-                    contract_path,
-                )
+                    .expect("ready key must refer to a contract")
+                    .clone()
             })
-            .collect::<Result<Vec<_>>>()?;
+            .collect_vec();
+        let ready_contracts = contracts.declarations_of(db, &ready_paths)?;
         let classes = compile_prepared_db(
             db,
-            &ready_contracts.iter().collect::<Vec<_>>(),
+            &ready_contracts.iter().collect_vec(),
             silent_compiler_config(unit),
         )?;
 
@@ -232,7 +211,16 @@ fn compile_contracts_in_forwarding_order(
         }
     }
 
-    contract_paths
+    let unresolved: ClassHashUsage = Default::default();
+    db.set_external_const_plugins(vec![
+        Arc::new(ResolvingConstPlugin { known }),
+        Arc::new(RecordingConstPlugin {
+            recorded: unresolved.clone(),
+        }),
+    ]);
+
+    let classes = contracts
+        .paths
         .iter()
         .map(|contract_path| {
             let key = class_hash_provider_key(contract_path);
@@ -240,7 +228,11 @@ fn compile_contracts_in_forwarding_order(
                 .remove(&key)
                 .with_context(|| format!("missing compiled class for `{contract_path}`"))
         })
-        .collect()
+        .collect::<Result<Vec<_>>>()?;
+    Ok(ForwardingCompilation {
+        classes,
+        unresolved,
+    })
 }
 
 fn starknet_class_hash(class: &ContractClass) -> Result<starknet_core::types::Felt> {
@@ -249,37 +241,18 @@ fn starknet_class_hash(class: &ContractClass) -> Result<starknet_core::types::Fe
     Ok(class.class_hash()?)
 }
 
-fn find_project_contract_by_path<'db>(
-    db: &'db dyn CloneableDatabase,
-    ui: Ui,
-    unit: &CairoCompilationUnit,
-    external_contracts: Option<Vec<ContractSelector>>,
-    contract_path: &str,
-) -> Result<ContractDeclaration<'db>> {
-    find_project_contracts_silent(
-        db,
-        ui,
-        unit,
-        collect_main_crate_ids(unit, db),
-        external_contracts,
-    )?
-    .into_iter()
-    .find(|contract| contract.module_id().full_path(db) == contract_path)
-    .with_context(|| format!("failed to find contract `{contract_path}`"))
-}
-
 /// Full path of the reserved extern in the class-hash sibling module for `contract_path`.
 fn class_hash_provider_key(contract_path: &str) -> String {
     let (parent, leaf) = match contract_path.rsplit_once("::") {
         Some((parent, leaf)) => (format!("{parent}::"), leaf),
         None => (String::new(), contract_path),
     };
-    format!("{parent}{leaf}{CLASS_HASH_MODULE_SUFFIX}::__externally_provided_const__")
+    format!("{parent}{leaf}{CLASS_HASH_MODULE_SUFFIX}::{EXTERNALLY_PROVIDED_CONST}")
 }
 
 /// Contract path for a provider key, for diagnostics. Falls back to the raw key if malformed.
 fn describe_key(key: &str) -> String {
-    let suffix = format!("{CLASS_HASH_MODULE_SUFFIX}::__externally_provided_const__");
+    let suffix = format!("{CLASS_HASH_MODULE_SUFFIX}::{EXTERNALLY_PROVIDED_CONST}");
     let Some(without_suffix) = key.strip_suffix(&suffix) else {
         return key.to_string();
     };
@@ -299,8 +272,10 @@ pub type ClassHashUsage = Arc<Mutex<HashSet<String>>>;
 /// installing a second plugin on the same db has caused a process abort when that db later loads
 /// cached incremental artifacts.
 pub fn install_default_class_hash_plugin(db: &mut dyn CloneableDatabase) -> ClassHashUsage {
-    let recorded = Arc::new(Mutex::new(HashSet::new()));
-    install_recording_plugin(db, recorded.clone());
+    let recorded: ClassHashUsage = Default::default();
+    db.set_external_const_plugins(vec![Arc::new(RecordingConstPlugin {
+        recorded: recorded.clone(),
+    })]);
     recorded
 }
 
@@ -308,12 +283,7 @@ pub fn install_default_class_hash_plugin(db: &mut dyn CloneableDatabase) -> Clas
 /// Only call after a reachability-scoped compile (starknet-contract, test, executable) - never
 /// after a whole-program one (`lib`), which would false-positive on any unused accessor.
 pub fn ensure_forwarding_unused(recorded: &ClassHashUsage, help: &str) -> Result<()> {
-    let used = recorded.lock().expect("recording provider mutex poisoned");
-    let contracts = used
-        .iter()
-        .map(|key| describe_key(key))
-        .sorted()
-        .collect_vec();
+    let contracts = recorded_contracts(recorded);
     ensure!(
         contracts.is_empty(),
         "contract(s) use static forwarding but it did not run for this build: {}. {help}",
@@ -322,9 +292,33 @@ pub fn ensure_forwarding_unused(recorded: &ClassHashUsage, help: &str) -> Result
     Ok(())
 }
 
+/// Errors if, after [`compile_with_forwarding`], the class hash of a contract outside the
+/// compiled set was asked for, i.e. some code forwards to a contract this build does not know.
+pub fn ensure_forwarding_resolved(unresolved: &ClassHashUsage) -> Result<()> {
+    let contracts = recorded_contracts(unresolved);
+    ensure!(
+        contracts.is_empty(),
+        "forwarding to contract(s) that are not included in this build: {}. Add them with \
+         `build-external-contracts` or fix the forwarding target.",
+        contracts.join(", ")
+    );
+    Ok(())
+}
+
+fn recorded_contracts(recorded: &ClassHashUsage) -> Vec<String> {
+    recorded
+        .lock()
+        .expect("recording provider mutex poisoned")
+        .iter()
+        .map(|key| describe_key(key))
+        .sorted()
+        .collect_vec()
+}
+
+/// Answers `0` for every class-hash request, recording what was asked.
 #[derive(Debug)]
 struct RecordingConstPlugin {
-    recorded: Arc<Mutex<HashSet<String>>>,
+    recorded: ClassHashUsage,
 }
 
 impl ExternalConstPlugin for RecordingConstPlugin {
@@ -346,6 +340,45 @@ impl ExternalConstPlugin for RecordingConstPlugin {
     }
 }
 
+/// Answers every class-hash request with a placeholder unique to the requested contract, and
+/// remembers which placeholder stands for which contract.
+#[derive(Debug, Default)]
+struct DiscoveryConstPlugin {
+    placeholders: Mutex<HashMap<String, BigUintAsHex>>,
+}
+
+impl DiscoveryConstPlugin {
+    /// Placeholders handed out so far, by provider key.
+    fn placeholders(&self) -> HashMap<String, BigUintAsHex> {
+        self.placeholders
+            .lock()
+            .expect("discovery provider mutex poisoned")
+            .clone()
+    }
+}
+
+impl ExternalConstPlugin for DiscoveryConstPlugin {
+    fn provide<'db>(
+        &self,
+        db: &'db dyn Database,
+        extern_id: ExternFunctionId<'db>,
+        ty: TypeId<'db>,
+    ) -> Option<Maybe<ConstValueId<'db>>> {
+        let key = extern_id.full_path(db);
+        // Keyed by the accessor path, so it is stable and cannot collide across contracts. A
+        // clash with a genuine constant in user code is as unlikely as a hash collision.
+        let placeholder = BigUintAsHex::from(starknet_keccak(key.as_bytes()).to_biguint());
+        let value =
+            ConstValueId::from_int(db, ty, &BigIntAsHex::from(placeholder.value.clone()).value);
+        self.placeholders
+            .lock()
+            .expect("discovery provider mutex poisoned")
+            .insert(key, placeholder);
+        Some(Ok(value))
+    }
+}
+
+/// Answers class-hash requests from a fixed map, leaving unknown ones to the next plugin.
 #[derive(Debug)]
 struct ResolvingConstPlugin {
     known: HashMap<String, BigIntAsHex>,
@@ -358,22 +391,9 @@ impl ExternalConstPlugin for ResolvingConstPlugin {
         extern_id: ExternFunctionId<'db>,
         ty: TypeId<'db>,
     ) -> Option<Maybe<ConstValueId<'db>>> {
-        let path = extern_id.full_path(db);
-        // Unreachable: discovery already validated every dep as known before readiness.
-        let value = self
-            .known
-            .get(&path)
-            .unwrap_or_else(|| panic!("internal error: no resolved class hash for `{path}`"));
+        let value = self.known.get(&extern_id.full_path(db))?;
         Some(Ok(ConstValueId::from_int(db, ty, &value.value)))
     }
-}
-
-fn install_recording_plugin(db: &mut dyn CloneableDatabase, recorded: Arc<Mutex<HashSet<String>>>) {
-    db.set_external_const_plugins(vec![Arc::new(RecordingConstPlugin { recorded })]);
-}
-
-fn install_resolving_plugin(db: &mut dyn CloneableDatabase, known: HashMap<String, BigIntAsHex>) {
-    db.set_external_const_plugins(vec![Arc::new(ResolvingConstPlugin { known })]);
 }
 
 fn silent_compiler_config(unit: &CairoCompilationUnit) -> CompilerConfig<'static> {

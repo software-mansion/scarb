@@ -31,6 +31,9 @@ allowed-libfuncs-list = {} # Cairo compiler defined
 
 # Emit Starknet artifacts for contracts defined in dependencies.
 build-external-contracts = []
+
+# Resolve static contract forwarding (see below).
+forwarding = false
 ```
 
 ## Usage
@@ -71,11 +74,15 @@ The off by default `casm-add-pythonic-hints` property enables Scarb to add it to
 ## Static contract forwarding
 
 Static contract forwarding embeds the forwarded contract's Sierra class hash into the forwarding contract at compile time.
-Scarb applies multi-pass class-hash injection automatically when contracts use static forwarding.
+Setting `forwarding = true` on the target makes Scarb compile the contracts in dependency order, injecting the class hashes computed in earlier passes into the later ones.
+Building a contract that uses static forwarding without this property enabled is an error.
 
 The source code must also opt in to Cairo's `#[feature("forward-impl")]` gate.
 Every forwarded contract must be part of the same build set, either because it is defined in the package or because it is listed in `build-external-contracts`.
 Forwarding cycles and forwarding to a contract that embeds its own generated class hash are compile-time errors.
+
+Test targets support the same `forwarding` property, so contracts compiled for tests embed the same class hashes.
+Auto-detected test targets inherit it from the package's `starknet-contract` targets, like they do with `build-external-contracts`.
 
 ## Compiling external contracts
 
