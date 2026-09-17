@@ -958,9 +958,10 @@ dependencies = [
 [[package]]
 name = "cairo-lang-casm"
 version = "2.20.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4aa14fe#4aa14fef12c094e821af6e7b2ee628bfbc768dc1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32f73dfbc516595f241962c75470d9abf73822aa30bac74832934d0fd1358303"
 dependencies = [
- "cairo-lang-utils 2.20.0 (git+https://github.com/starkware-libs/cairo?rev=4aa14fe)",
+ "cairo-lang-utils",
  "indoc",
  "num-bigint",
  "num-traits",
@@ -986,10 +987,10 @@ dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-sierra-generator",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "indoc",
  "rayon",
- "salsa 0.27.2",
+ "salsa",
  "semver 1.0.28",
  "smol_str",
  "thiserror 2.0.20",
@@ -1001,9 +1002,9 @@ version = "2.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5084fb3d1c2b6121ef4ebcccbc79d6b172f47a1c0539f4e3f4c0c03d991d8b0c"
 dependencies = [
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "id-arena",
- "salsa 0.27.2",
+ "salsa",
 ]
 
 [[package]]
@@ -1018,10 +1019,10 @@ dependencies = [
  "cairo-lang-parser",
  "cairo-lang-proc-macros",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "itertools 0.15.0",
  "postcard",
- "salsa 0.27.2",
+ "salsa",
  "serde",
  "thiserror 2.0.20",
  "typetag",
@@ -1037,9 +1038,9 @@ dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
  "cairo-lang-proc-macros",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "itertools 0.15.0",
- "salsa 0.27.2",
+ "salsa",
 ]
 
 [[package]]
@@ -1056,10 +1057,10 @@ dependencies = [
  "cairo-lang-parser",
  "cairo-lang-semantic",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "itertools 0.15.0",
  "pulldown-cmark",
- "salsa 0.27.2",
+ "salsa",
 ]
 
 [[package]]
@@ -1068,7 +1069,7 @@ version = "2.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca7129dd1abf22517cbb412d536b540a81e7b89f0c908d606cf97db3cc4aa19d"
 dependencies = [
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "good_lp",
 ]
 
@@ -1089,10 +1090,10 @@ dependencies = [
  "cairo-lang-semantic",
  "cairo-lang-sierra-generator",
  "cairo-lang-sierra-to-casm",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "cairo-vm",
  "itertools 0.15.0",
- "salsa 0.27.2",
+ "salsa",
  "serde",
  "serde_json",
 ]
@@ -1109,7 +1110,7 @@ dependencies = [
  "cairo-lang-syntax",
  "indoc",
  "itertools 0.15.0",
- "salsa 0.27.2",
+ "salsa",
 ]
 
 [[package]]
@@ -1122,7 +1123,7 @@ dependencies = [
  "cairo-lang-casm",
  "cairo-lang-executable",
  "cairo-lang-runner",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "cairo-vm",
  "num-bigint",
  "serde_json",
@@ -1136,10 +1137,10 @@ checksum = "2955bd234ff701a87cccb91ae6aed7ca86fb5815897aed475bd4dc8901e6ac4a"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-proc-macros",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "itertools 0.15.0",
  "path-clean",
- "salsa 0.27.2",
+ "salsa",
  "semver 1.0.28",
  "serde",
  "smol_str",
@@ -1157,11 +1158,11 @@ dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-parser",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "diffy",
  "ignore",
  "itertools 0.15.0",
- "salsa 0.27.2",
+ "salsa",
  "serde",
  "thiserror 2.0.20",
 ]
@@ -1180,7 +1181,7 @@ dependencies = [
  "cairo-lang-proc-macros",
  "cairo-lang-semantic",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "id-arena",
  "indent",
  "itertools 0.15.0",
@@ -1188,7 +1189,7 @@ dependencies = [
  "num-bigint",
  "num-integer",
  "num-traits",
- "salsa 0.27.2",
+ "salsa",
  "serde",
  "starknet-types-core",
  "thiserror 2.0.20",
@@ -1295,12 +1296,12 @@ dependencies = [
  "cairo-lang-primitive-token",
  "cairo-lang-syntax",
  "cairo-lang-syntax-codegen",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "colored",
  "itertools 0.15.0",
  "num-bigint",
  "num-traits",
- "salsa 0.27.2",
+ "salsa",
  "unescaper",
 ]
 
@@ -1315,11 +1316,11 @@ dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-parser",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "indent",
  "indoc",
  "itertools 0.15.0",
- "salsa 0.27.2",
+ "salsa",
 ]
 
 [[package]]
@@ -1337,7 +1338,7 @@ dependencies = [
  "cairo-lang-debug",
  "proc-macro2",
  "quote",
- "salsa 0.27.2",
+ "salsa",
  "syn 2.0.119",
 ]
 
@@ -1348,7 +1349,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c79de78147e27dff0bbf2137a84e5554b7890b819b588f3b29a4171ea84497f"
 dependencies = [
  "cairo-lang-filesystem",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "serde",
  "thiserror 2.0.20",
  "toml 1.1.2+spec-1.1.0",
@@ -1388,7 +1389,7 @@ dependencies = [
  "cairo-lang-sierra-gas",
  "cairo-lang-sierra-to-casm",
  "cairo-lang-sierra-type-size",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "cairo-vm",
  "thiserror 2.0.20",
 ]
@@ -1409,7 +1410,7 @@ dependencies = [
  "cairo-lang-sierra-generator",
  "cairo-lang-sierra-to-casm",
  "cairo-lang-starknet",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "cairo-vm",
  "clap",
  "itertools 0.15.0",
@@ -1418,7 +1419,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "rand 0.10.0",
- "salsa 0.27.2",
+ "salsa",
  "serde",
  "sha2 0.11.0",
  "starknet-types-core",
@@ -1440,14 +1441,14 @@ dependencies = [
  "cairo-lang-proc-macros",
  "cairo-lang-syntax",
  "cairo-lang-test-utils",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "id-arena",
  "indoc",
  "itertools 0.15.0",
  "num-bigint",
  "num-integer",
  "num-traits",
- "salsa 0.27.2",
+ "salsa",
  "serde",
  "sha3 0.12.0",
  "starknet-types-core",
@@ -1462,7 +1463,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73d27b97d875b17c6af400f6476b4ec8ef697bd01f068b24f41bbd1bd710d2ec"
 dependencies = [
  "anyhow",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "const-fnv1a-hash",
  "convert_case 0.11.0",
  "derivative",
@@ -1490,7 +1491,7 @@ dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
  "cairo-lang-sierra-type-size",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "itertools 0.15.0",
  "num-bigint",
  "num-traits",
@@ -1506,7 +1507,7 @@ dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
  "cairo-lang-sierra-type-size",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "itertools 0.15.0",
  "num-bigint",
  "num-traits",
@@ -1528,11 +1529,11 @@ dependencies = [
  "cairo-lang-semantic",
  "cairo-lang-sierra",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "itertools 0.15.0",
  "num-traits",
  "rayon",
- "salsa 0.27.2",
+ "salsa",
  "serde",
  "serde_json",
  "smol_str",
@@ -1550,7 +1551,7 @@ dependencies = [
  "cairo-lang-sierra-ap-change",
  "cairo-lang-sierra-gas",
  "cairo-lang-sierra-type-size",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "indoc",
  "itertools 0.15.0",
  "num-bigint",
@@ -1566,7 +1567,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b47cd93e5b02588322c8cd57fe94df5c31f4743a6d96be46c9c5422a27e08b7"
 dependencies = [
  "cairo-lang-sierra",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
 ]
 
 [[package]]
@@ -1588,13 +1589,13 @@ dependencies = [
  "cairo-lang-sierra-generator",
  "cairo-lang-starknet-classes",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "const_format",
  "indent",
  "indoc",
  "itertools 0.15.0",
  "rayon",
- "salsa 0.27.2",
+ "salsa",
  "serde",
  "serde_json",
  "starknet-types-core",
@@ -1612,7 +1613,7 @@ dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-sierra-to-casm",
  "cairo-lang-sierra-type-size",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "convert_case 0.11.0",
  "itertools 0.15.0",
  "num-bigint",
@@ -1636,11 +1637,11 @@ dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-primitive-token",
  "cairo-lang-proc-macros",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "itertools 0.15.0",
  "num-bigint",
  "num-traits",
- "salsa 0.27.2",
+ "salsa",
  "serde",
  "unescaper",
 ]
@@ -1674,12 +1675,12 @@ dependencies = [
  "cairo-lang-starknet",
  "cairo-lang-starknet-classes",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "indoc",
  "itertools 0.15.0",
  "num-bigint",
  "num-traits",
- "salsa 0.27.2",
+ "salsa",
  "serde",
  "starknet-types-core",
 ]
@@ -1699,12 +1700,12 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-starknet",
  "cairo-lang-test-plugin",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "colored",
  "itertools 0.15.0",
  "num-traits",
  "rayon",
- "salsa 0.27.2",
+ "salsa",
  "starknet-types-core",
 ]
 
@@ -1716,7 +1717,7 @@ checksum = "e19c9091d4b7e2f4a2f22e334ab47f71fd65adb430349e2a174456a952203a8e"
 dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-proc-macros",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "colored",
  "log",
  "pretty_assertions",
@@ -1733,29 +1734,13 @@ dependencies = [
  "itertools 0.15.0",
  "num-bigint",
  "num-traits",
- "salsa 0.27.2",
+ "salsa",
  "schemars",
  "serde",
  "smol_str",
  "tracing",
  "tracing-log",
  "tracing-subscriber",
- "vector-map",
-]
-
-[[package]]
-name = "cairo-lang-utils"
-version = "2.20.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=4aa14fe#4aa14fef12c094e821af6e7b2ee628bfbc768dc1"
-dependencies = [
- "hashbrown 0.17.0",
- "indexmap",
- "itertools 0.15.0",
- "num-bigint",
- "num-traits",
- "salsa 0.28.2",
- "serde",
- "smol_str",
  "vector-map",
 ]
 
@@ -1771,8 +1756,8 @@ dependencies = [
  "cairo-lang-parser",
  "cairo-lang-semantic",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "salsa 0.27.2",
+ "cairo-lang-utils",
+ "salsa",
  "semver 1.0.28",
  "tracing",
 ]
@@ -1804,7 +1789,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-syntax-codegen",
  "cairo-lang-test-plugin",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "cairo-language-common",
  "cairo-lint",
  "colored",
@@ -1821,7 +1806,7 @@ dependencies = [
  "lsp-types",
  "memchr",
  "mimalloc",
- "salsa 0.27.2",
+ "salsa",
  "scarb-manifest-schema 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "scarb-proc-macro-server-types 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1856,14 +1841,14 @@ dependencies = [
  "cairo-lang-semantic",
  "cairo-lang-syntax",
  "cairo-lang-test-plugin",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "cairo-language-common",
  "if_chain",
  "indoc",
  "itertools 0.14.0",
  "log",
  "num-bigint",
- "salsa 0.27.2",
+ "salsa",
  "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile",
  "tracing",
@@ -1880,7 +1865,7 @@ dependencies = [
  "cairo-lang-executable",
  "cairo-lang-execute-utils",
  "cairo-lang-runner",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "cairo-vm",
  "clap",
  "num-bigint",
@@ -7150,34 +7135,8 @@ dependencies = [
  "portable-atomic",
  "rayon",
  "rustc-hash",
- "salsa-macro-rules 0.27.2",
- "salsa-macros 0.27.2",
- "smallvec",
- "thin-vec",
- "tracing",
- "typeid",
-]
-
-[[package]]
-name = "salsa"
-version = "0.28.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf0e374215cd2db2b5c75d7b3a99cb0cc052c0595335dfdefc03d4eb08f4aa81"
-dependencies = [
- "boxcar",
- "crossbeam-queue",
- "crossbeam-utils",
- "hashbrown 0.17.0",
- "hashlink",
- "indexmap",
- "intrusive-collections",
- "inventory",
- "parking_lot",
- "portable-atomic",
- "rayon",
- "rustc-hash",
- "salsa-macro-rules 0.28.2",
- "salsa-macros 0.28.2",
+ "salsa-macro-rules",
+ "salsa-macros",
  "smallvec",
  "thin-vec",
  "tracing",
@@ -7189,12 +7148,6 @@ name = "salsa-macro-rules"
 version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de6872462ac73d39969a836273c24163e6a26a4e08f5114fcd80e25af30ea9c6"
-
-[[package]]
-name = "salsa-macro-rules"
-version = "0.28.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85f4b7d4405540bbd6d4ffa52d4322d983f3781954d3073067ac1bdb028459b3"
 
 [[package]]
 name = "salsa-macros"
@@ -7209,17 +7162,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "salsa-macros"
-version = "0.28.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "445be2bfbb2f67cb663225ecd7bc5a25370c0250fca30f9d8cbad9a913650370"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 3.0.4",
-]
-
-[[package]]
 name = "same-file"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7230,7 +7172,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "2.20.1"
+version = "2.19.5"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7258,7 +7200,7 @@ dependencies = [
  "cairo-lang-starknet-classes",
  "cairo-lang-syntax",
  "cairo-lang-test-plugin",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "cairo-lint",
  "camino",
  "cargo_metadata",
@@ -7299,7 +7241,7 @@ dependencies = [
  "rayon",
  "redb",
  "reqwest",
- "salsa 0.27.2",
+ "salsa",
  "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-fs-utils",
@@ -7349,7 +7291,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-build-metadata"
-version = "2.20.1"
+version = "2.19.5"
 dependencies = [
  "cargo_metadata",
  "semver 1.0.28",
@@ -7357,7 +7299,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "2.20.1"
+version = "2.19.5"
 dependencies = [
  "assert_fs",
  "cairo-language-server",
@@ -7369,7 +7311,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-test"
-version = "2.20.1"
+version = "2.19.5"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7395,7 +7337,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-doc"
-version = "2.20.1"
+version = "2.19.5"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7408,7 +7350,7 @@ dependencies = [
  "cairo-lang-semantic",
  "cairo-lang-starknet",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "camino",
  "clap",
  "console",
@@ -7420,7 +7362,7 @@ dependencies = [
  "mimalloc",
  "opener",
  "rayon",
- "salsa 0.27.2",
+ "salsa",
  "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
@@ -7435,7 +7377,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-execute"
-version = "2.20.1"
+version = "2.19.5"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7443,7 +7385,7 @@ dependencies = [
  "cairo-lang-casm",
  "cairo-lang-executable",
  "cairo-lang-runner",
- "cairo-lang-utils 2.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "cairo-program-runner-lib",
  "cairo-vm",
  "camino",
@@ -7472,7 +7414,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-extensions-cli"
-version = "2.20.1"
+version = "2.19.5"
 dependencies = [
  "anyhow",
  "cairo-air",
@@ -7526,7 +7468,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-mdbook"
-version = "2.20.1"
+version = "2.19.5"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7608,7 +7550,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-prove"
-version = "2.20.1"
+version = "2.19.5"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7696,7 +7638,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-verify"
-version = "2.20.1"
+version = "2.19.5"
 dependencies = [
  "anyhow",
  "assert_fs",
