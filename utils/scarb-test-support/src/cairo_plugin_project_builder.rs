@@ -105,6 +105,10 @@ impl CairoPluginProjectBuilder {
 
                 [dependencies]
                 cairo-lang-macro = {macro_lib_version_req}
+                # TODO: Remove these pins once `unicode-properties` catches up with `unicode-ident`.
+                #  `ra-ap-rustc_lexer` requires both to use the same Unicode version.
+                unicode-ident = "=1.0.24"
+                unicode-properties = "=0.1.4"
                 {deps}
                 "#}
     }
