@@ -124,7 +124,7 @@ fn expand_derive_v1(
             start: current_width.as_u32(),
             end: (current_width + added_length).as_u32(),
         },
-        origin: CodeOrigin::Span(call_site.clone()),
+        origin: CodeOrigin::CallSite(call_site.clone()),
     }]);
 
     Ok(ProcMacroResult {
