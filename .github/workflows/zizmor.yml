@@ -4,14 +4,10 @@ on:
   push:
     branches: ["main"]
     paths:
-      - ".github/workflows/_build_release.yml"
-      - ".github/workflows/nightly.yml"
-      - ".github/workflows/release.yml"
+      - ".github/workflows/*.yml"
   pull_request:
     paths:
-      - ".github/workflows/_build_release.yml"
-      - ".github/workflows/nightly.yml"
-      - ".github/workflows/release.yml"
+      - ".github/workflows/*.yml"
 
 permissions: {}
 

@@ -12,6 +12,9 @@ jobs:
   check:
     uses: ./.github/workflows/_check-release.yml
 
+  check-cairo-lang-versions:
+    uses: ./.github/workflows/_check-cairo-lang-versions.yml
+
   release:
     uses: ./.github/workflows/_build-release.yml
     with:
@@ -21,7 +24,7 @@ jobs:
   draft:
     name: draft release
     runs-on: ubuntu-latest
-    needs: [ check, release ]
+    needs: [ check, check-cairo-lang-versions, release ]
     permissions:
       contents: write
     steps:

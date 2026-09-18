@@ -122,12 +122,13 @@ jobs:
         shell: bash
         env:
           IS_SCARB_DEV: ${{ !!inputs.is_dev }}
+          IS_DEV: ${{ inputs.is_dev }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NIGHTLY_TAG=$(cargo xtask get-nightly-version --tag)
           NIGHTLY_VERSION=$(cargo xtask get-nightly-version)
 
-          if [ "${{ inputs.is_dev }}" = "true" ]; then
+          if [ "$IS_DEV" = "true" ]; then
             EXISTING_TAGS=$(gh api repos/software-mansion/scarb-nightlies/tags \
             --paginate \
             --jq '.[] | select(.name | startswith("'"$NIGHTLY_TAG"'")) | .name'
