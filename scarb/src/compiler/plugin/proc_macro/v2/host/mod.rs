@@ -309,17 +309,24 @@ pub fn generate_code_mappings(
             let TokenTree::Ident(token) = token;
             let token_width = TextWidth::from_str(token.content.as_ref());
 
-            let mapping = CodeMapping {
+            let origin_span = TextSpan {
+                start: TextOffset::default()
+                    .add_width(TextWidth::new_for_testing(token.span.start)),
+                end: TextOffset::default().add_width(TextWidth::new_for_testing(token.span.end)),
+            };
+            let is_call_site =
+                token.span.start == call_site.start && token.span.end == call_site.end;
+
+            let mapping: CodeMapping = CodeMapping {
                 span: TextSpan {
                     start: *current_pos,
                     end: current_pos.add_width(token_width),
                 },
-                origin: CodeOrigin::Span(TextSpan {
-                    start: TextOffset::default()
-                        .add_width(TextWidth::new_for_testing(token.span.start)),
-                    end: TextOffset::default()
-                        .add_width(TextWidth::new_for_testing(token.span.end)),
-                }),
+                origin: if is_call_site {
+                    CodeOrigin::CallSite(origin_span)
+                } else {
+                    CodeOrigin::Span(origin_span)
+                },
             };
 
             *current_pos = current_pos.add_width(token_width);
@@ -331,25 +338,18 @@ pub fn generate_code_mappings(
         .into_iter()
         // Emit additional mappings at the start of a span for zero-width diagnostics.
         .flat_map(|mapping| match &mapping.origin {
-            CodeOrigin::Span(origin) => {
-                if origin.start.as_u32() == call_site.start && origin.end.as_u32() == call_site.end
-                {
-                    // Call site should always be matched in full.
-                    return None;
-                }
-                Some(CodeMapping {
-                    span: TextSpan {
-                        start: mapping.span.start,
-                        end: mapping.span.start,
-                    },
-                    origin: CodeOrigin::Span(TextSpan {
-                        start: TextOffset::default()
-                            .add_width(TextWidth::new_for_testing(origin.start.as_u32())),
-                        end: TextOffset::default()
-                            .add_width(TextWidth::new_for_testing(origin.start.as_u32())),
-                    }),
-                })
-            }
+            CodeOrigin::Span(origin) => Some(CodeMapping {
+                span: TextSpan {
+                    start: mapping.span.start,
+                    end: mapping.span.start,
+                },
+                origin: CodeOrigin::Span(TextSpan {
+                    start: TextOffset::default()
+                        .add_width(TextWidth::new_for_testing(origin.start.as_u32())),
+                    end: TextOffset::default()
+                        .add_width(TextWidth::new_for_testing(origin.start.as_u32())),
+                }),
+            }),
             _ => None,
         })
         .chain(mappings)
