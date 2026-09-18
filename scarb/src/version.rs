@@ -67,7 +67,7 @@ impl VersionInfo {
             short = self.short(),
             cairo = self.cairo.short(),
             sierra = self.sierra.short(),
-            arch = target_triple::TARGET,
+            arch = target_tuple::TARGET,
         )
     }
 }
