@@ -9,7 +9,7 @@ use camino::Utf8PathBuf;
 use indoc::formatdoc;
 use libloading::library_filename;
 use std::env::consts::DLL_SUFFIX;
-use target_triple::target;
+use target_tuple::target;
 
 /// This trait is used to define the target and prebuilt path for a package.
 pub trait ProcMacroPathsProvider {
@@ -37,13 +37,13 @@ impl ProcMacroPathsProvider for Package {
             .into_child("target")
     }
     fn prebuilt_lib_path(&self) -> Option<Utf8PathBuf> {
-        let target_triple = target!();
+        let target_tuple = target!();
 
         let prebuilt_name = format!(
             "{name}_v{version}_{target}{suffix}",
             name = self.id.name,
             version = self.id.version,
-            target = target_triple,
+            target = target_tuple,
             suffix = DLL_SUFFIX
         );
 

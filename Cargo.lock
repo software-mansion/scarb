@@ -7079,7 +7079,7 @@ dependencies = [
  "snapbox",
  "starknet-core",
  "tar",
- "target-triple",
+ "target-tuple",
  "test-case",
  "test-for-each-example",
  "thiserror 2.0.20",
@@ -8571,12 +8571,6 @@ name = "target-lexicon"
 version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df7f62577c25e07834649fc3b39fafdc597c0a3527dc1c60129201ccfcbaa50c"
-
-[[package]]
-name = "target-triple"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "423077334691ac40df0e250bafa964bf5112f8ac9ea6a10377903554b83152bb"
 
 [[package]]
 name = "target-tuple"
