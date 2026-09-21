@@ -673,6 +673,9 @@ fn cairo_plugin() {
 
                 [dependencies]
                 cairo-lang-macro = { path = "[..]", version = "0.2.0" }
+                # `ra-ap-rustc_lexer` requires `unicode-ident` and `unicode-properties` to use the same Unicode version.
+                unicode-ident = "=1.0.24"
+                unicode-properties = "=0.1.4"
             "#},
         )
         .file_matches(
