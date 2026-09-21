@@ -16,14 +16,15 @@ use cairo_lang_macro::{
     Diagnostic, ProcMacroResult, Severity, TextSpan, Token, TokenStream, TokenTree,
 };
 use cairo_lang_parser::utils::SimpleParserDatabase;
-use cairo_lang_syntax::node::ast::{ModuleItem, SyntaxFile};
 use cairo_lang_syntax::node::TypedSyntaxNode;
+use cairo_lang_syntax::node::ast::{ModuleItem, SyntaxFile};
 use cairo_lang_utils::ordered_hash_set::OrderedHashSet;
 use cairo_lang_utils::unordered_hash_set::UnorderedHashSet;
 use convert_case::{Case, Casing};
 use salsa::Database;
 use scarb_proc_macro_host::{
-    Expansion, ExpansionId, ExpansionKind, ExpansionQuery, ProcMacroBackend, ProcMacroHostPlugin,
+    Expansion, ExpansionId, ExpansionKind, FULL_PATH_MARKER_KEY, ProcMacroBackend,
+    ProcMacroHostPlugin,
 };
 
 /// What a fake expansion does to the token stream it is given.
@@ -81,7 +82,6 @@ impl ExpansionId for FakeId {
 #[derive(Debug, Default)]
 struct FakeBackend {
     expansions: Vec<(Expansion, Behaviour)>,
-    executables: Vec<String>,
     /// Every expansion performed, in order, as `(expansion name, input)`.
     calls: Mutex<Vec<(String, String)>>,
     /// Every expansion the host reported back through `on_expanded`.
@@ -111,14 +111,21 @@ impl FakeBackend {
                     )
                 })
                 .collect(),
-            executables: Vec::new(),
             calls: Default::default(),
             observed: Default::default(),
         }
     }
 
     fn with_executable(mut self, name: &str) -> Self {
-        self.executables.push(name.to_string());
+        // Executable attributes are never expanded, so their behaviour does not matter.
+        self.expansions.push((
+            Expansion {
+                expansion_name: name.into(),
+                cairo_name: name.into(),
+                kind: ExpansionKind::Executable,
+            },
+            Behaviour::Identity,
+        ));
         self
     }
 
@@ -129,54 +136,21 @@ impl FakeBackend {
     fn observed(&self) -> Vec<String> {
         self.observed.lock().unwrap().clone()
     }
-
-    fn names_of(&self, kind: ExpansionKind) -> Vec<String> {
-        self.expansions
-            .iter()
-            .filter(|(expansion, _)| expansion.kind == kind)
-            .map(|(expansion, _)| expansion.cairo_name.to_string())
-            .collect()
-    }
 }
 
 impl ProcMacroBackend for FakeBackend {
     type Id = FakeId;
     type AuxData = Vec<String>;
 
-    fn find_expansion(&self, query: &ExpansionQuery) -> Option<FakeId> {
-        self.expansions
-            .iter()
-            .position(|(expansion, _)| expansion.matches_query(query))
-            .map(|behaviour_index| FakeId {
-                expansion: self.expansions[behaviour_index].0.clone(),
-                behaviour_index,
-            })
-    }
-
-    fn inline_macros(&self) -> Vec<FakeId> {
+    fn expansions(&self) -> Vec<FakeId> {
         self.expansions
             .iter()
             .enumerate()
-            .filter(|(_, (expansion, _))| expansion.kind == ExpansionKind::Inline)
             .map(|(behaviour_index, (expansion, _))| FakeId {
                 expansion: expansion.clone(),
                 behaviour_index,
             })
             .collect()
-    }
-
-    fn declared_attributes(&self) -> Vec<String> {
-        let mut names = self.names_of(ExpansionKind::Attr);
-        names.extend(self.executables.clone());
-        names
-    }
-
-    fn executable_attributes(&self) -> Vec<String> {
-        self.executables.clone()
-    }
-
-    fn declared_derives(&self) -> Vec<String> {
-        self.names_of(ExpansionKind::Derive)
     }
 
     fn expand(
@@ -198,7 +172,10 @@ impl ProcMacroBackend for FakeBackend {
             Behaviour::Empty => (TokenStream::empty(), Vec::new()),
             Behaviour::Replace(from, to) => {
                 let content = input.replace(from, to);
-                (single_token(content, whole_span(&item, &call_site)), Vec::new())
+                (
+                    single_token(content, whole_span(&item, &call_site)),
+                    Vec::new(),
+                )
             }
             Behaviour::Emit(code) => (
                 single_token(code.to_string(), call_site.clone()),
@@ -306,7 +283,12 @@ impl ExpandedItem {
             origins: result
                 .code
                 .as_ref()
-                .map(|code| code.code_mappings.iter().map(|m| m.origin.clone()).collect())
+                .map(|code| {
+                    code.code_mappings
+                        .iter()
+                        .map(|m| m.origin.clone())
+                        .collect()
+                })
                 .unwrap_or_default(),
             diagnostics: result
                 .diagnostics
@@ -404,16 +386,16 @@ fn derives_are_expanded_one_by_one_in_source_order() {
     );
 
     let item = results.into_iter().next().unwrap();
-    assert_eq!(
-        item.content.as_deref(),
-        Some("impl First {}impl Second {}")
-    );
+    assert_eq!(item.content.as_deref(), Some("impl First {}impl Second {}"));
     // Derives do not replace the item they are applied to.
     assert!(!item.remove_original_item);
 
     let calls = backend.calls();
     assert_eq!(
-        calls.iter().map(|(name, _)| name.as_str()).collect::<Vec<_>>(),
+        calls
+            .iter()
+            .map(|(name, _)| name.as_str())
+            .collect::<Vec<_>>(),
         vec!["first", "second"]
     );
     // Every derive sees the whole original item.
@@ -512,6 +494,21 @@ fn executable_attributes_are_declared_but_never_expanded() {
     let item = results.into_iter().next().unwrap();
     assert_eq!(item.content, None);
     assert!(backend.calls().is_empty());
+}
+
+#[test]
+fn full_path_marker_attribute_is_declared() {
+    // Macros may leave the marker on the code they generate. Every backend has to declare it, or
+    // the compiler reports it as an unknown attribute.
+    let db = SimpleParserDatabase::default();
+    let plugin = ProcMacroHostPlugin::new(Arc::new(FakeBackend::new(vec![])));
+
+    let declared: UnorderedHashSet<_> = plugin
+        .declared_attributes(&db)
+        .into_iter()
+        .map(|s| s.to_string(&db))
+        .collect();
+    assert!(declared.contains(&FULL_PATH_MARKER_KEY.to_string()));
 }
 
 #[test]
@@ -688,7 +685,11 @@ fn a_macro_emitting_aux_data_always_rewrites_the_item() {
     // The "nothing changed" shortcut must not fire when the macro emitted side output, or that
     // output would be dropped along with the generated file.
     let (_, results) = expand_all(
-        FakeBackend::new(vec![("collect", ExpansionKind::Attr, Behaviour::WithAuxData)]),
+        FakeBackend::new(vec![(
+            "collect",
+            ExpansionKind::Attr,
+            Behaviour::WithAuxData,
+        )]),
         "#[collect]\nfn foo() {}\n",
     );
 

@@ -1,5 +1,5 @@
-use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind};
 use crate::compiler::plugin::proc_macro::v2::ProcMacroAuxData;
+use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind};
 use crate::core::PackageId;
 use anyhow::{Context, Result, ensure};
 use cairo_lang_macro::{
@@ -120,10 +120,7 @@ impl Plugin {
         let stable_expansions = (self.vtable.list_expansions)();
         let (ptr, n) = stable_expansions.raw_parts();
         let expansions = unsafe { slice::from_raw_parts(ptr, n) };
-        let mut expansions: Vec<Expansion> = expansions
-            .iter()
-            .map(expansion_from_stable)
-            .collect();
+        let mut expansions: Vec<Expansion> = expansions.iter().map(expansion_from_stable).collect();
         // Free the memory allocated by the `stable_expansions`.
         (self.vtable.free_expansions_list)(stable_expansions);
         // Validate expansions.

@@ -39,7 +39,10 @@ impl<'db> AttributePluginResult<'db> {
         self
     }
 
-    pub(crate) fn with_plugin_diagnostics(mut self, diagnostics: Vec<PluginDiagnostic<'db>>) -> Self {
+    pub(crate) fn with_plugin_diagnostics(
+        mut self,
+        diagnostics: Vec<PluginDiagnostic<'db>>,
+    ) -> Self {
         self.diagnostics = diagnostics;
         self
     }

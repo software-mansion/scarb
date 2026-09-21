@@ -4,13 +4,13 @@ use salsa::Database;
 use smol_str::SmolStr;
 
 use crate::backend::{ExpansionId, ProcMacroBackend};
+use crate::conversion::CallSiteLocation;
 use crate::host::ProcMacroHostPlugin;
 use crate::host::attribute::child_nodes::{ChildNodesWithoutAttributes, ItemWithAttributes};
 use crate::host::attribute::span_adapter::{AdaptedTokenStream, ExpandableAttrLocation};
 use crate::host::attribute::{AttributeGeneratedFile, AttributePluginResult};
 use crate::host::generate_code_mappings;
 use crate::token_stream_builder::TokenStreamBuilder;
-use crate::conversion::CallSiteLocation;
 
 impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
     /// Find first attribute procedural macro that should be expanded.

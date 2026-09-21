@@ -125,9 +125,7 @@ impl<B: ProcMacroBackend> InlineMacroExprPlugin for ProcMacroInlinePlugin<B> {
     }
 
     fn documentation(&self) -> Option<String> {
-        self.doc
-            .get_or_init(|| self.backend.doc(&self.id))
-            .clone()
+        self.doc.get_or_init(|| self.backend.doc(&self.id)).clone()
     }
 }
 

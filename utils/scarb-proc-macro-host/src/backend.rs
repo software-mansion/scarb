@@ -4,7 +4,12 @@ use cairo_lang_defs::plugin::DynGeneratedFileAuxData;
 use cairo_lang_macro::{ProcMacroResult, TextSpan, TokenStream};
 use salsa::Database;
 
-use crate::expansion::{Expansion, ExpansionQuery};
+use crate::expansion::{Expansion, ExpansionKind, ExpansionQuery};
+
+/// Attribute macros can put on generated items to ask for their full path to be resolved.
+///
+/// It is never expanded, but has to be declared, or the compiler reports it as unknown.
+pub const FULL_PATH_MARKER_KEY: &str = "proc_macro::full_path_marker";
 
 /// Identifies a single expansion of a single procedural macro, as understood by a
 /// [`ProcMacroBackend`].
@@ -39,23 +44,47 @@ pub trait ProcMacroBackend: Debug + Send + Sync + 'static {
     /// it should set it to `()`.
     type AuxData: Default;
 
+    /// Every expansion this backend provides, including executable attributes.
+    ///
+    /// This is the single source of truth for which macros exist. The host derives everything it
+    /// declares to the compiler from it, so that all backends agree on what is declared and how.
+    fn expansions(&self) -> Vec<Self::Id>;
+
     /// Finds an expansion matching the query, if this backend provides one.
-    fn find_expansion(&self, query: &ExpansionQuery) -> Option<Self::Id>;
+    fn find_expansion(&self, query: &ExpansionQuery) -> Option<Self::Id> {
+        self.expansions()
+            .into_iter()
+            .find(|id| id.expansion().matches_query(query))
+    }
 
     /// All inline macro expansions provided by this backend.
     ///
     /// Unlike attributes and derives, inline macros are registered with the compiler as separate
     /// plugins, one per expansion, so the host needs the ids rather than just the names.
-    fn inline_macros(&self) -> Vec<Self::Id>;
+    fn inline_macros(&self) -> Vec<Self::Id> {
+        self.expansions()
+            .into_iter()
+            .filter(|id| id.expansion().kind == ExpansionKind::Inline)
+            .collect()
+    }
 
-    /// Names of all attributes this backend handles, including executable attributes.
-    fn declared_attributes(&self) -> Vec<String>;
+    /// Names of all attributes this backend handles, including executable attributes and the
+    /// [`FULL_PATH_MARKER_KEY`] macros may leave in their output.
+    fn declared_attributes(&self) -> Vec<String> {
+        let mut names = cairo_names_of(self, &[ExpansionKind::Attr, ExpansionKind::Executable]);
+        names.push(FULL_PATH_MARKER_KEY.to_string());
+        names
+    }
 
     /// Names of attributes that only mark code for later processing and are never expanded.
-    fn executable_attributes(&self) -> Vec<String>;
+    fn executable_attributes(&self) -> Vec<String> {
+        cairo_names_of(self, &[ExpansionKind::Executable])
+    }
 
     /// Names of all derives this backend handles, as written in Cairo code.
-    fn declared_derives(&self) -> Vec<String>;
+    fn declared_derives(&self) -> Vec<String> {
+        cairo_names_of(self, &[ExpansionKind::Derive])
+    }
 
     /// Expands a single macro.
     ///
@@ -92,4 +121,18 @@ pub trait ProcMacroBackend: Debug + Send + Sync + 'static {
     fn doc(&self, _id: &Self::Id) -> Option<String> {
         None
     }
+}
+
+/// Names under which the backend's expansions of the given kinds are written in Cairo code.
+fn cairo_names_of<B: ProcMacroBackend + ?Sized>(
+    backend: &B,
+    kinds: &[ExpansionKind],
+) -> Vec<String> {
+    backend
+        .expansions()
+        .iter()
+        .map(ExpansionId::expansion)
+        .filter(|expansion| kinds.contains(&expansion.kind))
+        .map(|expansion| expansion.cairo_name.to_string())
+        .collect()
 }

@@ -1,4 +1,6 @@
-use crate::compiler::plugin::proc_macro::{ExpansionQuery, ProcMacroInstance};
+use crate::compiler::plugin::proc_macro::{
+    Expansion, ExpansionKind, ExpansionQuery, ProcMacroInstance,
+};
 use crate::compiler::plugin::{ProcMacroApiVersion, proc_macro};
 use crate::core::PackageId;
 use anyhow::Result;
@@ -7,7 +9,7 @@ use cairo_lang_semantic::plugin::PluginSuite;
 use itertools::Itertools;
 use std::sync::Arc;
 
-pub const FULL_PATH_MARKER_KEY: &str = "proc_macro::full_path_marker";
+pub use scarb_proc_macro_host::FULL_PATH_MARKER_KEY;
 
 pub enum ProcMacroHostPlugin {
     V1(Arc<proc_macro::v1::ProcMacroHostPlugin>),
@@ -30,11 +32,11 @@ impl ProcMacroHostPlugin {
             ProcMacroApiVersion::V1 => Self::V1(Arc::new(
                 proc_macro::v1::ProcMacroHostPlugin::try_new(instances)?,
             )),
-            ProcMacroApiVersion::V2 => Self::V2(Arc::new(
-                proc_macro::v2::ProcMacroHostPlugin::new(Arc::new(
-                    proc_macro::v2::DylibBackend::try_new(instances)?,
-                )),
-            )),
+            ProcMacroApiVersion::V2 => {
+                Self::V2(Arc::new(proc_macro::v2::ProcMacroHostPlugin::new(
+                    Arc::new(proc_macro::v2::DylibBackend::try_new(instances)?),
+                )))
+            }
         })
     }
 
@@ -108,39 +110,18 @@ pub trait DeclaredProcMacroInstances {
             .collect()
     }
 
-    // NOTE: Required for proc macro server. `<ProcMacroHostPlugin as MacroPlugin>::declared_attributes`
-    // returns attributes **and** executables. In PMS, we only need the former because the latter is handled separately.
-    fn declared_attributes_without_executables_with_package(&self) -> Vec<(String, PackageId)> {
+    /// Expansions of the given kind, each with the package of the macro providing it.
+    ///
+    /// Used by the proc macro server to describe the available macros to the language server.
+    fn expansions_with_package(&self, kind: ExpansionKind) -> Vec<(Expansion, PackageId)> {
         self.instances()
             .iter()
             .flat_map(|instance| {
                 instance
-                    .declared_attributes()
-                    .into_iter()
-                    .map(|name| (name, instance.package_id()))
-            })
-            .collect()
-    }
-
-    fn declared_inline_macros_with_package(&self) -> Vec<(String, PackageId)> {
-        self.instances()
-            .iter()
-            .flat_map(|instance| {
-                instance
-                    .inline_macros()
-                    .into_iter()
-                    .map(|name| (name, instance.package_id()))
-            })
-            .collect()
-    }
-
-    fn declared_derives_snake_case_with_package(&self) -> Vec<(String, PackageId)> {
-        self.instances()
-            .iter()
-            .flat_map(|m| {
-                m.declared_derives_snake_case()
-                    .into_iter()
-                    .map(|name| (name, m.package_id()))
+                    .get_expansions()
+                    .iter()
+                    .filter(|expansion| expansion.kind == kind)
+                    .map(|expansion| (expansion.clone(), instance.package_id()))
             })
             .collect()
     }

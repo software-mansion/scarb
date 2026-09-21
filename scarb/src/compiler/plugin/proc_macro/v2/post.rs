@@ -1,5 +1,5 @@
-use crate::compiler::plugin::proc_macro::{DeclaredProcMacroInstances, FULL_PATH_MARKER_KEY};
 use crate::compiler::plugin::proc_macro::v2::DylibBackend;
+use crate::compiler::plugin::proc_macro::{DeclaredProcMacroInstances, FULL_PATH_MARKER_KEY};
 use crate::core::PackageId;
 use anyhow::Result;
 use cairo_lang_defs::db::DefsGroup;
@@ -131,7 +131,7 @@ impl DylibBackend {
             .write()
             .unwrap()
             .entry(package_id)
-            .and_modify(|markers| markers.extend(markers.clone()))
-            .or_insert(markers);
+            .or_default()
+            .extend(markers);
     }
 }

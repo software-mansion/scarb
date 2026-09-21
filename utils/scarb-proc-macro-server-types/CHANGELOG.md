@@ -5,8 +5,8 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ## 0.6.0
-- Expansion results now carry a spanned `cairo_lang_macro::TokenStream` instead of a flat string
-  plus optional code mappings. Callers compute code mappings from the token spans themselves.
+- Expansion results now carry a `SpannedTokenStream` (a list of tokens, each with the span of the
+  code it came from) instead of a flat string plus optional code mappings. Callers compute code mappings from the token spans themselves.
   Expansions performed through the v1 procedural macro api, which has no spans, are reported as a
   single token covering the whole expansion origin, so callers no longer need to special-case
   them.
@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 - `ExpandDeriveParams::derives` is replaced by `ExpandDeriveParams::derive`: one derive is
   expanded per request, each with its own call site.
 - Drop the dependency on `cairo-lang-macro` 0.1.
+- Add `MacroWithHash::cairo_name`, the name the macro is written under in Cairo code. `name` stays
+  the name of the expansion function, used when requesting expansions.
 
 ## 0.5.0 (2025-12-10)
 - Add `MacroWithHash` struct. 

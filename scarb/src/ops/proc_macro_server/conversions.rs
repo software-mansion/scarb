@@ -8,11 +8,11 @@ use cairo_lang_macro::{
     Diagnostic as DiagnosticV2, Severity as SeverityV2, TextSpan, TokenStream as TokenStreamV2,
     TokenTree,
 };
-use scarb_proc_macro_server_types::methods::SpannedTokenStream;
 use cairo_lang_macro_v1::{
     Diagnostic as DiagnosticV1, Severity as SeverityV1, TokenStream as TokenStreamV1,
     TokenStreamMetadata as TokenStreamMetadataV1,
 };
+use scarb_proc_macro_server_types::methods::SpannedTokenStream;
 
 /// Downcasts the spanned token stream to the flat v1 one.
 pub fn token_stream_v2_to_v1(token_stream_v2: &TokenStreamV2) -> TokenStreamV1 {
@@ -34,7 +34,7 @@ pub fn token_stream_v1_to_spanned(
     token_stream_v1: &TokenStreamV1,
     origin: TextSpan,
 ) -> SpannedTokenStream {
-    // An empty expansion means "remove the original item", which `single` preserves.
+    // An empty expansion means "remove the original item", which `unspanned` preserves.
     SpannedTokenStream::unspanned(token_stream_v1.to_string(), origin)
 }
 

@@ -2,7 +2,9 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::{Context, Result};
 use cairo_lang_macro::{TextSpan, TokenStream};
-use scarb_proc_macro_server_types::methods::{ProcMacroResult, SpannedTokenStream, expand::ExpandDerive};
+use scarb_proc_macro_server_types::methods::{
+    ProcMacroResult, SpannedTokenStream, expand::ExpandDerive,
+};
 
 use super::Handler;
 use crate::compiler::plugin::proc_macro::{

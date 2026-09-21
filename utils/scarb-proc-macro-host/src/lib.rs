@@ -18,6 +18,6 @@ mod span_utils;
 mod syntax_ext;
 mod token_stream_builder;
 
-pub use backend::{ExpansionId, ProcMacroBackend};
+pub use backend::{ExpansionId, FULL_PATH_MARKER_KEY, ProcMacroBackend};
 pub use expansion::{Expansion, ExpansionKind, ExpansionQuery};
 pub use host::{ProcMacroHostPlugin, ProcMacroInlinePlugin};

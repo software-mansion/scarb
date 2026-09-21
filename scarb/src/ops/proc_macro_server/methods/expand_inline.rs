@@ -2,7 +2,9 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::{Context, Result};
 use cairo_lang_macro::{TextSpan, TokenStream};
-use scarb_proc_macro_server_types::methods::{ProcMacroResult, SpannedTokenStream, expand::ExpandInline};
+use scarb_proc_macro_server_types::methods::{
+    ProcMacroResult, SpannedTokenStream, expand::ExpandInline,
+};
 
 use super::Handler;
 use crate::compiler::plugin::proc_macro::{
@@ -73,10 +75,12 @@ fn expand_inline_v2(
     call_site: TextSpan,
     args: TokenStream,
 ) -> Result<ProcMacroResult> {
-    let result =
-        proc_macro_instance
-            .try_v2()?
-            .generate_code(name.into(), call_site, TokenStream::empty(), args);
+    let result = proc_macro_instance.try_v2()?.generate_code(
+        name.into(),
+        call_site,
+        TokenStream::empty(),
+        args,
+    );
 
     Ok(ProcMacroResult {
         token_stream: SpannedTokenStream::from_token_stream(&result.token_stream),

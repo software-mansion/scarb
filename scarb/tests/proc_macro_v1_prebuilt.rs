@@ -246,5 +246,8 @@ fn load_prebuilt_proc_macros() {
     assert_eq!(response.diagnostics, vec![]);
     // This macro uses the v1 api, which reports no spans, so the server attributes the whole
     // expansion to the macro call.
-    assert_eq!(response.token_stream, SpannedTokenStream::unspanned("42", span));
+    assert_eq!(
+        response.token_stream,
+        SpannedTokenStream::unspanned("42", span)
+    );
 }
