@@ -233,4 +233,4 @@ cairo-lang-test-utils = { git = "https://github.com/starkware-libs/cairo", rev =
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "6530c2d86df234ba0023ff64a0669f69a23567e9" }
 cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "f0ae1d5f40117f08a07af5674cbbafaf67465b84" }
 cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "181b170d033b073871c08f087f31c06de21373f7" }
-cairo-language-common = { git = "https://github.com/software-mansion/cairo-language-common", rev = "c48194d467bba425da5a3a1b1322049db32316c1" }
+cairo-language-common = { git = "https://github.com/software-mansion/cairo-language-common", rev = "a54f89c0d837541a74bdeba898f294e14c1b2046" }
