@@ -166,7 +166,7 @@ fn expand_attribute() {
                 vec![
                     CodeMapping {
                         span: TextSpan { start: 0, end: 22 },
-                        origin: CodeOrigin::Span(TextSpan { start: 0, end: 22 })
+                        origin: CodeOrigin::CallSite(TextSpan { start: 0, end: 22 })
                     },
                     CodeMapping {
                         span: TextSpan { start: 0, end: 22 },
@@ -244,7 +244,7 @@ fn expand_derive() {
                 response.code_mappings,
                 Some(vec![CodeMapping {
                     span: TextSpan { start: 0, end: 29 },
-                    origin: Span(TextSpan { start: 0, end: 19 })
+                    origin: CodeOrigin::CallSite(TextSpan { start: 0, end: 19 })
                 },])
             );
         }
@@ -321,7 +321,7 @@ fn expand_inline() {
                 vec![
                     CodeMapping {
                         span: TextSpan { start: 0, end: 51 },
-                        origin: Span(TextSpan { start: 0, end: 51 })
+                        origin: CodeOrigin::CallSite(TextSpan { start: 0, end: 51 })
                     },
                     CodeMapping {
                         span: TextSpan { start: 0, end: 51 },
