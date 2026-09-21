@@ -116,8 +116,7 @@ impl Compiler for StarknetContractCompiler {
         let target_dir = unit.target_dir(ws);
 
         let (contracts, contract_paths, classes) = if props.forwarding {
-            // Forwarding mutates the db between passes, which the declarations borrow, so it works
-            // on an owned selection and the declarations are looked up again afterwards.
+            // Forwarding needs `&mut db`, so contract declarations are fetched again afterwards.
             let selected = SelectedContracts::new(
                 db,
                 &find_project_contracts(

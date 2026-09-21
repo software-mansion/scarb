@@ -292,20 +292,8 @@ pub fn ensure_forwarding_unused(recorded: &ClassHashUsage, help: &str) -> Result
     Ok(())
 }
 
-/// Errors if, after [`compile_with_forwarding`], the class hash of a contract outside the
-/// compiled set was asked for, i.e. some code forwards to a contract this build does not know.
-pub fn ensure_forwarding_resolved(unresolved: &ClassHashUsage) -> Result<()> {
-    let contracts = recorded_contracts(unresolved);
-    ensure!(
-        contracts.is_empty(),
-        "forwarding to contract(s) that are not included in this build: {}. Add them with \
-         `build-external-contracts` or fix the forwarding target.",
-        contracts.join(", ")
-    );
-    Ok(())
-}
-
-fn recorded_contracts(recorded: &ClassHashUsage) -> Vec<String> {
+/// Returns sorted paths of contracts whose class hash was requested.
+pub fn recorded_contracts(recorded: &ClassHashUsage) -> Vec<String> {
     recorded
         .lock()
         .expect("recording provider mutex poisoned")

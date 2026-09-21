@@ -53,9 +53,8 @@ impl Compiler for LibCompiler {
         ctx: Arc<IncrementalContext>,
         offloader: &Offloader<'_>,
         db: &mut dyn CloneableDatabase,
-        // A `lib` target compiles every function of the main crates (or, if any are declared,
-        // everything reachable from `#[executable]`s) regardless of contract reachability, so it's
-        // expected to touch any contract's unused class-hash accessor; never checked here.
+        // A `lib` target doesn't compile by contract reachability, so it may touch unused
+        // class-hash accessors. Not checked here.
         _default_class_hash_usage: &ClassHashUsage,
         ws: &Workspace<'_>,
     ) -> Result<()> {

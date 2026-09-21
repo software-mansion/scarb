@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, ensure};
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId, SmolStrId};
 use cairo_lang_sierra::program::VersionedProgram;
@@ -15,8 +15,8 @@ use tracing::{trace, trace_span};
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
 use crate::compiler::compilers::starknet_contract::{
-    ClassHashUsage, SelectedContracts, compile_with_forwarding, ensure_forwarding_resolved,
-    ensure_forwarding_unused,
+    ClassHashUsage, SelectedContracts, compile_with_forwarding, ensure_forwarding_unused,
+    recorded_contracts,
 };
 use crate::compiler::compilers::{
     Artifacts, ArtifactsWriter, ContractSelector, ensure_gas_enabled, find_project_contracts,
@@ -56,10 +56,7 @@ impl Compiler for TestCompiler {
         });
         let forwarding = starknet && test_props.forwarding;
 
-        // With forwarding, the contracts are compiled first: it resolves their class hashes
-        // pass by pass and leaves them installed, so the test program compiled below embeds the
-        // same values. Forwarding mutates the db between passes, which the declarations borrow,
-        // so it works on an owned selection and the declarations are looked up again afterwards.
+        // With forwarding, contracts are compiled before tests, so tests use the same class hashes.
         let (contracts, forwarded) = if forwarding {
             ensure_gas_enabled(db)?;
             let selected = SelectedContracts::new(
@@ -151,8 +148,14 @@ impl Compiler for TestCompiler {
         }
 
         if let Some(forwarded) = forwarded {
-            // The test program may forward to contracts the selection does not cover.
-            ensure_forwarding_resolved(&forwarded.unresolved)?;
+            // Tests may forward to contracts outside of this build.
+            let unresolved = recorded_contracts(&forwarded.unresolved);
+            ensure!(
+                unresolved.is_empty(),
+                "forwarding to contract(s) that are not included in this build: {}. Add them with \
+                 `build-external-contracts` or fix the forwarding target.",
+                unresolved.join(", ")
+            );
             write_contracts(
                 contracts,
                 forwarded.classes,
@@ -253,6 +256,7 @@ fn compile_contracts<'db>(
     )
 }
 
+/// Writes compiled test contract classes as test artifacts.
 #[allow(clippy::too_many_arguments)]
 fn write_contracts<'db>(
     contracts: Vec<ContractDeclaration<'db>>,

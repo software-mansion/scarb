@@ -2,8 +2,8 @@ pub use artifacts_writer::{Artifacts, ArtifactsWriter};
 pub use compiler::*;
 pub use contract_selector::{ContractFileStemCalculator, ContractSelector};
 pub use forwarding::{
-    ClassHashUsage, compile_with_forwarding, ensure_forwarding_resolved, ensure_forwarding_unused,
-    install_default_class_hash_plugin,
+    ClassHashUsage, compile_with_forwarding, ensure_forwarding_unused,
+    install_default_class_hash_plugin, recorded_contracts,
 };
 pub use validations::ensure_gas_enabled;
 

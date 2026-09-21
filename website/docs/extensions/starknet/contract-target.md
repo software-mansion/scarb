@@ -73,8 +73,33 @@ The off by default `casm-add-pythonic-hints` property enables Scarb to add it to
 
 ## Static contract forwarding
 
-Static contract forwarding embeds the forwarded contract's Sierra class hash into the forwarding contract at compile time.
-Setting `forwarding = true` on the target makes Scarb compile the contracts in dependency order, injecting the class hashes computed in earlier passes into the later ones.
+Static contract forwarding lets a contract expose another contract's interface by delegating calls to its class via `library_call`.
+Unlike a regular proxy, the target class hash is embedded at compile time instead of being read from storage.
+
+Cairo generates a `<Trait>ForwardImpl` for every `#[starknet::interface]`, and Scarb generates a `<contract>__class_hash__::ForwardingClassHashImpl` for every `#[starknet::contract]`:
+
+```cairo
+#[starknet::contract]
+#[feature("forward-impl")]
+pub mod static_proxy {
+    #[storage]
+    struct Storage {}
+
+    impl CounterClassHash =
+        super::counter_contract__class_hash__::ForwardingClassHashImpl<ContractState>;
+
+    #[abi(embed_v0)]
+    impl ForwardedImpl = super::ICounterContractForwardImpl<ContractState>;
+}
+```
+
+Since a class hash is only known after compilation, `forwarding = true` makes Scarb compile contracts in dependency order, injecting class hashes from earlier passes into later ones:
+
+```toml
+[[target.starknet-contract]]
+forwarding = true
+```
+
 Building a contract that uses static forwarding without this property enabled is an error.
 
 The source code must also opt in to Cairo's `#[feature("forward-impl")]` gate.
