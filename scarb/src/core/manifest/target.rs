@@ -187,6 +187,10 @@ impl Hash for TargetInner {
 pub struct TestTargetProps {
     pub test_type: TestTargetType,
     pub build_external_contracts: Option<Vec<String>>,
+    /// Compile the contracts with static forwarding, like a `starknet-contract` target with
+    /// `forwarding = true` would.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub forwarding: bool,
 }
 
 impl TestTargetProps {
@@ -194,6 +198,7 @@ impl TestTargetProps {
         Self {
             test_type,
             build_external_contracts: Default::default(),
+            forwarding: false,
         }
     }
 
@@ -202,6 +207,10 @@ impl TestTargetProps {
             build_external_contracts: (!external.is_empty()).then_some(external),
             ..self
         }
+    }
+
+    pub fn with_forwarding(self, forwarding: bool) -> Self {
+        Self { forwarding, ..self }
     }
 }
 

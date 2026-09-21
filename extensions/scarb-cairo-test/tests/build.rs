@@ -246,7 +246,7 @@ fn integration_tests() {
             test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 29170)
             test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 29170)
             test result: ok. 2 passed; 0 failed; 0 ignored; 0 filtered out;
-            
+
             running 1 test
             test hello::tests::it_works ... ok (gas usage est.: 29170)
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
