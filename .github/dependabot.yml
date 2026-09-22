@@ -28,6 +28,9 @@ updates:
           - "bincode"
     ignore:
       - dependency-name: "salsa"
+      # Don't bump to a newer version: its `ra-ap-rustc_lexer` asserts that `unicode-ident` and
+      # `unicode-properties` use the same Unicode version, which breaks builds after Unicode releases.
+      - dependency-name: "ra-ap-rustc_parse_format"
 
   - package-ecosystem: "github-actions"
     directory: "/"
