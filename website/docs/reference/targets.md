@@ -163,13 +163,16 @@ The test runner relies on test target definitions to find runnable tests.
 
 ### Configurable properties
 
-The test target can define three custom properties: `source-path`, `test-type` and `build-external-contracts`.
+The test target can define four custom properties: `source-path`, `test-type`, `build-external-contracts` and
+`forwarding`.
 The `source-path` property is a path from package root, to the main Cairo file of the test module.
 The `test-type` property accepts either `unit` or `integration` as a value, as described in
 [tests organization](../extensions/testing#tests-organization).
 The `build-external-contracts` allows compilation of contracts defined in dependencies of the tested package, as
 described in [compiling external contracts](../extensions/starknet/contract-target#compiling-external-contracts) section
 of the Starknet Contract Target page.
+The `forwarding` property enables [static contract forwarding](../extensions/starknet/contract-target#static-contract-forwarding)
+for the contracts compiled by the test target.
 
 Example test target definition:
 
@@ -189,6 +192,8 @@ The following rules are used to detect test targets:
 
 - A test target of `unit` type is added, with source path pointing to the main file of the package.
   The test target is named `{package_name}_unittest`.
+- Auto-detected test targets inherit `build-external-contracts` and `forwarding` from the package's
+  `starknet-contract` targets.
 - If there is a directory called `tests` in the package, besides a manifest file, it is searched for `integration`
   type test targets.
   - If the directory defines a `lib.cairo` file, a single test target with `source-path` pointing to it is created.

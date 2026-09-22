@@ -1213,7 +1213,7 @@ version = "0.2.0"
 dependencies = [
  "proc-macro2",
  "quote",
- "ra-ap-rustc_parse_format 0.146.0",
+ "ra-ap-rustc_parse_format",
  "syn 3.0.4",
 ]
 
@@ -1225,7 +1225,7 @@ checksum = "0476b3528ba25d371ebeebe6a55816702984b23feea46d4b8751114ef3157779"
 dependencies = [
  "proc-macro2",
  "quote",
- "ra-ap-rustc_parse_format 0.138.0",
+ "ra-ap-rustc_parse_format",
  "syn 2.0.119",
 ]
 
@@ -6340,33 +6340,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "ra-ap-rustc_lexer"
-version = "0.146.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ae080c0ea60b346f36fa6cd7e567c42847ba3da262079d858cdb239ab28d93c"
-dependencies = [
- "memchr",
- "unicode-ident",
- "unicode-properties",
-]
-
-[[package]]
 name = "ra-ap-rustc_parse_format"
 version = "0.138.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3fc97c3250406e0e0af9528325f41fe82492c85e467830418b75aa436d2c2ae9"
 dependencies = [
- "ra-ap-rustc_lexer 0.138.0",
- "rustc-literal-escaper",
-]
-
-[[package]]
-name = "ra-ap-rustc_parse_format"
-version = "0.146.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "427ce3eb7d030edcc09cf730f2825df954faf34c213cebaf7e38996eb64a288f"
-dependencies = [
- "ra-ap-rustc_lexer 0.146.0",
+ "ra-ap-rustc_lexer",
  "rustc-literal-escaper",
 ]
 
@@ -7098,6 +7077,7 @@ dependencies = [
  "smallvec",
  "smol_str",
  "snapbox",
+ "starknet-core",
  "tar",
  "target-triple",
  "test-case",
