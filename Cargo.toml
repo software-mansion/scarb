@@ -150,7 +150,7 @@ stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev
 stwo-cairo-prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "467d5c6d" }
 syn = { version = "3", default-features = false }
 tar = "0.4"
-target-triple = "2.0"
+target-tuple = "1.0"
 tempfile = "3"
 test-case = "3"
 thiserror = "2"
@@ -169,7 +169,7 @@ trybuild = "1"
 typed-builder = ">=0.17"
 typetag = "0.2"
 url = { version = "2", features = ["serde"] }
-uv-once-map = "0"
+uv-once-map = "0.0.83"
 walkdir = "2"
 wasmtime = "39"
 wasmtime-wasi = "39"
