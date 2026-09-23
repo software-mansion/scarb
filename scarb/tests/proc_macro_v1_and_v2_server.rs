@@ -2,6 +2,7 @@ use assert_fs::TempDir;
 use assert_fs::prelude::PathChild;
 use cairo_lang_macro::{TextSpan, Token, TokenStream as TokenStreamV2, TokenTree};
 use scarb_proc_macro_server_types::methods::CodeOrigin::Span;
+use scarb_proc_macro_server_types::methods::expand::Derive;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttribute;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttributeParams;
 use scarb_proc_macro_server_types::methods::expand::ExpandDerive;
@@ -208,9 +209,11 @@ fn expand_derive() {
                     },
                     component: component.clone(),
                 },
-                derives: vec![macro_name.to_string()],
+                derives: vec![Derive {
+                    name: macro_name.to_string(),
+                    call_site: span.clone(),
+                }],
                 item,
-                call_site: span,
             })
             .unwrap();
 
