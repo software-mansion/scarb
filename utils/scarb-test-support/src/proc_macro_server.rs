@@ -73,8 +73,36 @@ pub fn inline_some_v2(token_stream: TokenStream) -> ProcMacroResult {
 }
 
 #[derive_macro]
-fn some_derive_v2(_token_stream: TokenStream)-> ProcMacroResult {
+fn some_derive_v2(_token_stream: TokenStream) -> ProcMacroResult {
     let content = "impl SomeImpl of SomeTrait {}".to_string();
+    let span = TextSpan { start: 0, end: content.len() as u32 };
+    ProcMacroResult::new(
+        TokenStream::new(vec![
+            TokenTree::Ident(
+                Token::new(content, span)
+            )
+        ])
+    )
+}
+
+// Emits its token with `TextSpan::call_site()`, like `quote!`-based macros do, so the
+// call site passed by the proc macro server ends up in the token's code mapping.
+#[derive_macro]
+fn foo_v2(_token_stream: TokenStream) -> ProcMacroResult {
+    let content = "impl FooImpl of FooTrait {}".to_string();
+    ProcMacroResult::new(
+        TokenStream::new(vec![
+            TokenTree::Ident(
+            Token::new(content, TextSpan::call_site())
+            )
+        ])
+    )
+}
+
+// Emits its token with a fixed span; only the whole-expansion `CallSite` mapping carries the call site.
+#[derive_macro]
+fn bar_v2(_token_stream: TokenStream) -> ProcMacroResult {
+    let content = "impl BarImpl of BarTrait {}".to_string();
     let span = TextSpan { start: 0, end: content.len() as u32 };
     ProcMacroResult::new(
         TokenStream::new(vec![

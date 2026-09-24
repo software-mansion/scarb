@@ -14,6 +14,7 @@ use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
 use scarb_proc_macro_server_types::conversions::{diagnostic_v1_to_v2, token_stream_v2_to_v1};
+use scarb_proc_macro_server_types::methods::expand::Derive;
 use scarb_proc_macro_server_types::methods::{
     CodeMapping, CodeOrigin, ProcMacroResult, expand::ExpandDerive,
 };
@@ -29,12 +30,11 @@ impl Handler for ExpandDerive {
             context,
             mut derives,
             item,
-            call_site,
         } = params;
 
         // We need derives to be in deterministic order for hasing later.
         // LS capable of using fingerprint hash sends already sorted derives, so this should be linear.
-        derives.sort();
+        derives.sort_by_key(|d| d.name.clone());
 
         let mut derived_code = String::new();
         let mut all_diagnostics = vec![];
@@ -44,21 +44,25 @@ impl Handler for ExpandDerive {
         let mut hasher = StableHasher::new();
 
         for derive in derives {
+            let Derive {
+                name: derive_name,
+                call_site: derive_call_site,
+            } = derive;
             let expansion =
-                ExpansionQuery::with_expansion_name(derive.clone(), ExpansionKind::Derive);
+                ExpansionQuery::with_expansion_name(derive_name.clone(), ExpansionKind::Derive);
 
             let (proc_macro_instance, hash) = proc_macros
                 .lock()
                 .unwrap()
                 .get_instance_and_hash(&context, &expansion)
                 .with_context(|| {
-                    format!("No \"{derive}\" derive macros found in scope {context:?}")
+                    format!("No \"{derive_name}\" derive macros found in scope {context:?}")
                 })?;
 
             let expansion = proc_macro_instance
                 .find_expansion(&expansion)
                 .with_context(|| {
-                    format!("No \"{derive}\" derive macros found in scope {context:?}")
+                    format!("No \"{derive_name}\" derive macros found in scope {context:?}")
                 })?;
 
             let result = match proc_macro_instance.api_version() {
@@ -66,7 +70,7 @@ impl Handler for ExpandDerive {
                     &proc_macro_instance,
                     hash,
                     current_width,
-                    call_site.clone(),
+                    derive_call_site.clone(),
                     expansion,
                     token_stream_v2_to_v1(&item),
                 ),
@@ -75,7 +79,7 @@ impl Handler for ExpandDerive {
                     hash,
                     current_width,
                     expansion,
-                    call_site.clone(),
+                    derive_call_site.clone(),
                     item.clone(),
                 ),
             }?;
