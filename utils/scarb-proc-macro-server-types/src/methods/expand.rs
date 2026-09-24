@@ -35,9 +35,9 @@ impl Method for ExpandAttribute {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub struct Derive {
-    /// Name of derive macro
+    /// Name of derive macro.
     pub name: String,
-    /// The span of the macro call code
+    /// The span of the macro call code.
     pub call_site: TextSpan,
 }
 
@@ -75,7 +75,7 @@ pub struct ExpandInlineMacroParams {
     pub name: String,
     /// The token stream representing arguments passed to the macro.
     pub args: TokenStream,
-    /// The span of the macro call code
+    /// The span of the macro call code.
     pub call_site: TextSpan,
 }
 
