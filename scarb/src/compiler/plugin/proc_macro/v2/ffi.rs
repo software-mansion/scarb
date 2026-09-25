@@ -1,5 +1,5 @@
-use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
 use crate::compiler::plugin::proc_macro::v2::ProcMacroAuxData;
+use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind};
 use crate::core::PackageId;
 use anyhow::{Context, Result, ensure};
 use cairo_lang_macro::{
@@ -120,10 +120,7 @@ impl Plugin {
         let stable_expansions = (self.vtable.list_expansions)();
         let (ptr, n) = stable_expansions.raw_parts();
         let expansions = unsafe { slice::from_raw_parts(ptr, n) };
-        let mut expansions: Vec<Expansion> = expansions
-            .iter()
-            .map(|stable_expansion| stable_expansion.into())
-            .collect();
+        let mut expansions: Vec<Expansion> = expansions.iter().map(expansion_from_stable).collect();
         // Free the memory allocated by the `stable_expansions`.
         (self.vtable.free_expansions_list)(stable_expansions);
         // Validate expansions.
@@ -247,36 +244,34 @@ impl Plugin {
     }
 }
 
-impl From<&StableExpansion> for Expansion {
-    fn from(stable_expansion: &StableExpansion) -> Self {
-        // Note this does not take ownership of underlying memory.
-        let name = if stable_expansion.name.is_null() {
-            String::default()
-        } else {
-            let cstr = unsafe { CStr::from_ptr(stable_expansion.name) };
-            cstr.to_string_lossy().to_string()
+/// Note this does not take ownership of the underlying memory.
+fn expansion_from_stable(stable_expansion: &StableExpansion) -> Expansion {
+    let name = if stable_expansion.name.is_null() {
+        String::default()
+    } else {
+        let cstr = unsafe { CStr::from_ptr(stable_expansion.name) };
+        cstr.to_string_lossy().to_string()
+    };
+    // Handle special case for executable attributes.
+    if name.starts_with(EXEC_ATTR_PREFIX) {
+        let name = name.strip_prefix(EXEC_ATTR_PREFIX).unwrap();
+        let name = name.to_smolstr();
+        return Expansion {
+            cairo_name: name.clone(),
+            expansion_name: name.clone(),
+            kind: ExpansionKind::Executable,
         };
-        // Handle special case for executable attributes.
-        if name.starts_with(EXEC_ATTR_PREFIX) {
-            let name = name.strip_prefix(EXEC_ATTR_PREFIX).unwrap();
-            let name = name.to_smolstr();
-            return Self {
-                cairo_name: name.clone(),
-                expansion_name: name.clone(),
-                kind: ExpansionKind::Executable,
-            };
-        }
-        let expansion_kind = unsafe { ExpansionKindV2::from_stable(&stable_expansion.kind) }.into();
-        let cairo_name = if matches!(expansion_kind, ExpansionKind::Derive) {
-            let name = name.to_case(Case::UpperCamel);
-            name.to_smolstr()
-        } else {
-            name.to_smolstr()
-        };
-        Self {
-            cairo_name,
-            expansion_name: name.to_smolstr(),
-            kind: expansion_kind,
-        }
+    }
+    let expansion_kind = unsafe { ExpansionKindV2::from_stable(&stable_expansion.kind) }.into();
+    let cairo_name = if matches!(expansion_kind, ExpansionKind::Derive) {
+        let name = name.to_case(Case::UpperCamel);
+        name.to_smolstr()
+    } else {
+        name.to_smolstr()
+    };
+    Expansion {
+        cairo_name,
+        expansion_name: name.to_smolstr(),
+        kind: expansion_kind,
     }
 }

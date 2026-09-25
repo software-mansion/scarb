@@ -1,0 +1,32 @@
+[package]
+name = "scarb-proc-macro-host"
+version = "0.1.0"
+description = "Cairo compiler plugin driving procedural macro expansion, shared by Scarb and CairoLS"
+readme = "README.md"
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+cairo-lang-defs.workspace = true
+cairo-lang-diagnostics.workspace = true
+cairo-lang-filesystem.workspace = true
+cairo-lang-macro = { path = "../../plugins/cairo-lang-macro", version = "0.2.2" }
+cairo-lang-semantic.workspace = true
+cairo-lang-syntax.workspace = true
+itertools.workspace = true
+salsa.workspace = true
+scarb-stable-hash = { path = "../scarb-stable-hash", version = "1" }
+serde.workspace = true
+serde_json.workspace = true
+smol_str.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+convert_case.workspace = true
+cairo-lang-parser.workspace = true
+cairo-lang-utils.workspace = true
+indoc.workspace = true
+typetag.workspace = true

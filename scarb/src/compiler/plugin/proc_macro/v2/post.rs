@@ -1,5 +1,5 @@
-use crate::compiler::plugin::proc_macro::FULL_PATH_MARKER_KEY;
-use crate::compiler::plugin::proc_macro::v2::ProcMacroHostPlugin;
+use crate::compiler::plugin::proc_macro::v2::DylibBackend;
+use crate::compiler::plugin::proc_macro::{DeclaredProcMacroInstances, FULL_PATH_MARKER_KEY};
 use crate::core::PackageId;
 use anyhow::Result;
 use cairo_lang_defs::db::DefsGroup;
@@ -15,7 +15,7 @@ use itertools::Itertools;
 use std::collections::HashMap;
 use tracing::{debug, trace_span};
 
-impl ProcMacroHostPlugin {
+impl DylibBackend {
     #[tracing::instrument(level = "trace", skip_all)]
     pub fn post_process(&self, db: &dyn SemanticGroup) -> Result<()> {
         let aux_data = self.collect_aux_data(db);
@@ -31,7 +31,7 @@ impl ProcMacroHostPlugin {
         } else {
             Default::default()
         };
-        for instance in self.instances.iter() {
+        for instance in self.instances().iter() {
             let _ = trace_span!(
                 "post_process_callback",
                 instance = %instance.package_id()
@@ -131,7 +131,7 @@ impl ProcMacroHostPlugin {
             .write()
             .unwrap()
             .entry(package_id)
-            .and_modify(|markers| markers.extend(markers.clone()))
-            .or_insert(markers);
+            .or_default()
+            .extend(markers);
     }
 }
