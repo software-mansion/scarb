@@ -22,20 +22,12 @@ pub struct SpannedToken {
     pub span: TextSpan,
 }
 
-/// The code produced by a macro expansion.
-///
-/// This mirrors [`cairo_lang_macro::TokenStream`], but as plain owned data. The token stream of
-/// the procedural macro api interns its strings in a thread-local arena, which makes it unsuitable
-/// both for crossing a process boundary and for being stored by the caller.
+/// The code produced by a macro expansion, as plain owned data.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SpannedTokenStream(pub Vec<SpannedToken>);
 
 impl SpannedTokenStream {
-    /// Represents code that carries no span information of its own.
-    ///
-    /// The whole content is reported as a single token attributed to `origin`, so that the caller
-    /// maps all of it back onto that one piece of the original source. Empty content yields an
-    /// empty stream, which asks the caller to remove the expanded item.
+    /// Wraps code without span information into a single token spanning `origin`.
     pub fn unspanned(content: impl Into<String>, origin: TextSpan) -> Self {
         let content = content.into();
         if content.is_empty() {
@@ -69,8 +61,7 @@ impl SpannedTokenStream {
         )
     }
 
-    /// Converts into a token stream the procedural macro api understands, allocating the token
-    /// contents in `ctx`.
+    /// Converts into a token stream of the procedural macro api.
     pub fn to_token_stream(&self, ctx: &AllocationContext) -> TokenStream {
         TokenStream::new(
             self.0
@@ -97,10 +88,7 @@ impl Display for SpannedTokenStream {
 /// This struct encapsulates both the resulting token stream from macro expansion
 /// and any diagnostic messages (e.g., errors or warnings) that were generated during processing.
 ///
-/// Each token of the result carries the span of the code it originates from, which is what the
-/// caller uses to map expanded code back onto the original source. Expansions performed through
-/// the v1 procedural macro api, which has no notion of spans, are reported as a single token
-/// covering the whole expansion origin.
+/// Expansions of v1 macros are reported as a single token covering the whole expansion origin.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ProcMacroResult {
     /// The resultant token stream produced after the macro expansion.
@@ -135,8 +123,7 @@ mod tests {
 
     #[test]
     fn empty_content_produces_an_empty_stream() {
-        // An expansion that returns nothing asks the caller to remove the original item, so the
-        // emptiness has to survive being wrapped into a single token.
+        // An empty expansion asks the caller to remove the original item.
         let stream = SpannedTokenStream::unspanned("", span(0, 10));
         assert!(stream.is_empty());
         assert_eq!(stream.to_string(), "");
@@ -192,7 +179,6 @@ mod tests {
                 span: span(5, 6),
             },
         ]);
-        // Tokens need not be contiguous; the rendered code is just their contents in order.
         assert_eq!(stream.to_string(), "ab");
     }
 }

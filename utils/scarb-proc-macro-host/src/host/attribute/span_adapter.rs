@@ -194,10 +194,7 @@ impl ExpandableAttrLocation {
 
     /// Maps an offset of the expansion input back onto the original file.
     ///
-    /// The input is laid out in three regions: the code before the expandable attribute, the code
-    /// after it, and the attribute itself, which [`Self::adapt_token_stream`] moved to the end.
-    /// `at` selects the region, which lets a caller classify the end of a span by its last
-    /// character rather than by the position just past it.
+    /// `at` selects the region the offset belongs to.
     fn map_offset(&self, offset: TextOffset, at: TextOffset) -> TextOffset {
         let attr_width = self.width_with_trivia();
         let whole_item_width = self.whole_item_span.end - self.whole_item_span.start;
@@ -216,10 +213,7 @@ impl ExpandableAttrLocation {
 
     /// Maps a span of the expansion input back onto the original file.
     ///
-    /// Both ends are mapped by the region they point into, independently. A span covering the
-    /// whole input straddles regions - that is what a macro produces when it rebuilds the item
-    /// from its string form - and mapping both ends with the region of the first one would move
-    /// the end by the wrong amount.
+    /// Each end is mapped by the region it points into.
     fn map_span(&self, start: TextOffset, end: TextOffset) -> (TextOffset, TextOffset) {
         (
             self.map_offset(start, start),

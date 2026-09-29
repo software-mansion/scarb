@@ -1,9 +1,4 @@
-//! End-to-end tests of the host plugin driven by a fake backend.
-//!
-//! The backend stands in for a real procedural macro: it declares a fixed set of expansions and
-//! rewrites token streams in-memory. This exercises the whole host pipeline (finding what to
-//! expand, building the input, adapting spans, mapping the output back) without loading any
-//! dynamic library or talking to a proc macro server.
+//! Tests of the host plugin driven by a fake in-memory backend.
 
 use std::sync::{Arc, Mutex};
 
@@ -81,7 +76,8 @@ impl ExpansionId for FakeId {
 
 #[derive(Debug, Default)]
 struct FakeBackend {
-    expansions: Vec<(Expansion, Behaviour)>,
+    ids: Vec<FakeId>,
+    behaviours: Vec<Behaviour>,
     /// Every expansion performed, in order, as `(expansion name, input)`.
     calls: Mutex<Vec<(String, String)>>,
     /// Every expansion the host reported back through `on_expanded`.
@@ -90,42 +86,47 @@ struct FakeBackend {
 
 impl FakeBackend {
     fn new(expansions: Vec<(&str, ExpansionKind, Behaviour)>) -> Self {
-        Self {
-            expansions: expansions
-                .into_iter()
-                .map(|(name, kind, behaviour)| {
-                    // Scarb exposes derives to Cairo code in upper camel case, and everything
-                    // else under the name of the expansion function.
-                    let cairo_name = if kind == ExpansionKind::Derive {
-                        name.to_case(Case::UpperCamel)
-                    } else {
-                        name.to_string()
-                    };
-                    (
-                        Expansion {
-                            expansion_name: name.into(),
-                            cairo_name: cairo_name.into(),
-                            kind,
-                        },
-                        behaviour,
-                    )
-                })
-                .collect(),
+        let mut this = Self {
+            ids: Vec::new(),
+            behaviours: Vec::new(),
             calls: Default::default(),
             observed: Default::default(),
+        };
+        for (name, kind, behaviour) in expansions {
+            // Scarb exposes derives to Cairo code in upper camel case.
+            let cairo_name = if kind == ExpansionKind::Derive {
+                name.to_case(Case::UpperCamel)
+            } else {
+                name.to_string()
+            };
+            let expansion = Expansion {
+                expansion_name: name.into(),
+                cairo_name: cairo_name.into(),
+                kind,
+            };
+            this.push(expansion, behaviour);
         }
+        this
+    }
+
+    fn push(&mut self, expansion: Expansion, behaviour: Behaviour) {
+        self.ids.push(FakeId {
+            expansion,
+            behaviour_index: self.behaviours.len(),
+        });
+        self.behaviours.push(behaviour);
     }
 
     fn with_executable(mut self, name: &str) -> Self {
         // Executable attributes are never expanded, so their behaviour does not matter.
-        self.expansions.push((
+        self.push(
             Expansion {
                 expansion_name: name.into(),
                 cairo_name: name.into(),
                 kind: ExpansionKind::Executable,
             },
             Behaviour::Identity,
-        ));
+        );
         self
     }
 
@@ -142,15 +143,8 @@ impl ProcMacroBackend for FakeBackend {
     type Id = FakeId;
     type AuxData = Vec<String>;
 
-    fn expansions(&self) -> Vec<FakeId> {
-        self.expansions
-            .iter()
-            .enumerate()
-            .map(|(behaviour_index, (expansion, _))| FakeId {
-                expansion: expansion.clone(),
-                behaviour_index,
-            })
-            .collect()
+    fn expansions(&self) -> &[FakeId] {
+        &self.ids
     }
 
     fn expand(
@@ -167,7 +161,7 @@ impl ProcMacroBackend for FakeBackend {
             .unwrap()
             .push((id.expansion.expansion_name.to_string(), input.clone()));
 
-        let (token_stream, diagnostics) = match &self.expansions[id.behaviour_index].1 {
+        let (token_stream, diagnostics) = match &self.behaviours[id.behaviour_index] {
             Behaviour::Identity => (item, Vec::new()),
             Behaviour::Empty => (TokenStream::empty(), Vec::new()),
             Behaviour::Replace(from, to) => {
@@ -192,11 +186,8 @@ impl ProcMacroBackend for FakeBackend {
             Behaviour::WithAuxData => (item, Vec::new()),
         };
 
-        let aux_data = matches!(
-            self.expansions[id.behaviour_index].1,
-            Behaviour::WithAuxData
-        )
-        .then(|| cairo_lang_macro::AuxData::new(b"aux".to_vec()));
+        let aux_data = matches!(self.behaviours[id.behaviour_index], Behaviour::WithAuxData)
+            .then(|| cairo_lang_macro::AuxData::new(b"aux".to_vec()));
 
         ProcMacroResult {
             token_stream,
@@ -498,8 +489,7 @@ fn executable_attributes_are_declared_but_never_expanded() {
 
 #[test]
 fn full_path_marker_attribute_is_declared() {
-    // Macros may leave the marker on the code they generate. Every backend has to declare it, or
-    // the compiler reports it as an unknown attribute.
+    // Undeclared marker would be reported as an unknown attribute.
     let db = SimpleParserDatabase::default();
     let plugin = ProcMacroHostPlugin::new(Arc::new(FakeBackend::new(vec![])));
 
@@ -523,8 +513,7 @@ fn generated_code_is_mapped_back_onto_the_original_source() {
     );
 
     let item = results.into_iter().next().unwrap();
-    // Every piece of generated code points back at a span of the original file, so that the IDE
-    // can navigate from expanded code to the code the user wrote.
+    // Every piece of generated code points back at the original file.
     assert!(!item.origins.is_empty());
     assert!(
         item.origins
@@ -552,9 +541,7 @@ fn ast_item_kinds_without_attribute_support_are_ignored() {
 
 #[test]
 fn only_the_first_attribute_is_expanded_per_pass() {
-    // Attributes are expanded one per `generate_code` call. Even when an expansion changes
-    // nothing, the item must still be rewritten so the compiler calls us again for the next
-    // attribute, which would otherwise never run.
+    // The item must be rewritten so the next attribute gets expanded.
     let (backend, results) = expand_all(
         FakeBackend::new(vec![
             ("first", ExpansionKind::Attr, Behaviour::Identity),
@@ -581,8 +568,7 @@ fn only_the_first_attribute_is_expanded_per_pass() {
 
 #[test]
 fn an_unchanged_attribute_still_rewrites_when_derives_are_pending() {
-    // The "nothing changed, leave the item alone" shortcut only applies when there is no further
-    // work for this item. A pending derive is further work.
+    // A pending derive disables the "nothing changed" shortcut.
     let (_, results) = expand_all(
         FakeBackend::new(vec![
             ("keep", ExpansionKind::Attr, Behaviour::Identity),
@@ -601,8 +587,6 @@ fn an_unchanged_attribute_still_rewrites_when_derives_are_pending() {
 
 #[test]
 fn inner_attributes_of_trait_functions_are_expanded() {
-    // The trait branch rebuilds the item separately from the impl branch, so it needs its own
-    // coverage.
     let (backend, results) = expand_all(
         FakeBackend::new(vec![(
             "inner",
@@ -621,8 +605,7 @@ fn inner_attributes_of_trait_functions_are_expanded() {
 
 #[test]
 fn executable_attributes_are_left_on_the_expanded_item() {
-    // An executable attribute is consumed later in the build, so it must survive expansion of the
-    // attribute sitting next to it, and be visible to the macro that runs.
+    // Executable attributes must survive expansion of other attributes.
     let (backend, results) = expand_all(
         FakeBackend::new(vec![(
             "rename",
@@ -670,8 +653,7 @@ fn aux_data_from_every_expansion_is_attached_to_the_generated_file() {
 
 #[test]
 fn expansions_are_reported_even_when_they_produce_no_code() {
-    // Backends rely on being told about every expansion, not just the ones that generated code,
-    // because macros can emit side output without changing the item.
+    // Macros can emit side output without generating code.
     let (backend, _) = expand_all(
         FakeBackend::new(vec![("strip", ExpansionKind::Attr, Behaviour::Empty)]),
         "#[strip]\nfn gone() {}\n",
@@ -682,8 +664,7 @@ fn expansions_are_reported_even_when_they_produce_no_code() {
 
 #[test]
 fn a_macro_emitting_aux_data_always_rewrites_the_item() {
-    // The "nothing changed" shortcut must not fire when the macro emitted side output, or that
-    // output would be dropped along with the generated file.
+    // Side output disables the "nothing changed" shortcut.
     let (_, results) = expand_all(
         FakeBackend::new(vec![(
             "collect",
@@ -752,11 +733,7 @@ fn module_level_inline_macros_with_a_qualified_path_are_left_alone() {
 
 #[test]
 fn a_whole_input_span_maps_back_onto_the_whole_item() {
-    // A macro that rebuilds the item from its string form emits one token spanning the entire
-    // input it was given. That span straddles the code before the expandable attribute and the
-    // code after it, so both of its ends have to move by their own amount. Mapping the end with
-    // the region of the start used to cut the mapping short by the width of the attribute, which
-    // sent goto and diagnostics inside the generated code to the wrong place.
+    // A span covering the whole input has its ends in different regions.
     let source = "#[marker]\n#[rename]\nfn old() {}\n";
     let (_, results) = expand_all(
         FakeBackend::new(vec![(

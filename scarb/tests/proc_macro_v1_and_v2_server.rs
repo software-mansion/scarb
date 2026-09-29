@@ -16,10 +16,6 @@ use scarb_test_support::project_builder::ProjectBuilder;
 use std::path::PathBuf;
 
 /// Content and span of every token in the stream.
-///
-/// Spans are what the caller maps the expansion back onto the original source with. A v2 macro
-/// sets them itself; an expansion coming from the v1 api, which has no spans, is reported as a
-/// single token covering the whole origin.
 fn tokens(token_stream: &SpannedTokenStream) -> Vec<(String, TextSpan)> {
     token_stream
         .0
@@ -171,8 +167,7 @@ fn expand_attribute() {
             "fn some_test_fn_34(){}".to_string()
         );
 
-        // Both api versions report the expansion as a single token. The v2 macro sets that span
-        // itself; for the v1 macro the server attributes the whole output to the whole input item.
+        // Both api versions report the expansion as a single token.
         assert_eq!(
             tokens(&response.token_stream),
             vec![(
@@ -316,8 +311,7 @@ fn expand_inline() {
 
 #[test]
 fn v1_attribute_returning_nothing_reports_an_empty_expansion() {
-    // An empty expansion asks the caller to remove the item. That has to survive the upcast from
-    // the v1 api, which returns a plain string rather than a token stream.
+    // An empty expansion asks the caller to remove the item.
     let remove_v1 = r#"
         #[attribute_macro]
         pub fn remove_v1(_attr: TokenStream, _token_stream: TokenStream) -> ProcMacroResult {
@@ -363,8 +357,7 @@ fn v1_attribute_returning_nothing_reports_an_empty_expansion() {
 
 #[test]
 fn v1_diagnostics_arrive_without_a_span() {
-    // The v1 api has no way to point a diagnostic at a piece of code, so the upcast produces a
-    // span-less diagnostic and the caller falls back to the macro call site.
+    // The v1 diagnostics carry no span.
     let failing_v1 = r#"
         use cairo_lang_macro::Diagnostic;
 

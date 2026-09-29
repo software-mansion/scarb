@@ -41,12 +41,9 @@ pub struct CompilationUnitComponentMacros {
 /// Represents single macro (attr/inline/derive) with hash of its plugin package.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct MacroWithHash {
-    /// Name of the expansion function in the macro implementation.
-    ///
-    /// This is the name to use when requesting an expansion from the server.
+    /// Name of the expansion function, used when requesting an expansion.
     pub name: String,
-    /// Name under which the macro is written in Cairo code, e.g. `SomeDerive` for a derive
-    /// implemented by `some_derive`.
+    /// Name of the macro in Cairo code, e.g. `SomeDerive` for `some_derive`.
     pub cairo_name: String,
     /// Hash of plugin containing this macro.
     pub hash: u64,

@@ -60,7 +60,7 @@ fn expand_inline_v1(
         token_stream_v2_to_v1(&args),
     );
 
-    // A v1 macro reports no spans, so the whole expansion is attributed to the macro call.
+    // A v1 macro reports no spans, so the expansion is attributed to the macro call.
     Ok(ProcMacroResult {
         token_stream: token_stream_v1_to_spanned(&result.token_stream, call_site),
         diagnostics: result.diagnostics.iter().map(diagnostic_v1_to_v2).collect(),

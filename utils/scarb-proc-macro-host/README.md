@@ -10,3 +10,9 @@ It is generic over a [`ProcMacroBackend`], which supplies the list of available 
 and performs the actual expansion. Scarb implements that backend by calling into procedural macro
 dynamic libraries loaded in-process. CairoLS implements it by talking to
 `scarb proc-macro-server`.
+
+## Releasing
+
+CairoLS depends on the version of this crate published to crates.io, so every change here has to be
+published together with the Scarb release that includes it.
+See the release procedure in [MAINTAINING.md](../../MAINTAINING.md#scarb-proc-macro-host-release-procedure).

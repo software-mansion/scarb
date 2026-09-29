@@ -12,7 +12,7 @@ use crate::compiler::plugin::proc_macro::v2::aux_data::{EmittedAuxData, ProcMacr
 use crate::compiler::plugin::proc_macro::{DeclaredProcMacroInstances, ProcMacroInstance};
 use crate::core::PackageId;
 
-/// Identifies a single expansion of a procedural macro loaded from a dynamic library.
+/// Identifies a single expansion of a loaded procedural macro.
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct ProcMacroId {
     pub package_id: PackageId,
@@ -35,13 +35,10 @@ impl ExpansionId for ProcMacroId {
 }
 
 /// Expands procedural macros by calling into dynamic libraries loaded in-process.
-///
-/// This is the Scarb side of [`ProcMacroBackend`]. It owns the loaded macro instances, and
-/// collects the auxiliary data and full path markers that macros emit alongside the expanded
-/// code, so they can be handed back to the macros in the post-processing callback.
 #[derive(Debug)]
 pub struct DylibBackend {
     instances: Vec<Arc<ProcMacroInstance>>,
+    expansions: Vec<ProcMacroId>,
     pub(crate) full_path_markers: RwLock<HashMap<PackageId, Vec<String>>>,
 }
 
@@ -53,12 +50,22 @@ impl DeclaredProcMacroInstances for DylibBackend {
 
 impl DylibBackend {
     pub fn try_new(macros: Vec<Arc<ProcMacroInstance>>) -> Result<Self> {
+        let expansions = macros
+            .iter()
+            .flat_map(|instance| {
+                instance
+                    .get_expansions()
+                    .iter()
+                    .map(|expansion| ProcMacroId::new(instance.package_id(), expansion.clone()))
+            })
+            .collect();
         let backend = Self {
             instances: macros,
+            expansions,
             full_path_markers: RwLock::new(Default::default()),
         };
         // Validate expansions.
-        let mut expansions = backend.expansions();
+        let mut expansions = backend.expansions.clone();
         expansions.sort_unstable_by_key(|e| (e.expansion.cairo_name.clone(), e.package_id));
         ensure!(
             expansions
@@ -92,16 +99,8 @@ impl ProcMacroBackend for DylibBackend {
     type Id = ProcMacroId;
     type AuxData = EmittedAuxData;
 
-    fn expansions(&self) -> Vec<ProcMacroId> {
-        self.instances
-            .iter()
-            .flat_map(|instance| {
-                instance
-                    .get_expansions()
-                    .iter()
-                    .map(|expansion| ProcMacroId::new(instance.package_id(), expansion.clone()))
-            })
-            .collect()
+    fn expansions(&self) -> &[ProcMacroId] {
+        &self.expansions
     }
 
     fn expand(

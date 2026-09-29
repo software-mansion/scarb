@@ -266,10 +266,7 @@ fn expansion_from_stable(stable_expansion: &StableExpansion) -> Expansion {
     }
 }
 
-/// Convert the expansion kind exposed by the v1 procedural macro api.
-///
-/// Unlike the v2 kind, this one has no blanket conversion in `scarb-proc-macro-host`, which is
-/// v2-only.
+/// Converts the expansion kind exposed by the v1 procedural macro api.
 fn expansion_kind_from_v1(kind: ExpansionKindV1) -> ExpansionKind {
     match kind {
         ExpansionKindV1::Attr => ExpansionKind::Attr,

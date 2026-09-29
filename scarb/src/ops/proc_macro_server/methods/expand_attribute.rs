@@ -61,8 +61,7 @@ fn expand_attribute_v1(
     args: TokenStream,
     item: TokenStream,
 ) -> Result<ProcMacroResult> {
-    // A v1 macro sees the item as flat text, so the whole expansion is attributed back to the
-    // whole item it was applied to.
+    // A v1 macro reports no spans, so the expansion is attributed to the whole item.
     let origin = token_stream_span(&item).unwrap_or_else(|| TextSpan::new(0, 0));
     let result = proc_macro_instance.try_v1()?.generate_code(
         attr.into(),

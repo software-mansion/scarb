@@ -110,9 +110,7 @@ pub trait DeclaredProcMacroInstances {
             .collect()
     }
 
-    /// Expansions of the given kind, each with the package of the macro providing it.
-    ///
-    /// Used by the proc macro server to describe the available macros to the language server.
+    /// Expansions of the given kind, each with the package providing it.
     fn expansions_with_package(&self, kind: ExpansionKind) -> Vec<(Expansion, PackageId)> {
         self.instances()
             .iter()
