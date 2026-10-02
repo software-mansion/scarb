@@ -33,6 +33,14 @@ impl Method for ExpandAttribute {
     type Response = ProcMacroResult;
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+pub struct Derive {
+    /// Name of derive macro.
+    pub name: String,
+    /// The span of the macro call code.
+    pub call_site: TextSpan,
+}
+
 /// Parameters for expanding derive macros.
 ///
 /// These parameters specify a list of derive macros to be expanded and the item they apply to.
@@ -40,12 +48,10 @@ impl Method for ExpandAttribute {
 pub struct ExpandDeriveParams {
     /// The project scope in which the action is requested.
     pub context: ProcMacroScope,
-    /// A list of names for derived macros to be expanded.
-    pub derives: Vec<String>,
+    /// A list of names and call_sites for derived macros to be expanded.
+    pub derives: Vec<Derive>,
     /// The token stream of the item to which the derive macros are applied.
     pub item: TokenStream,
-    /// The span of the macro call code
-    pub call_site: TextSpan,
 }
 
 /// Represents a request to expand derive macros.
@@ -69,7 +75,7 @@ pub struct ExpandInlineMacroParams {
     pub name: String,
     /// The token stream representing arguments passed to the macro.
     pub args: TokenStream,
-    /// The span of the macro call code
+    /// The span of the macro call code.
     pub call_site: TextSpan,
 }
 

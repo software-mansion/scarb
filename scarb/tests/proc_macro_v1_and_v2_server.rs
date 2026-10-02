@@ -2,6 +2,7 @@ use assert_fs::TempDir;
 use assert_fs::prelude::PathChild;
 use cairo_lang_macro::{TextSpan, Token, TokenStream as TokenStreamV2, TokenTree};
 use scarb_proc_macro_server_types::methods::CodeOrigin::Span;
+use scarb_proc_macro_server_types::methods::expand::Derive;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttribute;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttributeParams;
 use scarb_proc_macro_server_types::methods::expand::ExpandDerive;
@@ -76,7 +77,12 @@ fn defined_macros() {
             .into_iter()
             .map(|m| m.name)
             .collect::<Vec<_>>(),
-        &["some_derive_v1".to_string(), "some_derive_v2".to_string()]
+        &[
+            "some_derive_v1".to_string(),
+            "bar_v2".to_string(),
+            "foo_v2".to_string(),
+            "some_derive_v2".to_string()
+        ]
     );
     assert_eq!(
         &defined_macros
@@ -208,9 +214,11 @@ fn expand_derive() {
                     },
                     component: component.clone(),
                 },
-                derives: vec![macro_name.to_string()],
+                derives: vec![Derive {
+                    name: macro_name.to_string(),
+                    call_site: span.clone(),
+                }],
                 item,
-                call_site: span,
             })
             .unwrap();
 
@@ -249,6 +257,90 @@ fn expand_derive() {
             );
         }
     }
+}
+
+#[test]
+fn expand_multiple_derives_use_own_call_sites() {
+    let t = TempDir::new().unwrap();
+    let project = setup_project_with_v1_and_v2_macro_deps(&t, None, None);
+
+    let mut manifest_path = project.clone();
+    manifest_path.push("test_package");
+    manifest_path.set_file_name("Scarb.toml");
+
+    let mut proc_macro_client = ProcMacroClient::new(&project);
+
+    let component = proc_macro_client
+        .defined_macros_for_package("test_package", manifest_path.clone())
+        .component;
+
+    let code = "fn some_test_fn(){}".to_string();
+    let item_span = TextSpan::new(0, code.len() as u32);
+    let item = TokenStreamV2::new(vec![TokenTree::Ident(Token::new(code, item_span.clone()))]);
+
+    // #[derive(Foo, Bar)]
+    let foo_call_site = TextSpan::new(9, 12);
+    let bar_call_site = TextSpan::new(14, 17);
+
+    let response = proc_macro_client
+        .request_and_wait::<ExpandDerive>(ExpandDeriveParams {
+            context: ProcMacroScope {
+                workspace: Workspace {
+                    manifest_path: manifest_path.clone(),
+                },
+                component: component.clone(),
+            },
+            derives: vec![
+                Derive {
+                    name: "foo_v2".to_string(),
+                    call_site: foo_call_site.clone(),
+                },
+                Derive {
+                    name: "bar_v2".to_string(),
+                    call_site: bar_call_site.clone(),
+                },
+            ],
+            item,
+        })
+        .unwrap();
+
+    assert_eq!(response.diagnostics, vec![]);
+    assert_eq!(
+        response.token_stream.to_string(),
+        "impl BarImpl of BarTrait {}impl FooImpl of FooTrait {}"
+    );
+
+    // Derives are expanded in name order: `bar_v2` at 0..27, `foo_v2` at 27..54.
+    //
+    // `bar_v2` uses a fixed token span (0..27), so its call site appears only in the `CallSite` mapping.
+    //
+    // `foo_v2` uses `TextSpan::call_site()`, so its call site appears in the token mapping too.
+
+    assert_eq!(
+        response.code_mappings.unwrap(),
+        vec![
+            CodeMapping {
+                span: TextSpan { start: 0, end: 0 },
+                origin: Span(TextSpan { start: 0, end: 0 })
+            },
+            CodeMapping {
+                span: TextSpan { start: 0, end: 27 },
+                origin: Span(TextSpan { start: 0, end: 27 })
+            },
+            CodeMapping {
+                span: TextSpan { start: 0, end: 27 },
+                origin: CodeOrigin::CallSite(bar_call_site)
+            },
+            CodeMapping {
+                span: TextSpan { start: 27, end: 54 },
+                origin: Span(foo_call_site.clone())
+            },
+            CodeMapping {
+                span: TextSpan { start: 27, end: 54 },
+                origin: CodeOrigin::CallSite(foo_call_site)
+            }
+        ]
+    )
 }
 
 #[test]

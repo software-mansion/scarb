@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.6.0 (2026-09-23)
+- Pass a call site per derive in `ExpandDeriveParams` (`derives: Vec<Derive>`), replacing the single `call_site`.
+
 ## 0.5.0 (2025-12-10)
 - Add `MacroWithHash` struct. 
 - Use `MacroWithHash` to identify procedural macros in `CompilationUnitComponentMacros`, instead of macro name only.
