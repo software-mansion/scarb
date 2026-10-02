@@ -1,25 +1,18 @@
-use crate::compiler::plugin::proc_macro::v2::host::attribute::child_nodes::{
-    ChildNodesWithoutAttributes, ItemWithAttributes,
-};
-use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::{
-    AdaptedTextSpan, AdaptedTokenStream, ExpandableAttrLocation,
-};
-use crate::compiler::plugin::proc_macro::v2::host::attribute::{
-    AttributeGeneratedFile, AttributePluginResult,
-};
-use crate::compiler::plugin::proc_macro::v2::host::aux_data::EmittedAuxData;
-use crate::compiler::plugin::proc_macro::v2::host::conversion::CallSiteLocation;
-use crate::compiler::plugin::proc_macro::v2::host::generate_code_mappings;
-use crate::compiler::plugin::proc_macro::v2::{
-    ProcMacroAuxData, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
-};
-use crate::core::PackageId;
-use cairo_lang_macro::{AllocationContext, ProcMacroResult, TokenStream};
+use cairo_lang_macro::{AllocationContext, TokenStream};
 use cairo_lang_syntax::node::ast;
 use salsa::Database;
 use smol_str::SmolStr;
 
-impl ProcMacroHostPlugin {
+use crate::backend::{ExpansionId, ProcMacroBackend};
+use crate::conversion::CallSiteLocation;
+use crate::host::ProcMacroHostPlugin;
+use crate::host::attribute::child_nodes::{ChildNodesWithoutAttributes, ItemWithAttributes};
+use crate::host::attribute::span_adapter::{AdaptedTokenStream, ExpandableAttrLocation};
+use crate::host::attribute::{AttributeGeneratedFile, AttributePluginResult};
+use crate::host::generate_code_mappings;
+use crate::token_stream_builder::TokenStreamBuilder;
+
+impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
     /// Find first attribute procedural macro that should be expanded.
     ///
     /// This method serves two purposes:
@@ -38,13 +31,13 @@ impl ProcMacroHostPlugin {
     /// when parsing a source file. Obviously, when we remove the attribute from the `TokenStream`
     /// built, it's no longer consecutive.
     ///
-    /// See [`AttributeSpanAdapter`] for details.
+    /// See [`crate::host::attribute::span_adapter`] for details.
     pub(crate) fn parse_attribute<'db>(
         &self,
         db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
         ctx: &AllocationContext,
-    ) -> (AttrExpansionFound<'db>, AdaptedTokenStream) {
+    ) -> (AttrExpansionFound<'db, B::Id>, AdaptedTokenStream) {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         let input = match item_ast.clone() {
             ast::ModuleItem::Trait(ast) => {
@@ -91,35 +84,23 @@ impl ProcMacroHostPlugin {
         (input, token_stream)
     }
 
-    pub(crate) fn generate_attribute_code(
-        &self,
-        package_id: PackageId,
-        item_name: SmolStr,
-        call_site: AdaptedTextSpan,
-        attr: TokenStream,
-        token_stream: AdaptedTokenStream,
-    ) -> ProcMacroResult {
-        self.instance(package_id)
-            .try_v2()
-            .expect("procedural macro using v1 api used in a context expecting v2 api")
-            .generate_code(item_name, call_site.into(), attr, token_stream.into())
-    }
-
-    pub fn expand_attribute<'db>(
+    pub(crate) fn expand_attribute<'db>(
         &self,
         db: &'db dyn Database,
         last: bool,
         args: TokenStream,
         token_stream: AdaptedTokenStream,
-        input: AttrExpansionArgs<'db>,
+        input: AttrExpansionArgs<'db, B::Id>,
     ) -> AttributePluginResult<'db> {
         let original = token_stream.to_string();
-        let result = self.generate_attribute_code(
-            input.id.package_id,
-            input.id.expansion.expansion_name.clone(),
-            input.attribute_location.adapted_call_site(),
+        let mut aux_data = B::AuxData::default();
+        let result = self.expand(
+            db,
+            &input.id,
+            input.attribute_location.adapted_call_site().into(),
             args,
-            token_stream,
+            token_stream.into(),
+            &mut aux_data,
         );
 
         // Handle token stream.
@@ -135,9 +116,6 @@ impl ProcMacroHostPlugin {
                         .adapt_diagnostics(result.diagnostics),
                 );
         }
-
-        // Full path markers require code modification.
-        self.register_full_path_markers(input.id.package_id, result.full_path_markers.clone());
 
         // This is a minor optimization.
         // If the expanded macro attribute is the only one that will be expanded by `ProcMacroHost`
@@ -159,7 +137,7 @@ impl ProcMacroHostPlugin {
             );
         }
 
-        let file_name = format!("proc_{}", input.id.expansion.cairo_name);
+        let file_name = format!("proc_{}", input.id.expansion().cairo_name);
         let code_mappings = generate_code_mappings(
             &result.token_stream,
             input.attribute_location.adapted_call_site().into(),
@@ -180,32 +158,25 @@ impl ProcMacroHostPlugin {
                 AttributeGeneratedFile::new(file_name)
                     .with_content(content)
                     .with_code_mappings(code_mappings)
-                    .with_aux_data(
-                        result
-                            .aux_data
-                            .map(|new_aux_data| {
-                                EmittedAuxData::new(ProcMacroAuxData::new(
-                                    new_aux_data.into(),
-                                    input.id.clone(),
-                                ))
-                            })
-                            .unwrap_or_default(),
-                    )
+                    .with_aux_data(self.backend().finish_aux_data(aux_data))
                     .with_diagnostics_note(format!(
                         "this error originates in the attribute macro: `{}`",
-                        input.id.expansion.cairo_name
+                        input.id.expansion().cairo_name
                     )),
             )
     }
 }
 
-fn parse_item<'db, T: ItemWithAttributes<'db> + ChildNodesWithoutAttributes<'db>>(
+fn parse_item<'db, T: ItemWithAttributes<'db> + ChildNodesWithoutAttributes<'db>, B>(
     ast: &T,
     db: &'db dyn Database,
-    host: &ProcMacroHostPlugin,
+    host: &ProcMacroHostPlugin<B>,
     token_stream_builder: &mut TokenStreamBuilder<'db>,
     ctx: &AllocationContext,
-) -> AttrExpansionFound<'db> {
+) -> AttrExpansionFound<'db, B::Id>
+where
+    B: ProcMacroBackend,
+{
     let span = ast.span_with_trivia(db);
     let attrs = ast.item_attributes(db);
     let expansion = host.parse_attrs(db, token_stream_builder, attrs, span, ctx);
@@ -213,24 +184,24 @@ fn parse_item<'db, T: ItemWithAttributes<'db> + ChildNodesWithoutAttributes<'db>
     expansion
 }
 
-pub enum AttrExpansionFound<'db> {
-    Some(AttrExpansionArgs<'db>),
-    Last(AttrExpansionArgs<'db>),
+pub(crate) enum AttrExpansionFound<'db, Id: ExpansionId> {
+    Some(AttrExpansionArgs<'db, Id>),
+    Last(AttrExpansionArgs<'db, Id>),
     None,
 }
 
-pub struct AttrExpansionArgs<'db> {
-    pub id: ProcMacroId,
+pub(crate) struct AttrExpansionArgs<'db, Id: ExpansionId> {
+    pub id: Id,
     pub args: TokenStream,
     pub call_site: CallSiteLocation<'db>,
     pub attribute_location: ExpandableAttrLocation,
 }
 
-impl<'db> AttrExpansionFound<'db> {
-    pub fn as_name(&self) -> Option<SmolStr> {
+impl<'db, Id: ExpansionId> AttrExpansionFound<'db, Id> {
+    pub(crate) fn as_name(&self) -> Option<SmolStr> {
         match self {
             AttrExpansionFound::Some(args) | AttrExpansionFound::Last(args) => {
-                Some(args.id.expansion.cairo_name.clone())
+                Some(args.id.expansion().cairo_name.clone())
             }
             AttrExpansionFound::None => None,
         }

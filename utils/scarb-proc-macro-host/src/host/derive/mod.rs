@@ -1,15 +1,8 @@
-use crate::compiler::plugin::proc_macro::ExpansionQuery;
-use crate::compiler::plugin::proc_macro::expansion::ExpansionKind;
-use crate::compiler::plugin::proc_macro::v2::derive::span_adapter::DeriveAdapter;
-use crate::compiler::plugin::proc_macro::v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::v2::host::conversion::{
-    CallSiteLocation, into_cairo_diagnostics,
-};
-use crate::compiler::plugin::proc_macro::v2::host::{DERIVE_ATTR, generate_code_mappings};
-use crate::compiler::plugin::proc_macro::v2::{
-    ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
-};
-use cairo_lang_defs::plugin::{DynGeneratedFileAuxData, PluginGeneratedFile, PluginResult};
+mod span_adapter;
+
+use std::fmt::{Debug, Formatter};
+
+use cairo_lang_defs::plugin::{PluginGeneratedFile, PluginResult};
 use cairo_lang_filesystem::ids::CodeMapping;
 use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{AllocationContext, Diagnostic, TextSpan, TokenStream, TokenStreamMetadata};
@@ -19,19 +12,23 @@ use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::{Terminal, TypedSyntaxNode, ast};
 use itertools::Itertools;
 use salsa::Database;
-use std::fmt::{Debug, Formatter};
 
-mod span_adapter;
+use crate::backend::{ExpansionId, ProcMacroBackend};
+use crate::conversion::{CallSiteLocation, into_cairo_diagnostics};
+use crate::expansion::{ExpansionKind, ExpansionQuery};
+use crate::host::derive::span_adapter::DeriveAdapter;
+use crate::host::{DERIVE_ATTR, ProcMacroHostPlugin, generate_code_mappings};
+use crate::token_stream_builder::TokenStreamBuilder;
 
-impl ProcMacroHostPlugin {
+impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
     /// Handle `#[derive(...)]` attribute.
     ///
     /// Returns a list of expansions that this plugin should apply.
-    pub fn parse_derive<'db>(
+    pub(crate) fn parse_derive<'db>(
         &self,
         db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
-    ) -> Vec<DeriveFound<'db>> {
+    ) -> Vec<DeriveFound<'db, B::Id>> {
         let attrs = match item_ast {
             ast::ModuleItem::Struct(struct_ast) => {
                 Some(struct_ast.query_attr(db, DERIVE_ATTR).collect_vec())
@@ -74,17 +71,17 @@ impl ProcMacroHostPlugin {
             .collect_vec()
     }
 
-    pub fn expand_derives<'db>(
+    pub(crate) fn expand_derives<'db>(
         &self,
         db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
-        derives: Vec<DeriveFound<'db>>,
+        derives: Vec<DeriveFound<'db, B::Id>>,
         stream_metadata: TokenStreamMetadata,
     ) -> Option<PluginResult<'db>> {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         token_stream_builder.add_node(item_ast.as_syntax_node());
         token_stream_builder.with_metadata(stream_metadata.clone());
-        let mut aux_data = EmittedAuxData::default();
+        let mut aux_data = B::AuxData::default();
         let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
 
         if derives.is_empty() {
@@ -105,28 +102,17 @@ impl ProcMacroHostPlugin {
 
         for derive in derives.iter() {
             let call_site = adapter.adapted_call_site(&derive.call_site.span);
-            let derive = &derive.id;
-            let result = self
-                .instance(derive.package_id)
-                .try_v2()
-                .expect("procedural macro using v1 api used in a context expecting v2 api")
-                .generate_code(
-                    derive.expansion.expansion_name.clone(),
-                    call_site.clone(),
-                    TokenStream::empty(),
-                    adapted_token_stream.clone(),
-                );
+            let result = self.expand(
+                db,
+                &derive.id,
+                call_site.clone(),
+                TokenStream::empty(),
+                adapted_token_stream.clone(),
+                &mut aux_data,
+            );
 
             // Register diagnostics.
             all_diagnostics.extend(adapter.adapt_diagnostics(result.diagnostics));
-
-            // Register aux data.
-            if let Some(new_aux_data) = result.aux_data {
-                aux_data.push(ProcMacroAuxData::new(
-                    new_aux_data.into(),
-                    ProcMacroId::new(derive.package_id, derive.expansion.clone()),
-                ));
-            }
 
             if result.token_stream.is_empty() {
                 // No code has been generated.
@@ -157,7 +143,7 @@ impl ProcMacroHostPlugin {
                 };
                 let derive_names = derives
                     .iter()
-                    .map(|derive| derive.id.expansion.cairo_name.to_string())
+                    .map(|derive| derive.id.expansion().cairo_name.to_string())
                     .join("`, `");
                 let note = format!("this error originates in {msg}: `{derive_names}`");
 
@@ -166,11 +152,7 @@ impl ProcMacroHostPlugin {
                     code_mappings,
                     content: derived_code,
                     diagnostics_note: Some(note),
-                    aux_data: if aux_data.is_empty() {
-                        None
-                    } else {
-                        Some(DynGeneratedFileAuxData::new(aux_data))
-                    },
+                    aux_data: self.backend().finish_aux_data(aux_data),
                     is_unhygienic: false,
                 })
             },
@@ -182,18 +164,18 @@ impl ProcMacroHostPlugin {
     }
 }
 
-pub struct DeriveFound<'db> {
-    id: ProcMacroId,
+pub(crate) struct DeriveFound<'db, Id: ExpansionId> {
+    id: Id,
     call_site: CallSiteLocation<'db>,
 }
 
-impl<'db> Debug for DeriveFound<'db> {
+impl<'db, Id: ExpansionId> Debug for DeriveFound<'db, Id> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("DeriveFound").field("id", &self.id).finish()
     }
 }
 
-pub fn generate_code_mappings_with_offset(
+pub(crate) fn generate_code_mappings_with_offset(
     token_stream: &TokenStream,
     call_site: TextSpan,
     offset: TextWidth,

@@ -6,7 +6,7 @@ use cairo_lang_syntax::node::{SyntaxNode, TypedStablePtr, TypedSyntaxNode};
 use itertools::Itertools;
 use salsa::Database;
 
-pub trait SpanSource<'db> {
+pub(crate) trait SpanSource<'db> {
     fn text_span(&self, db: &'db dyn Database) -> TextSpan;
 }
 
@@ -18,7 +18,7 @@ impl<'db, T: TypedSyntaxNode<'db>> SpanSource<'db> for T {
     }
 }
 
-pub struct CallSiteLocation<'db> {
+pub(crate) struct CallSiteLocation<'db> {
     pub stable_ptr: SyntaxStablePtrId<'db>,
     pub span: TextSpan,
 }
@@ -32,7 +32,7 @@ impl<'db> CallSiteLocation<'db> {
     }
 }
 
-pub fn into_cairo_diagnostics<'db>(
+pub(crate) fn into_cairo_diagnostics<'db>(
     db: &'db dyn Database,
     diagnostics: Vec<Diagnostic>,
     call_site_stable_ptr: SyntaxStablePtrId<'db>,
@@ -82,7 +82,7 @@ fn get_root_ptr<'db>(
 
 /// Finds the most specific node that fully encompasses the given text span.
 /// Returns `None` if unable to find such node.
-pub fn find_encompassing_node<'db>(
+pub(crate) fn find_encompassing_node<'db>(
     root_syntax_node: &SyntaxNode<'db>,
     db: &'db dyn Database,
     span: &TextSpan,

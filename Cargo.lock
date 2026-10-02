@@ -1642,7 +1642,7 @@ dependencies = [
  "salsa",
  "scarb-manifest-schema 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "scarb-metadata 1.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "scarb-proc-macro-server-types 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "scarb-proc-macro-server-types 0.5.0",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "semver 1.0.28",
  "serde",
@@ -7057,7 +7057,8 @@ dependencies = [
  "scarb-fs-utils",
  "scarb-manifest-schema 1.0.0",
  "scarb-metadata 1.15.1",
- "scarb-proc-macro-server-types 0.5.0",
+ "scarb-proc-macro-host",
+ "scarb-proc-macro-server-types 0.6.0",
  "scarb-stable-hash 1.0.0",
  "scarb-test-support",
  "scarb-ui",
@@ -7338,13 +7339,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "scarb-proc-macro-server-types"
-version = "0.5.0"
+name = "scarb-proc-macro-host"
+version = "0.1.0"
 dependencies = [
- "cairo-lang-macro 0.1.1",
+ "cairo-lang-defs",
+ "cairo-lang-diagnostics",
+ "cairo-lang-filesystem",
  "cairo-lang-macro 0.2.2",
+ "cairo-lang-parser",
+ "cairo-lang-semantic",
+ "cairo-lang-syntax",
+ "cairo-lang-utils",
+ "convert_case 0.10.0",
+ "indoc",
+ "itertools 0.15.0",
+ "salsa",
+ "scarb-stable-hash 1.0.0",
  "serde",
  "serde_json",
+ "smol_str",
+ "tracing",
+ "typetag",
 ]
 
 [[package]]
@@ -7355,6 +7370,15 @@ checksum = "aacfafcd4d6600217d13521afeaf37ffd5c3ea5348161a3334c6b12fa38b3393"
 dependencies = [
  "cairo-lang-macro 0.1.1",
  "cairo-lang-macro 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "scarb-proc-macro-server-types"
+version = "0.6.0"
+dependencies = [
+ "cairo-lang-macro 0.2.2",
  "serde",
  "serde_json",
 ]
@@ -7417,7 +7441,7 @@ dependencies = [
  "scarb",
  "scarb-build-metadata",
  "scarb-fs-utils",
- "scarb-proc-macro-server-types 0.5.0",
+ "scarb-proc-macro-server-types 0.6.0",
  "scarb-ui",
  "semver 1.0.28",
  "serde",
