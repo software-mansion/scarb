@@ -1630,6 +1630,7 @@ fn infer_readme_simple_bool() {
         )
         .unwrap();
 
+    // `readme = true` with no README file is a warning, not a manifest error.
     let output = Scarb::quick_command()
         .arg("--json")
         .arg("metadata")
@@ -1639,7 +1640,7 @@ fn infer_readme_simple_bool() {
         .output()
         .unwrap();
 
-    assert!(!output.status.success());
+    assert!(output.status.success(), "{output:?}");
 
     let stdout = String::from_utf8(output.stdout).unwrap();
     let lines = stdout
@@ -1647,29 +1648,25 @@ fn infer_readme_simple_bool() {
         .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
         .collect_vec();
 
-    assert_eq!(lines.len(), 2, "{stdout}");
-    assert_eq!(lines[0]["kind"], "manifest_diagnostic");
+    let warning = lines
+        .iter()
+        .filter(|line| line["type"] == "warn")
+        .filter_map(|line| line["message"].as_str())
+        .find(|message| message.contains("readme file"))
+        .unwrap_or_else(|| panic!("expected a readme warning in: {stdout}"));
     assert!(
-        lines[0]["message"]
-            .as_str()
-            .unwrap()
-            .contains("failed to find readme at")
+        warning.contains("readme file `README.md` set in `package.readme` was not found at"),
+        "{warning}"
     );
-    assert!(lines[0]["message"].as_str().unwrap().contains("README.md"));
-    assert!(lines[0]["file"].as_str().unwrap().ends_with("Scarb.toml"));
-
-    assert_eq!(lines[1]["type"], "error");
-    assert!(
-        lines[1]["message"]
-            .as_str()
+    assert!(warning.contains("the field will be ignored"), "{warning}");
+    let meta: Metadata = serde_json::from_value(lines.last().unwrap().clone()).unwrap();
+    assert_eq!(
+        packages_by_name(meta)
+            .get("hello")
             .unwrap()
-            .contains("failed to parse manifest at:")
-    );
-    assert!(
-        lines[1]["message"]
-            .as_str()
-            .unwrap()
-            .contains("failed to find readme at")
+            .manifest_metadata
+            .readme,
+        None
     );
 
     t.child("README.md").touch().unwrap();
@@ -2644,4 +2641,104 @@ fn cannot_specify_not_predefined_inlining_strategy() {
                 unknown inlining strategy: `super-cool`
                 use one of: `default`, `avoid` or a number
         "#});
+}
+
+#[test]
+fn missing_readme_and_license_files_are_warnings() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+            edition = "2024_07"
+            readme = "README"
+            license-file = "LICENCE"
+            "#,
+        )
+        .unwrap();
+    t.child("README.md").touch().unwrap();
+    t.child("LICENSE").touch().unwrap();
+
+    Scarb::quick_command()
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            warn: license file `LICENCE` set in `package.license-file` was not found at [..]LICENCE, the field will be ignored
+            warn: readme file `README` set in `package.readme` was not found at [..]README, the field will be ignored
+            ...
+        "#});
+
+    let meta = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let packages = packages_by_name(meta);
+    let metadata = &packages.get("hello").unwrap().manifest_metadata;
+    assert_eq!(metadata.readme, None);
+    assert_eq!(metadata.license_file, None);
+}
+
+#[test]
+fn missing_workspace_readme_is_a_warning() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [workspace]
+            members = ["hello"]
+
+            [workspace.package]
+            readme = "MISSING.md"
+            "#,
+        )
+        .unwrap();
+    t.child("hello/Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+            edition = "2024_07"
+            readme.workspace = true
+            "#,
+        )
+        .unwrap();
+    t.child("hello/src/lib.cairo").touch().unwrap();
+
+    Scarb::quick_command()
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            warn: readme file `MISSING.md` set in `workspace.package.readme` was not found at [..]MISSING.md, the field will be ignored
+            ...
+        "#});
+
+    let meta = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    assert_eq!(
+        packages_by_name(meta)
+            .get("hello")
+            .unwrap()
+            .manifest_metadata
+            .readme,
+        None
+    );
 }
