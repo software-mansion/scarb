@@ -52,7 +52,7 @@ async-trait = "0.1"
 axum = { version = "0.8.6", default-features = false, features = ["http1", "tokio", "tracing"] }
 bumpalo = "=3.17.0"
 cairo-air = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "467d5c6d" }
-cairo-annotations = "1.0.0"
+cairo-annotations = "1.0.1"
 cairo-lang-casm = "*"
 cairo-lang-compiler = "*"
 cairo-lang-defs = "*"
@@ -115,9 +115,9 @@ libloading = "0"
 linkme = "0.3"
 mdbook-driver = "0.5"
 mimalloc = "0.1.52"
-ntest = "0.9"
+ntest = "0.10"
 once_cell = "1"
-opener = "0.8.4"
+opener = "0.9.0"
 pathdiff = { version = "0.2", features = ["camino"] }
 petgraph = "0.8"
 postcard = { version = "1", features = ["alloc", "use-std"] }
@@ -150,7 +150,7 @@ stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev
 stwo-cairo-prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "467d5c6d" }
 syn = { version = "3", default-features = false }
 tar = "0.4"
-target-triple = "1.0"
+target-tuple = "1.0"
 tempfile = "3"
 test-case = "3"
 thiserror = "2"
@@ -178,7 +178,7 @@ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System"
 xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "8", default-features = false, features = ["deflate"] }
-zstd = "0.13"
+zstd = "0.14"
 
 [workspace.dependencies.reqwest]
 version = "0.12"
