@@ -292,10 +292,6 @@ jobs:
   check-rust:
     runs-on: ubuntu-latest
     env:
-      # Nothing in this job reads debug info, and it is what made this job's `rust-cache`
-      # archive one of the three largest in the repository (3.7 GB of the 10 GB Actions cache
-      # quota between them). `sccache` cannot take over here - neither `clippy-driver` nor
-      # `rustdoc` invocations are cacheable by it - so keep the target cache, just make it small.
       CARGO_PROFILE_DEV_DEBUG: "0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -337,10 +333,6 @@ jobs:
     name: check-rust (nightly)
     runs-on: ubuntu-latest
     env:
-      # Nothing in this job reads debug info, and it is what made this job's `rust-cache`
-      # archive one of the three largest in the repository (3.7 GB of the 10 GB Actions cache
-      # quota between them). `sccache` cannot take over here - neither `clippy-driver` nor
-      # `rustdoc` invocations are cacheable by it - so keep the target cache, just make it small.
       CARGO_PROFILE_DEV_DEBUG: "0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
