@@ -84,7 +84,12 @@ fn defined_macros() {
             .into_iter()
             .map(|m| m.name)
             .collect::<Vec<_>>(),
-        &["some_derive_v1".to_string(), "some_derive_v2".to_string()]
+        &[
+            "some_derive_v1".to_string(),
+            "bar_v2".to_string(),
+            "foo_v2".to_string(),
+            "some_derive_v2".to_string()
+        ]
     );
     assert_eq!(
         &defined_macros
@@ -233,6 +238,73 @@ fn expand_derive() {
             );
         }
     }
+}
+
+#[test]
+fn expand_multiple_derives_use_own_call_sites() {
+    let t = TempDir::new().unwrap();
+    let project = setup_project_with_v1_and_v2_macro_deps(&t, None, None);
+
+    let mut manifest_path = project.clone();
+    manifest_path.push("test_package");
+    manifest_path.set_file_name("Scarb.toml");
+
+    let mut proc_macro_client = ProcMacroClient::new(&project);
+
+    let component = proc_macro_client
+        .defined_macros_for_package("test_package", manifest_path.clone())
+        .component;
+
+    let code = "fn some_test_fn(){}".to_string();
+    let item_span = TextSpan::new(0, code.len() as u32);
+
+    // #[derive(Foo, Bar)]
+    let foo_call_site = TextSpan::new(9, 12);
+    let bar_call_site = TextSpan::new(14, 17);
+
+    // Each derive is expanded in its own request, carrying its own call site.
+    let mut expand = |derive: &str, call_site: TextSpan| {
+        let item = TokenStreamV2::new(vec![TokenTree::Ident(Token::new(
+            code.clone(),
+            item_span.clone(),
+        ))]);
+
+        proc_macro_client
+            .request_and_wait::<ExpandDerive>(ExpandDeriveParams {
+                context: ProcMacroScope {
+                    workspace: Workspace {
+                        manifest_path: manifest_path.clone(),
+                    },
+                    component: component.clone(),
+                },
+                derive: derive.to_string(),
+                item,
+                call_site,
+            })
+            .unwrap()
+    };
+
+    let foo = expand("foo_v2", foo_call_site.clone());
+    let bar = expand("bar_v2", bar_call_site.clone());
+
+    assert_eq!(foo.diagnostics, vec![]);
+    assert_eq!(bar.diagnostics, vec![]);
+    assert_eq!(foo.token_stream.to_string(), "impl FooImpl of FooTrait {}");
+    assert_eq!(bar.token_stream.to_string(), "impl BarImpl of BarTrait {}");
+
+    // `foo_v2` spans its output with `TextSpan::call_site()`, so it gets its own call site.
+    assert_eq!(
+        tokens(&foo.token_stream),
+        vec![("impl FooImpl of FooTrait {}".to_string(), foo_call_site)]
+    );
+    // `bar_v2` uses a fixed token span instead, which is left as the macro reported it.
+    assert_eq!(
+        tokens(&bar.token_stream),
+        vec![(
+            "impl BarImpl of BarTrait {}".to_string(),
+            TextSpan::new(0, 27)
+        )]
+    );
 }
 
 #[test]
