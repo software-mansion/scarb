@@ -1,14 +1,5 @@
-use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::{
-    AdaptedDiagnostic, AdaptedTokenStream,
-};
-use crate::compiler::plugin::proc_macro::v2::host::attribute::{
-    AttrExpansionArgs, AttrExpansionFound, AttributeGeneratedFile, AttributePluginResult,
-};
-use crate::compiler::plugin::proc_macro::v2::host::aux_data::EmittedAuxData;
-use crate::compiler::plugin::proc_macro::v2::host::conversion::into_cairo_diagnostics;
-use crate::compiler::plugin::proc_macro::v2::{
-    ProcMacroAuxData, ProcMacroHostPlugin, TokenStreamBuilder, generate_code_mappings,
-};
+use std::collections::HashSet;
+
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_macro::{AllocationContext, ProcMacroResult, TokenStream};
@@ -18,38 +9,47 @@ use cairo_lang_syntax::node::{SyntaxNode, TypedSyntaxNode, ast};
 use itertools::Itertools;
 use salsa::Database;
 use smol_str::SmolStr;
-use std::collections::HashSet;
 
-pub enum InnerAttrExpansionResult<'db> {
+use crate::backend::{ExpansionId, ProcMacroBackend};
+use crate::conversion::into_cairo_diagnostics;
+use crate::host::ProcMacroHostPlugin;
+use crate::host::attribute::span_adapter::{AdaptedDiagnostic, AdaptedTokenStream};
+use crate::host::attribute::{
+    AttrExpansionArgs, AttrExpansionFound, AttributeGeneratedFile, AttributePluginResult,
+};
+use crate::host::generate_code_mappings;
+use crate::token_stream_builder::TokenStreamBuilder;
+
+pub(crate) enum InnerAttrExpansionResult<'db> {
     None,
     Some(AttributePluginResult<'db>),
 }
 
-pub struct InnerAttrExpansionContext<'a, 'db> {
-    host: &'a ProcMacroHostPlugin,
+pub(crate) struct InnerAttrExpansionContext<'a, 'db, B: ProcMacroBackend> {
+    host: &'a ProcMacroHostPlugin<B>,
     // Metadata returned for expansions.
     diagnostics: Vec<PluginDiagnostic<'db>>,
-    aux_data: EmittedAuxData,
+    aux_data: B::AuxData,
     any_changed: bool,
     item_builder: PatchBuilder<'db>,
 }
 
-impl<'a, 'db> InnerAttrExpansionContext<'a, 'db> {
-    pub fn new(
-        host: &'a ProcMacroHostPlugin,
+impl<'a, 'db, B: ProcMacroBackend> InnerAttrExpansionContext<'a, 'db, B> {
+    pub(crate) fn new(
+        host: &'a ProcMacroHostPlugin<B>,
         db: &'db dyn Database,
         item_ast: &ast::ModuleItem<'db>,
     ) -> Self {
         Self {
             diagnostics: Vec::new(),
-            aux_data: EmittedAuxData::default(),
+            aux_data: B::AuxData::default(),
             any_changed: false,
             item_builder: PatchBuilder::new(db, item_ast),
             host,
         }
     }
 
-    pub fn add_node(&mut self, node: SyntaxNode<'db>) {
+    pub(crate) fn add_node(&mut self, node: SyntaxNode<'db>) {
         self.item_builder.add_node(node);
     }
 
@@ -64,30 +64,20 @@ impl<'a, 'db> InnerAttrExpansionContext<'a, 'db> {
             .extend(into_cairo_diagnostics(db, diagnostics, stable_ptr));
     }
 
-    pub fn register_result_metadata(
+    pub(crate) fn register_result_metadata(
         &mut self,
         db: &'db dyn Database,
-        input: &AttrExpansionArgs<'db>,
+        input: &AttrExpansionArgs<'db, B::Id>,
         original: String,
         result: ProcMacroResult,
     ) {
         let result_str = result.token_stream.to_string();
         let changed = result_str != original;
 
-        if changed {
-            self.host
-                .register_full_path_markers(input.id.package_id, result.full_path_markers.clone());
-        }
-
         let diagnostics = input
             .attribute_location
             .adapt_diagnostics(result.diagnostics);
         self.register_diagnotics(db, diagnostics, input.call_site.stable_ptr);
-
-        if let Some(new_aux_data) = result.aux_data {
-            self.aux_data
-                .push(ProcMacroAuxData::new(new_aux_data.into(), input.id.clone()));
-        }
 
         self.any_changed = self.any_changed || changed;
 
@@ -98,7 +88,15 @@ impl<'a, 'db> InnerAttrExpansionContext<'a, 'db> {
             ));
     }
 
-    pub fn into_result(self, attr_names: Vec<SmolStr>) -> AttributePluginResult<'db> {
+    pub(crate) fn into_result(self, attr_names: Vec<SmolStr>) -> AttributePluginResult<'db> {
+        let Self {
+            host,
+            diagnostics,
+            aux_data,
+            item_builder,
+            ..
+        } = self;
+        let aux_data = host.backend().finish_aux_data(aux_data);
         let msg = if attr_names.len() == 1 {
             "the attribute macro"
         } else {
@@ -108,18 +106,18 @@ impl<'a, 'db> InnerAttrExpansionContext<'a, 'db> {
         let note = format!("this error originates in {msg}: `{derive_names}`");
         AttributePluginResult::new()
             .with_remove_original_item(true)
-            .with_plugin_diagnostics(self.diagnostics)
+            .with_plugin_diagnostics(diagnostics)
             .with_generated_file(
-                AttributeGeneratedFile::from_patch_builder("proc_attr_inner", self.item_builder)
+                AttributeGeneratedFile::from_patch_builder("proc_attr_inner", item_builder)
                     .with_diagnostics_note(note)
-                    .with_aux_data(self.aux_data),
+                    .with_aux_data(aux_data),
             )
     }
 }
 
-fn rewrite_node_patch_from_expansion_result<'db>(
+fn rewrite_node_patch_from_expansion_result<'db, Id: ExpansionId>(
     token_stream: TokenStream,
-    input: &AttrExpansionArgs<'db>,
+    input: &AttrExpansionArgs<'db, Id>,
 ) -> RewriteNode<'db> {
     let code_mappings = generate_code_mappings(
         &token_stream,
@@ -131,7 +129,7 @@ fn rewrite_node_patch_from_expansion_result<'db>(
     RewriteNode::TextAndMapping(expanded, code_mappings)
 }
 
-impl ProcMacroHostPlugin {
+impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
     pub(crate) fn expand_inner_attr<'db>(
         &self,
         db: &'db dyn Database,
@@ -277,8 +275,8 @@ impl ProcMacroHostPlugin {
     fn do_expand_inner_attr<'a, 'db>(
         &'a self,
         db: &'db dyn Database,
-        context: &mut InnerAttrExpansionContext<'a, 'db>,
-        found: AttrExpansionFound<'db>,
+        context: &mut InnerAttrExpansionContext<'a, 'db, B>,
+        found: AttrExpansionFound<'db, B::Id>,
         func: &impl TypedSyntaxNode<'db>,
         token_stream: AdaptedTokenStream,
     ) -> bool {
@@ -298,12 +296,13 @@ impl ProcMacroHostPlugin {
             }
         };
 
-        let result = self.generate_attribute_code(
-            input.id.package_id,
-            input.id.expansion.expansion_name.clone(),
-            input.attribute_location.adapted_call_site(),
+        let result = self.expand(
+            db,
+            &input.id,
+            input.attribute_location.adapted_call_site().into(),
             input.args.clone(),
-            token_stream.clone(),
+            token_stream.clone().into(),
+            &mut context.aux_data,
         );
 
         context.register_result_metadata(db, &input, token_stream.to_string(), result);

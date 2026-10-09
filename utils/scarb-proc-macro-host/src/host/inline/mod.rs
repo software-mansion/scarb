@@ -1,54 +1,64 @@
 mod span_adapter;
 
-use crate::compiler::plugin::proc_macro::ProcMacroInstance;
-use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind, ExpansionQuery};
-use crate::compiler::plugin::proc_macro::v2::host::TokenStreamMetadata;
-use crate::compiler::plugin::proc_macro::v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::v2::host::conversion::{
-    CallSiteLocation, into_cairo_diagnostics,
-};
-use crate::compiler::plugin::proc_macro::v2::host::generate_code_mappings;
-use crate::compiler::plugin::proc_macro::v2::host::inline::span_adapter::InlineAdapter;
-use crate::compiler::plugin::proc_macro::v2::{
-    ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
-};
+use std::sync::{Arc, OnceLock};
+
 use cairo_lang_defs::plugin::{
-    DynGeneratedFileAuxData, InlineMacroExprPlugin, InlinePluginResult, MacroPluginMetadata,
-    PluginGeneratedFile, PluginResult,
+    InlineMacroExprPlugin, InlinePluginResult, MacroPluginMetadata, PluginGeneratedFile,
+    PluginResult,
 };
-use cairo_lang_macro::{AllocationContext, TokenStream};
+use cairo_lang_macro::{
+    AllocationContext, ProcMacroResult, TextSpan, TokenStream, TokenStreamMetadata,
+};
 use cairo_lang_syntax::node::ast::PathSegment;
 use cairo_lang_syntax::node::{Terminal, TypedSyntaxNode, ast};
 use salsa::Database;
-use std::sync::{Arc, OnceLock};
+
+use crate::backend::{ExpansionId, ProcMacroBackend};
+use crate::conversion::{CallSiteLocation, into_cairo_diagnostics};
+use crate::expansion::{ExpansionKind, ExpansionQuery};
+use crate::host::inline::span_adapter::InlineAdapter;
+use crate::host::{ProcMacroHostPlugin, generate_code_mappings};
+use crate::token_stream_builder::TokenStreamBuilder;
 
 /// A Cairo compiler inline macro plugin controlling the inline procedural macro execution.
 ///
 /// This plugin represents a single expansion capable of handling inline procedural macros.
 /// The plugin triggers code expansion in a corresponding procedural macro instance.
 #[derive(Debug)]
-pub struct ProcMacroInlinePlugin {
-    instance: Arc<ProcMacroInstance>,
-    expansion: Expansion,
+pub struct ProcMacroInlinePlugin<B: ProcMacroBackend> {
+    backend: Arc<B>,
+    id: B::Id,
     doc: OnceLock<Option<String>>,
 }
 
-impl ProcMacroInlinePlugin {
-    pub fn new(instance: Arc<ProcMacroInstance>, expansion: Expansion) -> Self {
-        assert!(instance.get_expansions().contains(&expansion));
+impl<B: ProcMacroBackend> ProcMacroInlinePlugin<B> {
+    pub fn new(backend: Arc<B>, id: B::Id) -> Self {
         Self {
-            instance,
-            expansion,
+            backend,
+            id,
             doc: Default::default(),
         }
     }
 
-    fn instance(&self) -> &ProcMacroInstance {
-        &self.instance
+    pub fn backend(&self) -> &Arc<B> {
+        &self.backend
+    }
+
+    fn expand(
+        &self,
+        db: &dyn Database,
+        call_site: TextSpan,
+        args: TokenStream,
+        item: TokenStream,
+        aux_data: &mut B::AuxData,
+    ) -> ProcMacroResult {
+        let result = self.backend.expand(db, &self.id, call_site, args, item);
+        self.backend.on_expanded(&self.id, &result, aux_data);
+        result
     }
 }
 
-impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
+impl<B: ProcMacroBackend> InlineMacroExprPlugin for ProcMacroInlinePlugin<B> {
     #[tracing::instrument(level = "trace", skip_all)]
     fn generate_code<'db>(
         &self,
@@ -68,16 +78,14 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
             call_site.span.clone(),
         );
         let adapted_call_site = adapter.adapted_call_site();
-        let result = self
-            .instance()
-            .try_v2()
-            .expect("procedural macro using v1 api used in a context expecting v2 api")
-            .generate_code(
-                self.expansion.expansion_name.clone(),
-                adapted_call_site.clone(),
-                TokenStream::empty(),
-                adapted_token_stream,
-            );
+        let mut aux_data = B::AuxData::default();
+        let result = self.expand(
+            db,
+            adapted_call_site.clone(),
+            TokenStream::empty(),
+            adapted_token_stream,
+            &mut aux_data,
+        );
         // Handle diagnostics.
         let diagnostics = into_cairo_diagnostics(
             db,
@@ -93,15 +101,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
             }
         } else {
             // Replace
-            let aux_data = result.aux_data.map(|aux_data| {
-                let aux_data = ProcMacroAuxData::new(
-                    aux_data.into(),
-                    ProcMacroId::new(self.instance.package_id(), self.expansion.clone()),
-                );
-                let mut emitted = EmittedAuxData::default();
-                emitted.push(aux_data);
-                DynGeneratedFileAuxData::new(emitted)
-            });
+            let aux_data = self.backend.finish_aux_data(aux_data);
             let content = token_stream.to_string();
             let code_mappings = adapter.adapt_code_mappings(generate_code_mappings(
                 &token_stream,
@@ -115,7 +115,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                     aux_data,
                     diagnostics_note: Some(format!(
                         "this error originates in the inline macro: `{}`",
-                        self.expansion.cairo_name
+                        self.id.expansion().cairo_name
                     )),
                     is_unhygienic: false,
                 }),
@@ -125,15 +125,13 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
     }
 
     fn documentation(&self) -> Option<String> {
-        self.doc
-            .get_or_init(|| self.instance().doc(self.expansion.cairo_name.clone()))
-            .clone()
+        self.doc.get_or_init(|| self.backend.doc(&self.id)).clone()
     }
 }
 
 #[tracing::instrument(level = "trace", skip_all)]
-pub fn expand_module_level_inline_macro<'db>(
-    host: &ProcMacroHostPlugin,
+pub(crate) fn expand_module_level_inline_macro<'db, B: ProcMacroBackend>(
+    host: &ProcMacroHostPlugin<B>,
     db: &'db dyn Database,
     inline_macro: &ast::ItemInlineMacro<'db>,
     _metadata: &TokenStreamMetadata,
@@ -163,16 +161,15 @@ pub fn expand_module_level_inline_macro<'db>(
     );
     let adapted_call_site = adapter.adapted_call_site();
 
-    let result = host
-        .instance(found.package_id)
-        .try_v2()
-        .expect("procedural macro using v1 api used in a context expecting v2 api")
-        .generate_code(
-            found.expansion.expansion_name.clone(),
-            adapted_call_site.clone(),
-            TokenStream::empty(),
-            adapted_token_stream,
-        );
+    let mut aux_data = B::AuxData::default();
+    let result = host.expand(
+        db,
+        &found,
+        adapted_call_site.clone(),
+        TokenStream::empty(),
+        adapted_token_stream,
+        &mut aux_data,
+    );
 
     let diagnostics = into_cairo_diagnostics(
         db,
@@ -190,12 +187,7 @@ pub fn expand_module_level_inline_macro<'db>(
         });
     }
 
-    let aux_data = result.aux_data.map(|aux_data| {
-        DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
-            aux_data.into(),
-            found.clone(),
-        )))
-    });
+    let aux_data = host.backend().finish_aux_data(aux_data);
     let code_mappings = adapter.adapt_code_mappings(generate_code_mappings(
         &result.token_stream,
         adapted_call_site.clone(),
@@ -209,7 +201,7 @@ pub fn expand_module_level_inline_macro<'db>(
             aux_data,
             diagnostics_note: Some(format!(
                 "this error originates in the inline macro: `{}`",
-                found.expansion.cairo_name
+                found.expansion().cairo_name
             )),
             is_unhygienic: false,
         }),

@@ -1,8 +1,8 @@
-use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
 use crate::compiler::plugin::proc_macro::v1::FromSyntaxNode;
 use crate::compiler::plugin::proc_macro::{
     DeclaredProcMacroInstances, ExpansionQuery, FULL_PATH_MARKER_KEY, ProcMacroInstance,
 };
+use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind};
 use crate::core::PackageId;
 use anyhow::{Result, ensure};
 use cairo_lang_defs::db::DefsGroup;
@@ -959,8 +959,8 @@ impl ProcMacroHostPlugin {
             .write()
             .unwrap()
             .entry(package_id)
-            .and_modify(|markers| markers.extend(markers.clone()))
-            .or_insert(markers);
+            .or_default()
+            .extend(markers);
     }
 
     fn calculate_metadata<'db>(

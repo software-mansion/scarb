@@ -10,7 +10,10 @@ use scarb_proc_macro_server_types::methods::defined_macros::{
 use crate::{
     compiler::{
         self, CompilationUnit,
-        plugin::{collection::WorkspaceProcMacros, proc_macro::DeclaredProcMacroInstances},
+        plugin::{
+            collection::WorkspaceProcMacros,
+            proc_macro::{DeclaredProcMacroInstances, ExpansionKind},
+        },
     },
     core::Config,
     ops::{
@@ -95,30 +98,20 @@ fn get_macros_for_components(
             plugin
                 .iter()
                 .map(|plugin| {
-                    let attributes = plugin
-                        .declared_attributes_without_executables_with_package()
-                        .into_iter()
-                        .map(|(name, package)| MacroWithHash {
-                            name,
-                            hash: *workspace_macros.instance_to_hash.get(&package).unwrap(),
-                        })
-                        .collect();
-                    let inline_macros = plugin
-                        .declared_inline_macros_with_package()
-                        .into_iter()
-                        .map(|(name, package)| MacroWithHash {
-                            name,
-                            hash: *workspace_macros.instance_to_hash.get(&package).unwrap(),
-                        })
-                        .collect();
-                    let derives = plugin
-                        .declared_derives_snake_case_with_package()
-                        .into_iter()
-                        .map(|(name, package)| MacroWithHash {
-                            name,
-                            hash: *workspace_macros.instance_to_hash.get(&package).unwrap(),
-                        })
-                        .collect();
+                    let macros_of = |kind| {
+                        plugin
+                            .expansions_with_package(kind)
+                            .into_iter()
+                            .map(|(expansion, package)| MacroWithHash {
+                                name: expansion.expansion_name.to_string(),
+                                cairo_name: expansion.cairo_name.to_string(),
+                                hash: *workspace_macros.instance_to_hash.get(&package).unwrap(),
+                            })
+                            .collect()
+                    };
+                    let attributes = macros_of(ExpansionKind::Attr);
+                    let inline_macros = macros_of(ExpansionKind::Inline);
+                    let derives = macros_of(ExpansionKind::Derive);
                     let executables = plugin.executable_attributes();
                     let source_packages = plugin
                         .instances()

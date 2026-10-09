@@ -38,6 +38,11 @@ You might need to swiftly pause the [Website Deploy] workflow to prevent publish
 > Only [Starknet Crates.io Admins] can do this.
 
 > [!IMPORTANT]
+> If `scarb-proc-macro-host` or `scarb-proc-macro-server-types` changed since their last release, they must be
+> [released and published](#scarb-proc-macro-host-release-procedure) to [crates.io] before CairoLS is released.
+> CairoLS is built against the published crates, and it is bundled with Scarb.
+
+> [!IMPORTANT]
 > For Cairo RC bumps, do not tag or publish immediately after preparing the branch. First push the same-named
 > release branch for each releasable repo, open a PR, and wait for CI to go green there. The usual release chain
 > is: `cairo-language-common` -> `cairo-lint` -> `cairo-language-server` (`cairols`) -> `scarb`. Only then create
@@ -198,6 +203,27 @@ Releasing `cairo-lang-macro` crate is also a semi-automated process.
 5. Create a tag on `main` named `cairo-lang-macro/vX.Y.Z`.
 6. Push it.
 7. Run `cargo publish -p cairo-lang-macro`.
+
+## `scarb-proc-macro-host` release procedure
+
+`scarb-proc-macro-host` is shared by Scarb and CairoLS, and CairoLS uses the version published to [crates.io].
+
+Release it with every Scarb release that changes it, and with every Cairo version bump.
+Publish it before releasing CairoLS.
+
+1. Make sure correct version is present in:
+    1. `utils/scarb-proc-macro-host/Cargo.toml`
+    2. `Cargo.lock`
+       You will probably have to commit changes and then tag newly created commit.
+2. Make sure all changes to crates `cairo-lang-macro`, `scarb-stable-hash` are released to crates.io as well.
+3. If `scarb-proc-macro-server-types` changed, release it the same way, with a `scarb-proc-macro-server-types/vX.Y.Z`
+   tag. Changes to its types break the protocol between CairoLS and `scarb proc-macro-server`.
+4. Make sure you create it on a green commit (CI is passing), this is not verified!
+5. Run `cargo publish -p scarb-proc-macro-host --dry-run` to verify that everything is fine.
+6. Create a tag on `main` named `scarb-proc-macro-host/vX.Y.Z`.
+7. Push it.
+8. Run `cargo publish -p scarb-proc-macro-host`.
+9. Bump `scarb-proc-macro-host` in CairoLS to the published version.
 
 [@software-mansion/scarb-maintainers]: https://github.com/orgs/software-mansion/teams/scarb-maintainers
 

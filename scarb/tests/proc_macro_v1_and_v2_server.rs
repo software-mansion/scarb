@@ -1,7 +1,7 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::PathChild;
 use cairo_lang_macro::{TextSpan, Token, TokenStream as TokenStreamV2, TokenTree};
-use scarb_proc_macro_server_types::methods::CodeOrigin::Span;
+use scarb_proc_macro_server_types::methods::SpannedTokenStream;
 use scarb_proc_macro_server_types::methods::expand::Derive;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttribute;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttributeParams;
@@ -9,13 +9,21 @@ use scarb_proc_macro_server_types::methods::expand::ExpandDerive;
 use scarb_proc_macro_server_types::methods::expand::ExpandDeriveParams;
 use scarb_proc_macro_server_types::methods::expand::ExpandInline;
 use scarb_proc_macro_server_types::methods::expand::ExpandInlineMacroParams;
-use scarb_proc_macro_server_types::methods::{CodeMapping, CodeOrigin};
 use scarb_proc_macro_server_types::scope::ProcMacroScope;
 use scarb_proc_macro_server_types::scope::Workspace;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::proc_macro_server::{ProcMacroClient, SIMPLE_MACROS_V1, SIMPLE_MACROS_V2};
 use scarb_test_support::project_builder::ProjectBuilder;
 use std::path::PathBuf;
+
+/// Content and span of every token in the stream.
+fn tokens(token_stream: &SpannedTokenStream) -> Vec<(String, TextSpan)> {
+    token_stream
+        .0
+        .iter()
+        .map(|token| (token.content.clone(), token.span.clone()))
+        .collect()
+}
 
 fn setup_project_with_v1_and_v2_macro_deps(
     temp_dir: &TempDir,
@@ -165,24 +173,14 @@ fn expand_attribute() {
             "fn some_test_fn_34(){}".to_string()
         );
 
-        if macro_name == "replace_12_with_34_v2" {
-            assert!(response.code_mappings.is_some());
-            assert_eq!(
-                response.code_mappings.unwrap(),
-                vec![
-                    CodeMapping {
-                        span: TextSpan { start: 0, end: 22 },
-                        origin: CodeOrigin::Span(TextSpan { start: 0, end: 22 })
-                    },
-                    CodeMapping {
-                        span: TextSpan { start: 0, end: 22 },
-                        origin: CodeOrigin::CallSite(TextSpan { start: 0, end: 22 })
-                    }
-                ]
-            );
-        } else {
-            assert!(response.code_mappings.is_none());
-        }
+        // Both api versions report the expansion as a single token.
+        assert_eq!(
+            tokens(&response.token_stream),
+            vec![(
+                "fn some_test_fn_34(){}".to_string(),
+                TextSpan::new(0, "fn some_test_fn_12(){}".len() as u32)
+            )]
+        );
     }
 }
 
@@ -222,38 +220,26 @@ fn expand_derive() {
             })
             .unwrap();
 
+        let [response] = <[_; 1]>::try_from(response).expect("one derive was requested");
+
         assert_eq!(response.diagnostics, vec![]);
         assert_eq!(
             response.token_stream.to_string(),
             "impl SomeImpl of SomeTrait {}".to_string()
         );
 
+        let expanded = "impl SomeImpl of SomeTrait {}".to_string();
         if macro_name == "some_derive_v2" {
-            assert!(response.code_mappings.is_some());
+            // The v2 macro spans its own output.
             assert_eq!(
-                response.code_mappings.unwrap(),
-                vec![
-                    CodeMapping {
-                        span: TextSpan { start: 0, end: 0 },
-                        origin: Span(TextSpan { start: 0, end: 0 })
-                    },
-                    CodeMapping {
-                        span: TextSpan { start: 0, end: 29 },
-                        origin: Span(TextSpan { start: 0, end: 29 })
-                    },
-                    CodeMapping {
-                        span: TextSpan { start: 0, end: 29 },
-                        origin: CodeOrigin::CallSite(TextSpan { start: 0, end: 19 })
-                    }
-                ]
+                tokens(&response.token_stream),
+                vec![(expanded.clone(), TextSpan::new(0, expanded.len() as u32))]
             );
         } else {
+            // The v1 macro reports no spans, so the whole output is attributed to the call site.
             assert_eq!(
-                response.code_mappings,
-                Some(vec![CodeMapping {
-                    span: TextSpan { start: 0, end: 29 },
-                    origin: Span(TextSpan { start: 0, end: 19 })
-                },])
+                tokens(&response.token_stream),
+                vec![(expanded.clone(), span.clone())]
             );
         }
     }
@@ -282,6 +268,7 @@ fn expand_multiple_derives_use_own_call_sites() {
     let foo_call_site = TextSpan::new(9, 12);
     let bar_call_site = TextSpan::new(14, 17);
 
+    // All derives of the item are expanded in a single request.
     let response = proc_macro_client
         .request_and_wait::<ExpandDerive>(ExpandDeriveParams {
             context: ProcMacroScope {
@@ -304,43 +291,27 @@ fn expand_multiple_derives_use_own_call_sites() {
         })
         .unwrap();
 
-    assert_eq!(response.diagnostics, vec![]);
+    // One result per derive, in the order they were requested in.
+    let [foo, bar] = <[_; 2]>::try_from(response).expect("two derives were requested");
+
+    assert_eq!(foo.diagnostics, vec![]);
+    assert_eq!(bar.diagnostics, vec![]);
+    assert_eq!(foo.token_stream.to_string(), "impl FooImpl of FooTrait {}");
+    assert_eq!(bar.token_stream.to_string(), "impl BarImpl of BarTrait {}");
+
+    // `foo_v2` spans its output with `TextSpan::call_site()`, so it gets its own call site.
     assert_eq!(
-        response.token_stream.to_string(),
-        "impl BarImpl of BarTrait {}impl FooImpl of FooTrait {}"
+        tokens(&foo.token_stream),
+        vec![("impl FooImpl of FooTrait {}".to_string(), foo_call_site)]
     );
-
-    // Derives are expanded in name order: `bar_v2` at 0..27, `foo_v2` at 27..54.
-    //
-    // `bar_v2` uses a fixed token span (0..27), so its call site appears only in the `CallSite` mapping.
-    //
-    // `foo_v2` uses `TextSpan::call_site()`, so its call site appears in the token mapping too.
-
+    // `bar_v2` uses a fixed token span instead, which is left as the macro reported it.
     assert_eq!(
-        response.code_mappings.unwrap(),
-        vec![
-            CodeMapping {
-                span: TextSpan { start: 0, end: 0 },
-                origin: Span(TextSpan { start: 0, end: 0 })
-            },
-            CodeMapping {
-                span: TextSpan { start: 0, end: 27 },
-                origin: Span(TextSpan { start: 0, end: 27 })
-            },
-            CodeMapping {
-                span: TextSpan { start: 0, end: 27 },
-                origin: CodeOrigin::CallSite(bar_call_site)
-            },
-            CodeMapping {
-                span: TextSpan { start: 27, end: 54 },
-                origin: Span(foo_call_site.clone())
-            },
-            CodeMapping {
-                span: TextSpan { start: 27, end: 54 },
-                origin: CodeOrigin::CallSite(foo_call_site)
-            }
-        ]
-    )
+        tokens(&bar.token_stream),
+        vec![(
+            "impl BarImpl of BarTrait {}".to_string(),
+            TextSpan::new(0, 27)
+        )]
+    );
 }
 
 #[test]
@@ -406,23 +377,108 @@ fn expand_inline() {
             "struct A { field: 25, other_field: macro_call!(12)}".to_string()
         );
 
-        if macro_name == "replace_all_15_with_25_v2" {
-            assert!(response.code_mappings.is_some());
-            assert_eq!(
-                response.code_mappings.unwrap(),
-                vec![
-                    CodeMapping {
-                        span: TextSpan { start: 0, end: 51 },
-                        origin: Span(TextSpan { start: 0, end: 51 })
-                    },
-                    CodeMapping {
-                        span: TextSpan { start: 0, end: 51 },
-                        origin: CodeOrigin::CallSite(TextSpan { start: 0, end: 51 })
-                    }
-                ]
-            );
-        } else {
-            assert!(response.code_mappings.is_none())
-        }
+        // Both api versions report the expansion as a single token spanning the macro call.
+        assert_eq!(
+            tokens(&response.token_stream),
+            vec![(
+                "struct A { field: 25, other_field: macro_call!(12)}".to_string(),
+                span.clone()
+            )]
+        );
     }
+}
+
+#[test]
+fn v1_attribute_returning_nothing_reports_an_empty_expansion() {
+    // An empty expansion asks the caller to remove the item.
+    let remove_v1 = r#"
+        #[attribute_macro]
+        pub fn remove_v1(_attr: TokenStream, _token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(TokenStream::new(String::new()))
+        }
+    "#;
+
+    let t = TempDir::new().unwrap();
+    let project = setup_project_with_v1_and_v2_macro_deps(&t, Some(remove_v1), None);
+
+    let mut manifest_path = project.clone();
+    manifest_path.push("test_package");
+    manifest_path.set_file_name("Scarb.toml");
+
+    let mut proc_macro_client = ProcMacroClient::new(&project);
+    let component = proc_macro_client
+        .defined_macros_for_package("test_package", manifest_path.clone())
+        .component;
+
+    let code = "fn some_test_fn(){}".to_string();
+    let span = TextSpan::new(0, code.len() as u32);
+    let item = TokenStreamV2::new(vec![TokenTree::Ident(Token::new(code, span.clone()))]);
+
+    let response = proc_macro_client
+        .request_and_wait::<ExpandAttribute>(ExpandAttributeParams {
+            context: ProcMacroScope {
+                workspace: Workspace {
+                    manifest_path: manifest_path.clone(),
+                },
+                component,
+            },
+            attr: "remove_v1".to_string(),
+            args: TokenStreamV2::empty(),
+            item,
+            adapted_call_site: span,
+        })
+        .unwrap();
+
+    assert_eq!(response.diagnostics, vec![]);
+    assert!(response.token_stream.is_empty());
+    assert_eq!(tokens(&response.token_stream), vec![]);
+}
+
+#[test]
+fn v1_diagnostics_arrive_without_a_span() {
+    // The v1 diagnostics carry no span.
+    let failing_v1 = r#"
+        use cairo_lang_macro::Diagnostic;
+
+        #[attribute_macro]
+        pub fn failing_v1(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(token_stream)
+                .with_diagnostics(Diagnostic::error("v1 is unhappy").into())
+        }
+    "#;
+
+    let t = TempDir::new().unwrap();
+    let project = setup_project_with_v1_and_v2_macro_deps(&t, Some(failing_v1), None);
+
+    let mut manifest_path = project.clone();
+    manifest_path.push("test_package");
+    manifest_path.set_file_name("Scarb.toml");
+
+    let mut proc_macro_client = ProcMacroClient::new(&project);
+    let component = proc_macro_client
+        .defined_macros_for_package("test_package", manifest_path.clone())
+        .component;
+
+    let code = "fn some_test_fn(){}".to_string();
+    let span = TextSpan::new(0, code.len() as u32);
+    let item = TokenStreamV2::new(vec![TokenTree::Ident(Token::new(code, span.clone()))]);
+
+    let response = proc_macro_client
+        .request_and_wait::<ExpandAttribute>(ExpandAttributeParams {
+            context: ProcMacroScope {
+                workspace: Workspace {
+                    manifest_path: manifest_path.clone(),
+                },
+                component,
+            },
+            attr: "failing_v1".to_string(),
+            args: TokenStreamV2::empty(),
+            item,
+            adapted_call_site: span,
+        })
+        .unwrap();
+
+    assert_eq!(response.diagnostics.len(), 1);
+    assert_eq!(response.diagnostics[0].message(), "v1 is unhappy");
+    assert_eq!(response.diagnostics[0].span(), None);
 }

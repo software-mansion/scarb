@@ -1,18 +1,18 @@
-use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::ExpandableAttrLocation;
-use crate::compiler::plugin::proc_macro::v2::host::attribute::{
-    AttrExpansionArgs, AttrExpansionFound,
-};
-use crate::compiler::plugin::proc_macro::v2::host::conversion::{CallSiteLocation, SpanSource};
-use crate::compiler::plugin::proc_macro::v2::host::span_utils::move_spans_by_offset;
-use crate::compiler::plugin::proc_macro::v2::{ProcMacroHostPlugin, TokenStreamBuilder};
-use crate::compiler::plugin::proc_macro::{ExpansionKind, ExpansionQuery};
+use crate::backend::ProcMacroBackend;
+use crate::conversion::{CallSiteLocation, SpanSource};
+use crate::expansion::{ExpansionKind, ExpansionQuery};
+use crate::host::ProcMacroHostPlugin;
+use crate::host::attribute::span_adapter::ExpandableAttrLocation;
+use crate::host::attribute::{AttrExpansionArgs, AttrExpansionFound};
+use crate::span_utils::move_spans_by_offset;
+use crate::token_stream_builder::TokenStreamBuilder;
 use cairo_lang_filesystem::span::TextSpan;
 use cairo_lang_macro::AllocationContext;
 use cairo_lang_syntax::attribute::structured::AttributeStructurize;
 use cairo_lang_syntax::node::{TypedSyntaxNode, ast};
 use salsa::Database;
 
-impl ProcMacroHostPlugin {
+impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
     pub(crate) fn parse_attrs<'db>(
         &self,
         db: &'db dyn Database,
@@ -20,7 +20,7 @@ impl ProcMacroHostPlugin {
         item_attrs: Vec<ast::Attribute<'db>>,
         item_span: TextSpan,
         ctx: &AllocationContext,
-    ) -> AttrExpansionFound<'db> {
+    ) -> AttrExpansionFound<'db, B::Id> {
         // This function parses attributes of the item,
         // checking if those attributes correspond to a procedural macro that should be fired.
         // The proc macro attribute found is removed from attributes list,

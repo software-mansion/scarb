@@ -17,6 +17,7 @@ use crate::core::Config;
 use crate::ops::store::ProcMacroStore;
 
 mod connection;
+mod conversions;
 mod methods;
 pub mod store;
 
