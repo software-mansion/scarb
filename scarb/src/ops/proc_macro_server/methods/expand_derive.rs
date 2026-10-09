@@ -3,7 +3,8 @@ use std::sync::{Arc, Mutex};
 use anyhow::{Context, Result};
 use cairo_lang_macro::{TextSpan, TokenStream};
 use scarb_proc_macro_server_types::methods::{
-    ProcMacroResult, SpannedTokenStream, expand::ExpandDerive,
+    ProcMacroResult, SpannedTokenStream,
+    expand::{Derive, ExpandDerive},
 };
 
 use super::Handler;
@@ -24,32 +25,49 @@ impl Handler for ExpandDerive {
     ) -> Result<Self::Response> {
         let Self::Params {
             context,
-            derive,
+            derives,
             item,
-            call_site,
         } = params;
 
-        let query = ExpansionQuery::with_expansion_name(derive.clone(), ExpansionKind::Derive);
+        derives
+            .into_iter()
+            .map(|Derive { name, call_site }| {
+                let query =
+                    ExpansionQuery::with_expansion_name(name.clone(), ExpansionKind::Derive);
 
-        let (proc_macro_instance, hash) = proc_macros
-            .lock()
-            .unwrap()
-            .get_instance_and_hash(&context, &query)
-            .with_context(|| format!("No \"{derive}\" derive macros found in scope {context:?}"))?;
+                let (proc_macro_instance, hash) = proc_macros
+                    .lock()
+                    .unwrap()
+                    .get_instance_and_hash(&context, &query)
+                    .with_context(|| {
+                        format!("No \"{name}\" derive macros found in scope {context:?}")
+                    })?;
 
-        let expansion = proc_macro_instance
-            .find_expansion(&query)
-            .with_context(|| format!("No \"{derive}\" derive macros found in scope {context:?}"))?
-            .clone();
+                let expansion = proc_macro_instance
+                    .find_expansion(&query)
+                    .with_context(|| {
+                        format!("No \"{name}\" derive macros found in scope {context:?}")
+                    })?
+                    .clone();
 
-        match proc_macro_instance.api_version() {
-            ProcMacroApiVersion::V1 => {
-                expand_derive_v1(&proc_macro_instance, hash, &expansion, item, call_site)
-            }
-            ProcMacroApiVersion::V2 => {
-                expand_derive_v2(&proc_macro_instance, hash, &expansion, call_site, item)
-            }
-        }
+                match proc_macro_instance.api_version() {
+                    ProcMacroApiVersion::V1 => expand_derive_v1(
+                        &proc_macro_instance,
+                        hash,
+                        &expansion,
+                        item.clone(),
+                        call_site,
+                    ),
+                    ProcMacroApiVersion::V2 => expand_derive_v2(
+                        &proc_macro_instance,
+                        hash,
+                        &expansion,
+                        call_site,
+                        item.clone(),
+                    ),
+                }
+            })
+            .collect()
     }
 }
 

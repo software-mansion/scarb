@@ -13,8 +13,12 @@ All notable changes to this project will be documented in this file.
 - Remove `ProcMacroResult::code_mappings`, along with the `CodeMapping` and `CodeOrigin` types.
 - Remove the `conversions` module. Converting between macro api versions is now entirely internal
   to the proc macro server.
-- `ExpandDeriveParams::derives` is replaced by `ExpandDeriveParams::derive`: one derive is
-  expanded per request, each with its own call site.
+- `ExpandDerive` responds with one `ProcMacroResult` per requested derive, instead of a single
+  result holding the concatenated code of all of them. Results come in the order the derives were
+  requested in, and the server no longer sorts them by name.
+- Each result's `fingerprint` is now the fingerprint of the macro that produced that one derive,
+  instead of a hash combining all derives of the item.
+- Callers concatenate the per-derive expansions themselves, offsetting code mappings as they go.
 - Drop the dependency on `cairo-lang-macro` 0.1.
 - Add `MacroWithHash::cairo_name`, the name the macro is written under in Cairo code. `name` stays
   the name of the expansion function, used when requesting expansions.

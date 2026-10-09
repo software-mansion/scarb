@@ -100,16 +100,28 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
         let token_stream = token_stream_builder.build(&ctx);
         let (adapter, adapted_token_stream) = DeriveAdapter::adapt_token_stream(token_stream);
 
-        for derive in derives.iter() {
-            let call_site = adapter.adapted_call_site(&derive.call_site.span);
-            let result = self.expand(
-                db,
-                &derive.id,
-                call_site.clone(),
-                TokenStream::empty(),
-                adapted_token_stream.clone(),
-                &mut aux_data,
-            );
+        // All derives of an item are expanded in one go, so that a backend talking to another
+        // process can do it in a single request.
+        let calls = derives
+            .iter()
+            .map(|derive| {
+                (
+                    derive.id.clone(),
+                    adapter.adapted_call_site(&derive.call_site.span),
+                )
+            })
+            .collect_vec();
+        let results = self
+            .backend()
+            .expand_derives(db, &calls, adapted_token_stream);
+        debug_assert_eq!(
+            results.len(),
+            calls.len(),
+            "a backend must answer every derive it was given"
+        );
+
+        for ((id, call_site), result) in calls.iter().zip(results) {
+            self.backend().on_expanded(id, &result, &mut aux_data);
 
             // Register diagnostics.
             all_diagnostics.extend(adapter.adapt_diagnostics(result.diagnostics));
@@ -123,7 +135,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
             code_mappings.extend(
                 adapter.adapt_code_mappings(generate_code_mappings_with_offset(
                     &result.token_stream,
-                    call_site,
+                    call_site.clone(),
                     current_width,
                 )),
             );

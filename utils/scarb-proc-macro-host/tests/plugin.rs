@@ -359,7 +359,7 @@ fn diagnostics_are_reported_against_the_call_site() {
 }
 
 #[test]
-fn derives_are_expanded_one_by_one_in_source_order() {
+fn derives_are_expanded_in_source_order_against_the_whole_item() {
     let (backend, results) = expand_all(
         FakeBackend::new(vec![
             (
