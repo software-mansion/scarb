@@ -1726,7 +1726,7 @@ dependencies = [
 [[package]]
 name = "cairo-program-runner-lib"
 version = "1.2.2"
-source = "git+https://github.com/software-mansion-labs/proving-utils.git?rev=bcadf37#bcadf3705fdb6347ae60830c7139ea8d8ceca5f9"
+source = "git+https://github.com/software-mansion-labs/proving-utils.git?rev=d25c90e#d25c90ec909216f71453986c48ce39d45313f35d"
 dependencies = [
  "anyhow",
  "cairo-lang-casm",
