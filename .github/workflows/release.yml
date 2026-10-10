@@ -47,13 +47,25 @@ jobs:
       - name: Determine release notes start tag
         run: |
           if [[ "$RELEASE_TAG" == *-rc* ]]; then
-            # because the release is a release candidate, we want to include pre-releases when determining the start tag for the release notes
-            RELEASE_NOTES_START_TAG=$(gh release list --json tagName --limit 1 --exclude-drafts --jq '.[0].tagName')
+            EXISTING_TAGS=$(gh release list --limit 1000 --exclude-drafts --json tagName --jq '.[].tagName')
           else
-            # because the release is not a release candidate, we want to exclude pre-releases when determining the start tag for the release notes
-            RELEASE_NOTES_START_TAG=$(gh release list --json tagName --limit 1 --exclude-pre-releases --exclude-drafts --jq '.[0].tagName')
+            EXISTING_TAGS=$(gh release list --limit 1000 --exclude-drafts --exclude-pre-releases --json tagName --jq '.[].tagName')
           fi
-          echo "RELEASE_NOTES_START_TAG=${RELEASE_NOTES_START_TAG}" >> $GITHUB_ENV
+
+          # 1. Combine existing releases with the current tag being released
+          # 2. Swap "-rc" for "~rc" so sort -V puts release candidates BEFORE the final
+          #    release (v1.2.0~rc2 < v1.2.0), sort semantically, then swap back
+          # 3. Remove duplicates (uniq)
+          # 4. Find the current tag and grab it along with the 1 line before it (-B 1)
+          # 5. Take the first line of that output (which is the previous tag)
+          RELEASE_NOTES_START_TAG=$( (echo "$EXISTING_TAGS"; echo "$RELEASE_TAG") | sed 's/-rc/~rc/' | sort -V | sed 's/~rc/-rc/' | uniq | grep -B 1 -x "$RELEASE_TAG" | head -n 1 )
+
+          # If it's the very first release, it will return itself.
+          if [[ "$RELEASE_NOTES_START_TAG" == "$RELEASE_TAG" ]]; then
+            RELEASE_NOTES_START_TAG=""
+          fi
+
+          echo "RELEASE_NOTES_START_TAG=${RELEASE_NOTES_START_TAG}" >> "$GITHUB_ENV"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.ref_name }}
