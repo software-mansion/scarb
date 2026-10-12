@@ -153,22 +153,25 @@ impl ProcMacroHostPlugin {
             })
             .collect::<Vec<_>>();
         expansions.sort_unstable_by_key(|e| (e.expansion.cairo_name.clone(), e.package_id));
+        let duplicates = expansions
+            .chunk_by(|a, b| a.expansion.cairo_name == b.expansion.cairo_name)
+            .filter(|group| group.len() > 1)
+            .map(|group| {
+                let packages = group
+                    .iter()
+                    .map(|e| e.package_id.to_string())
+                    .collect::<Vec<_>>();
+                format!(
+                    "{} ({})",
+                    group[0].expansion.cairo_name.as_str(),
+                    packages.join(", ")
+                )
+            })
+            .collect::<Vec<_>>();
         ensure!(
-            expansions
-                .windows(2)
-                .all(|w| w[0].expansion.cairo_name != w[1].expansion.cairo_name),
-            "duplicate expansions defined for procedural macros: {duplicates}",
-            duplicates = expansions
-                .windows(2)
-                .filter(|w| w[0].expansion.cairo_name == w[1].expansion.cairo_name)
-                .map(|w| format!(
-                    "{} ({} and {})",
-                    w[0].expansion.cairo_name.as_str(),
-                    w[0].package_id,
-                    w[1].package_id
-                ))
-                .collect::<Vec<_>>()
-                .join(", ")
+            duplicates.is_empty(),
+            "duplicate expansions defined for procedural macros: {}",
+            duplicates.join(", ")
         );
         Ok(Self {
             instances: macros,

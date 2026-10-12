@@ -62,8 +62,8 @@ impl Handler for ExpandDerive {
                         &proc_macro_instance,
                         hash,
                         &expansion,
-                        call_site,
                         item.clone(),
+                        call_site,
                     ),
                 }
             })
@@ -96,8 +96,8 @@ fn expand_derive_v2(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     fingerprint: u64,
     expansion: &Expansion,
-    call_site: TextSpan,
     item: TokenStream,
+    call_site: TextSpan,
 ) -> Result<ProcMacroResult> {
     let result = proc_macro_instance.try_v2()?.generate_code(
         expansion.expansion_name.clone(),

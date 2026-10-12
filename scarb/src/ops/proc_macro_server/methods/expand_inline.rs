@@ -41,7 +41,7 @@ impl Handler for ExpandInline {
                 expand_inline_v1(&proc_macro_instance, hash, name, args, call_site)
             }
             ProcMacroApiVersion::V2 => {
-                expand_inline_v2(&proc_macro_instance, hash, name, call_site, args)
+                expand_inline_v2(&proc_macro_instance, hash, name, args, call_site)
             }
         }
     }
@@ -72,8 +72,8 @@ fn expand_inline_v2(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     fingerprint: u64,
     name: String,
-    call_site: TextSpan,
     args: TokenStream,
+    call_site: TextSpan,
 ) -> Result<ProcMacroResult> {
     let result = proc_macro_instance.try_v2()?.generate_code(
         name.into(),
