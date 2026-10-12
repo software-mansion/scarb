@@ -15,8 +15,7 @@ use crate::core::config::Config;
 use crate::core::errors::{ManifestErrorWithSource, ManifestParseError};
 use crate::core::manifest::{
     ManifestDiagnosticAnchor, ManifestDiagnosticCode, ManifestDiagnosticExtraData,
-    ManifestDiagnosticMessage, ManifestDiagnosticSpan, ManifestMessageKind,
-    resolve_manifest_anchor,
+    ManifestDiagnosticMessage, ManifestMessageKind, format_span_location, resolve_manifest_anchor,
 };
 use crate::core::package::Package;
 use crate::core::source::SourceId;
@@ -233,24 +232,6 @@ fn warn_unknown_manifest_fields(path: &Utf8Path, source: &str, config: &Config) 
                 .warn(format!("unknown manifest field `{path_str}`{location}"));
         }
     }
-}
-
-/// Converts a byte-offset span to a `(path:line:col)` locator string.
-fn format_span_location(path: &Utf8Path, source: &str, span: &ManifestDiagnosticSpan) -> String {
-    let (line, col) = byte_offset_to_line_col(source, span.start);
-    format!("({path}:{line}:{col})")
-}
-
-/// Converts a byte offset into a 1-based (line, column) pair.
-fn byte_offset_to_line_col(source: &str, offset: usize) -> (usize, usize) {
-    let offset = offset.min(source.len());
-    let before = &source[..offset];
-    let line = before.bytes().filter(|&b| b == b'\n').count() + 1;
-    let col = before
-        .rfind('\n')
-        .map(|pos| offset - pos)
-        .unwrap_or(offset + 1);
-    (line, col)
 }
 
 fn find_member_paths(
