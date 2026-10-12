@@ -208,8 +208,12 @@ Releasing `cairo-lang-macro` crate is also a semi-automated process.
 
 `scarb-proc-macro-host` is shared by Scarb and CairoLS, and CairoLS uses the version published to [crates.io].
 
-Release it with every Scarb release that changes it, and with every Cairo version bump.
-Publish it before releasing CairoLS.
+Release it with every Scarb release that changes it, and with every Cairo version (RC or final) Scarb is released
+against. Cairo rev bumps on `main` do not need a release, CairoLS `main` patches the host from git. Publish it before
+releasing CairoLS.
+
+The published crate pins `cairo-lang-*` to the Cairo version of the commit it was published from, so a release
+build of CairoLS can only use it with the same Cairo version.
 
 1. Make sure correct version is present in:
     1. `utils/scarb-proc-macro-host/Cargo.toml`
@@ -220,7 +224,8 @@ Publish it before releasing CairoLS.
    tag. Changes to its types break the protocol between CairoLS and `scarb proc-macro-server`.
 4. Make sure you create it on a green commit (CI is passing), this is not verified!
 5. Run `cargo publish -p scarb-proc-macro-host --dry-run` to verify that everything is fine.
-6. Create a tag on `main` named `scarb-proc-macro-host/vX.Y.Z`.
+6. Create a tag named `scarb-proc-macro-host/vX.Y.Z` on a release branch commit. On `main` the `cairo-lang-*`
+   requirements are `*`, which [crates.io] rejects.
 7. Push it.
 8. Run `cargo publish -p scarb-proc-macro-host`.
 9. Bump `scarb-proc-macro-host` in CairoLS to the published version.
