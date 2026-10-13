@@ -227,7 +227,7 @@ fn load_prebuilt_proc_macros() {
         .defined_macros_for_package("test_package", manifest_path.clone())
         .component;
 
-    let args_code = "42".to_string();
+    let args_code = "42";
     let span = TextSpan::new(0, args_code.len() as u32);
     let args = TokenStreamV2::new(vec![TokenTree::Ident(Token::new(args_code, span.clone()))]);
 
@@ -247,6 +247,6 @@ fn load_prebuilt_proc_macros() {
     // A v1 macro reports no spans, so the expansion is attributed to the macro call.
     assert_eq!(
         response.token_stream,
-        SpannedTokenStream::unspanned("42", span)
+        SpannedTokenStream::unspanned(args_code, span)
     );
 }

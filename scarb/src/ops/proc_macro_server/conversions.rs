@@ -2,7 +2,6 @@
 
 use cairo_lang_macro::{
     Diagnostic as DiagnosticV2, Severity as SeverityV2, TextSpan, TokenStream as TokenStreamV2,
-    TokenTree,
 };
 use cairo_lang_macro_v1::{
     Diagnostic as DiagnosticV1, Severity as SeverityV1, TokenStream as TokenStreamV1,
@@ -26,13 +25,6 @@ pub fn token_stream_v1_to_spanned(
     origin: TextSpan,
 ) -> SpannedTokenStream {
     SpannedTokenStream::unspanned(token_stream_v1.to_string(), origin)
-}
-
-/// The span covering a whole token stream, or `None` if it carries no tokens.
-pub fn token_stream_span(token_stream: &TokenStreamV2) -> Option<TextSpan> {
-    let TokenTree::Ident(first) = token_stream.tokens.first()?;
-    let TokenTree::Ident(last) = token_stream.tokens.last()?;
-    Some(TextSpan::new(first.span.start, last.span.end))
 }
 
 /// Upcasts the old diagnostic struct to the new one.

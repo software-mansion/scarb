@@ -12,7 +12,7 @@ use crate::compiler::plugin::proc_macro::{
 };
 use crate::core::Config;
 use crate::ops::proc_macro_server::conversions::{
-    diagnostic_v1_to_v2, token_stream_span, token_stream_v1_to_spanned, token_stream_v2_to_v1,
+    diagnostic_v1_to_v2, token_stream_v1_to_spanned, token_stream_v2_to_v1,
 };
 use crate::ops::store::ProcMacroStore;
 
@@ -39,9 +39,14 @@ impl Handler for ExpandAttribute {
             })?;
 
         match proc_macro_instance.api_version() {
-            ProcMacroApiVersion::V1 => {
-                expand_attribute_v1(&proc_macro_instance, hash, attr, args, item)
-            }
+            ProcMacroApiVersion::V1 => expand_attribute_v1(
+                &proc_macro_instance,
+                hash,
+                attr,
+                adapted_call_site,
+                args,
+                item,
+            ),
             ProcMacroApiVersion::V2 => expand_attribute_v2(
                 &proc_macro_instance,
                 hash,
@@ -58,11 +63,10 @@ fn expand_attribute_v1(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     fingerprint: u64,
     attr: String,
+    adapted_call_site: TextSpan,
     args: TokenStream,
     item: TokenStream,
 ) -> Result<ProcMacroResult> {
-    // A v1 macro reports no spans, so the expansion is attributed to the whole item.
-    let origin = token_stream_span(&item).unwrap_or_else(|| TextSpan::new(0, 0));
     let result = proc_macro_instance.try_v1()?.generate_code(
         attr.into(),
         token_stream_v2_to_v1(&args),
@@ -70,7 +74,7 @@ fn expand_attribute_v1(
     );
 
     Ok(ProcMacroResult {
-        token_stream: token_stream_v1_to_spanned(&result.token_stream, origin),
+        token_stream: token_stream_v1_to_spanned(&result.token_stream, adapted_call_site),
         diagnostics: result.diagnostics.iter().map(diagnostic_v1_to_v2).collect(),
         fingerprint,
     })
