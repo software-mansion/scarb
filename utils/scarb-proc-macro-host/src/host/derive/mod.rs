@@ -176,7 +176,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
     }
 }
 
-pub(crate) struct DeriveFound<'db, Id: ExpansionId> {
+pub struct DeriveFound<'db, Id: ExpansionId> {
     id: Id,
     call_site: CallSiteLocation<'db>,
 }
@@ -187,7 +187,7 @@ impl<'db, Id: ExpansionId> Debug for DeriveFound<'db, Id> {
     }
 }
 
-pub(crate) fn generate_code_mappings_with_offset(
+pub fn generate_code_mappings_with_offset(
     token_stream: &TokenStream,
     call_site: TextSpan,
     offset: TextWidth,

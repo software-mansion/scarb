@@ -8,7 +8,7 @@ use salsa::Database;
 
 /// Helps creating TokenStream based on multiple SyntaxNodes,
 /// which aren't descendants or ascendants of each other inside the SyntaxTree.
-pub(crate) struct TokenStreamBuilder<'db> {
+pub struct TokenStreamBuilder<'db> {
     db: &'db dyn Database,
     nodes: Vec<SyntaxNode<'db>>,
     metadata: Option<TokenStreamMetadata>,

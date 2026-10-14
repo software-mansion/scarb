@@ -28,7 +28,7 @@ pub struct SpannedTokenStream(pub Vec<SpannedToken>);
 
 impl SpannedTokenStream {
     /// Wraps code without span information into a single token spanning `origin`.
-    pub fn unspanned(content: impl Into<String>, origin: TextSpan) -> Self {
+    pub fn from_unspanned(content: impl Into<String>, origin: TextSpan) -> Self {
         let content = content.into();
         if content.is_empty() {
             return Self::default();
@@ -109,7 +109,7 @@ mod tests {
 
     #[test]
     fn unspanned_content_is_attributed_to_its_origin() {
-        let stream = SpannedTokenStream::unspanned("fn foo() {}", span(3, 14));
+        let stream = SpannedTokenStream::from_unspanned("fn foo() {}", span(3, 14));
         assert_eq!(
             stream.0,
             vec![SpannedToken {
@@ -124,7 +124,7 @@ mod tests {
     #[test]
     fn empty_content_produces_an_empty_stream() {
         // An empty expansion asks the caller to remove the original item.
-        let stream = SpannedTokenStream::unspanned("", span(0, 10));
+        let stream = SpannedTokenStream::from_unspanned("", span(0, 10));
         assert!(stream.is_empty());
         assert_eq!(stream.to_string(), "");
     }
@@ -161,7 +161,7 @@ mod tests {
 
     #[test]
     fn round_trips_through_serde() {
-        let original = SpannedTokenStream::unspanned("impl A {}", span(2, 20));
+        let original = SpannedTokenStream::from_unspanned("impl A {}", span(2, 20));
         let json = serde_json::to_string(&original).unwrap();
         let back: SpannedTokenStream = serde_json::from_str(&json).unwrap();
         assert_eq!(back, original);

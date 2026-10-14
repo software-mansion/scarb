@@ -247,6 +247,6 @@ fn load_prebuilt_proc_macros() {
     // A v1 macro reports no spans, so the expansion is attributed to the macro call.
     assert_eq!(
         response.token_stream,
-        SpannedTokenStream::unspanned(args_code, span)
+        SpannedTokenStream::from_unspanned(args_code, span)
     );
 }

@@ -20,12 +20,12 @@ use crate::host::attribute::{
 use crate::host::generate_code_mappings;
 use crate::token_stream_builder::TokenStreamBuilder;
 
-pub(crate) enum InnerAttrExpansionResult<'db> {
+pub enum InnerAttrExpansionResult<'db> {
     None,
     Some(AttributePluginResult<'db>),
 }
 
-pub(crate) struct InnerAttrExpansionContext<'a, 'db, B: ProcMacroBackend> {
+pub struct InnerAttrExpansionContext<'a, 'db, B: ProcMacroBackend> {
     host: &'a ProcMacroHostPlugin<B>,
     // Metadata returned for expansions.
     diagnostics: Vec<PluginDiagnostic<'db>>,
@@ -35,7 +35,7 @@ pub(crate) struct InnerAttrExpansionContext<'a, 'db, B: ProcMacroBackend> {
 }
 
 impl<'a, 'db, B: ProcMacroBackend> InnerAttrExpansionContext<'a, 'db, B> {
-    pub(crate) fn new(
+    pub fn new(
         host: &'a ProcMacroHostPlugin<B>,
         db: &'db dyn Database,
         item_ast: &ast::ModuleItem<'db>,
@@ -49,7 +49,7 @@ impl<'a, 'db, B: ProcMacroBackend> InnerAttrExpansionContext<'a, 'db, B> {
         }
     }
 
-    pub(crate) fn add_node(&mut self, node: SyntaxNode<'db>) {
+    pub fn add_node(&mut self, node: SyntaxNode<'db>) {
         self.item_builder.add_node(node);
     }
 
@@ -64,7 +64,7 @@ impl<'a, 'db, B: ProcMacroBackend> InnerAttrExpansionContext<'a, 'db, B> {
             .extend(into_cairo_diagnostics(db, diagnostics, stable_ptr));
     }
 
-    pub(crate) fn register_result_metadata(
+    pub fn register_result_metadata(
         &mut self,
         db: &'db dyn Database,
         input: &AttrExpansionArgs<'db, B::Id>,
@@ -88,7 +88,7 @@ impl<'a, 'db, B: ProcMacroBackend> InnerAttrExpansionContext<'a, 'db, B> {
             ));
     }
 
-    pub(crate) fn into_result(self, attr_names: Vec<SmolStr>) -> AttributePluginResult<'db> {
+    pub fn into_result(self, attr_names: Vec<SmolStr>) -> AttributePluginResult<'db> {
         let Self {
             host,
             diagnostics,

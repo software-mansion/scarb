@@ -130,7 +130,7 @@ impl<B: ProcMacroBackend> InlineMacroExprPlugin for ProcMacroInlinePlugin<B> {
 }
 
 #[tracing::instrument(level = "trace", skip_all)]
-pub(crate) fn expand_module_level_inline_macro<'db, B: ProcMacroBackend>(
+pub fn expand_module_level_inline_macro<'db, B: ProcMacroBackend>(
     host: &ProcMacroHostPlugin<B>,
     db: &'db dyn Database,
     inline_macro: &ast::ItemInlineMacro<'db>,

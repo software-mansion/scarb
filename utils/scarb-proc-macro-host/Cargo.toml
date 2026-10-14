@@ -13,7 +13,7 @@ repository.workspace = true
 cairo-lang-defs.workspace = true
 cairo-lang-diagnostics.workspace = true
 cairo-lang-filesystem.workspace = true
-cairo-lang-macro = { path = "../../plugins/cairo-lang-macro", version = "0.2.2" }
+cairo-lang-macro.workspace = true
 cairo-lang-semantic.workspace = true
 cairo-lang-syntax.workspace = true
 itertools.workspace = true

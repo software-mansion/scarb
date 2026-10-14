@@ -24,7 +24,7 @@ pub fn token_stream_v1_to_spanned(
     token_stream_v1: &TokenStreamV1,
     origin: TextSpan,
 ) -> SpannedTokenStream {
-    SpannedTokenStream::unspanned(token_stream_v1.to_string(), origin)
+    SpannedTokenStream::from_unspanned(token_stream_v1.to_string(), origin)
 }
 
 /// Upcasts the old diagnostic struct to the new one.

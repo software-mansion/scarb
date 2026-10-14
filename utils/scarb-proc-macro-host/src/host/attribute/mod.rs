@@ -12,23 +12,23 @@ use cairo_lang_defs::plugin::{
 };
 use cairo_lang_filesystem::ids::CodeMapping;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
-pub(crate) use inner_attribute::*;
-pub(crate) use item_attribute::*;
+pub use inner_attribute::*;
+pub use item_attribute::*;
 use salsa::Database;
 
 #[derive(Default)]
-pub(crate) struct AttributePluginResult<'db> {
+pub struct AttributePluginResult<'db> {
     diagnostics: Vec<PluginDiagnostic<'db>>,
     remove_original_item: bool,
     code: Option<PluginGeneratedFile>,
 }
 
 impl<'db> AttributePluginResult<'db> {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self::default()
     }
 
-    pub(crate) fn with_diagnostics(
+    pub fn with_diagnostics(
         mut self,
         db: &'db dyn Database,
         call_site_stable_ptr: SyntaxStablePtrId<'db>,
@@ -39,20 +39,17 @@ impl<'db> AttributePluginResult<'db> {
         self
     }
 
-    pub(crate) fn with_plugin_diagnostics(
-        mut self,
-        diagnostics: Vec<PluginDiagnostic<'db>>,
-    ) -> Self {
+    pub fn with_plugin_diagnostics(mut self, diagnostics: Vec<PluginDiagnostic<'db>>) -> Self {
         self.diagnostics = diagnostics;
         self
     }
 
-    pub(crate) fn with_remove_original_item(mut self, remove: bool) -> Self {
+    pub fn with_remove_original_item(mut self, remove: bool) -> Self {
         self.remove_original_item = remove;
         self
     }
 
-    pub(crate) fn with_generated_file(mut self, generated_file: AttributeGeneratedFile) -> Self {
+    pub fn with_generated_file(mut self, generated_file: AttributeGeneratedFile) -> Self {
         self.code = Some(generated_file.into());
         self
     }
@@ -68,7 +65,7 @@ impl<'db> From<AttributePluginResult<'db>> for PluginResult<'db> {
     }
 }
 
-pub(crate) struct AttributeGeneratedFile {
+pub struct AttributeGeneratedFile {
     name: String,
     content: String,
     code_mappings: Vec<CodeMapping>,
@@ -87,7 +84,7 @@ impl AttributeGeneratedFile {
         }
     }
 
-    pub(crate) fn from_patch_builder(name: impl ToString, item_builder: PatchBuilder<'_>) -> Self {
+    pub fn from_patch_builder(name: impl ToString, item_builder: PatchBuilder<'_>) -> Self {
         let (expanded, mut code_mappings) = item_builder.build();
         // PatchBuilder::build() adds additional mapping at the end,
         // which wraps the whole outputted code.
@@ -102,22 +99,22 @@ impl AttributeGeneratedFile {
         }
     }
 
-    pub(crate) fn with_content(mut self, content: impl ToString) -> Self {
+    pub fn with_content(mut self, content: impl ToString) -> Self {
         self.content = content.to_string();
         self
     }
 
-    pub(crate) fn with_code_mappings(mut self, code_mappings: Vec<AdaptedCodeMapping>) -> Self {
+    pub fn with_code_mappings(mut self, code_mappings: Vec<AdaptedCodeMapping>) -> Self {
         self.code_mappings = code_mappings.into_iter().map(Into::into).collect();
         self
     }
 
-    pub(crate) fn with_aux_data(mut self, aux_data: Option<DynGeneratedFileAuxData>) -> Self {
+    pub fn with_aux_data(mut self, aux_data: Option<DynGeneratedFileAuxData>) -> Self {
         self.aux_data = aux_data;
         self
     }
 
-    pub(crate) fn with_diagnostics_note(mut self, diagnostics_note: impl ToString) -> Self {
+    pub fn with_diagnostics_note(mut self, diagnostics_note: impl ToString) -> Self {
         self.diagnostics_note = Some(diagnostics_note.to_string());
         self
     }

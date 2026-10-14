@@ -184,13 +184,13 @@ where
     expansion
 }
 
-pub(crate) enum AttrExpansionFound<'db, Id: ExpansionId> {
+pub enum AttrExpansionFound<'db, Id: ExpansionId> {
     Some(AttrExpansionArgs<'db, Id>),
     Last(AttrExpansionArgs<'db, Id>),
     None,
 }
 
-pub(crate) struct AttrExpansionArgs<'db, Id: ExpansionId> {
+pub struct AttrExpansionArgs<'db, Id: ExpansionId> {
     pub id: Id,
     pub args: TokenStream,
     pub call_site: CallSiteLocation<'db>,
@@ -198,7 +198,7 @@ pub(crate) struct AttrExpansionArgs<'db, Id: ExpansionId> {
 }
 
 impl<'db, Id: ExpansionId> AttrExpansionFound<'db, Id> {
-    pub(crate) fn as_name(&self) -> Option<SmolStr> {
+    pub fn as_name(&self) -> Option<SmolStr> {
         match self {
             AttrExpansionFound::Some(args) | AttrExpansionFound::Last(args) => {
                 Some(args.id.expansion().cairo_name.clone())

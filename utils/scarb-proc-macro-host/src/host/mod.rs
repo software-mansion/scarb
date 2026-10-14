@@ -1,6 +1,6 @@
-pub(crate) mod attribute;
-pub(crate) mod derive;
-pub(crate) mod inline;
+pub mod attribute;
+pub mod derive;
+pub mod inline;
 
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -27,7 +27,7 @@ use scarb_stable_hash::short_hash;
 use crate::backend::{ExpansionId, ProcMacroBackend};
 use crate::expansion::ExpansionQuery;
 
-pub(crate) const DERIVE_ATTR: &str = "derive";
+pub const DERIVE_ATTR: &str = "derive";
 
 /// A Cairo compiler plugin controlling the procedural macro execution.
 ///
@@ -250,7 +250,7 @@ impl<B: ProcMacroBackend> MacroPlugin for ProcMacroHostPlugin<B> {
     }
 }
 
-pub(crate) fn generate_code_mappings(
+pub fn generate_code_mappings(
     token_stream: &TokenStream,
     call_site: MacroTextSpan,
 ) -> Vec<CodeMapping> {
