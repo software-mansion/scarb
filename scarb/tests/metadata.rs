@@ -2714,23 +2714,44 @@ fn missing_workspace_readme_and_license_file_are_warnings() {
     t.child("Scarb.toml")
         .write_str(indoc! {r#"
             [workspace]
-            members = ["hello"]
+            members = ["hello", "world"]
 
             [workspace.package]
             readme = "MISSING.md"
             license-file = "MISSING.txt"
         "#})
         .unwrap();
-    t.child("hello/Scarb.toml")
-        .write_str(indoc! {r#"
-            [package]
-            name = "hello"
-            version = "1.0.0"
-            edition = "2024_07"
-            readme.workspace = true
-            license-file.workspace = true
-        "#})
+    for name in ["hello", "world"] {
+        t.child(format!("{name}/Scarb.toml"))
+            .write_str(&formatdoc! {r#"
+                [package]
+                name = "{name}"
+                version = "1.0.0"
+                edition = "2024_07"
+                readme.workspace = true
+                license-file.workspace = true
+            "#})
+            .unwrap();
+    }
+
+    let output = Scarb::quick_command()
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
         .unwrap();
+
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let warnings = stdout
+        .lines()
+        .filter(|line| line.starts_with("warn: failed to find"))
+        .collect_vec();
+    assert_eq!(warnings.len(), 2, "{stdout}");
+    assert!(warnings[0].contains("MISSING.txt"), "{stdout}");
+    assert!(warnings[1].contains("MISSING.md"), "{stdout}");
 
     let output = Scarb::quick_command()
         .arg("--json")
@@ -2764,7 +2785,9 @@ fn missing_workspace_readme_and_license_file_are_warnings() {
 
     let meta: Metadata = serde_json::from_value(lines[2].clone()).unwrap();
     let packages = packages_by_name(meta);
-    let metadata = &packages.get("hello").unwrap().manifest_metadata;
-    assert_eq!(metadata.readme, None);
-    assert_eq!(metadata.license_file, None);
+    for name in ["hello", "world"] {
+        let metadata = &packages.get(name).unwrap().manifest_metadata;
+        assert_eq!(metadata.readme, None);
+        assert_eq!(metadata.license_file, None);
+    }
 }

@@ -1,8 +1,5 @@
-use crate::core::{Config, ManifestSemanticError, PackageName, TargetKind};
-use camino::Utf8Path;
+use crate::core::{PackageName, TargetKind};
 use scarb_manifest_schema::FieldPath;
-use scarb_ui::OutputFormat;
-use scarb_ui::components::MachineMessage;
 use serde::Serialize;
 use toml_edit::{Document, Item, Table};
 
@@ -526,62 +523,4 @@ pub fn resolve_anchor_in_doc(
             key_or_item_span(table, key)
         }
     }
-}
-
-/// Emits a non-fatal manifest diagnostic.
-///
-/// In text mode: `warn: <message> (path:line:col)`.
-/// In JSON mode: a `manifest_diagnostic` machine message with `file` and `span`.
-pub fn emit_manifest_warning(
-    config: &Config,
-    path: &Utf8Path,
-    source: &str,
-    diagnostic: &ManifestSemanticError,
-) {
-    let data = Document::parse(source)
-        .ok()
-        .map(|doc| diagnostic.resolve(doc.as_table()));
-    let (span, related, extra) = data
-        .map(|data| (data.span, data.related, data.extra))
-        .unwrap_or_default();
-    if config.ui().output_format() == OutputFormat::Json {
-        config
-            .ui()
-            .force_print(MachineMessage(ManifestDiagnosticMessage {
-                kind: ManifestMessageKind::ManifestDiagnostic,
-                message: diagnostic.to_string(),
-                error_code: diagnostic.code(),
-                file: Some(path.to_string()),
-                span,
-                related,
-                data: extra,
-            }));
-    } else {
-        let location = span
-            .map(|s| format!(" {}", format_span_location(path, source, &s)))
-            .unwrap_or_default();
-        config.ui().warn(format!("{diagnostic}{location}"));
-    }
-}
-
-/// Converts a byte-offset span to a `(path:line:col)` locator string.
-pub fn format_span_location(
-    path: &Utf8Path,
-    source: &str,
-    span: &ManifestDiagnosticSpan,
-) -> String {
-    let (line, col) = byte_offset_to_line_col(source, span.start);
-    format!("({path}:{line}:{col})")
-}
-
-/// Converts a byte offset into a 1-based (line, column) pair.
-fn byte_offset_to_line_col(source: &str, offset: usize) -> (usize, usize) {
-    let offset = offset.min(source.len());
-    let before = &source[..offset];
-    let line = before.bytes().filter(|&b| b == b'\n').count() + 1;
-    let col = before
-        .rfind('\n')
-        .map(|pos| offset - pos)
-        .unwrap_or(offset + 1);
-    (line, col)
 }
