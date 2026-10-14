@@ -1632,8 +1632,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15c5f91720ff524720f352a390ff11e01194fd9ec9e27839f7c99fddfcd5a6a3"
+source = "git+https://github.com/software-mansion/cairols?rev=abc6353#abc6353fcda77d32255ab66b754926711651e569"
 dependencies = [
  "anyhow",
  "bincode 2.0.1",
@@ -1673,6 +1672,7 @@ dependencies = [
  "lsp-types",
  "memchr",
  "mimalloc",
+ "percent-encoding",
  "regex",
  "salsa",
  "scarb-manifest-schema 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
