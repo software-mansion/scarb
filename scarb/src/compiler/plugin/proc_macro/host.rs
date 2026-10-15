@@ -1,8 +1,6 @@
-use crate::compiler::plugin::proc_macro::{
-    Expansion, ExpansionKind, ExpansionQuery, ProcMacroInstance,
-};
+use crate::compiler::plugin::proc_macro::v2::ProcMacroId;
+use crate::compiler::plugin::proc_macro::{ExpansionKind, ExpansionQuery, ProcMacroInstance};
 use crate::compiler::plugin::{ProcMacroApiVersion, proc_macro};
-use crate::core::PackageId;
 use anyhow::Result;
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::plugin::PluginSuite;
@@ -108,7 +106,7 @@ pub trait DeclaredProcMacroInstances {
     }
 
     /// Expansions of the given kind, each with the package providing it.
-    fn expansions_with_package(&self, kind: ExpansionKind) -> Vec<(Expansion, PackageId)> {
+    fn expansions_with_package(&self, kind: ExpansionKind) -> Vec<ProcMacroId> {
         self.instances()
             .iter()
             .flat_map(|instance| {
@@ -116,7 +114,7 @@ pub trait DeclaredProcMacroInstances {
                     .get_expansions()
                     .iter()
                     .filter(|expansion| expansion.kind == kind)
-                    .map(|expansion| (expansion.clone(), instance.package_id()))
+                    .map(|expansion| ProcMacroId::new(instance.package_id(), expansion.clone()))
             })
             .collect()
     }

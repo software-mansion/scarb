@@ -102,10 +102,13 @@ fn get_macros_for_components(
                         plugin
                             .expansions_with_package(kind)
                             .into_iter()
-                            .map(|(expansion, package)| MacroWithHash {
-                                name: expansion.expansion_name.to_string(),
-                                cairo_name: expansion.cairo_name.to_string(),
-                                hash: *workspace_macros.instance_to_hash.get(&package).unwrap(),
+                            .map(|id| MacroWithHash {
+                                name: id.expansion.expansion_name.to_string(),
+                                cairo_name: id.expansion.cairo_name.to_string(),
+                                hash: *workspace_macros
+                                    .instance_to_hash
+                                    .get(&id.package_id)
+                                    .unwrap(),
                             })
                             .collect()
                     };
