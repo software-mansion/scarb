@@ -35,7 +35,6 @@ use cairo_lang_filesystem::ids::CAIRO_FILE_EXTENSION;
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
-use pathdiff::diff_utf8_paths;
 use scarb_fs_utils as fsx;
 use scarb_fs_utils::PathBufUtf8Ext;
 use scarb_ui::Ui;
@@ -57,8 +56,8 @@ use url::Url;
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlManifest {
-    /// The raw source text of the manifest file, populated by [`TomlManifest::read_from_path`].
-    /// Empty when the manifest was constructed via [`TomlManifest::read_from_str`].
+    /// The raw source text of the manifest file, populated by [`TomlManifest::read_from_str`]
+    /// and [`TomlManifest::read_from_path`].
     #[serde(skip)]
     #[schemars(skip)]
     pub raw_content: String,
@@ -344,25 +343,30 @@ impl PackageInheritableFields {
     get_field!(documentation, String);
     get_field!(homepage, String);
     get_field!(license, String);
-    get_field!(license_file, Utf8PathBuf);
     get_field!(repository, String);
     get_field!(edition, Edition);
 
-    pub fn readme(&self, workspace_root: &Utf8Path, package_root: &Utf8Path) -> Result<PathOrBool> {
+    pub fn readme(&self, workspace_root: &Utf8Path) -> Result<MetadataFile> {
         let readme = readme_for_package(
             workspace_root,
             self.readme.as_ref(),
             Some(ManifestDiagnosticAnchor::workspace_package_field("readme")),
         )?;
-        let Some(readme) = readme else {
+        if let MetadataFile::NotConfigured = readme {
             bail!("`workspace.package.readme` was not defined");
+        }
+        Ok(readme)
+    }
+
+    pub fn license_file(&self, workspace_root: &Utf8Path) -> Result<MetadataFile> {
+        let Some(license_file) = &self.license_file else {
+            bail!("no `license_file` field found in workspace definition");
         };
-        diff_utf8_paths(
-            workspace_root.parent().unwrap().join(readme),
-            package_root.parent().unwrap(),
+        license_file_for_package(
+            workspace_root,
+            license_file,
+            ManifestDiagnosticAnchor::workspace_package_field("license-file"),
         )
-        .map(PathOrBool::Path)
-        .context("failed to create relative path to workspace readme")
     }
 }
 
@@ -976,14 +980,15 @@ impl TomlManifest {
         let contents = fs::read_to_string(path)
             .with_context(|| format!("failed to read manifest at: {path}"))?;
 
-        let mut manifest =
-            Self::read_from_str(&contents).map_err(|err| ManifestParseError::new(path, err))?;
-        manifest.raw_content = contents;
-        Ok(manifest)
+        Self::read_from_str(&contents)
+            .map_err(|err| ManifestParseError::new(path, err))
+            .map_err(Into::into)
     }
 
     pub fn read_from_str(contents: &str) -> Result<Self> {
-        toml::from_str(contents).map_err(Into::into)
+        let mut manifest: Self = toml::from_str(contents)?;
+        manifest.raw_content = contents.to_string();
+        Ok(manifest)
     }
 }
 
@@ -1284,50 +1289,17 @@ impl TomlManifest {
                 .clone()
                 .map(|mw| mw.resolve("license", || inheritable_package.license()))
                 .transpose()?,
-            license_file: package
-                .license_file
-                .clone()
-                .map(|mw| match mw {
-                    MaybeWorkspace::Defined(license_rel_path) => {
-                        let anchor = ManifestDiagnosticAnchor::package_field("license-file");
-                        abs_canonical_path("license", manifest_path, &license_rel_path).map_err(
-                            |message| {
-                                let err: ManifestSemanticError =
-                                    LicensePathInvalid::new(message.to_string(), Some(anchor))
-                                        .into();
-                                err.into()
-                            },
-                        )
-                    }
-                    MaybeWorkspace::Workspace(_) => mw.resolve("license_file", || {
-                        let anchor =
-                            ManifestDiagnosticAnchor::workspace_package_field("license-file");
-                        abs_canonical_path(
-                            "license",
-                            workspace_manifest_path,
-                            &inheritable_package.license_file()?,
-                        )
-                        .map_err(|message| {
-                            let err: ManifestSemanticError =
-                                LicensePathInvalid::new(message.to_string(), Some(anchor)).into();
-                            err.into()
-                        })
-                    }),
-                })
-                .transpose()?,
-            readme: readme_for_package(
+            license_file: Self::resolve_license_file(
+                package,
                 manifest_path,
-                package
-                    .readme
-                    .clone()
-                    .map(|mw| {
-                        mw.resolve("readme", || {
-                            inheritable_package.readme(workspace_manifest_path, manifest_path)
-                        })
-                    })
-                    .transpose()?
-                    .as_ref(),
-                Some(ManifestDiagnosticAnchor::package_field("readme")),
+                workspace_manifest_path,
+                &inheritable_package,
+            )?,
+            readme: Self::resolve_readme(
+                package,
+                manifest_path,
+                workspace_manifest_path,
+                &inheritable_package,
             )?,
             repository: package
                 .repository
@@ -1375,6 +1347,89 @@ impl TomlManifest {
             .features(features.try_into()?)
             .build()?;
         Ok(manifest)
+    }
+
+    /// Returns diagnostics for `readme` and `license-file` files set in this manifest that do not exist.
+    ///
+    /// Fields inherited from the workspace are skipped, they are reported for the workspace root.
+    pub fn missing_metadata_files(&self, manifest_path: &Utf8Path) -> Vec<ManifestSemanticError> {
+        let mut warnings = Vec::new();
+        if let Some(package) = self.workspace.as_ref().and_then(|w| w.package.as_ref()) {
+            if let Ok(MetadataFile::Missing(path)) = package.license_file(manifest_path) {
+                let anchor = ManifestDiagnosticAnchor::workspace_package_field("license-file");
+                warnings.push(
+                    LicensePathInvalid::new(missing_file_message("license", &path), Some(anchor))
+                        .into(),
+                );
+            }
+            if let Ok(MetadataFile::Missing(path)) = package.readme(manifest_path) {
+                let anchor = ManifestDiagnosticAnchor::workspace_package_field("readme");
+                warnings.push(
+                    ReadmePathInvalid::new(missing_file_message("readme", &path), Some(anchor))
+                        .into(),
+                );
+            }
+        }
+        if let Some(package) = self.package.as_deref() {
+            let anchor = ManifestDiagnosticAnchor::package_field("license-file");
+            if let Some(MaybeWorkspace::Defined(license_file)) = &package.license_file
+                && let Ok(MetadataFile::Missing(path)) =
+                    license_file_for_package(manifest_path, license_file, anchor.clone())
+            {
+                warnings.push(
+                    LicensePathInvalid::new(missing_file_message("license", &path), Some(anchor))
+                        .into(),
+                );
+            }
+            let readme = package.readme.as_ref().and_then(MaybeWorkspace::as_defined);
+            if !matches!(package.readme, Some(MaybeWorkspace::Workspace(_)))
+                && let Ok(MetadataFile::Missing(path)) =
+                    readme_for_package(manifest_path, readme, None)
+            {
+                let anchor = ManifestDiagnosticAnchor::package_field("readme");
+                warnings.push(
+                    ReadmePathInvalid::new(missing_file_message("readme", &path), Some(anchor))
+                        .into(),
+                );
+            }
+        }
+        warnings
+    }
+
+    fn resolve_license_file(
+        package: &TomlPackage,
+        manifest_path: &Utf8Path,
+        workspace_manifest_path: &Utf8Path,
+        inheritable_package: &PackageInheritableFields,
+    ) -> Result<Option<Utf8PathBuf>> {
+        let Some(license_file) = package.license_file.clone() else {
+            return Ok(None);
+        };
+        let anchor = ManifestDiagnosticAnchor::package_field("license-file");
+        let license_file = license_file
+            .map(|path| license_file_for_package(manifest_path, &path, anchor))?
+            .resolve("license_file", || {
+                inheritable_package.license_file(workspace_manifest_path)
+            })?;
+        Ok(license_file.found())
+    }
+
+    fn resolve_readme(
+        package: &TomlPackage,
+        manifest_path: &Utf8Path,
+        workspace_manifest_path: &Utf8Path,
+        inheritable_package: &PackageInheritableFields,
+    ) -> Result<Option<Utf8PathBuf>> {
+        let anchor = Some(ManifestDiagnosticAnchor::package_field("readme"));
+        let readme = match package.readme.clone() {
+            None => readme_for_package(manifest_path, None, anchor)?,
+            Some(mw) => mw
+                .map(|readme| readme_for_package(manifest_path, Some(&readme), anchor))?
+                .resolve("readme", || {
+                    inheritable_package.readme(workspace_manifest_path)
+                })?,
+        };
+        Ok(readme.found())
     }
 
     fn collect_targets(
@@ -1926,12 +1981,33 @@ fn merge_profile(target: &TomlProfile, source: &TomlProfile) -> Result<TomlProfi
     })
 }
 
-/// Returns the absolute canonical path of the README file for a [`TomlPackage`].
+/// Resolution of a file referenced by package metadata, such as `readme` or `license-file`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MetadataFile {
+    NotConfigured,
+    Missing(Utf8PathBuf),
+    Found(Utf8PathBuf),
+}
+
+impl MetadataFile {
+    fn found(self) -> Option<Utf8PathBuf> {
+        match self {
+            Self::Found(path) => Some(path),
+            Self::NotConfigured | Self::Missing(_) => None,
+        }
+    }
+}
+
+fn missing_file_message(file_label: &str, path: &Utf8Path) -> String {
+    format!("failed to find {file_label} at {path}, the field will be ignored")
+}
+
+/// Resolves the README file for a [`TomlPackage`].
 pub fn readme_for_package(
     package_root: &Utf8Path,
     readme: Option<&PathOrBool>,
     anchor: Option<ManifestDiagnosticAnchor>,
-) -> Result<Option<Utf8PathBuf>> {
+) -> Result<MetadataFile> {
     let file_name = match readme {
         None => default_readme_from_package_root(package_root.parent().unwrap()),
         Some(PathOrBool::Path(p)) => Some(p.as_path()),
@@ -1942,20 +2018,37 @@ pub fn readme_for_package(
         Some(PathOrBool::Bool(false)) => None,
     };
 
-    file_name
-        .map(|file_name| {
-            abs_canonical_path("readme", package_root, file_name).map_err(|message| {
-                match anchor.clone() {
-                    Some(a) => {
-                        let err: ManifestSemanticError =
-                            ReadmePathInvalid::new(message.to_string(), Some(a)).into();
-                        err.into()
-                    }
-                    None => message,
-                }
-            })
-        })
-        .transpose()
+    let Some(file_name) = file_name else {
+        return Ok(MetadataFile::NotConfigured);
+    };
+    metadata_file("readme", package_root, file_name).map_err(|message| match anchor {
+        Some(a) => {
+            let err: ManifestSemanticError =
+                ReadmePathInvalid::new(message.to_string(), Some(a)).into();
+            err.into()
+        }
+        None => message,
+    })
+}
+
+fn license_file_for_package(
+    package_root: &Utf8Path,
+    license_file: &Utf8Path,
+    anchor: ManifestDiagnosticAnchor,
+) -> Result<MetadataFile> {
+    metadata_file("license", package_root, license_file).map_err(|message| {
+        let err: ManifestSemanticError =
+            LicensePathInvalid::new(message.to_string(), Some(anchor)).into();
+        err.into()
+    })
+}
+
+fn metadata_file(file_label: &str, prefix: &Utf8Path, path: &Utf8Path) -> Result<MetadataFile> {
+    let full_path = prefix.parent().unwrap().join(path);
+    if !full_path.exists() {
+        return Ok(MetadataFile::Missing(full_path));
+    }
+    abs_canonical_path(file_label, prefix, path).map(MetadataFile::Found)
 }
 
 /// Creates the absolute canonical path of the file and checks if it exists
