@@ -16,6 +16,7 @@ use cairo_lang_syntax::node::ast::{ModuleItem, SyntaxFile};
 use cairo_lang_utils::ordered_hash_set::OrderedHashSet;
 use cairo_lang_utils::unordered_hash_set::UnorderedHashSet;
 use convert_case::{Case, Casing};
+use indoc::indoc;
 use salsa::Database;
 use scarb_proc_macro_host::{
     Expansion, ExpansionId, ExpansionKind, FULL_PATH_MARKER_KEY, ProcMacroBackend,
@@ -323,11 +324,19 @@ fn attribute_is_expanded_and_removed_from_the_item() {
             ExpansionKind::Attr,
             Behaviour::Replace("old", "new"),
         )]),
-        "#[rename]\nfn old() {}\n",
+        indoc! {r#"
+            #[rename]
+            fn old() {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
-    assert_eq!(item.content.as_deref(), Some("fn new() {}\n"));
+    assert_eq!(
+        item.content.as_deref(),
+        Some(indoc! {r#"
+            fn new() {}
+        "#})
+    );
     assert!(item.remove_original_item);
     assert!(item.diagnostics.is_empty());
 
@@ -335,14 +344,22 @@ fn attribute_is_expanded_and_removed_from_the_item() {
     let calls = backend.calls();
     assert_eq!(calls.len(), 1);
     assert_eq!(calls[0].0, "rename");
-    assert_eq!(calls[0].1, "fn old() {}\n");
+    assert_eq!(
+        calls[0].1,
+        indoc! {r#"
+            fn old() {}
+        "#}
+    );
 }
 
 #[test]
 fn attribute_returning_nothing_removes_the_item() {
     let (_, results) = expand_all(
         FakeBackend::new(vec![("strip", ExpansionKind::Attr, Behaviour::Empty)]),
-        "#[strip]\nfn gone() {}\n",
+        indoc! {r#"
+            #[strip]
+            fn gone() {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -354,7 +371,10 @@ fn attribute_returning_nothing_removes_the_item() {
 fn unchanged_attribute_expansion_leaves_the_item_alone() {
     let (_, results) = expand_all(
         FakeBackend::new(vec![("keep", ExpansionKind::Attr, Behaviour::Identity)]),
-        "#[keep]\nfn same() {}\n",
+        indoc! {r#"
+            #[keep]
+            fn same() {}
+        "#},
     );
 
     // The only attribute expanded produced no change, so there is nothing to rewrite.
@@ -371,7 +391,10 @@ fn diagnostics_are_reported_against_the_call_site() {
             ExpansionKind::Attr,
             Behaviour::Error("something went wrong"),
         )]),
-        "#[failing]\nfn foo() {}\n",
+        indoc! {r#"
+            #[failing]
+            fn foo() {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -393,7 +416,10 @@ fn derives_are_expanded_in_source_order_against_the_whole_item() {
                 Behaviour::Emit("impl Second {}"),
             ),
         ]),
-        "#[derive(First, Second)]\nstruct S {}\n",
+        indoc! {r#"
+            #[derive(First, Second)]
+            struct S {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -422,7 +448,10 @@ fn derives_we_do_not_declare_are_ignored() {
             ExpansionKind::Derive,
             Behaviour::Emit("impl Unknown {}"),
         )]),
-        "#[derive(Drop)]\nstruct S {}\n",
+        indoc! {r#"
+            #[derive(Drop)]
+            struct S {}
+        "#},
     );
 
     // `Drop` is not ours, so nothing is generated.
@@ -438,7 +467,9 @@ fn module_level_inline_macro_replaces_the_item() {
             ExpansionKind::Inline,
             Behaviour::Emit("fn generated() {}"),
         )]),
-        "generate!();\n",
+        indoc! {r#"
+            generate!();
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -454,7 +485,12 @@ fn inner_attributes_of_impl_functions_are_expanded() {
             ExpansionKind::Attr,
             Behaviour::Replace("old", "new"),
         )]),
-        "impl A of B {\n    #[inner]\n    fn old() {}\n}\n",
+        indoc! {r#"
+            impl A of B {
+                #[inner]
+                fn old() {}
+            }
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -475,7 +511,9 @@ fn items_without_our_macros_are_not_touched() {
             ExpansionKind::Attr,
             Behaviour::Replace("a", "b"),
         )]),
-        "fn plain() {}\n",
+        indoc! {r#"
+            fn plain() {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -500,7 +538,10 @@ fn executable_attributes_are_declared_but_never_expanded() {
 
     let (backend, results) = expand_all(
         FakeBackend::new(vec![]).with_executable("marker"),
-        "#[marker]\nfn foo() {}\n",
+        indoc! {r#"
+            #[marker]
+            fn foo() {}
+        "#},
     );
     let item = results.into_iter().next().unwrap();
     assert_eq!(item.content, None);
@@ -529,7 +570,10 @@ fn generated_code_is_mapped_back_onto_the_original_source() {
             ExpansionKind::Attr,
             Behaviour::Replace("old", "new"),
         )]),
-        "#[rename]\nfn old() {}\n",
+        indoc! {r#"
+            #[rename]
+            fn old() {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -550,7 +594,9 @@ fn ast_item_kinds_without_attribute_support_are_ignored() {
             ExpansionKind::Attr,
             Behaviour::Replace("old", "new"),
         )]),
-        "use core::old;\n",
+        indoc! {r#"
+            use core::old;
+        "#},
     );
 
     // `use` items do support attributes, but carry none of ours here.
@@ -567,7 +613,11 @@ fn only_the_first_attribute_is_expanded_per_pass() {
             ("first", ExpansionKind::Attr, Behaviour::Identity),
             ("second", ExpansionKind::Attr, Behaviour::Identity),
         ]),
-        "#[first]\n#[second]\nfn foo() {}\n",
+        indoc! {r#"
+            #[first]
+            #[second]
+            fn foo() {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -598,7 +648,11 @@ fn an_unchanged_attribute_still_rewrites_when_derives_are_pending() {
                 Behaviour::Emit("impl First {}"),
             ),
         ]),
-        "#[keep]\n#[derive(First)]\nstruct S {}\n",
+        indoc! {r#"
+            #[keep]
+            #[derive(First)]
+            struct S {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -613,7 +667,12 @@ fn inner_attributes_of_trait_functions_are_expanded() {
             ExpansionKind::Attr,
             Behaviour::Replace("old", "new"),
         )]),
-        "trait T {\n    #[inner]\n    fn old();\n}\n",
+        indoc! {r#"
+            trait T {
+                #[inner]
+                fn old();
+            }
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -633,7 +692,11 @@ fn executable_attributes_are_left_on_the_expanded_item() {
             Behaviour::Replace("old", "new"),
         )])
         .with_executable("marker"),
-        "#[marker]\n#[rename]\nfn old() {}\n",
+        indoc! {r#"
+            #[marker]
+            #[rename]
+            fn old() {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -661,7 +724,10 @@ fn aux_data_from_every_expansion_is_attached_to_the_generated_file() {
                 Behaviour::Emit("impl Second {}"),
             ),
         ]),
-        "#[derive(First, Second)]\nstruct S {}\n",
+        indoc! {r#"
+            #[derive(First, Second)]
+            struct S {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -676,7 +742,10 @@ fn expansions_are_reported_even_when_they_produce_no_code() {
     // Macros can emit side output without generating code.
     let (backend, _) = expand_all(
         FakeBackend::new(vec![("strip", ExpansionKind::Attr, Behaviour::Empty)]),
-        "#[strip]\nfn gone() {}\n",
+        indoc! {r#"
+            #[strip]
+            fn gone() {}
+        "#},
     );
 
     assert_eq!(backend.observed(), vec!["strip".to_string()]);
@@ -691,7 +760,10 @@ fn a_macro_emitting_aux_data_always_rewrites_the_item() {
             ExpansionKind::Attr,
             Behaviour::WithAuxData,
         )]),
-        "#[collect]\nfn foo() {}\n",
+        indoc! {r#"
+            #[collect]
+            fn foo() {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -707,7 +779,10 @@ fn derives_are_matched_on_enums_too() {
             ExpansionKind::Derive,
             Behaviour::Emit("impl First {}"),
         )]),
-        "#[derive(First)]\nenum E { A }\n",
+        indoc! {r#"
+            #[derive(First)]
+            enum E { A }
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -725,7 +800,10 @@ fn a_derive_producing_no_code_is_skipped() {
                 Behaviour::Emit("impl Second {}"),
             ),
         ]),
-        "#[derive(First, Second)]\nstruct S {}\n",
+        indoc! {r#"
+            #[derive(First, Second)]
+            struct S {}
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -743,7 +821,9 @@ fn module_level_inline_macros_with_a_qualified_path_are_left_alone() {
             ExpansionKind::Inline,
             Behaviour::Emit("fn generated() {}"),
         )]),
-        "other::generate!();\n",
+        indoc! {r#"
+            other::generate!();
+        "#},
     );
 
     let item = results.into_iter().next().unwrap();
@@ -754,7 +834,11 @@ fn module_level_inline_macros_with_a_qualified_path_are_left_alone() {
 #[test]
 fn a_whole_input_span_maps_back_onto_the_whole_item() {
     // A span covering the whole input has its ends in different regions.
-    let source = "#[marker]\n#[rename]\nfn old() {}\n";
+    let source = indoc! {r#"
+        #[marker]
+        #[rename]
+        fn old() {}
+    "#};
     let (_, results) = expand_all(
         FakeBackend::new(vec![(
             "rename",
