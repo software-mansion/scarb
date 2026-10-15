@@ -147,6 +147,26 @@ impl ProcMacroBackend for FakeBackend {
         &self.ids
     }
 
+    fn expand_derives(
+        &self,
+        db: &dyn Database,
+        derives: &[(FakeId, TextSpan)],
+        item: TokenStream,
+    ) -> Vec<ProcMacroResult> {
+        derives
+            .iter()
+            .map(|(id, call_site)| {
+                self.expand(
+                    db,
+                    id,
+                    call_site.clone(),
+                    TokenStream::empty(),
+                    item.clone(),
+                )
+            })
+            .collect()
+    }
+
     fn expand(
         &self,
         _db: &dyn Database,

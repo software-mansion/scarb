@@ -100,8 +100,6 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
         let token_stream = token_stream_builder.build(&ctx);
         let (adapter, adapted_token_stream) = DeriveAdapter::adapt_token_stream(token_stream);
 
-        // All derives of an item are expanded in one go, so that a backend talking to another
-        // process can do it in a single request.
         let calls = derives
             .iter()
             .map(|derive| {

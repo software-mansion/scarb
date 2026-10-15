@@ -95,6 +95,26 @@ impl ProcMacroBackend for DylibBackend {
             .generate_code(id.expansion.expansion_name.clone(), call_site, args, item)
     }
 
+    fn expand_derives(
+        &self,
+        db: &dyn Database,
+        derives: &[(ProcMacroId, TextSpan)],
+        item: TokenStream,
+    ) -> Vec<ProcMacroResult> {
+        derives
+            .iter()
+            .map(|(id, call_site)| {
+                self.expand(
+                    db,
+                    id,
+                    call_site.clone(),
+                    TokenStream::empty(),
+                    item.clone(),
+                )
+            })
+            .collect()
+    }
+
     fn on_expanded(
         &self,
         id: &ProcMacroId,
@@ -117,9 +137,3 @@ impl ProcMacroBackend for DylibBackend {
             .doc(id.expansion.cairo_name.clone())
     }
 }
-
-/// The procedural macro host plugin, as used by Scarb.
-pub type ProcMacroHostPlugin = scarb_proc_macro_host::ProcMacroHostPlugin<DylibBackend>;
-
-/// The inline procedural macro plugin, as used by Scarb.
-pub type ProcMacroInlinePlugin = scarb_proc_macro_host::ProcMacroInlinePlugin<DylibBackend>;

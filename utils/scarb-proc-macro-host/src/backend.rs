@@ -69,27 +69,12 @@ pub trait ProcMacroBackend: Debug + Send + Sync + 'static {
     ) -> ProcMacroResult;
 
     /// Expands all derives applied to one item, one result per derive, in the given order.
-    ///
-    /// Backends talking to another process override this to expand an item in a single request.
     fn expand_derives(
         &self,
         db: &dyn Database,
         derives: &[(Self::Id, TextSpan)],
         item: TokenStream,
-    ) -> Vec<ProcMacroResult> {
-        derives
-            .iter()
-            .map(|(id, call_site)| {
-                self.expand(
-                    db,
-                    id,
-                    call_site.clone(),
-                    TokenStream::empty(),
-                    item.clone(),
-                )
-            })
-            .collect()
-    }
+    ) -> Vec<ProcMacroResult>;
 
     /// Called after every [`Self::expand`].
     fn on_expanded(

@@ -9,9 +9,12 @@ use std::sync::Arc;
 
 pub use scarb_proc_macro_host::FULL_PATH_MARKER_KEY;
 
+/// The shared procedural macro host, driving the v2 dylib backend.
+type V2HostPlugin = scarb_proc_macro_host::ProcMacroHostPlugin<proc_macro::v2::DylibBackend>;
+
 pub enum ProcMacroHostPlugin {
     V1(Arc<proc_macro::v1::ProcMacroHostPlugin>),
-    V2(Arc<proc_macro::v2::ProcMacroHostPlugin>),
+    V2(Arc<V2HostPlugin>),
 }
 
 impl ProcMacroHostPlugin {
@@ -27,11 +30,9 @@ impl ProcMacroHostPlugin {
             ProcMacroApiVersion::V1 => Self::V1(Arc::new(
                 proc_macro::v1::ProcMacroHostPlugin::new(instances),
             )),
-            ProcMacroApiVersion::V2 => {
-                Self::V2(Arc::new(proc_macro::v2::ProcMacroHostPlugin::new(
-                    Arc::new(proc_macro::v2::DylibBackend::new(instances)),
-                )))
-            }
+            ProcMacroApiVersion::V2 => Self::V2(Arc::new(V2HostPlugin::new(Arc::new(
+                proc_macro::v2::DylibBackend::new(instances),
+            )))),
         }
     }
 
@@ -47,9 +48,7 @@ impl ProcMacroHostPlugin {
             ProcMacroHostPlugin::V1(host) => {
                 proc_macro::v1::ProcMacroHostPlugin::build_plugin_suite(host.clone())
             }
-            ProcMacroHostPlugin::V2(host) => {
-                proc_macro::v2::ProcMacroHostPlugin::build_plugin_suite(host.clone())
-            }
+            ProcMacroHostPlugin::V2(host) => V2HostPlugin::build_plugin_suite(host.clone()),
         }
     }
 
