@@ -4,11 +4,8 @@ mod item_attribute;
 mod parse_attributes;
 mod span_adapter;
 
-use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::{
-    AdaptedCodeMapping, AdaptedDiagnostic,
-};
-use crate::compiler::plugin::proc_macro::v2::host::aux_data::EmittedAuxData;
-use crate::compiler::plugin::proc_macro::v2::host::conversion::into_cairo_diagnostics;
+use crate::conversion::into_cairo_diagnostics;
+use crate::host::attribute::span_adapter::{AdaptedCodeMapping, AdaptedDiagnostic};
 use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, PluginDiagnostic, PluginGeneratedFile, PluginResult,
@@ -112,12 +109,8 @@ impl AttributeGeneratedFile {
         self
     }
 
-    pub fn with_aux_data(mut self, aux_data: EmittedAuxData) -> Self {
-        if aux_data.is_empty() {
-            self.aux_data = None;
-        } else {
-            self.aux_data = Some(DynGeneratedFileAuxData::new(aux_data));
-        }
+    pub fn with_aux_data(mut self, aux_data: Option<DynGeneratedFileAuxData>) -> Self {
+        self.aux_data = aux_data;
         self
     }
 

@@ -61,7 +61,8 @@ impl Method for ExpandDerive {
     const METHOD: &'static str = "expandDerive";
 
     type Params = ExpandDeriveParams;
-    type Response = ProcMacroResult;
+    /// One result per requested derive, in the same order.
+    type Response = Vec<ProcMacroResult>;
 }
 
 /// Parameters for expanding a single inline macro.

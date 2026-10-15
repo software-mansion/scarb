@@ -15,6 +15,7 @@ members = [
     "plugins/cairo-lang-quote",
     "utils/create-output-dir",
     "utils/scarb-build-metadata",
+    "utils/scarb-proc-macro-host",
     "utils/scarb-proc-macro-server-types",
     "utils/scarb-stable-hash",
     "utils/scarb-test-support",
@@ -63,6 +64,7 @@ cairo-lang-executable-plugin = "2.21.0"
 cairo-lang-filesystem = "2.21.0"
 cairo-lang-formatter = "2.21.0"
 cairo-lang-lowering = "2.21.0"
+cairo-lang-macro = { path = "plugins/cairo-lang-macro", version = "0.2.2" }
 cairo-lang-macro-v1 = { version = "0.1", package = "cairo-lang-macro", features = ["serde"] }
 cairo-lang-parser = "2.21.0"
 cairo-lang-plugins = "2.21.0"
