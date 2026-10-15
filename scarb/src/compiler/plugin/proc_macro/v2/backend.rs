@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
-use anyhow::{Result, ensure};
 use cairo_lang_defs::plugin::DynGeneratedFileAuxData;
 use cairo_lang_macro::{ProcMacroResult, TextSpan, TokenStream};
 use salsa::Database;
@@ -49,7 +48,7 @@ impl DeclaredProcMacroInstances for DylibBackend {
 }
 
 impl DylibBackend {
-    pub fn try_new(macros: Vec<Arc<ProcMacroInstance>>) -> Result<Self> {
+    pub fn new(macros: Vec<Arc<ProcMacroInstance>>) -> Self {
         let expansions = macros
             .iter()
             .flat_map(|instance| {
@@ -59,35 +58,11 @@ impl DylibBackend {
                     .map(|expansion| ProcMacroId::new(instance.package_id(), expansion.clone()))
             })
             .collect();
-        let backend = Self {
+        Self {
             instances: macros,
             expansions,
             full_path_markers: RwLock::new(Default::default()),
-        };
-        // Validate expansions.
-        let mut expansions = backend.expansions.clone();
-        expansions.sort_unstable_by_key(|e| (e.expansion.cairo_name.clone(), e.package_id));
-        let duplicates = expansions
-            .chunk_by(|a, b| a.expansion.cairo_name == b.expansion.cairo_name)
-            .filter(|group| group.len() > 1)
-            .map(|group| {
-                let packages = group
-                    .iter()
-                    .map(|e| e.package_id.to_string())
-                    .collect::<Vec<_>>();
-                format!(
-                    "{} ({})",
-                    group[0].expansion.cairo_name.as_str(),
-                    packages.join(", ")
-                )
-            })
-            .collect::<Vec<_>>();
-        ensure!(
-            duplicates.is_empty(),
-            "duplicate expansions defined for procedural macros: {}",
-            duplicates.join(", ")
-        );
-        Ok(backend)
+        }
     }
 
     pub fn instance(&self, package_id: PackageId) -> &ProcMacroInstance {

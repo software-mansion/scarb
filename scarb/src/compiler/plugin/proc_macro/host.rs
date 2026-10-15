@@ -17,10 +17,7 @@ pub enum ProcMacroHostPlugin {
 }
 
 impl ProcMacroHostPlugin {
-    pub fn try_new(
-        instances: Vec<Arc<ProcMacroInstance>>,
-        api_version: ProcMacroApiVersion,
-    ) -> Result<Self> {
+    pub fn new(instances: Vec<Arc<ProcMacroInstance>>, api_version: ProcMacroApiVersion) -> Self {
         assert!(
             instances
                 .iter()
@@ -28,16 +25,16 @@ impl ProcMacroHostPlugin {
                 .all_equal(),
             "all proc macro instances in a single host must use the same API version"
         );
-        Ok(match api_version {
+        match api_version {
             ProcMacroApiVersion::V1 => Self::V1(Arc::new(
-                proc_macro::v1::ProcMacroHostPlugin::try_new(instances)?,
+                proc_macro::v1::ProcMacroHostPlugin::new(instances),
             )),
             ProcMacroApiVersion::V2 => {
                 Self::V2(Arc::new(proc_macro::v2::ProcMacroHostPlugin::new(
-                    Arc::new(proc_macro::v2::DylibBackend::try_new(instances)?),
+                    Arc::new(proc_macro::v2::DylibBackend::new(instances)),
                 )))
             }
-        })
+        }
     }
 
     pub fn post_process(&self, db: &dyn SemanticGroup) -> Result<()> {

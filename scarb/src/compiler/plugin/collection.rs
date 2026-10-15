@@ -311,9 +311,9 @@ impl ComponentProcMacroHost {
             .into_iter()
             .map(|(api_version, instances)| {
                 let instances: Vec<Arc<ProcMacroInstance>> = instances.collect_vec();
-                ProcMacroHostPlugin::try_new(instances, api_version)
+                ProcMacroHostPlugin::new(instances, api_version)
             })
-            .collect::<Result<Vec<ProcMacroHostPlugin>>>()?;
+            .collect();
         Self::try_new(plugins)
     }
 
