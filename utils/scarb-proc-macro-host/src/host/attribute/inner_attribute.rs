@@ -96,7 +96,7 @@ impl<'a, 'db, B: ProcMacroBackend> InnerAttrExpansionContext<'a, 'db, B> {
             item_builder,
             ..
         } = self;
-        let aux_data = host.backend().finish_aux_data(aux_data);
+        let aux_data = host.backend.finish_aux_data(aux_data);
         let msg = if attr_names.len() == 1 {
             "the attribute macro"
         } else {
@@ -130,7 +130,7 @@ fn rewrite_node_patch_from_expansion_result<'db, Id: ExpansionId>(
 }
 
 impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
-    pub(crate) fn expand_inner_attr<'db>(
+    pub fn expand_inner_attr<'db>(
         &self,
         db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,

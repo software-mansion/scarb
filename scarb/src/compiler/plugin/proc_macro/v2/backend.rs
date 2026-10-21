@@ -18,15 +18,6 @@ pub struct ProcMacroId {
     pub expansion: Expansion,
 }
 
-impl ProcMacroId {
-    pub fn new(package_id: PackageId, expansion: Expansion) -> Self {
-        Self {
-            package_id,
-            expansion,
-        }
-    }
-}
-
 impl ExpansionId for ProcMacroId {
     fn expansion(&self) -> &Expansion {
         &self.expansion
@@ -38,7 +29,7 @@ impl ExpansionId for ProcMacroId {
 pub struct DylibBackend {
     instances: Vec<Arc<ProcMacroInstance>>,
     expansions: Vec<ProcMacroId>,
-    pub(crate) full_path_markers: RwLock<HashMap<PackageId, Vec<String>>>,
+    pub full_path_markers: RwLock<HashMap<PackageId, Vec<String>>>,
 }
 
 impl DeclaredProcMacroInstances for DylibBackend {
@@ -55,7 +46,10 @@ impl DylibBackend {
                 instance
                     .get_expansions()
                     .iter()
-                    .map(|expansion| ProcMacroId::new(instance.package_id(), expansion.clone()))
+                    .map(|expansion| ProcMacroId {
+                        package_id: instance.package_id(),
+                        expansion: expansion.clone(),
+                    })
             })
             .collect();
         Self {

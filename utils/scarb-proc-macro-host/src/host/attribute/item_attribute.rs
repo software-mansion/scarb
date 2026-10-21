@@ -32,7 +32,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
     /// built, it's no longer consecutive.
     ///
     /// See [`crate::host::attribute::span_adapter`] for details.
-    pub(crate) fn parse_attribute<'db>(
+    pub fn parse_attribute<'db>(
         &self,
         db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
@@ -84,7 +84,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
         (input, token_stream)
     }
 
-    pub(crate) fn expand_attribute<'db>(
+    pub fn expand_attribute<'db>(
         &self,
         db: &'db dyn Database,
         last: bool,
@@ -158,7 +158,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
                 AttributeGeneratedFile::new(file_name)
                     .with_content(content)
                     .with_code_mappings(code_mappings)
-                    .with_aux_data(self.backend().finish_aux_data(aux_data))
+                    .with_aux_data(self.backend.finish_aux_data(aux_data))
                     .with_diagnostics_note(format!(
                         "this error originates in the attribute macro: `{}`",
                         input.id.expansion().cairo_name

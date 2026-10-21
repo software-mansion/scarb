@@ -13,7 +13,7 @@ use cairo_lang_syntax::node::{TypedSyntaxNode, ast};
 use salsa::Database;
 
 impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
-    pub(crate) fn parse_attrs<'db>(
+    pub fn parse_attrs<'db>(
         &self,
         db: &'db dyn Database,
         builder: &mut TokenStreamBuilder<'db>,

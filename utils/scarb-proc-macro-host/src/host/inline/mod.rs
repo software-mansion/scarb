@@ -40,7 +40,7 @@ impl<B: ProcMacroBackend> ProcMacroInlinePlugin<B> {
         }
     }
 
-    pub fn backend(&self) -> &Arc<B> {
+    pub fn backend(&self) -> &B {
         &self.backend
     }
 
@@ -187,7 +187,7 @@ pub fn expand_module_level_inline_macro<'db, B: ProcMacroBackend>(
         });
     }
 
-    let aux_data = host.backend().finish_aux_data(aux_data);
+    let aux_data = host.backend.finish_aux_data(aux_data);
     let code_mappings = adapter.adapt_code_mappings(generate_code_mappings(
         &result.token_stream,
         adapted_call_site.clone(),

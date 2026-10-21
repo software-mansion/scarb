@@ -24,7 +24,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
     /// Handle `#[derive(...)]` attribute.
     ///
     /// Returns a list of expansions that this plugin should apply.
-    pub(crate) fn parse_derive<'db>(
+    pub fn parse_derive<'db>(
         &self,
         db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
@@ -71,7 +71,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
             .collect_vec()
     }
 
-    pub(crate) fn expand_derives<'db>(
+    pub fn expand_derives<'db>(
         &self,
         db: &'db dyn Database,
         item_ast: ast::ModuleItem<'db>,
@@ -110,7 +110,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
             })
             .collect_vec();
         let results = self
-            .backend()
+            .backend
             .expand_derives(db, &calls, adapted_token_stream);
         debug_assert_eq!(
             results.len(),
@@ -119,7 +119,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
         );
 
         for ((id, call_site), result) in calls.iter().zip(results) {
-            self.backend().on_expanded(id, &result, &mut aux_data);
+            self.backend.on_expanded(id, &result, &mut aux_data);
 
             // Register diagnostics.
             all_diagnostics.extend(adapter.adapt_diagnostics(result.diagnostics));
@@ -162,7 +162,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
                     code_mappings,
                     content: derived_code,
                     diagnostics_note: Some(note),
-                    aux_data: self.backend().finish_aux_data(aux_data),
+                    aux_data: self.backend.finish_aux_data(aux_data),
                     is_unhygienic: false,
                 })
             },

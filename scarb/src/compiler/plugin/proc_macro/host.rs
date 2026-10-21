@@ -117,7 +117,10 @@ pub trait DeclaredProcMacroInstances {
                     .get_expansions()
                     .iter()
                     .filter(|expansion| expansion.kind == kind)
-                    .map(|expansion| ProcMacroId::new(instance.package_id(), expansion.clone()))
+                    .map(|expansion| ProcMacroId {
+                        package_id: instance.package_id(),
+                        expansion: expansion.clone(),
+                    })
             })
             .collect()
     }

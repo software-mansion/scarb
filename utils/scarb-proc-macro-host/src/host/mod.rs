@@ -109,7 +109,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
         suite
     }
 
-    pub(crate) fn expand(
+    pub fn expand(
         &self,
         db: &dyn Database,
         id: &B::Id,
