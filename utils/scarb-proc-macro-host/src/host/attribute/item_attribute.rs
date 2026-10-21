@@ -31,7 +31,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
     /// when parsing a source file. Obviously, when we remove the attribute from the `TokenStream`
     /// built, it's no longer consecutive.
     ///
-    /// See [`crate::host::attribute::span_adapter`] for details.
+    /// See the `span_adapter` module for details.
     pub fn parse_attribute<'db>(
         &self,
         db: &'db dyn Database,
