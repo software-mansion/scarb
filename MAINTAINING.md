@@ -208,12 +208,12 @@ Releasing `cairo-lang-macro` crate is also a semi-automated process.
 
 `scarb-proc-macro-host` is shared by Scarb and CairoLS, and CairoLS uses the version published to [crates.io].
 
-Release it with every Scarb release that changes it, and with every Cairo version (RC or final) Scarb is released
-against. Cairo rev bumps on `main` do not need a release, CairoLS `main` patches the host from git. Publish it before
-releasing CairoLS.
+Release it with every Scarb release that changes it. Cairo rev bumps on `main` do not need a release, CairoLS `main`
+patches the host from git. Publish it before releasing CairoLS.
 
-The published crate pins `cairo-lang-*` to the Cairo version of the commit it was published from, so a release
-build of CairoLS can only use it with the same Cairo version.
+The published crate requires `cairo-lang-*` with caret requirements, so CairoLS can use it with newer Cairo versions.
+A new Cairo version needs a host release only if the host stops building against it, or if it is a pre-release
+(e.g. an RC), as caret requirements do not match pre-releases.
 
 1. Make sure correct version is present in:
     1. `utils/scarb-proc-macro-host/Cargo.toml`
