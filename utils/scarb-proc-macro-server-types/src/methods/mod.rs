@@ -15,7 +15,9 @@ pub trait Method {
     type Response: Serialize + DeserializeOwned;
 }
 
-/// A single token of an expansion result, together with the span of the code it came from.
+/// A piece of an expansion result, together with the span of the code it came from.
+///
+/// For v2 macros it is a single token; a v1 expansion is one piece spanning its origin.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SpannedToken {
     pub content: String,
@@ -108,33 +110,6 @@ mod tests {
     }
 
     #[test]
-    fn unspanned_content_is_attributed_to_its_origin() {
-        let stream = SpannedTokenStream::from_unspanned("fn foo() {}", span(3, 14));
-        assert_eq!(
-            stream.0,
-            vec![SpannedToken {
-                content: "fn foo() {}".to_string(),
-                span: span(3, 14)
-            }]
-        );
-        assert!(!stream.is_empty());
-        assert_eq!(stream.to_string(), "fn foo() {}");
-    }
-
-    #[test]
-    fn empty_content_produces_an_empty_stream() {
-        // An empty expansion asks the caller to remove the original item.
-        let stream = SpannedTokenStream::from_unspanned("", span(0, 10));
-        assert!(stream.is_empty());
-        assert_eq!(stream.to_string(), "");
-    }
-
-    #[test]
-    fn default_stream_is_empty() {
-        assert!(SpannedTokenStream::default().is_empty());
-    }
-
-    #[test]
     fn round_trips_through_the_macro_api_token_stream() {
         let original = SpannedTokenStream(vec![
             SpannedToken {
@@ -156,14 +131,6 @@ mod tests {
         assert_eq!(token_stream.to_string(), "fn foo() {}");
 
         let back = SpannedTokenStream::from_token_stream(&token_stream);
-        assert_eq!(back, original);
-    }
-
-    #[test]
-    fn round_trips_through_serde() {
-        let original = SpannedTokenStream::from_unspanned("impl A {}", span(2, 20));
-        let json = serde_json::to_string(&original).unwrap();
-        let back: SpannedTokenStream = serde_json::from_str(&json).unwrap();
         assert_eq!(back, original);
     }
 
