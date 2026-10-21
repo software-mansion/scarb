@@ -9,7 +9,6 @@ use cairo_lang_macro_v1::{
 };
 use scarb_proc_macro_server_types::methods::SpannedTokenStream;
 
-/// Downcasts the spanned token stream to the flat v1 one.
 pub fn token_stream_v2_to_v1(token_stream_v2: &TokenStreamV2) -> TokenStreamV1 {
     let metadata_v2 = token_stream_v2.metadata.clone();
     let token_stream = TokenStreamV1::new(token_stream_v2.to_string());
@@ -27,7 +26,6 @@ pub fn token_stream_v1_to_spanned(
     SpannedTokenStream::from_unspanned(token_stream_v1.to_string(), origin)
 }
 
-/// Upcasts the old diagnostic struct to the new one.
 pub fn diagnostic_v1_to_v2(diagnostic_v1: &DiagnosticV1) -> DiagnosticV2 {
     DiagnosticV2::new(
         match diagnostic_v1.severity {

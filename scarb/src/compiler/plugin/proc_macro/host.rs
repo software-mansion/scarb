@@ -10,6 +10,10 @@ use std::sync::Arc;
 pub use scarb_proc_macro_host::FULL_PATH_MARKER_KEY;
 
 /// The shared procedural macro host, driving the v2 dylib backend.
+///
+/// v1 macros keep their own host, as the shared one is built on the v2 macro api
+/// (spanned token streams, `TextSpan` call sites). Moving v1 onto it would need conversions for
+/// little gain, since v1 is nearly deprecated.
 type V2HostPlugin = scarb_proc_macro_host::ProcMacroHostPlugin<proc_macro::v2::DylibBackend>;
 
 pub enum ProcMacroHostPlugin {

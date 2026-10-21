@@ -48,7 +48,9 @@ pub trait ProcMacroBackend: Debug + Send + Sync + 'static {
         names
     }
 
-    /// Names of executable attributes, which are never expanded.
+    /// Names of executable attributes.
+    ///
+    /// Note: the executable attributes are never expanded.
     fn executable_attributes(&self) -> Vec<String> {
         cairo_names_of(self, &[ExpansionKind::Executable])
     }
@@ -69,6 +71,9 @@ pub trait ProcMacroBackend: Debug + Send + Sync + 'static {
     ) -> ProcMacroResult;
 
     /// Expands all derives applied to one item, one result per derive, in the given order.
+    ///
+    /// Separate from [`Self::expand`] so a backend can expand them together, e.g. the language
+    /// server sends them to the proc macro server in a single request.
     fn expand_derives(
         &self,
         db: &dyn Database,

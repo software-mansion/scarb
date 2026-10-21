@@ -121,7 +121,6 @@ impl ProcMacroBackend for DylibBackend {
         result: &ProcMacroResult,
         aux_data: &mut EmittedAuxData,
     ) {
-        // Full path markers require code modification.
         self.register_full_path_markers(id.package_id, result.full_path_markers.clone());
         if let Some(new_aux_data) = result.aux_data.clone() {
             aux_data.push(ProcMacroAuxData::new(new_aux_data.into(), id.clone()));
