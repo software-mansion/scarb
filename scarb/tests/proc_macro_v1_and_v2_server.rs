@@ -168,11 +168,6 @@ fn expand_attribute() {
             .unwrap();
 
         assert_eq!(response.diagnostics, vec![]);
-        assert_eq!(
-            response.token_stream.to_string(),
-            "fn some_test_fn_34(){}".to_string()
-        );
-
         // Both api versions report the expansion as a single token.
         assert_eq!(
             tokens(&response.token_stream),
@@ -223,11 +218,6 @@ fn expand_derive() {
         let [response] = <[_; 1]>::try_from(response).expect("one derive was requested");
 
         assert_eq!(response.diagnostics, vec![]);
-        assert_eq!(
-            response.token_stream.to_string(),
-            "impl SomeImpl of SomeTrait {}".to_string()
-        );
-
         let expanded = "impl SomeImpl of SomeTrait {}".to_string();
         if macro_name == "some_derive_v2" {
             // The v2 macro spans its own output.
@@ -296,8 +286,6 @@ fn expand_multiple_derives_use_own_call_sites() {
 
     assert_eq!(foo.diagnostics, vec![]);
     assert_eq!(bar.diagnostics, vec![]);
-    assert_eq!(foo.token_stream.to_string(), "impl FooImpl of FooTrait {}");
-    assert_eq!(bar.token_stream.to_string(), "impl BarImpl of BarTrait {}");
 
     // `foo_v2` spans its output with `TextSpan::call_site()`, so it gets its own call site.
     assert_eq!(
@@ -372,11 +360,6 @@ fn expand_inline() {
             .unwrap();
 
         assert_eq!(response.diagnostics, vec![]);
-        assert_eq!(
-            response.token_stream.to_string(),
-            "struct A { field: 25, other_field: macro_call!(12)}".to_string()
-        );
-
         // Both api versions report the expansion as a single token spanning the macro call.
         assert_eq!(
             tokens(&response.token_stream),
@@ -430,7 +413,6 @@ fn v1_attribute_returning_nothing_reports_an_empty_expansion() {
         .unwrap();
 
     assert_eq!(response.diagnostics, vec![]);
-    assert!(response.token_stream.is_empty());
     assert_eq!(tokens(&response.token_stream), vec![]);
 }
 

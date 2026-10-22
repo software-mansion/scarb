@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use cairo_lang_macro::{AllocationContext, Diagnostic, Token, TokenStream, TokenTree};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
@@ -41,11 +39,6 @@ impl SpannedTokenStream {
         }])
     }
 
-    /// An empty stream, which asks the caller to remove the expanded item.
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
     /// Converts a token stream produced by the procedural macro api.
     pub fn from_token_stream(token_stream: &TokenStream) -> Self {
         Self(
@@ -73,15 +66,6 @@ impl SpannedTokenStream {
                 })
                 .collect(),
         )
-    }
-}
-
-impl Display for SpannedTokenStream {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for token in &self.0 {
-            f.write_str(&token.content)?;
-        }
-        Ok(())
     }
 }
 
@@ -132,20 +116,5 @@ mod tests {
 
         let back = SpannedTokenStream::from_token_stream(&token_stream);
         assert_eq!(back, original);
-    }
-
-    #[test]
-    fn display_concatenates_token_contents() {
-        let stream = SpannedTokenStream(vec![
-            SpannedToken {
-                content: "a".to_string(),
-                span: span(0, 1),
-            },
-            SpannedToken {
-                content: "b".to_string(),
-                span: span(5, 6),
-            },
-        ]);
-        assert_eq!(stream.to_string(), "ab");
     }
 }
