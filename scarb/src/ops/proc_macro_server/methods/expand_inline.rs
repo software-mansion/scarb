@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::{Context, Result};
 use cairo_lang_macro::{TextSpan, TokenStream};
+use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
 use scarb_proc_macro_server_types::methods::{
     ProcMacroResult, SpannedTokenStream, expand::ExpandInline,
 };
@@ -37,9 +38,13 @@ impl Handler for ExpandInline {
             .with_context(|| format!("No \"{name}\" inline macros found in scope: {context:?}"))?;
 
         match proc_macro_instance.api_version() {
-            ProcMacroApiVersion::V1 => {
-                expand_inline_v1(&proc_macro_instance, hash, name, args, call_site)
-            }
+            ProcMacroApiVersion::V1 => expand_inline_v1(
+                &proc_macro_instance,
+                hash,
+                name,
+                token_stream_v2_to_v1(&args),
+                call_site,
+            ),
             ProcMacroApiVersion::V2 => {
                 expand_inline_v2(&proc_macro_instance, hash, name, args, call_site)
             }
@@ -51,13 +56,13 @@ fn expand_inline_v1(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     fingerprint: u64,
     name: String,
-    args: TokenStream,
+    args: TokenStreamV1,
     call_site: TextSpan,
 ) -> Result<ProcMacroResult> {
     let result = proc_macro_instance.try_v1()?.generate_code(
         name.into(),
-        cairo_lang_macro_v1::TokenStream::new(String::new()),
-        token_stream_v2_to_v1(&args),
+        TokenStreamV1::new(String::new()),
+        args,
     );
 
     // A v1 macro reports no spans, so the expansion is attributed to the macro call.

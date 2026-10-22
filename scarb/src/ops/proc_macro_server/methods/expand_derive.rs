@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::{Context, Result};
 use cairo_lang_macro::{TextSpan, TokenStream};
+use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
 use scarb_proc_macro_server_types::methods::{
     ProcMacroResult, SpannedTokenStream,
     expand::{Derive, ExpandDerive},
@@ -55,7 +56,7 @@ impl Handler for ExpandDerive {
                         &proc_macro_instance,
                         hash,
                         &expansion,
-                        item.clone(),
+                        token_stream_v2_to_v1(&item),
                         call_site,
                     ),
                     ProcMacroApiVersion::V2 => expand_derive_v2(
@@ -75,13 +76,13 @@ fn expand_derive_v1(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     fingerprint: u64,
     expansion: &Expansion,
-    item: TokenStream,
+    item: TokenStreamV1,
     call_site: TextSpan,
 ) -> Result<ProcMacroResult> {
     let result = proc_macro_instance.try_v1()?.generate_code(
         expansion.expansion_name.clone(),
-        cairo_lang_macro_v1::TokenStream::empty(),
-        token_stream_v2_to_v1(&item),
+        TokenStreamV1::empty(),
+        item,
     );
 
     // A v1 macro reports no spans, so the expansion is attributed to the derive call.
