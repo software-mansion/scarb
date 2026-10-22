@@ -1,5 +1,6 @@
+use crate::compiler::plugin::proc_macro::Expansion;
+use crate::compiler::plugin::proc_macro::ffi::expansion_from_stable;
 use crate::compiler::plugin::proc_macro::v2::ProcMacroAuxData;
-use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind};
 use crate::core::PackageId;
 use anyhow::{Context, Result, ensure};
 use cairo_lang_macro::{
@@ -7,27 +8,18 @@ use cairo_lang_macro::{
     TextSpan, TokenStream,
 };
 use cairo_lang_macro_stable::{
-    StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
-    StableResultWrapper, StableTextSpan, StableTokenStream,
+    StableExpansionsList, StablePostProcessContext, StableProcMacroResult, StableResultWrapper,
+    StableTextSpan, StableTokenStream,
 };
-use convert_case::{Case, Casing};
 use itertools::Itertools;
 #[cfg(not(windows))]
 use libloading::os::unix::Symbol as RawSymbol;
 #[cfg(windows)]
 use libloading::os::windows::Symbol as RawSymbol;
 use libloading::{Library, Symbol};
-use smol_str::{SmolStr, ToSmolStr};
+use smol_str::SmolStr;
 use std::ffi::{CStr, CString, c_char};
 use std::slice;
-
-/// This constant is used to identify executable attributes.
-///
-/// An attribute is considered executable if it starts with this prefix.
-/// No other metadata is stored for executable attributes.
-/// This means, that this constant is part of the stable contract between Scarb and procedural macro.
-/// Warning: Changing this would be breaking to existing macros!
-const EXEC_ATTR_PREFIX: &str = "__exec_attr_";
 
 type ListExpansions = extern "C" fn() -> StableExpansionsList;
 type FreeExpansionsList = extern "C" fn(StableExpansionsList);
@@ -120,7 +112,15 @@ impl Plugin {
         let stable_expansions = (self.vtable.list_expansions)();
         let (ptr, n) = stable_expansions.raw_parts();
         let expansions = unsafe { slice::from_raw_parts(ptr, n) };
-        let mut expansions: Vec<Expansion> = expansions.iter().map(expansion_from_stable).collect();
+        let mut expansions: Vec<Expansion> = expansions
+            .iter()
+            .map(|expansion| unsafe {
+                expansion_from_stable(
+                    expansion.name,
+                    ExpansionKindV2::from_stable(&expansion.kind).into(),
+                )
+            })
+            .collect();
         // Free the memory allocated by the `stable_expansions`.
         (self.vtable.free_expansions_list)(stable_expansions);
         // Validate expansions.
@@ -241,37 +241,5 @@ impl Plugin {
             .as_ref()
             .map(|f| f())
             .unwrap_or_default()
-    }
-}
-
-/// Note this does not take ownership of the underlying memory.
-fn expansion_from_stable(stable_expansion: &StableExpansion) -> Expansion {
-    let name = if stable_expansion.name.is_null() {
-        String::default()
-    } else {
-        let cstr = unsafe { CStr::from_ptr(stable_expansion.name) };
-        cstr.to_string_lossy().to_string()
-    };
-    // Handle special case for executable attributes.
-    if name.starts_with(EXEC_ATTR_PREFIX) {
-        let name = name.strip_prefix(EXEC_ATTR_PREFIX).unwrap();
-        let name = name.to_smolstr();
-        return Expansion {
-            cairo_name: name.clone(),
-            expansion_name: name.clone(),
-            kind: ExpansionKind::Executable,
-        };
-    }
-    let expansion_kind = unsafe { ExpansionKindV2::from_stable(&stable_expansion.kind) }.into();
-    let cairo_name = if matches!(expansion_kind, ExpansionKind::Derive) {
-        let name = name.to_case(Case::UpperCamel);
-        name.to_smolstr()
-    } else {
-        name.to_smolstr()
-    };
-    Expansion {
-        cairo_name,
-        expansion_name: name.to_smolstr(),
-        kind: expansion_kind,
     }
 }
