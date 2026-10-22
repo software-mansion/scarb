@@ -49,6 +49,8 @@ pub struct ExpandDeriveParams {
     /// The project scope in which the action is requested.
     pub context: ProcMacroScope,
     /// A list of names and call_sites for derived macros to be expanded.
+    ///
+    /// The response holds one result per derive, in this order.
     pub derives: Vec<Derive>,
     /// The token stream of the item to which the derive macros are applied.
     pub item: TokenStream,
@@ -61,7 +63,8 @@ impl Method for ExpandDerive {
     const METHOD: &'static str = "expandDerive";
 
     type Params = ExpandDeriveParams;
-    type Response = ProcMacroResult;
+    /// One result per requested derive, in the same order.
+    type Response = Vec<ProcMacroResult>;
 }
 
 /// Parameters for expanding a single inline macro.
