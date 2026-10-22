@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use std::sync::{Arc, Mutex};
 
-use cairo_lang_macro::{TextSpan, TokenStream};
+use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
 use scarb_proc_macro_server_types::methods::{
     ProcMacroResult, SpannedTokenStream, expand::ExpandAttribute,
@@ -84,8 +84,8 @@ fn expand_attribute_v2(
     fingerprint: u64,
     attr: String,
     adapted_call_site: TextSpan,
-    args: TokenStream,
-    item: TokenStream,
+    args: TokenStreamV2,
+    item: TokenStreamV2,
 ) -> Result<ProcMacroResult> {
     let result =
         proc_macro_instance

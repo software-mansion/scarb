@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use anyhow::{Context, Result};
-use cairo_lang_macro::{TextSpan, TokenStream};
+use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
 use scarb_proc_macro_server_types::methods::{
     ProcMacroResult, SpannedTokenStream,
@@ -30,6 +30,7 @@ impl Handler for ExpandDerive {
             item,
         } = params;
 
+        // One result per derive, in the order they were requested.
         derives
             .into_iter()
             .map(|Derive { name, call_site }| {
@@ -97,13 +98,13 @@ fn expand_derive_v2(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     fingerprint: u64,
     expansion: &Expansion,
-    item: TokenStream,
+    item: TokenStreamV2,
     call_site: TextSpan,
 ) -> Result<ProcMacroResult> {
     let result = proc_macro_instance.try_v2()?.generate_code(
         expansion.expansion_name.clone(),
         call_site,
-        TokenStream::empty(),
+        TokenStreamV2::empty(),
         item,
     );
 
