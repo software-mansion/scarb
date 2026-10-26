@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::PluginDiagnostic;
+use cairo_lang_filesystem::span::TextSpan;
 use cairo_lang_macro::{AllocationContext, ProcMacroResult, TokenStream};
 use cairo_lang_syntax::node::ast::{ImplItem, MaybeImplBody, MaybeTraitBody};
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
@@ -70,6 +71,7 @@ impl<'a, 'db, B: ProcMacroBackend> InnerAttrExpansionContext<'a, 'db, B> {
         input: &AttrExpansionArgs<'db, B::Id>,
         original: String,
         result: ProcMacroResult,
+        func_span: TextSpan,
     ) {
         let result_str = result.token_stream.to_string();
         let changed = result_str != original;
@@ -81,11 +83,15 @@ impl<'a, 'db, B: ProcMacroBackend> InnerAttrExpansionContext<'a, 'db, B> {
 
         self.any_changed = self.any_changed || changed;
 
-        self.item_builder
-            .add_modified(rewrite_node_patch_from_expansion_result(
-                result.token_stream,
-                input,
-            ));
+        let node = if self.host.backend.has_spans(&input.id) {
+            rewrite_node_patch_from_expansion_result(result.token_stream, input)
+        } else {
+            RewriteNode::Mapped {
+                origin: func_span,
+                node: Box::new(RewriteNode::Text(result_str)),
+            }
+        };
+        self.item_builder.add_modified(node);
     }
 
     pub fn into_result(self, attr_names: Vec<SmolStr>) -> AttributePluginResult<'db> {
@@ -305,7 +311,13 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
             &mut context.aux_data,
         );
 
-        context.register_result_metadata(db, &input, token_stream.to_string(), result);
+        context.register_result_metadata(
+            db,
+            &input,
+            token_stream.to_string(),
+            result,
+            func.as_syntax_node().span(db),
+        );
 
         all_none
     }

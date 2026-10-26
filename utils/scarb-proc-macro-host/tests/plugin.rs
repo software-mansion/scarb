@@ -83,6 +83,8 @@ struct FakeBackend {
     calls: Mutex<Vec<(String, String)>>,
     /// Every expansion the host reported back through `on_expanded`.
     observed: Mutex<Vec<String>>,
+    /// Whether expansions come without spans, like those of v1 macros.
+    spanless: bool,
 }
 
 impl FakeBackend {
@@ -92,6 +94,7 @@ impl FakeBackend {
             behaviours: Vec::new(),
             calls: Default::default(),
             observed: Default::default(),
+            spanless: false,
         };
         for (name, kind, behaviour) in expansions {
             // Scarb exposes derives to Cairo code in upper camel case.
@@ -131,6 +134,11 @@ impl FakeBackend {
         self
     }
 
+    fn spanless(mut self) -> Self {
+        self.spanless = true;
+        self
+    }
+
     fn calls(&self) -> Vec<(String, String)> {
         self.calls.lock().unwrap().clone()
     }
@@ -146,6 +154,10 @@ impl ProcMacroBackend for FakeBackend {
 
     fn expansions(&self) -> &[FakeId] {
         &self.ids
+    }
+
+    fn has_spans(&self, _id: &FakeId) -> bool {
+        !self.spanless
     }
 
     fn expand_derives(
@@ -246,6 +258,14 @@ fn whole_span(token_stream: &TokenStream, fallback: &TextSpan) -> TextSpan {
         return fallback.clone();
     };
     TextSpan::new(first.span.start, last.span.end)
+}
+
+/// The code a [`CodeOrigin::Span`] points at.
+fn origin_text<'a>(code: &'a str, origin: &CodeOrigin) -> Option<&'a str> {
+    let CodeOrigin::Span(span) = origin else {
+        return None;
+    };
+    Some(&code[span.start.as_u32() as usize..span.end.as_u32() as usize])
 }
 
 /// Runs the host plugin over every item of `code`, returning one result per item.
@@ -583,6 +603,64 @@ fn generated_code_is_mapped_back_onto_the_original_source() {
         item.origins
             .iter()
             .all(|origin| matches!(origin, CodeOrigin::Span(_) | CodeOrigin::CallSite(_)))
+    );
+}
+
+#[test]
+fn spanless_attribute_expansion_is_mapped_onto_the_whole_item() {
+    let code = indoc! {r#"
+        #[rename]
+        fn old() {}
+    "#};
+    let (_, results) = expand_all(
+        FakeBackend::new(vec![(
+            "rename",
+            ExpansionKind::Attr,
+            Behaviour::Replace("old", "new"),
+        )])
+        .spanless(),
+        code,
+    );
+
+    let item = results.into_iter().next().unwrap();
+    assert_eq!(item.content.as_deref(), Some("fn new() {}\n"));
+    let origins = item
+        .origins
+        .iter()
+        .map(|origin| origin_text(code, origin))
+        .collect::<Vec<_>>();
+    assert_eq!(origins, [Some("#[rename]\nfn old() {}")]);
+}
+
+#[test]
+fn spanless_inner_attribute_expansion_is_mapped_onto_the_whole_function() {
+    let code = indoc! {r#"
+        impl A of B {
+            #[inner]
+            fn old() {}
+        }
+    "#};
+    let (_, results) = expand_all(
+        FakeBackend::new(vec![(
+            "inner",
+            ExpansionKind::Attr,
+            Behaviour::Replace("old", "new"),
+        )])
+        .spanless(),
+        code,
+    );
+
+    let item = results.into_iter().next().unwrap();
+    let content = item.content.expect("impl body should be rewritten");
+    assert!(content.contains("fn new() {}"), "got: {content}");
+    let origins = item
+        .origins
+        .iter()
+        .filter_map(|origin| origin_text(code, origin))
+        .collect::<Vec<_>>();
+    assert!(
+        origins.contains(&"    #[inner]\n    fn old() {}\n"),
+        "got: {origins:?}"
     );
 }
 

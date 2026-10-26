@@ -1,5 +1,7 @@
+use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
+use cairo_lang_filesystem::span::TextSpan as CairoTextSpan;
 use cairo_lang_macro::{AllocationContext, TokenStream};
-use cairo_lang_syntax::node::ast;
+use cairo_lang_syntax::node::{TypedSyntaxNode, ast};
 use salsa::Database;
 use smol_str::SmolStr;
 
@@ -7,7 +9,9 @@ use crate::backend::{ExpansionId, ProcMacroBackend};
 use crate::conversion::CallSiteLocation;
 use crate::host::ProcMacroHostPlugin;
 use crate::host::attribute::child_nodes::{ChildNodesWithoutAttributes, ItemWithAttributes};
-use crate::host::attribute::span_adapter::{AdaptedTokenStream, ExpandableAttrLocation};
+use crate::host::attribute::span_adapter::{
+    AdaptedCodeMapping, AdaptedTokenStream, ExpandableAttrLocation,
+};
 use crate::host::attribute::{AttributeGeneratedFile, AttributePluginResult};
 use crate::host::generate_code_mappings;
 use crate::token_stream_builder::TokenStreamBuilder;
@@ -87,6 +91,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
     pub fn expand_attribute<'db>(
         &self,
         db: &'db dyn Database,
+        item_ast: &ast::ModuleItem<'db>,
         last: bool,
         args: TokenStream,
         token_stream: AdaptedTokenStream,
@@ -138,12 +143,19 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
         }
 
         let file_name = format!("proc_{}", input.id.expansion().cairo_name);
-        let code_mappings = generate_code_mappings(
-            &result.token_stream,
-            input.attribute_location.adapted_call_site().into(),
-        );
-        let code_mappings = input.attribute_location.adapt_code_mappings(code_mappings);
         let content = result.token_stream.to_string();
+        let code_mappings = if self.backend.has_spans(&input.id) {
+            let code_mappings = generate_code_mappings(
+                &result.token_stream,
+                input.attribute_location.adapted_call_site().into(),
+            );
+            input.attribute_location.adapt_code_mappings(code_mappings)
+        } else {
+            vec![AdaptedCodeMapping::from_original(CodeMapping {
+                span: CairoTextSpan::from_str(&content),
+                origin: CodeOrigin::Span(item_ast.as_syntax_node().span_without_trivia(db)),
+            })]
+        };
 
         AttributePluginResult::new()
             .with_remove_original_item(true)

@@ -78,6 +78,13 @@ impl Display for AdaptedTokenStream {
 #[derive(Debug)]
 pub struct AdaptedCodeMapping(CodeMapping);
 
+impl AdaptedCodeMapping {
+    /// Wraps a mapping whose origin already points into the original file.
+    pub fn from_original(code_mapping: CodeMapping) -> Self {
+        Self(code_mapping)
+    }
+}
+
 impl From<AdaptedCodeMapping> for CodeMapping {
     fn from(value: AdaptedCodeMapping) -> Self {
         value.0

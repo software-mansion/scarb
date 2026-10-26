@@ -8,8 +8,7 @@ All notable changes to this project will be documented in this file.
 - Expansion results now carry a `SpannedTokenStream` (a list of tokens, each with the span of the
   code it came from) instead of a flat string plus optional code mappings. Callers compute code mappings from the token spans themselves.
   Expansions performed through the v1 procedural macro api, which has no spans, are reported as a
-  single token covering the whole expansion origin, so callers no longer need to special-case
-  them.
+  single token covering the whole expansion origin.
 - Remove `ProcMacroResult::code_mappings`, along with the `CodeMapping` and `CodeOrigin` types.
 - Remove the `conversions` module. Converting between macro api versions is now entirely internal
   to the proc macro server.
@@ -22,6 +21,8 @@ All notable changes to this project will be documented in this file.
 - Drop the dependency on `cairo-lang-macro` 0.1.
 - Add `MacroWithHash::cairo_name`, the name the macro is written under in Cairo code. `name` stays
   the name of the expansion function, used when requesting expansions.
+- Add `MacroWithHash::has_spans`, which is `false` for macros using the v1 api, so callers can map
+  their expansions onto the whole item.
 
 ## 0.6.0 (2026-09-23)
 - Pass a call site per derive in `ExpandDeriveParams` (`derives: Vec<Derive>`), replacing the single `call_site`.

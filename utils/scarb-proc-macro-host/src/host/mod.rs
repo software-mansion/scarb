@@ -199,6 +199,7 @@ impl<B: ProcMacroBackend> MacroPlugin for ProcMacroHostPlugin<B> {
             let token_stream = body.with_metadata(stream_metadata.clone());
             self.expand_attribute(
                 db,
+                &item_ast,
                 // We also want to mark that this is the last attribute if there are no derives to be applied.
                 last && derives.is_empty(),
                 input.args.clone(),

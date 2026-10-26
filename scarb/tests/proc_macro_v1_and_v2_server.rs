@@ -75,9 +75,12 @@ fn defined_macros() {
         &defined_macros
             .attributes
             .into_iter()
-            .map(|m| m.name)
+            .map(|m| (m.name, m.has_spans))
             .collect::<Vec<_>>(),
-        &["some_v1".to_string(), "some_v2".to_string()]
+        &[
+            ("some_v1".to_string(), false),
+            ("some_v2".to_string(), true)
+        ]
     );
     assert_eq!(
         &defined_macros

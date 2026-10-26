@@ -47,6 +47,10 @@ pub struct MacroWithHash {
     pub cairo_name: String,
     /// Hash of plugin containing this macro.
     pub hash: u64,
+    /// Whether token spans in expansions of this macro point into its input.
+    ///
+    /// `false` for macros using the v1 api, whose expansion is a single token spanning its origin.
+    pub has_spans: bool,
 }
 
 /// Stores extra information about the macros managed by the server.

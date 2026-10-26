@@ -81,6 +81,13 @@ pub trait ProcMacroBackend: Debug + Send + Sync + 'static {
         item: TokenStream,
     ) -> Vec<ProcMacroResult>;
 
+    /// Whether token spans in the code produced by `id` point into its input.
+    ///
+    /// If not, the host maps attribute expansions onto the whole item.
+    fn has_spans(&self, _id: &Self::Id) -> bool {
+        true
+    }
+
     /// Called after every [`Self::expand`].
     fn on_expanded(
         &self,
