@@ -1639,7 +1639,7 @@ fn infer_readme_simple_bool() {
         .output()
         .unwrap();
 
-    assert!(!output.status.success());
+    assert!(output.status.success());
 
     let stdout = String::from_utf8(output.stdout).unwrap();
     let lines = stdout
@@ -1647,7 +1647,7 @@ fn infer_readme_simple_bool() {
         .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
         .collect_vec();
 
-    assert_eq!(lines.len(), 2, "{stdout}");
+    assert_eq!(lines.len(), 3, "{stdout}");
     assert_eq!(lines[0]["kind"], "manifest_diagnostic");
     assert!(
         lines[0]["message"]
@@ -1658,18 +1658,15 @@ fn infer_readme_simple_bool() {
     assert!(lines[0]["message"].as_str().unwrap().contains("README.md"));
     assert!(lines[0]["file"].as_str().unwrap().ends_with("Scarb.toml"));
 
-    assert_eq!(lines[1]["type"], "error");
-    assert!(
-        lines[1]["message"]
-            .as_str()
+    assert_eq!(lines[1]["type"], "warn");
+    let meta: Metadata = serde_json::from_value(lines[2].clone()).unwrap();
+    assert_eq!(
+        packages_by_name(meta)
+            .get("hello")
             .unwrap()
-            .contains("failed to parse manifest at:")
-    );
-    assert!(
-        lines[1]["message"]
-            .as_str()
-            .unwrap()
-            .contains("failed to find readme at")
+            .manifest_metadata
+            .readme,
+        None
     );
 
     t.child("README.md").touch().unwrap();
@@ -2644,4 +2641,153 @@ fn cannot_specify_not_predefined_inlining_strategy() {
                 unknown inlining strategy: `super-cool`
                 use one of: `default`, `avoid` or a number
         "#});
+}
+
+#[test]
+fn missing_readme_and_license_file_are_warnings() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+            edition = "2024_07"
+            readme = "README"
+            license-file = "LICENCE"
+        "#})
+        .unwrap();
+    t.child("README.md").touch().unwrap();
+    t.child("LICENSE").touch().unwrap();
+
+    Scarb::quick_command()
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            warn: failed to find license at [..]LICENCE, the field will be ignored ([..]Scarb.toml:6:1)
+            warn: failed to find readme at [..]README, the field will be ignored ([..]Scarb.toml:5:1)
+            ...
+        "#});
+
+    let output = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let lines = stdout
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .collect_vec();
+
+    assert_eq!(lines.len(), 3, "{stdout}");
+    for (line, code, file_name) in [
+        (&lines[0], "SE0016", "LICENCE"),
+        (&lines[1], "SE0015", "README"),
+    ] {
+        assert_eq!(line["kind"], "manifest_diagnostic");
+        assert_eq!(line["error_code"], code);
+        assert!(line["message"].as_str().unwrap().contains(file_name));
+        assert!(line["file"].as_str().unwrap().ends_with("Scarb.toml"));
+        assert!(line["span"].is_object());
+    }
+
+    let meta: Metadata = serde_json::from_value(lines[2].clone()).unwrap();
+    let packages = packages_by_name(meta);
+    let metadata = &packages.get("hello").unwrap().manifest_metadata;
+    assert_eq!(metadata.readme, None);
+    assert_eq!(metadata.license_file, None);
+}
+
+#[test]
+fn missing_workspace_readme_and_license_file_are_warnings() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(indoc! {r#"
+            [workspace]
+            members = ["hello", "world"]
+
+            [workspace.package]
+            readme = "MISSING.md"
+            license-file = "MISSING.txt"
+        "#})
+        .unwrap();
+    for name in ["hello", "world"] {
+        t.child(format!("{name}/Scarb.toml"))
+            .write_str(&formatdoc! {r#"
+                [package]
+                name = "{name}"
+                version = "1.0.0"
+                edition = "2024_07"
+                readme.workspace = true
+                license-file.workspace = true
+            "#})
+            .unwrap();
+    }
+
+    let output = Scarb::quick_command()
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let warnings = stdout
+        .lines()
+        .filter(|line| line.starts_with("warn: failed to find"))
+        .collect_vec();
+    assert_eq!(warnings.len(), 2, "{stdout}");
+    assert!(warnings[0].contains("MISSING.txt"), "{stdout}");
+    assert!(warnings[1].contains("MISSING.md"), "{stdout}");
+
+    let output = Scarb::quick_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let lines = stdout
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .collect_vec();
+
+    assert_eq!(lines.len(), 3, "{stdout}");
+    let workspace_manifest = fsx::canonicalize_utf8(t.join("Scarb.toml")).unwrap();
+    for (line, code, file_name) in [
+        (&lines[0], "SE0016", "MISSING.txt"),
+        (&lines[1], "SE0015", "MISSING.md"),
+    ] {
+        assert_eq!(line["kind"], "manifest_diagnostic");
+        assert_eq!(line["error_code"], code);
+        assert!(line["message"].as_str().unwrap().contains(file_name));
+        assert_eq!(line["file"], workspace_manifest.as_str());
+        assert!(line["span"].is_object());
+    }
+
+    let meta: Metadata = serde_json::from_value(lines[2].clone()).unwrap();
+    let packages = packages_by_name(meta);
+    for name in ["hello", "world"] {
+        let metadata = &packages.get(name).unwrap().manifest_metadata;
+        assert_eq!(metadata.readme, None);
+        assert_eq!(metadata.license_file, None);
+    }
 }
