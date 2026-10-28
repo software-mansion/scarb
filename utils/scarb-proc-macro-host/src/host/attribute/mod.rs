@@ -11,6 +11,7 @@ use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, PluginDiagnostic, PluginGeneratedFile, PluginResult,
 };
 use cairo_lang_filesystem::ids::CodeMapping;
+use cairo_lang_macro::{TextSpan, TokenStream, TokenTree};
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 pub use inner_attribute::*;
 pub use item_attribute::*;
@@ -131,4 +132,12 @@ impl From<AttributeGeneratedFile> for PluginGeneratedFile {
             is_unhygienic: false,
         }
     }
+}
+
+/// Whether `expansion` is a single token spanning its whole input, as v1 macros report expansions.
+fn spans_whole_input(expansion: &TokenStream, input_span: Option<&TextSpan>) -> bool {
+    matches!(
+        expansion.tokens.as_slice(),
+        [TokenTree::Ident(token)] if Some(&token.span) == input_span
+    )
 }

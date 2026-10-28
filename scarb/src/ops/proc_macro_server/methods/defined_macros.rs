@@ -12,7 +12,7 @@ use crate::{
         self, CompilationUnit,
         plugin::{
             collection::WorkspaceProcMacros,
-            proc_macro::{DeclaredProcMacroInstances, ExpansionKind, ProcMacroApiVersion},
+            proc_macro::{DeclaredProcMacroInstances, ExpansionKind},
         },
     },
     core::Config,
@@ -98,10 +98,6 @@ fn get_macros_for_components(
             plugin
                 .iter()
                 .map(|plugin| {
-                    let has_spans = match plugin.api_version() {
-                        ProcMacroApiVersion::V1 => false,
-                        ProcMacroApiVersion::V2 => true,
-                    };
                     let macros_of = |kind| {
                         plugin
                             .expansions_with_package(kind)
@@ -113,7 +109,6 @@ fn get_macros_for_components(
                                     .instance_to_hash
                                     .get(&id.package_id)
                                     .unwrap(),
-                                has_spans,
                             })
                             .collect()
                     };

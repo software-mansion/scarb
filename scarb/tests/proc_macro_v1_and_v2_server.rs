@@ -75,12 +75,9 @@ fn defined_macros() {
         &defined_macros
             .attributes
             .into_iter()
-            .map(|m| (m.name, m.has_spans))
+            .map(|m| m.name)
             .collect::<Vec<_>>(),
-        &[
-            ("some_v1".to_string(), false),
-            ("some_v2".to_string(), true)
-        ]
+        &["some_v1".to_string(), "some_v2".to_string()]
     );
     assert_eq!(
         &defined_macros
@@ -153,6 +150,7 @@ fn expand_attribute() {
 
         let code = "fn some_test_fn_12(){}".to_string();
         let span = TextSpan::new(0, code.len() as u32);
+        let call_site = TextSpan::new(span.end, span.end + 10);
         let item = TokenStreamV2::new(vec![TokenTree::Ident(Token::new(code, span.clone()))]);
 
         let response = proc_macro_client
@@ -166,12 +164,12 @@ fn expand_attribute() {
                 attr: macro_name.to_string(),
                 args: TokenStreamV2::empty(),
                 item,
-                adapted_call_site: span,
+                adapted_call_site: call_site,
             })
             .unwrap();
 
         assert_eq!(response.diagnostics, vec![]);
-        // Both api versions report the expansion as a single token.
+        // Both api versions report the expansion as a single token spanning the item.
         assert_eq!(
             tokens(&response.token_stream),
             vec![(

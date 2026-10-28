@@ -61,6 +61,20 @@ impl AdaptedTokenStream {
     pub fn with_metadata(self, metadata: TokenStreamMetadata) -> Self {
         Self(self.0.with_metadata(metadata))
     }
+
+    /// The span covering all tokens of this stream, if it has any.
+    pub fn span(&self) -> Option<TextSpan> {
+        let spans = || {
+            self.0
+                .tokens
+                .iter()
+                .map(|TokenTree::Ident(token)| &token.span)
+        };
+        Some(TextSpan {
+            start: spans().map(|span| span.start).min()?,
+            end: spans().map(|span| span.end).max()?,
+        })
+    }
 }
 
 impl From<AdaptedTokenStream> for TokenStream {

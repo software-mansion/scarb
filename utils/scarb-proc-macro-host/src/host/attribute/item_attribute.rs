@@ -12,7 +12,7 @@ use crate::host::attribute::child_nodes::{ChildNodesWithoutAttributes, ItemWithA
 use crate::host::attribute::span_adapter::{
     AdaptedCodeMapping, AdaptedTokenStream, ExpandableAttrLocation,
 };
-use crate::host::attribute::{AttributeGeneratedFile, AttributePluginResult};
+use crate::host::attribute::{AttributeGeneratedFile, AttributePluginResult, spans_whole_input};
 use crate::host::generate_code_mappings;
 use crate::token_stream_builder::TokenStreamBuilder;
 
@@ -98,6 +98,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
         input: AttrExpansionArgs<'db, B::Id>,
     ) -> AttributePluginResult<'db> {
         let original = token_stream.to_string();
+        let input_span = token_stream.span();
         let mut aux_data = B::AuxData::default();
         let result = self.expand(
             db,
@@ -144,17 +145,17 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
 
         let file_name = format!("proc_{}", input.id.expansion().cairo_name);
         let content = result.token_stream.to_string();
-        let code_mappings = if self.backend.has_spans(&input.id) {
+        let code_mappings = if spans_whole_input(&result.token_stream, input_span.as_ref()) {
+            vec![AdaptedCodeMapping::from_original(CodeMapping {
+                span: CairoTextSpan::from_str(&content),
+                origin: CodeOrigin::Span(item_ast.as_syntax_node().span_without_trivia(db)),
+            })]
+        } else {
             let code_mappings = generate_code_mappings(
                 &result.token_stream,
                 input.attribute_location.adapted_call_site().into(),
             );
             input.attribute_location.adapt_code_mappings(code_mappings)
-        } else {
-            vec![AdaptedCodeMapping::from_original(CodeMapping {
-                span: CairoTextSpan::from_str(&content),
-                origin: CodeOrigin::Span(item_ast.as_syntax_node().span_without_trivia(db)),
-            })]
         };
 
         AttributePluginResult::new()

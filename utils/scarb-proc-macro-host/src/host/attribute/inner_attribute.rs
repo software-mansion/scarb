@@ -17,6 +17,7 @@ use crate::host::ProcMacroHostPlugin;
 use crate::host::attribute::span_adapter::{AdaptedDiagnostic, AdaptedTokenStream};
 use crate::host::attribute::{
     AttrExpansionArgs, AttrExpansionFound, AttributeGeneratedFile, AttributePluginResult,
+    spans_whole_input,
 };
 use crate::host::generate_code_mappings;
 use crate::token_stream_builder::TokenStreamBuilder;
@@ -69,12 +70,12 @@ impl<'a, 'db, B: ProcMacroBackend> InnerAttrExpansionContext<'a, 'db, B> {
         &mut self,
         db: &'db dyn Database,
         input: &AttrExpansionArgs<'db, B::Id>,
-        original: String,
+        original: &AdaptedTokenStream,
         result: ProcMacroResult,
         func_span: TextSpan,
     ) {
         let result_str = result.token_stream.to_string();
-        let changed = result_str != original;
+        let changed = result_str != original.to_string();
 
         let diagnostics = input
             .attribute_location
@@ -83,13 +84,13 @@ impl<'a, 'db, B: ProcMacroBackend> InnerAttrExpansionContext<'a, 'db, B> {
 
         self.any_changed = self.any_changed || changed;
 
-        let node = if self.host.backend.has_spans(&input.id) {
-            rewrite_node_patch_from_expansion_result(result.token_stream, input)
-        } else {
+        let node = if spans_whole_input(&result.token_stream, original.span().as_ref()) {
             RewriteNode::Mapped {
                 origin: func_span,
                 node: Box::new(RewriteNode::Text(result_str)),
             }
+        } else {
+            rewrite_node_patch_from_expansion_result(result.token_stream, input)
         };
         self.item_builder.add_modified(node);
     }
@@ -314,7 +315,7 @@ impl<B: ProcMacroBackend> ProcMacroHostPlugin<B> {
         context.register_result_metadata(
             db,
             &input,
-            token_stream.to_string(),
+            &token_stream,
             result,
             func.as_syntax_node().span(db),
         );

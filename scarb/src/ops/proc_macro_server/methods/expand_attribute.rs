@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use std::sync::{Arc, Mutex};
 
-use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
+use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2, TokenTree};
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
 use scarb_proc_macro_server_types::methods::{
     ProcMacroResult, SpannedTokenStream, expand::ExpandAttribute,
@@ -44,7 +44,7 @@ impl Handler for ExpandAttribute {
                 &proc_macro_instance,
                 hash,
                 attr,
-                adapted_call_site,
+                span_of(&item).unwrap_or(adapted_call_site),
                 token_stream_v2_to_v1(&args),
                 token_stream_v2_to_v1(&item),
             ),
@@ -60,11 +60,12 @@ impl Handler for ExpandAttribute {
     }
 }
 
+/// A v1 macro reports no spans, so its expansion is attributed to `item_span`.
 fn expand_attribute_v1(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     fingerprint: u64,
     attr: String,
-    adapted_call_site: TextSpan,
+    item_span: TextSpan,
     args: TokenStreamV1,
     item: TokenStreamV1,
 ) -> Result<ProcMacroResult> {
@@ -73,7 +74,7 @@ fn expand_attribute_v1(
         .generate_code(attr.into(), args, item);
 
     Ok(ProcMacroResult {
-        token_stream: token_stream_v1_to_spanned(&result.token_stream, adapted_call_site),
+        token_stream: token_stream_v1_to_spanned(&result.token_stream, item_span),
         diagnostics: result.diagnostics.iter().map(diagnostic_v1_to_v2).collect(),
         fingerprint,
     })
@@ -96,5 +97,19 @@ fn expand_attribute_v2(
         token_stream: SpannedTokenStream::from_token_stream(&result.token_stream),
         diagnostics: result.diagnostics,
         fingerprint,
+    })
+}
+
+/// The span covering all tokens of `token_stream`, if it has any.
+fn span_of(token_stream: &TokenStreamV2) -> Option<TextSpan> {
+    let spans = || {
+        token_stream
+            .tokens
+            .iter()
+            .map(|TokenTree::Ident(token)| &token.span)
+    };
+    Some(TextSpan {
+        start: spans().map(|span| span.start).min()?,
+        end: spans().map(|span| span.end).max()?,
     })
 }
