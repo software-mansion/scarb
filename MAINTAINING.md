@@ -168,24 +168,12 @@ Everything starts with Scarb. On a new stable Cairo version (minor or patch), bu
 
 Requirements like `cairo-lang-* = "2.21.0"` mean `^2.21.0` (`>=2.21.0, <3.0.0`), so Cargo resolves the whole graph
 to the newer 2.x version bumped in Scarb.
-If Scarb compiles with the current `cairo-language-common`, `cairo-lint` and `cairols` releases,
-**do not bump Cairo in them and do not release them**.
+Release a downstream crate only when it needs changes for the new Cairo (see [Scenarios](#scenarios)).
 Their versions may lag behind the Cairo version (e.g. Scarb with Cairo 2.22 and CairoLS 2.21), and that's fine.
 
 Caret requirements do not match pre-releases, so a Cairo RC needs a release of the whole chain.
 For the final Cairo version, re-release the chain to drop the `-rc` suffix.
 Usually it's a version-only bump, unless the code changed between the RC and the final.
-
-Bump Cairo in a downstream crate only when:
-
-- the new Cairo changes an API that crate uses (Scarb doesn't compile), or
-- the crate needs a new Cairo feature (e.g. new syntax support in CairoLS or CairoLint), or
-- the new Cairo fails the crate's tests (e.g. corelib diagnostics or snapshots).
-
-Then bump from the bottom of the chain, releasing only the crates that need it:
-`cairo-language-common` -> `cairo-lint` -> `cairols` -> `scarb`.
-
-The same applies to `scarb-proc-macro-host`, see [its release procedure](#scarb-proc-macro-host-release-procedure).
 
 ### Releasing a chain of crates
 
@@ -198,7 +186,8 @@ When downstream crates need a release (always the whole chain for a Cairo RC and
 3. Before tagging Scarb on a new Cairo version (RC or final), push a same-named `proving-utils` fork branch
    and pin Scarb to its commit, otherwise version solving can become unresolvable.
 4. In chain order, publish each crate and push its `vX.Y.Z` tag.
-   When a published crate is needed by the next repo, wait until it is visible on [crates.io] before continuing.
+5. Merge each release PR back to `main`, so `main` contains everything that was released.
+   The exception is when `main` already has newer Cairo commits, as CI would fail there anyway.
 
 If you want agent assistance for this flow, use the `cairo-rc-release` skill from
 `.agents/skills/cairo-rc-release/`.
@@ -216,36 +205,16 @@ If you want agent assistance for this flow, use the `cairo-rc-release` skill fro
 2. Release them in chain order (see [Releasing a chain of crates](#releasing-a-chain-of-crates)).
 3. Bump Cairo and the released crates in Scarb.
 
-#### Scarb changes an interface CairoLS uses
+#### Scarb changes an interface CairoLS uses, or Cairo breaks corelib
 
-Preferred: use a `dev-*` Scarb build.
+CairoLS runs its tests against the Scarb binary from its `.tool-versions`,
+including tests that check corelib produces no diagnostics. Use a `dev-*` Scarb build:
 
 1. Release a dev build of Scarb without CairoLS (the [Dev Build] workflow with `include-cairols: false`).
-2. Push a commit to CairoLS `main` that uses this dev build (`.tool-versions`) and the new API
-   (Scarb crates from git `rev`, or a published pre-release if one exists).
+2. Push a commit to CairoLS `main` that uses this dev build (`.tool-versions`) and, for an interface change,
+   the new API (Scarb crates from git `rev`, or a published pre-release if one exists).
    If the Scarb change is updated before it merges, cut a new dev build and bump to it.
 3. On the next Scarb release, bump CairoLS `main` to it and replace git revs with published Scarb crates.
-
-Alternative, without a dev build (last resort only):
-
-1. Push a commit to CairoLS `main` that uses the new interface, with Scarb crates patched by commit hash.
-2. Ignore CairoLS tests that fail because `.tool-versions` still points to the old Scarb.
-3. Release a Scarb nightly and publish the new crates to [crates.io].
-4. Push a commit to CairoLS `main` that uses the new releases.
-
-#### Cairo is released and breaks corelib
-
-CairoLS has tests that check corelib produces no diagnostics.
-
-Preferred: use a `dev-*` Scarb build.
-
-1. Release a dev build of Scarb without CairoLS (the [Dev Build] workflow with `include-cairols: false`).
-2. Push a commit to CairoLS `main` that uses this dev build (`.tool-versions`).
-   If the Cairo bump in Scarb is updated before it merges, cut a new dev build and bump to it.
-3. On the next Scarb release, bump CairoLS `main` to it.
-
-Alternative, without a dev build (last resort only): mark the failing CairoLS tests `#[ignore] // wrong corelib version`,
-bump `.tool-versions` to the next Scarb nightly, then remove the ignores.
 
 #### Cairo is released from an old release branch while CairoLS `main` has moved on
 
@@ -253,8 +222,10 @@ CairoLS and CairoLint are released for every Cairo minor, so there is always a m
 
 1. Bump Cairo in the Scarb release branch. Usually that's enough
    (e.g. Scarb 2.19.2-2.19.6 shipped CairoLS 2.19.1).
-2. If a downstream crate doesn't compile, cut its patch release branch from its release for that Cairo minor,
+2. If a downstream crate doesn't compile, release it from a `main` revision that compiles with that Cairo version.
+3. Only if no such revision exists, cut a patch release branch from its release for that Cairo minor,
    make only the change needed for the new Cairo (don't cherry-pick from `main`), and release it in chain order.
+   Avoid this: released changes that aren't on `main` make regressions hard to track down.
 
 ## `scarb-metadata` release procedure
 
