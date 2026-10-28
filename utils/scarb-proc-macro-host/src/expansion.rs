@@ -1,5 +1,4 @@
-use cairo_lang_macro::ExpansionKind as ExpansionKindV1;
-use cairo_lang_macro_v1::ExpansionKind as ExpansionKindV2;
+use cairo_lang_macro::ExpansionKind as MacroExpansionKind;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
@@ -11,26 +10,18 @@ pub enum ExpansionKind {
     Executable,
 }
 
-// Implement conversions from expansion kind enums exposed by the proc macro implementation api.
+// Implement conversion from the expansion kind enum exposed by the procedural macro
+// implementation api.
 // Note that `executable` kind is not represented on the macro side and executable attributes are
 // inferred from the attribute expansion by separate logic.
 // See `EXEC_ATTR_PREFIX` for implementation details.
 
-impl From<ExpansionKindV1> for ExpansionKind {
-    fn from(kind: ExpansionKindV1) -> Self {
+impl From<MacroExpansionKind> for ExpansionKind {
+    fn from(kind: MacroExpansionKind) -> Self {
         match kind {
-            ExpansionKindV1::Attr => Self::Attr,
-            ExpansionKindV1::Derive => Self::Derive,
-            ExpansionKindV1::Inline => Self::Inline,
-        }
-    }
-}
-impl From<ExpansionKindV2> for ExpansionKind {
-    fn from(kind: ExpansionKindV2) -> Self {
-        match kind {
-            ExpansionKindV2::Attr => Self::Attr,
-            ExpansionKindV2::Derive => Self::Derive,
-            ExpansionKindV2::Inline => Self::Inline,
+            MacroExpansionKind::Attr => Self::Attr,
+            MacroExpansionKind::Derive => Self::Derive,
+            MacroExpansionKind::Inline => Self::Inline,
         }
     }
 }

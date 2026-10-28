@@ -1,4 +1,4 @@
-use crate::compiler::syntax::SyntaxNodeExt;
+use crate::syntax_ext::SyntaxNodeExt;
 use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{
     AllocationContext, TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree,
@@ -102,7 +102,7 @@ impl<'db> Extend<SyntaxNode<'db>> for TokenStreamBuilder<'db> {
 
 #[cfg(test)]
 mod tests {
-    use crate::compiler::plugin::proc_macro::v2::TokenStreamBuilder;
+    use crate::token_stream_builder::TokenStreamBuilder;
     use cairo_lang_macro::{AllocationContext, TextSpan, TokenStream, TokenTree};
     use cairo_lang_parser::utils::SimpleParserDatabase;
     use indoc::indoc;
