@@ -13,6 +13,10 @@ Use this workflow for coordinated Cairo RC bumps across local sibling repos such
 - `cairols`
 - `scarb`
 
+Always read the [Cairo version bumps](../../../MAINTAINING.md#cairo-version-bumps) section of Scarb's
+`MAINTAINING.md` first. It is the source of truth; if this skill contradicts it, follow `MAINTAINING.md`
+and tell the user.
+
 ## Prerequisites
 
 - The target version is explicit, for example `2.17.0-rc.4`.
@@ -62,8 +66,9 @@ Do not continue to the next mutating step until the user approves it.
 1. `proving-utils`
 2. `cairo-language-common`
 3. `cairo-lint`
-4. `cairo-language-server` / `cairols`
-5. `scarb`
+4. `scarb-proc-macro-server-types` (if changed) and `scarb-proc-macro-host`
+5. `cairo-language-server` / `cairols`
+6. `scarb`
 
 ## Core Per-Repo Workflow
 
@@ -115,11 +120,17 @@ Do not continue to the next mutating step until the user approves it.
 - Once CI is green and the user approves, publish the RC version to crates.io.
 - After publishing, create and push tag `v<version>` (e.g. `v2.18.0-rc.0`) pointing to the release commit.
 
+### `scarb-proc-macro-host` and `scarb-proc-macro-server-types`
+
+- Follow the `scarb-proc-macro-host` release procedure in Scarb's `MAINTAINING.md`.
+- Release `scarb-proc-macro-server-types` first if it changed.
+
 ### `cairols`
 
 - Bump package version to the RC.
 - Use `cargo xtask upgrade cairo <VERSION>`.
 - Set `cairo-language-common` and `cairo-lint` to the exact RC version after they are published.
+- Set `scarb-proc-macro-host` (and `scarb-proc-macro-server-types` if released) to the published version.
 - Do not hand-edit `[patch.crates-io]`.
 - Verify with `cargo metadata --format-version 1` and a clean `cargo check`.
 - Push the same-named release branch and create a PR first.
