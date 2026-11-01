@@ -143,7 +143,7 @@ sha2 = "0.11"
 shell-words = "1"
 similar-asserts = { version = "2", features = ["serde"] }
 smallvec = "1"
-smol_str = { version = "=0.3.6", features = ["serde"] }
+smol_str = { version = "=0.3.7", features = ["serde"] }
 snapbox = { version = "1.2", features = ["cmd", "path", "diff"] }
 starknet-core = "0.16.0"
 stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "467d5c6d" }
