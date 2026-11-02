@@ -3,7 +3,7 @@
 Package tarballs are distributable, compressed `.tar.zst` files with the source code of the package and additional
 metadata for use by registries and other services.
 Tarballs are regular [GNU tar archives](<https://en.wikipedia.org/wiki/Tar_(computing)>) compressed
-with [Zstandard](https://facebook.github.io/zstd/) algorithm.
+with [Zstandard](https://github.com/facebook/zstd) algorithm.
 The `scarb package` command can be used to create a package tarball from a package directory.
 
 In general, a package tarball consists of the minimum amount of files copied from the package source directory,
