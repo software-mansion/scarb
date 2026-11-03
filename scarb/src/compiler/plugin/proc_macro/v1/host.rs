@@ -1,10 +1,10 @@
-use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
 use crate::compiler::plugin::proc_macro::v1::FromSyntaxNode;
 use crate::compiler::plugin::proc_macro::{
     DeclaredProcMacroInstances, ExpansionQuery, FULL_PATH_MARKER_KEY, ProcMacroInstance,
 };
+use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind};
 use crate::core::PackageId;
-use anyhow::{Result, ensure};
+use anyhow::Result;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
@@ -141,39 +141,11 @@ impl IntoIterator for EmittedAuxData {
 }
 
 impl ProcMacroHostPlugin {
-    pub fn try_new(macros: Vec<Arc<ProcMacroInstance>>) -> Result<Self> {
-        // Validate expansions.
-        let mut expansions = macros
-            .iter()
-            .flat_map(|m| {
-                m.get_expansions()
-                    .iter()
-                    .map(|e| ProcMacroId::new(m.package_id(), e.clone()))
-                    .collect_vec()
-            })
-            .collect::<Vec<_>>();
-        expansions.sort_unstable_by_key(|e| (e.expansion.cairo_name.clone(), e.package_id));
-        ensure!(
-            expansions
-                .windows(2)
-                .all(|w| w[0].expansion.cairo_name != w[1].expansion.cairo_name),
-            "duplicate expansions defined for procedural macros: {duplicates}",
-            duplicates = expansions
-                .windows(2)
-                .filter(|w| w[0].expansion.cairo_name == w[1].expansion.cairo_name)
-                .map(|w| format!(
-                    "{} ({} and {})",
-                    w[0].expansion.cairo_name.as_str(),
-                    w[0].package_id,
-                    w[1].package_id
-                ))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-        Ok(Self {
+    pub fn new(macros: Vec<Arc<ProcMacroInstance>>) -> Self {
+        Self {
             instances: macros,
             full_path_markers: RwLock::new(Default::default()),
-        })
+        }
     }
 
     fn uses_proc_macros<'db>(
@@ -959,8 +931,8 @@ impl ProcMacroHostPlugin {
             .write()
             .unwrap()
             .entry(package_id)
-            .and_modify(|markers| markers.extend(markers.clone()))
-            .or_insert(markers);
+            .or_default()
+            .extend(markers);
     }
 
     fn calculate_metadata<'db>(
