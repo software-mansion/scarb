@@ -225,6 +225,11 @@ pub trait MarkdownDocItem: DocItem {
             && let Some(file_path) = context.resolve_markdown_file_path_from_item(resolved_id)
         {
             format!("[{}]({file_path})", link.label.clone(),)
+        } else if link.md_link.dest_text.is_none()
+            && let Some(path) = &link.path
+        {
+            // Destination is not an item path (e.g. an external URL), keep it as is.
+            format!("[{}]({path})", link.label)
         } else {
             link.label.clone()
         }
