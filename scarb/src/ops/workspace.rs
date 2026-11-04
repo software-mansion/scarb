@@ -15,7 +15,7 @@ use crate::core::config::Config;
 use crate::core::errors::{ManifestErrorWithSource, ManifestParseError};
 use crate::core::manifest::{
     ManifestDiagnosticAnchor, ManifestDiagnosticCode, ManifestDiagnosticExtraData,
-    ManifestDiagnosticMessage, ManifestDiagnosticSpan, ManifestMessageKind,
+    ManifestDiagnosticMessage, ManifestDiagnosticSpan, ManifestMessageKind, ManifestSemanticError,
     resolve_manifest_anchor,
 };
 use crate::core::package::Package;
@@ -26,6 +26,7 @@ use scarb_fs_utils as fsx;
 use scarb_fs_utils::{PathBufUtf8Ext, is_hidden};
 use scarb_ui::OutputFormat;
 use scarb_ui::components::MachineMessage;
+use toml_edit::Document;
 
 #[tracing::instrument(level = "debug", skip(config))]
 pub fn read_workspace<'c>(manifest_path: &Utf8Path, config: &'c Config) -> Result<Workspace<'c>> {
@@ -87,6 +88,7 @@ fn read_workspace_root<'c>(
     let toml_manifest = TomlManifest::read_from_str(&manifest_source)
         .map_err(|err| ManifestParseError::new(manifest_path, err))?;
     warn_unknown_manifest_fields(manifest_path, &manifest_source, config);
+    warn_missing_metadata_files(manifest_path, &toml_manifest, config);
     let toml_workspace = toml_manifest.get_workspace();
 
     let with_source = |err| {
@@ -140,6 +142,7 @@ fn read_workspace_root<'c>(
             .map(|package_path| {
                 let package_manifest = TomlManifest::read_from_path(package_path)?;
                 warn_unknown_manifest_fields(package_path, &package_manifest.raw_content, config);
+                warn_missing_metadata_files(package_path, &package_manifest, config);
                 // Read the member package.
                 let manifest = package_manifest
                     .to_manifest(
@@ -232,6 +235,49 @@ fn warn_unknown_manifest_fields(path: &Utf8Path, source: &str, config: &Config) 
                 .ui()
                 .warn(format!("unknown manifest field `{path_str}`{location}"));
         }
+    }
+}
+
+/// Emits a warning for each `readme` or `license-file` file set in the manifest that does not exist.
+fn warn_missing_metadata_files(path: &Utf8Path, manifest: &TomlManifest, config: &Config) {
+    for warning in manifest.missing_metadata_files(path) {
+        emit_manifest_warning(config, path, &manifest.raw_content, &warning);
+    }
+}
+
+/// Emits a non-fatal manifest diagnostic.
+///
+/// In text mode: `warn: <message> (path:line:col)`.
+/// In JSON mode: a `manifest_diagnostic` machine message with `file` and `span`.
+fn emit_manifest_warning(
+    config: &Config,
+    path: &Utf8Path,
+    source: &str,
+    diagnostic: &ManifestSemanticError,
+) {
+    let data = Document::parse(source)
+        .ok()
+        .map(|doc| diagnostic.resolve(doc.as_table()));
+    let (span, related, extra) = data
+        .map(|data| (data.span, data.related, data.extra))
+        .unwrap_or_default();
+    if config.ui().output_format() == OutputFormat::Json {
+        config
+            .ui()
+            .force_print(MachineMessage(ManifestDiagnosticMessage {
+                kind: ManifestMessageKind::ManifestDiagnostic,
+                message: diagnostic.to_string(),
+                error_code: diagnostic.code(),
+                file: Some(path.to_string()),
+                span,
+                related,
+                data: extra,
+            }));
+    } else {
+        let location = span
+            .map(|s| format!(" {}", format_span_location(path, source, &s)))
+            .unwrap_or_default();
+        config.ui().warn(format!("{diagnostic}{location}"));
     }
 }
 
