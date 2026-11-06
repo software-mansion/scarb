@@ -227,8 +227,8 @@ pub trait MarkdownDocItem: DocItem {
             format!("[{}]({file_path})", link.label.clone(),)
         } else if link.md_link.dest_text.is_none()
             && let Some(path) = &link.path
+            && is_external_url(path)
         {
-            // Destination is not an item path (e.g. an external URL), keep it as is.
             format!("[{}]({path})", link.label)
         } else {
             link.label.clone()
@@ -862,6 +862,18 @@ fn generate_markdown_from_item_data(
     }
 
     Ok(markdown)
+}
+
+/// Returns true when the link destination starts with a URL scheme, such as `https:` or `mailto:`.
+/// Item paths such as `helper` or `super::Item` do not.
+fn is_external_url(destination: &str) -> bool {
+    let Some((scheme, rest)) = destination.split_once(':') else {
+        return false;
+    };
+    let mut chars = scheme.chars();
+    chars.next().is_some_and(|c| c.is_ascii_alphabetic())
+        && chars.all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.'))
+        && !rest.starts_with(':')
 }
 
 fn get_linked_path(full_path: &str, files_extension: &str) -> String {

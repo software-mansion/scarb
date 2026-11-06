@@ -48,7 +48,13 @@ fn test_markdown_external_links() {
         .name("hello_world")
         .lib_cairo(indoc! {r#"
             /// Uses the [`shell` package](https://scarbs.xyz/packages/shell) and [Scarb](https://docs.swmansion.com/scarb).
+            /// See also [the Scarb docs][scarb_docs] and [the helper][helper_ref].
+            ///
+            /// [scarb_docs]: https://docs.swmansion.com/scarb/docs
+            /// [helper_ref]: helper
             pub fn main() {}
+
+            pub fn helper() {}
         "#})
         .build(&root_dir);
 
@@ -63,6 +69,7 @@ fn test_markdown_external_links() {
     let expected = [
         "[`shell` package](https://scarbs.xyz/packages/shell)",
         "[Scarb](https://docs.swmansion.com/scarb)",
+        "[the Scarb docs](https://docs.swmansion.com/scarb/docs)",
     ];
     for file in ["hello_world-main.md", "hello_world.md"] {
         let content = std::fs::read_to_string(doc_dir.join(file)).unwrap();
@@ -72,5 +79,10 @@ fn test_markdown_external_links() {
                 "`{link}` not found in {file}:\n{content}"
             );
         }
+        // A reference link to an item path is not resolved, so it stays plain text.
+        assert!(
+            content.contains("the helper") && !content.contains("](helper)"),
+            "`the helper` is not plain text in {file}:\n{content}"
+        );
     }
 }
