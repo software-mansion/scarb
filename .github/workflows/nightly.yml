@@ -227,10 +227,11 @@ jobs:
 
       - name: Create GitHub release
         run: |
+          # Create as draft: `release: published` dispatches must only fire once assets are uploaded.
           gh release create \
             "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
             --repo software-mansion/scarb-nightlies \
-            ${{ !inputs.is_dev && '--latest' || '--latest=false' }} \
+            --draft \
             --title "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
             --notes-file NIGHTLY_RELEASE_NOTES.md
         env:
@@ -263,6 +264,17 @@ jobs:
               "$file" \
               --repo software-mansion/scarb-nightlies
           done
+        env:
+          GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
+          NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG: ${{ needs.prepare.outputs.nightly_tag }}
+
+      - name: Publish GitHub release
+        run: |
+          gh release edit \
+            "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
+            --repo software-mansion/scarb-nightlies \
+            --draft=false \
+            ${{ !inputs.is_dev && '--latest' || '--latest=false' }}
         env:
           GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
           NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG: ${{ needs.prepare.outputs.nightly_tag }}
