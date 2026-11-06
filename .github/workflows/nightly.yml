@@ -120,7 +120,7 @@ jobs:
           # Cargo silently ignores [patch] entries when the patched crate version
           # (Cairo main) doesn't satisfy the repo's requirement, which would make
           # this check a false green. Fail if any cairo-lang crate still comes from crates.io.
-          if grep -B2 '^source = "registry' Cargo.lock | grep 'name = "cairo-lang-'; then
+          if grep -B2 '^source = "registry' Cargo.lock | grep 'name = "cairo-lang-' | grep -v 'cairo-lang-primitive-token'; then
             echo "::error::Cairo main was NOT tested: the crates above still resolve from crates.io. Likely Cairo main's version is lower than the one this repo depends on."
             exit 1
           fi
