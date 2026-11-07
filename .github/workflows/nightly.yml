@@ -114,6 +114,17 @@ jobs:
       #   if: ${{ !contains(inputs.upgrade-stwo, 'false') }}
       #   run: cargo xtask upgrade stwo-cairo --rev $(git ls-remote --refs "https://github.com/starkware-libs/stwo-cairo" main | awk '{print $1}')
 
+      - name: Verify Cairo main was actually used
+        if: ${{ !contains(inputs.upgrade-cairo, 'false') }}
+        run: |
+          # Cargo silently ignores [patch] entries when the patched crate version
+          # (Cairo main) doesn't satisfy the repo's requirement, which would make
+          # this check a false green. Fail if any cairo-lang crate still comes from crates.io.
+          if grep -B2 '^source = "registry' Cargo.lock | grep 'name = "cairo-lang-' | grep -v 'cairo-lang-primitive-token'; then
+            echo "::error::Cairo main was NOT tested: the crates above still resolve from crates.io. Likely Cairo main's version is lower than the one this repo depends on."
+            exit 1
+          fi
+
       - name: Rebuild xtasks after Cargo.toml changes
         run: cargo build -p xtask
 
@@ -227,10 +238,11 @@ jobs:
 
       - name: Create GitHub release
         run: |
+          # Create as draft: `release: published` dispatches must only fire once assets are uploaded.
           gh release create \
             "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
             --repo software-mansion/scarb-nightlies \
-            ${{ !inputs.is_dev && '--latest' || '--latest=false' }} \
+            --draft \
             --title "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
             --notes-file NIGHTLY_RELEASE_NOTES.md
         env:
@@ -263,6 +275,17 @@ jobs:
               "$file" \
               --repo software-mansion/scarb-nightlies
           done
+        env:
+          GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
+          NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG: ${{ needs.prepare.outputs.nightly_tag }}
+
+      - name: Publish GitHub release
+        run: |
+          gh release edit \
+            "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
+            --repo software-mansion/scarb-nightlies \
+            --draft=false \
+            ${{ !inputs.is_dev && '--latest' || '--latest=false' }}
         env:
           GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
           NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG: ${{ needs.prepare.outputs.nightly_tag }}
