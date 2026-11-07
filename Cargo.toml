@@ -199,3 +199,6 @@ strip = "debuginfo"
 opt-level = 3
 
 [patch.crates-io]
+scarb-proc-macro-host = { path = "utils/scarb-proc-macro-host" }
+scarb-proc-macro-server-types = { path = "utils/scarb-proc-macro-server-types" }
+cairo-lang-macro = { path = "plugins/cairo-lang-macro" }
