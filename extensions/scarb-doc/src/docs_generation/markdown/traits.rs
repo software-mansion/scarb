@@ -864,15 +864,19 @@ fn generate_markdown_from_item_data(
     Ok(markdown)
 }
 
-/// Returns true when the link destination starts with a URL scheme, such as `https:` or `mailto:`.
-/// Item paths such as `helper` or `super::Item` do not.
+/// URL schemes that are kept as links in the generated docs.
+const EXTERNAL_URL_SCHEMES: &[&str] = &["http", "https", "mailto"];
+
+/// Returns true when the link destination starts with an allowed URL scheme,
+/// such as `https:` or `mailto:`.
+/// Item paths such as `helper` or `super::Item` and unknown schemes such as `foo:bar` do not.
 fn is_external_url(destination: &str) -> bool {
     let Some((scheme, rest)) = destination.split_once(':') else {
         return false;
     };
-    let mut chars = scheme.chars();
-    chars.next().is_some_and(|c| c.is_ascii_alphabetic())
-        && chars.all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.'))
+    EXTERNAL_URL_SCHEMES
+        .iter()
+        .any(|allowed| scheme.eq_ignore_ascii_case(allowed))
         && !rest.starts_with(':')
 }
 
@@ -968,5 +972,21 @@ impl<'db> WithItemDataCommon for SubItemData<'db> {
     }
     fn code_blocks(&self) -> Vec<CodeBlock> {
         self.code_blocks.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_external_url;
+
+    #[test]
+    fn external_url_schemes() {
+        assert!(is_external_url("https://docs.swmansion.com/scarb"));
+        assert!(is_external_url("HTTP://example.com"));
+        assert!(is_external_url("mailto:someone@example.com"));
+        assert!(!is_external_url("foo:bar"));
+        assert!(!is_external_url("helper"));
+        assert!(!is_external_url("super::Item"));
+        assert!(!is_external_url("http::Item"));
     }
 }
