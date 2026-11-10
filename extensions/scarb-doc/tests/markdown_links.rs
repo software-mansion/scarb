@@ -1,6 +1,7 @@
 //! Run `UPDATE_EXPECT=1 cargo test` to fix the tests.
 
 use assert_fs::TempDir;
+use indoc::indoc;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 mod markdown_target;
 use markdown_target::MarkdownTargetChecker;
@@ -37,4 +38,51 @@ fn test_markdown_linked_items() {
         )
         .expected(EXPECTED_LINKED_ITEMS)
         .assert_all_files_match();
+}
+
+#[test]
+fn test_markdown_external_links() {
+    let root_dir = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+            /// Uses the [`shell` package](https://scarbs.xyz/packages/shell) and [Scarb](https://docs.swmansion.com/scarb).
+            /// See also [the Scarb docs][scarb_docs] and [the helper][helper_ref].
+            ///
+            /// [scarb_docs]: https://docs.swmansion.com/scarb/docs
+            /// [helper_ref]: helper
+            pub fn main() {}
+
+            pub fn helper() {}
+        "#})
+        .build(&root_dir);
+
+    Scarb::quick_command()
+        .arg("doc")
+        .arg("--disable-remote-linking")
+        .current_dir(&root_dir)
+        .assert()
+        .success();
+
+    let doc_dir = root_dir.path().join("target/doc/hello_world/src");
+    let expected = [
+        "[`shell` package](https://scarbs.xyz/packages/shell)",
+        "[Scarb](https://docs.swmansion.com/scarb)",
+        "[the Scarb docs](https://docs.swmansion.com/scarb/docs)",
+    ];
+    for file in ["hello_world-main.md", "hello_world.md"] {
+        let content = std::fs::read_to_string(doc_dir.join(file)).unwrap();
+        for link in expected {
+            assert!(
+                content.contains(link),
+                "`{link}` not found in {file}:\n{content}"
+            );
+        }
+        // A reference link to an item path is not resolved, so it stays plain text.
+        assert!(
+            content.contains("the helper") && !content.contains("](helper)"),
+            "`the helper` is not plain text in {file}:\n{content}"
+        );
+    }
 }

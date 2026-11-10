@@ -225,6 +225,11 @@ pub trait MarkdownDocItem: DocItem {
             && let Some(file_path) = context.resolve_markdown_file_path_from_item(resolved_id)
         {
             format!("[{}]({file_path})", link.label.clone(),)
+        } else if link.md_link.dest_text.is_none()
+            && let Some(path) = &link.path
+            && is_external_url(path)
+        {
+            format!("[{}]({path})", link.label)
         } else {
             link.label.clone()
         }
@@ -859,6 +864,22 @@ fn generate_markdown_from_item_data(
     Ok(markdown)
 }
 
+/// URL schemes that are kept as links in the generated docs.
+const EXTERNAL_URL_SCHEMES: &[&str] = &["http", "https", "mailto"];
+
+/// Returns true when the link destination starts with an allowed URL scheme,
+/// such as `https:` or `mailto:`.
+/// Item paths such as `helper` or `super::Item` and unknown schemes such as `foo:bar` do not.
+fn is_external_url(destination: &str) -> bool {
+    let Some((scheme, rest)) = destination.split_once(':') else {
+        return false;
+    };
+    EXTERNAL_URL_SCHEMES
+        .iter()
+        .any(|allowed| scheme.eq_ignore_ascii_case(allowed))
+        && !rest.starts_with(':')
+}
+
 fn get_linked_path(full_path: &str, files_extension: &str) -> String {
     let path_items = full_path.split("::").collect::<Vec<_>>();
     let mut result: Vec<String> = Vec::new();
@@ -951,5 +972,21 @@ impl<'db> WithItemDataCommon for SubItemData<'db> {
     }
     fn code_blocks(&self) -> Vec<CodeBlock> {
         self.code_blocks.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_external_url;
+
+    #[test]
+    fn external_url_schemes() {
+        assert!(is_external_url("https://docs.swmansion.com/scarb"));
+        assert!(is_external_url("HTTP://example.com"));
+        assert!(is_external_url("mailto:someone@example.com"));
+        assert!(!is_external_url("foo:bar"));
+        assert!(!is_external_url("helper"));
+        assert!(!is_external_url("super::Item"));
+        assert!(!is_external_url("http::Item"));
     }
 }
