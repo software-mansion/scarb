@@ -462,7 +462,7 @@ fn diags_can_be_mapped_to_call_site_correctly() {
                      ^^^^^^^^^^^^^^^^^^^^^
             note: this error originates in the derive macro: `ImproperDeriveMacroV2`
 
-            error[E1028]: Consecutive comparison operators are not allowed: '<' followed by '>'
+            error[E1028]: Consecutive comparison operators are not allowed: '<' followed by '>'. Did you mean to use `::<` for generic arguments?
              --> [..]lib.cairo:1:10
             #[derive(ImproperDeriveMacroV2)]
                      ^^^^^^^^^^^^^^^^^^^^^
