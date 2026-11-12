@@ -1,4 +1,4 @@
-use crate::compiler::plugin::proc_macro::v2::host::span_utils::move_spans_by_offset;
+use crate::span_utils::move_spans_by_offset;
 use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
 use cairo_lang_filesystem::span::{TextSpan as CairoTextSpan, TextWidth};
 use cairo_lang_macro::{Diagnostic, TextOffset, TextSpan, Token, TokenStream, TokenTree};

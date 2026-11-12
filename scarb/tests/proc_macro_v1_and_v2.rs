@@ -160,7 +160,7 @@ fn v1_and_v2_macros_cannot_duplicate_expansions() {
             [..]Compiling bar v1.0.0 ([..]Scarb.toml)
             [..]Compiling foo v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: duplicate expansions defined for procedural macros: some (bar v1.0.0 ([..]Scarb.toml) and foo v1.0.0 ([..]Scarb.toml))
+            error: duplicate expansions defined for procedural macros: some (bar v1.0.0 ([..]Scarb.toml), foo v1.0.0 ([..]Scarb.toml))
             error: could not compile `hello` due to [..] previous error[..]
         "#});
 }

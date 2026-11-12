@@ -15,6 +15,7 @@ members = [
     "plugins/cairo-lang-quote",
     "utils/create-output-dir",
     "utils/scarb-build-metadata",
+    "utils/scarb-proc-macro-host",
     "utils/scarb-proc-macro-server-types",
     "utils/scarb-stable-hash",
     "utils/scarb-test-support",
@@ -63,6 +64,7 @@ cairo-lang-executable-plugin = "2.21.0"
 cairo-lang-filesystem = "2.21.0"
 cairo-lang-formatter = "2.21.0"
 cairo-lang-lowering = "2.21.0"
+cairo-lang-macro = { path = "plugins/cairo-lang-macro", version = "0.2.2" }
 cairo-lang-macro-v1 = { version = "0.1", package = "cairo-lang-macro", features = ["serde"] }
 cairo-lang-parser = "2.21.0"
 cairo-lang-plugins = "2.21.0"
@@ -143,7 +145,7 @@ sha2 = "0.11"
 shell-words = "1"
 similar-asserts = { version = "2", features = ["serde"] }
 smallvec = "1"
-smol_str = { version = "=0.3.6", features = ["serde"] }
+smol_str = { version = "=0.3.7", features = ["serde"] }
 snapbox = { version = "1.2", features = ["cmd", "path", "diff"] }
 starknet-core = "0.16.0"
 stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "467d5c6d" }
@@ -169,7 +171,7 @@ trybuild = "1"
 typed-builder = ">=0.17"
 typetag = "0.2"
 url = { version = "2", features = ["serde"] }
-uv-once-map = "0"
+uv-once-map = "=0.0.72"
 walkdir = "2"
 wasmtime = "39"
 wasmtime-wasi = "39"

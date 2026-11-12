@@ -1,6 +1,6 @@
 use crate::compiler::plugin::proc_macro;
-use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
 use crate::compiler::plugin::proc_macro::ffi::SharedPluginLibrary;
+use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind};
 use crate::compiler::plugin::proc_macro::{ExpansionQuery, ProcMacroPathsProvider};
 use crate::core::{Package, PackageId};
 use anyhow::{Context, Result, anyhow};
@@ -107,15 +107,6 @@ impl ProcMacroInstance {
             .iter()
             .filter(|e| e.kind == ExpansionKind::Derive)
             .map(|e| e.cairo_name.clone())
-            .map(Into::into)
-            .collect()
-    }
-
-    pub fn declared_derives_snake_case(&self) -> Vec<String> {
-        self.get_expansions()
-            .iter()
-            .filter(|e| e.kind == ExpansionKind::Derive)
-            .map(|e| e.expansion_name.clone())
             .map(Into::into)
             .collect()
     }
