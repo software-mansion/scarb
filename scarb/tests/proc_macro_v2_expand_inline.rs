@@ -464,7 +464,6 @@ fn module_level_inline_macro_with_args() {
                 result
             }
             "##})
-        .add_dep(r#"indoc = "*""#)
         .build(&t);
 
     let project = temp.child("hello");

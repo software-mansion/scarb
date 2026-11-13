@@ -14,8 +14,15 @@ pub fn cargo_bin(name: &str) -> PathBuf {
 /// Makes assumptions about Cargo.
 fn lookup_cargo_bin(name: &str) -> PathBuf {
     let file_name = format!("{}{}", name, std::env::consts::EXE_SUFFIX);
-    let target_dir = target_dir();
-    target_dir.join(file_name)
+    // Cargo places binaries in the profile directory (e.g. `target/debug`). Test executables live
+    // in `target/debug/deps` up to Rust 1.99, and in `target/debug/build/<pkg>/<hash>/out` since
+    // Rust 1.100, so walk up from the test executable until the binary is found.
+    let exe = env::current_exe().unwrap();
+    exe.ancestors()
+        .skip(1)
+        .map(|dir| dir.join(&file_name))
+        .find(|path| path.is_file())
+        .unwrap_or_else(|| target_dir().join(file_name))
 }
 
 // Adapted from
