@@ -88,7 +88,9 @@ jobs:
         with:
           # Credentials are persisted so this job can push the nightly branch.
           persist-credentials: true # zizmor: ignore[artipacked]
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
 
       - name: Configure Git for committing
         run: |
