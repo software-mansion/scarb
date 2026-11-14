@@ -225,12 +225,15 @@ jobs:
           mv artifacts-dl/checksums/* artifacts/
           ls -lh artifacts/
 
-      - name: Create GitHub release
+      # The release is created as a draft and published only after all assets are uploaded.
+      # Publishing triggers `release: published` in scarb-nightlies, which dispatches
+      # downstream checks (e.g. CairoLS) that download the release assets immediately.
+      - name: Create GitHub release draft
         run: |
           gh release create \
             "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
             --repo software-mansion/scarb-nightlies \
-            ${{ !inputs.is_dev && '--latest' || '--latest=false' }} \
+            --draft \
             --title "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
             --notes-file NIGHTLY_RELEASE_NOTES.md
         env:
@@ -263,6 +266,17 @@ jobs:
               "$file" \
               --repo software-mansion/scarb-nightlies
           done
+        env:
+          GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
+          NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG: ${{ needs.prepare.outputs.nightly_tag }}
+
+      - name: Publish GitHub release
+        run: |
+          gh release edit \
+            "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
+            --repo software-mansion/scarb-nightlies \
+            --draft=false \
+            ${{ !inputs.is_dev && '--latest' || '--latest=false' }}
         env:
           GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
           NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG: ${{ needs.prepare.outputs.nightly_tag }}
