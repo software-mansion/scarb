@@ -1,4 +1,4 @@
-use cairo_lang_casm::hints::{Hint, StarknetHint};
+use cairo_lang_casm::hints::{CoreHint, CoreHintBase, Hint, StarknetHint};
 use cairo_lang_runner::casm_run::{
     MemBuffer, cell_ref_to_relocatable, extract_relocatable, vm_get_range,
 };
@@ -19,6 +19,8 @@ use std::sync::Arc;
 pub struct ExecuteHintProcessor<'a> {
     pub cairo_hint_processor: CairoHintProcessor<'a>,
     pub oracle_hint_service: OracleHintService,
+    /// Skip `print!` output of the Cairo program, used when the UI is quiet.
+    pub quiet: bool,
 }
 
 impl<'a> HintProcessorLogic for ExecuteHintProcessor<'a> {
@@ -28,6 +30,13 @@ impl<'a> HintProcessorLogic for ExecuteHintProcessor<'a> {
         exec_scopes: &mut ExecutionScopes,
         hint_data: &Box<dyn Any>,
     ) -> Result<(), HintError> {
+        if self.quiet
+            && let Some(Hint::Core(CoreHintBase::Core(CoreHint::DebugPrint { .. }))) =
+                hint_data.downcast_ref::<Hint>()
+        {
+            return Ok(());
+        }
+
         if let Some(Hint::Starknet(StarknetHint::Cheatcode {
             selector,
             input_start,
