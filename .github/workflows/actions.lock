@@ -58,7 +58,6 @@ workflows:
         - 'actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c'
     '.github/workflows/verify-lockfile.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
-        - 'actions/checkout@v7.0.1'
     '.github/workflows/website-deploy.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
         - 'actions/configure-pages@v6'
@@ -70,11 +69,6 @@ workflows:
         - 'zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd'
 dependencies:
     'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1':
-        ref: 'v7.0.1'
-        commit: 'sha1-3d3c42e5aac5ba805825da76410c181273ba90b1'
-        owner_id: 44036562
-        repo_id: 197814629
-    'actions/checkout@v7.0.1':
         ref: 'v7.0.1'
         commit: 'sha1-3d3c42e5aac5ba805825da76410c181273ba90b1'
         owner_id: 44036562
@@ -133,7 +127,7 @@ dependencies:
         repo_id: 420777439
     'dtolnay/rust-toolchain@master':
         ref: 'master'
-        commit: 'sha1-683b588c487a69d01f6c6ddf40f036ff682cc2c8'
+        commit: 'sha1-df2a88e9fe4098bad09cb42c3dec7187f15861fc'
         owner_id: 1940490
         repo_id: 260749683
     'foundry-rs/setup-snfoundry@v6':
