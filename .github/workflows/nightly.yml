@@ -281,6 +281,25 @@ jobs:
           GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
           NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG: ${{ needs.prepare.outputs.nightly_tag }}
 
+      # Do not leave a dangling draft release behind if uploading or publishing failed.
+      # Only drafts are deleted, so a rerun can never remove an already published release.
+      - name: Delete draft release on failure
+        if: failure()
+        run: |
+          is_draft=$(gh release view "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
+            --repo software-mansion/scarb-nightlies \
+            --json isDraft --jq .isDraft 2>/dev/null || echo "missing")
+          if [[ "$is_draft" == "true" ]]; then
+            gh release delete "${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG}" \
+              --repo software-mansion/scarb-nightlies \
+              --yes
+          else
+            echo "Release ${NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG} is not a draft (${is_draft}), not deleting."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
+          NEEDS_PREPARE_OUTPUTS_NIGHTLY_TAG: ${{ needs.prepare.outputs.nightly_tag }}
+
   cleanup:
     runs-on: ubuntu-latest
     if: always() && needs.prepare.result == 'success'
