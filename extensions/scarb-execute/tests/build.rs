@@ -358,6 +358,27 @@ fn can_set_ui_verbosity() {
 }
 
 #[test]
+fn quiet_hides_program_prints() {
+    let t = TempDir::new().unwrap();
+    executable_project_builder()
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                println!("hello world");
+                42
+            }
+        "#})
+        .build(&t);
+    Scarb::quick_command()
+        .arg("execute")
+        .arg("--quiet")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(Data::from("").raw());
+}
+
+#[test]
 fn maintains_parent_verbosity() {
     let t = build_executable_project();
     Scarb::quick_command()

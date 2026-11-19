@@ -34,9 +34,9 @@ use scarb_fs_utils::canonicalize_utf8;
 use scarb_fs_utils::{MANIFEST_FILE_NAME, find_manifest_path};
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
 use scarb_oracle_hint_service::OracleHintService;
-use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars, WithManifestPath};
 use scarb_ui::components::Status;
+use scarb_ui::{Ui, Verbosity};
 use serde_json::{Value, json};
 use std::env;
 use std::fs;
@@ -161,6 +161,7 @@ fn execute_standalone(
     executable: &Executable,
     cairo_run_config: &CairoRunConfig,
     arguments: ProgramArguments,
+    quiet: bool,
 ) -> Result<(CairoRunner, Box<dyn ExecutionResourcesSource>)> {
     let data = executable
         .program
@@ -205,6 +206,7 @@ fn execute_standalone(
     let mut hint_processor = ExecuteHintProcessor {
         cairo_hint_processor,
         oracle_hint_service: OracleHintService::new(Some(executable_path.as_std_path())),
+        quiet,
     };
 
     let runner =
@@ -326,6 +328,7 @@ pub fn execute(
             &executable,
             &cairo_run_config,
             args.run.arguments.clone(),
+            ui.verbosity() == Verbosity::Quiet,
         )
     }?;
 
