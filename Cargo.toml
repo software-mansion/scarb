@@ -200,6 +200,5 @@ opt-level = 3
 
 [patch.crates-io]
 cairo-lang-macro = { path = "plugins/cairo-lang-macro" }
-cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "7e9eed72318163ee2743ee308410d2e8e6cf5c63" }
 scarb-proc-macro-host = { path = "utils/scarb-proc-macro-host" }
 scarb-proc-macro-server-types = { path = "utils/scarb-proc-macro-server-types" }

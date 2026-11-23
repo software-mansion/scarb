@@ -1588,7 +1588,8 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.22.0-rc.0"
-source = "git+https://github.com/software-mansion/cairols?rev=7e9eed72318163ee2743ee308410d2e8e6cf5c63#7e9eed72318163ee2743ee308410d2e8e6cf5c63"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51f2ed94111c3f5048d5ba9b24195c2b524c0f87ba17b2ad5331d12d8f83da4e"
 dependencies = [
  "anyhow",
  "bincode 2.0.1",
