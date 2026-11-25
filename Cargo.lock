@@ -824,9 +824,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-casm"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7204939a7211a6a938d9579c5e42869c354261b34f4aa907e8bea6a415973d77"
+checksum = "81a6d3ea3da13f3453a24203885be2ab0528ef3e7feac293b0dd53f07792c586"
 dependencies = [
  "cairo-lang-utils",
  "indoc",
@@ -838,9 +838,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-compiler"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9dcbd481823cb5445128a301ca2effe15ae12e7b264b06360480cab2744cc795"
+checksum = "ed1f8444fab7f9063f40b07117fd8d070b1f7d4473875dfa117f3e1709e53bd4"
 dependencies = [
  "anyhow",
  "cairo-lang-defs",
@@ -865,9 +865,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-debug"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cd5d978a06a8a54e0a873a07c0a22bf8871d72a9ccf3e00cd403a19277aa531"
+checksum = "79361fe7d5bc70a7bf4a8e3e5fa21a92d228df92244ea4d51900c90101940eb0"
 dependencies = [
  "cairo-lang-utils",
  "id-arena",
@@ -876,9 +876,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-defs"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c55dbe2aca2d80d72d9ed4f52b52c230fa1b6cecf446ec3e672ff003e05e4c78"
+checksum = "e583c270d8d142a83689af7fc7723724ae9f5ccb9959a66ed06387501ae8a418"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-diagnostics",
@@ -898,9 +898,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-diagnostics"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "601bb78da32365d092570d7c5217c089a11f350ac904b6f531ec8dd2aed0371d"
+checksum = "43f72c1f120b4df45e4df8d02141a89f769c0b399900cd7ee197c6a532d07ec3"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
@@ -912,9 +912,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-doc"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b2bf9097b1a9ba78ccc4854fc8ce60d3ecd6624efbd44358d4ef4ccee4fcc32"
+checksum = "775273d84e77ba63f0c8da1b9fda4b8fa59bfdbfe61c675199efbdcbf1fe04ec"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -932,9 +932,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-eq-solver"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed7dea64242399a89d9d603d51def6af7328a76cf439febf164c3dc48e6fb6b5"
+checksum = "1a697e46d66bb02cf9fc8faf5ecaeca924cd96332514bf2f21a4d8fa4813c607"
 dependencies = [
  "cairo-lang-utils",
  "good_lp",
@@ -942,9 +942,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-executable"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "417516601877245b6552520040b297d2d3d036bdeb21995c3f3d967f0fc6fd67"
+checksum = "43f2abd1ab0570d845615acc9aaa7974ba0beb02a63709bc4219b75d9618c97f"
 dependencies = [
  "anyhow",
  "cairo-lang-casm",
@@ -967,9 +967,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-executable-plugin"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b5e38f0321dfb51d7dfaef68cb054a49d4a36cf445ab3515112ed7439d8856b"
+checksum = "2ea260637796a177a0132ff1bd715021a1f81efd5aaba9eae44d0e5f583fc322"
 dependencies = [
  "cairo-lang-defs",
  "cairo-lang-filesystem",
@@ -982,9 +982,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-execute-utils"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c670447df697e389fbc2da54bd53bb107b0449e96a2473a284b38f40cef98b41"
+checksum = "6772bdc4b4f5790c71c8f6dbf307f19bd31c1d22c91ff310656271502b499d3a"
 dependencies = [
  "anyhow",
  "cairo-lang-casm",
@@ -998,9 +998,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-filesystem"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5715ef7c7734a2efe1c0015e33918de7c8375a848ed6957edafb6d66ab7df71f"
+checksum = "c7de006af0c493e395e643212e87b41521c1488c9ad37f0648833efd6fadbd6c"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-proc-macros",
@@ -1016,9 +1016,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-formatter"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a2449e45478e228737f7fcde6bef42c58b4d2e362e6f56923ebd722a49ad932"
+checksum = "e1a7a84558ec2839830d0e1c88e7cb54dd8d56bb7509fcbf4fd3ebf7bd1cc021"
 dependencies = [
  "anyhow",
  "cairo-lang-diagnostics",
@@ -1036,9 +1036,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-lowering"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c5b30f3175e4d4ffa02bbb977a202deb9f8f7b48d0dd8e5cdd1baf480b9fd4e"
+checksum = "b5dee37b95b4cb2f8136e8d74960978d83a8589af7ea6e25aa33dd298efbfc19"
 dependencies = [
  "assert_matches",
  "cairo-lang-debug",
@@ -1122,9 +1122,9 @@ version = "2.0.0"
 
 [[package]]
 name = "cairo-lang-parser"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "851cccd9387c3af7e51309868d1a2e692f14658a7a32dadf01e3155bc73dfa16"
+checksum = "280b8f384ea4eb51455557688f9c4ea8bd298a28d24f21d271cf7cc1d6d67ea3"
 dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
@@ -1142,9 +1142,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-plugins"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c02bc9e2f2bf92360e376e2704cc43e224c7664ae81cb95f7450c5a27b5d898b"
+checksum = "2c08e7044466b946edc7661cb342cdae4717eb94d3bfeaf29b29372997151c5c"
 dependencies = [
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -1166,9 +1166,9 @@ checksum = "123ac0ecadf31bacae77436d72b88fa9caef2b8e92c89ce63a125ae911a12fae"
 
 [[package]]
 name = "cairo-lang-proc-macros"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "888ac301b1d82c782d9378a55c1160f1c67800fecb3cc70d587dff2c0337f599"
+checksum = "c4d95b9b65a54887d236bf626e51a0c37dec5d5da8a0c87ee90991cadbe203bb"
 dependencies = [
  "cairo-lang-debug",
  "proc-macro2",
@@ -1179,9 +1179,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-project"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fdccdc996bdafe9a5811d7577ebc7c3ed6ac2bf69a5bfae2a0bf7b7b0d8eec8f"
+checksum = "a5c1022269980ba5803e26511678d890bb793574ed9f999585609f19302163a9"
 dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-utils",
@@ -1202,9 +1202,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-runnable-utils"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58d4366fe7b18cee48bee6e08983f75983349c5fc2cbb54b5c78a65a9972a0c5"
+checksum = "8be10dba34ddae0d6df3ebefd8ea5efeaa6e023cae568975043e7de66b6b7eea"
 dependencies = [
  "cairo-lang-casm",
  "cairo-lang-sierra",
@@ -1219,9 +1219,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-runner"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "557673df826ced2bac27df22bc3f10f55839a7b57662c917af7b2628c66b3b79"
+checksum = "297e0241de081043fff0fd33d838c4514fc2d2dde355eff5683f720192391549"
 dependencies = [
  "cairo-lang-casm",
  "cairo-lang-lowering",
@@ -1249,9 +1249,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-semantic"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4da6a110ae858a56c291e7a9de6835b959c123441c7dc87205901924317fd88a"
+checksum = "c93e4d76691a84d0c553fee1b6f3e395c294fa8ca85a03cbdd7190e5a30b6b5e"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1279,9 +1279,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c49054751a9b28db2fcc924ba16c6b785d6f8c487d7b0ffb897d1507858d0d0c"
+checksum = "2342aafd50c7c36ae3898640891e309e1cdf7d2a04c2e526659cee77d42e9894"
 dependencies = [
  "anyhow",
  "cairo-lang-utils",
@@ -1305,9 +1305,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-ap-change"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5def4861dc3498bee667489792d8933a1860c24462e3036c6c8c75a2403637c"
+checksum = "c5e8ba1b3cab3edea7384160271afae587bfa0db54d2497d749765eeebec3a30"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
@@ -1321,9 +1321,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-gas"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9820758e234e82178935c673e685596c048ff7cd1002c50c0854d2c63a00eeab"
+checksum = "ccecdb8adf3f54735804245af27e5157360c041a21b4bebf24f06b7092f0abbf"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
@@ -1337,9 +1337,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-generator"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41210f60c77b9e96b1269e66b96cbbfb0a2637dabb70e6a78820a8c6c92afe47"
+checksum = "0c5782de921d2cde6c208fa81b9de179b0175b13c94255b9090105638108818a"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1363,9 +1363,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-to-casm"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94000296e67793400d25d5b28e96cce798b02b2fc622ab64dc938184778699c8"
+checksum = "0885c41fee02d4df5ac227cad06c3f7b14cba41c86bf1c155c5a4b646f39e78d"
 dependencies = [
  "assert_matches",
  "cairo-lang-casm",
@@ -1384,9 +1384,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-type-size"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a94e9532e497f15f8f7f0b25a771d6c67376ecfa4fc16d6e07dd1b314e57cb0e"
+checksum = "f5a421a7be094b49a399fce6bb43b333f62f39cc141ee13406e34008bc19ec59"
 dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-utils",
@@ -1394,9 +1394,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-starknet"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ef1198190147b260d0ba1dfb127809c2d63d2fea0f266f74e850e47d6ec06a5"
+checksum = "9db5d1babce6090cfc4864b0fcf83b22a44cd3e93401efda3f345392293a52a8"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1427,9 +1427,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-starknet-classes"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ae2cfadd7f3fe87eec0f6a0613c221a5a996601b6f0d09f9f0aa41a42a102a6"
+checksum = "33da80d4e34febfc31451947be469a6c931145c71b4ef2dfdb1a441f492169f5"
 dependencies = [
  "cairo-lang-casm",
  "cairo-lang-sierra",
@@ -1451,9 +1451,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-syntax"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee093a267dfaf8fcead071f3d143e440ef00608895cb5df7f3230c8a1ce129ea"
+checksum = "2689fb5429a405a75920f73a319e3e0f54803f5f6a3448f05e5add06fac0505c"
 dependencies = [
  "assert_matches",
  "cairo-lang-debug",
@@ -1471,9 +1471,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-syntax-codegen"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63151aa9248bd89a9a4f0c58ec52296f7560bf74381a3173e8f1ed1b60543f59"
+checksum = "3d38561797fc556a909176cab97a167656a264dabf9ef54c735eaf29066187de"
 dependencies = [
  "genco",
  "xshell",
@@ -1481,9 +1481,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-test-plugin"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd152e0bc8afad9308c4db21e99c38a290ec9eca75b8836695e2736d97483a3c"
+checksum = "15b13c553e64d1272aed93ea28a693b95396fe88ddd4700a6e109f9707a36964"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1510,9 +1510,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-test-runner"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "013c7bbbea9e85b344d4d2cf44a00bcbefacad3cb3d5ba0b88f54cf4a28db3ad"
+checksum = "a25c2e2e02b3b57223461cefc7811008cf04a0c97367ae7946ad38620ace5c33"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1534,9 +1534,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-test-utils"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5db49a18fa79e094471661e75283c7cc83a305a58a850215338e5a1269fd8dfc"
+checksum = "680931d6e23b82a2d95ee91d7391cadd3070a9ea86383750af61fbb0099468f2"
 dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-proc-macros",
@@ -1548,9 +1548,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-utils"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "703ba689503d165e6db17ec810d406c09935dd945073038c3f3cb4ce8b7e5e2d"
+checksum = "a8c64cae4b7a4c7643e2af8a0449655e24de35c8e3efbb5f15aed6c6fb60cbbd"
 dependencies = [
  "hashbrown 0.17.0",
  "indexmap",
@@ -1569,9 +1569,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-language-common"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "143a5cad9744f6280f303677780e98ae5abc42ba2a8166e6a5617342abf62801"
+checksum = "23bc1e1f617b5b349f21a29bd96fc53c6b8635df530e12f9a462e7d6808509ea"
 dependencies = [
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -1587,9 +1587,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-language-server"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8171a5087f396278bfdc449fedf5cc0bc02d4b6b3a8e4cbe4d172438045f602f"
+checksum = "22a39a2129556823e6917bf90898db6e720e5e36cfded0154cec4a5c0c30df2e"
 dependencies = [
  "anyhow",
  "bincode 2.0.1",
@@ -1648,9 +1648,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lint"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab1dbeac7779e8ae205a64168b7ea830f8adca1da5b818fc4090597701f10c78"
+checksum = "db55a69adcd192f86243527ef7e6d82b131712cea9df8e48a29b7d4cf797b792"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -7005,7 +7005,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7126,7 +7126,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-build-metadata"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 dependencies = [
  "cargo_metadata",
  "semver 1.0.28",
@@ -7134,7 +7134,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 dependencies = [
  "assert_fs",
  "cairo-language-server",
@@ -7146,7 +7146,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-test"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7172,7 +7172,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-doc"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7212,7 +7212,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-execute"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7249,7 +7249,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-extensions-cli"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 dependencies = [
  "anyhow",
  "cairo-air",
@@ -7303,7 +7303,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-mdbook"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7396,7 +7396,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-prove"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7484,7 +7484,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-verify"
-version = "2.22.0-rc.1"
+version = "2.22.0"
 dependencies = [
  "anyhow",
  "assert_fs",
