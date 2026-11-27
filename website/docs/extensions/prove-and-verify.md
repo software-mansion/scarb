@@ -38,7 +38,13 @@ The proof for the trace files inside the execution folder will be generated, and
 To verify the proof, you can run:
 
 ```shell
-scarb verify <path to proof json file>
+scarb verify --proof-file <path to proof json file>
+```
+
+Alternatively, if you have just run `scarb prove` in the same package, you can verify by execution ID:
+
+```shell
+scarb verify --execution-id <index of the relevant execution>
 ```
 
 ## Performance
