@@ -53,6 +53,65 @@ fn warn_on_unknown_package_field() {
 }
 
 #[test]
+fn warn_only_on_unknown_target_defaults_field() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            edition = "2024_07"
+
+            [target-defaults.test]
+            build-external-contracts = ["hello::Foo"]
+            build-externel-contracts = ["hello::Foo"]
+        "#})
+        .unwrap();
+    t.child("src/lib.cairo").write_str("").unwrap();
+
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(
+            "warn: unknown manifest field `target-defaults.test.build-externel-contracts` ([..]/Scarb.toml:8:1)\n",
+        );
+}
+
+#[test]
+fn warn_only_on_unknown_inherited_target_defaults_field() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            edition = "2024_07"
+
+            [workspace]
+
+            [workspace.target-defaults.test]
+            build-external-contracts = ["hello::Foo"]
+
+            [target-defaults.test]
+            workspace = true
+            typo_field = "oops"
+        "#})
+        .unwrap();
+    t.child("src/lib.cairo").write_str("").unwrap();
+
+    Scarb::quick_command()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(
+            "warn: unknown manifest field `target-defaults.test.typo_field` ([..]/Scarb.toml:13:1)\n",
+        );
+}
+
+#[test]
 fn no_warn_for_known_tool_and_profile_sections() {
     let t = TempDir::new().unwrap();
     t.child("Scarb.toml")

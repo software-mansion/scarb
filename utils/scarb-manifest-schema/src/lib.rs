@@ -62,16 +62,21 @@ fn find_unknown_fields_in_json(schema: &Value, json_value: &Value) -> Result<Vec
     let mut unknown: Vec<FieldPath> = Vec::new();
 
     for error in validator.iter_errors(json_value) {
-        collect_unknown_fields_from_error(&error, &mut unknown);
+        for path in unknown_fields_from_error(&error) {
+            push_unique(&mut unknown, path);
+        }
     }
 
     Ok(unknown)
 }
 
-fn collect_unknown_fields_from_error(
-    error: &jsonschema::ValidationError<'_>,
-    unknown: &mut Vec<FieldPath>,
-) {
+fn push_unique(paths: &mut Vec<FieldPath>, path: FieldPath) {
+    if !paths.contains(&path) {
+        paths.push(path);
+    }
+}
+
+fn unknown_fields_from_error(error: &jsonschema::ValidationError<'_>) -> Vec<FieldPath> {
     match error.kind() {
         jsonschema::error::ValidationErrorKind::AdditionalProperties { unexpected }
         | jsonschema::error::ValidationErrorKind::UnevaluatedProperties { unexpected } => {
@@ -82,28 +87,63 @@ fn collect_unknown_fields_from_error(
                 .map(|seg| seg.to_string())
                 .collect();
 
+            let mut unknown = Vec::new();
             for field in unexpected {
                 let mut path = base.clone();
                 path.push(field.clone());
-                if !unknown.contains(&path) {
-                    unknown.push(path);
-                }
+                push_unique(&mut unknown, path);
             }
+            unknown
         }
         jsonschema::error::ValidationErrorKind::AnyOf { context }
         | jsonschema::error::ValidationErrorKind::OneOfMultipleValid { context }
         | jsonschema::error::ValidationErrorKind::OneOfNotValid { context } => {
-            for branch_errors in context {
-                for nested in branch_errors {
-                    collect_unknown_fields_from_error(nested, unknown);
-                }
-            }
+            unknown_fields_in_all_branches(error, context)
         }
         jsonschema::error::ValidationErrorKind::PropertyNames { error } => {
-            collect_unknown_fields_from_error(error, unknown);
+            unknown_fields_from_error(error)
         }
-        _ => {}
+        _ => Vec::new(),
     }
+}
+
+/// A field is unknown under `anyOf`/`oneOf` only if every branch that accepts the value's type
+/// rejects it. Otherwise, a single typo in a table such as `MaybeWorkspace<T, W>` would also flag
+/// the valid keys of `T` as unknown, because the `W` branch (`{ workspace = true }`) rejects them.
+fn unknown_fields_in_all_branches(
+    error: &jsonschema::ValidationError<'_>,
+    branches: &[Vec<jsonschema::ValidationError<'_>>],
+) -> Vec<FieldPath> {
+    let mut result: Option<Vec<FieldPath>> = None;
+    for branch in branches {
+        // Skip branches that expect a different type for this value (e.g. the string form of a
+        // dependency when the value is a table).
+        let type_mismatch = branch.iter().any(|e| {
+            matches!(
+                e.kind(),
+                jsonschema::error::ValidationErrorKind::Type { .. }
+            ) && e.instance_path() == error.instance_path()
+        });
+        if type_mismatch {
+            continue;
+        }
+
+        let mut branch_unknown = Vec::new();
+        for nested in branch {
+            for path in unknown_fields_from_error(nested) {
+                push_unique(&mut branch_unknown, path);
+            }
+        }
+
+        result = Some(match result {
+            None => branch_unknown,
+            Some(acc) => acc
+                .into_iter()
+                .filter(|path| branch_unknown.contains(path))
+                .collect(),
+        });
+    }
+    result.unwrap_or_default()
 }
 
 /// Traverses the JSON Schema and returns the definition for a specific TOML path, such as `package.dependencies`.
