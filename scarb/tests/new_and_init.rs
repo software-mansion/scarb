@@ -3,11 +3,13 @@ use std::fs;
 
 use assert_fs::prelude::*;
 use indoc::indoc;
+use itertools::Itertools;
 use predicates::prelude::*;
 use toml::{Table, Value};
 
 use scarb::core::TomlManifest;
-use scarb_test_support::command::Scarb;
+use scarb_metadata::Metadata;
+use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::filesystem::path_with_temp_dir;
 use scarb_test_support::fsx::AssertFsUtf8Ext;
 
@@ -492,4 +494,121 @@ fn new_with_starknet_foundry_without_snforge_binary() {
                 
                 You can also create a project without a test runner using the `--test-runner none` flag.
         "#});
+}
+
+#[test]
+fn new_adds_package_to_workspace_members() {
+    let pt = assert_fs::TempDir::new().unwrap();
+    pt.child("Scarb.toml")
+        .write_str(indoc! {r#"
+            [workspace]
+            members = [
+                "first",
+            ]
+
+            [workspace.package]
+            version = "0.1.0"
+        "#})
+        .unwrap();
+    Scarb::quick_command()
+        .args(["new", "first", "--no-vcs"])
+        .env("SCARB_INIT_EMPTY", "true")
+        .current_dir(&pt)
+        .assert()
+        .success();
+
+    Scarb::quick_command()
+        .args(["new", "crates/second", "--no-vcs"])
+        .env("SCARB_INIT_EMPTY", "true")
+        .current_dir(&pt)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            [..]Adding `second` as member of workspace at `[..]`
+            Created `second` package.
+        "#});
+
+    assert_eq!(
+        fs::read_to_string(pt.child("Scarb.toml")).unwrap(),
+        indoc! {r#"
+            [workspace]
+            members = [
+                "first",
+                "crates/second",
+            ]
+
+            [workspace.package]
+            version = "0.1.0"
+        "#}
+    );
+
+    let metadata = Scarb::quick_command()
+        .args(["--json", "metadata", "--format-version=1"])
+        .current_dir(&pt)
+        .stdout_json::<Metadata>();
+    let members = metadata
+        .workspace
+        .members
+        .iter()
+        .map(|id| id.repr.split_whitespace().next().unwrap().to_string())
+        .sorted()
+        .collect::<Vec<_>>();
+    assert_eq!(members, vec!["first", "second"]);
+}
+
+#[test]
+fn init_adds_package_to_workspace_members() {
+    let pt = assert_fs::TempDir::new().unwrap();
+    pt.child("Scarb.toml")
+        .write_str(indoc! {r#"
+            [workspace]
+            members = ["first"]
+        "#})
+        .unwrap();
+    let t = pt.child("second");
+    t.create_dir_all().unwrap();
+
+    Scarb::quick_command()
+        .args(["init", "--no-vcs"])
+        .env("SCARB_INIT_EMPTY", "true")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            [..]Adding `second` as member of workspace at `[..]`
+            Created package.
+        "#});
+
+    assert_eq!(
+        fs::read_to_string(pt.child("Scarb.toml")).unwrap(),
+        indoc! {r#"
+            [workspace]
+            members = ["first", "second"]
+        "#}
+    );
+}
+
+#[test]
+fn new_does_not_add_package_matched_by_workspace_glob() {
+    let pt = assert_fs::TempDir::new().unwrap();
+    let manifest = indoc! {r#"
+        [workspace]
+        members = ["crates/*"]
+    "#};
+    pt.child("Scarb.toml").write_str(manifest).unwrap();
+
+    Scarb::quick_command()
+        .args(["new", "crates/hello", "--no-vcs"])
+        .env("SCARB_INIT_EMPTY", "true")
+        .current_dir(&pt)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            Created `hello` package.
+        "#});
+
+    assert_eq!(
+        fs::read_to_string(pt.child("Scarb.toml")).unwrap(),
+        manifest
+    );
 }

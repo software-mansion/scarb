@@ -3,7 +3,10 @@ use cairo_lang_filesystem::db::Edition;
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
+use scarb_ui::components::Status;
 use std::collections::HashMap;
+use std::str::FromStr;
+use toml_edit::{Array, DocumentMut, Item, Value, value};
 use which::which;
 
 use crate::core::{Config, PackageName, edition_variant};
@@ -151,6 +154,14 @@ fn mk(
 
     template.materialize(&canonical_path)?;
 
+    if let Err(err) = add_to_workspace_members(&canonical_path, &name, config) {
+        config.ui().warn(formatdoc! {r#"
+            failed to add package `{name}` to workspace members
+
+            {err:?}
+        "#})
+    }
+
     if let Err(err) = ops::read_workspace(&canonical_path.join(MANIFEST_FILE_NAME), config) {
         config.ui().warn(formatdoc! {r#"
             compiling this new package may not work due to invalid workspace configuration
@@ -164,6 +175,91 @@ fn mk(
     }
 
     Ok(())
+}
+
+/// Adds the new package to the `members` list of the parent workspace, if there is one.
+///
+/// Nothing is changed if any of the existing `members` patterns already matches the new package.
+fn add_to_workspace_members(
+    package_path: &Utf8Path,
+    name: &PackageName,
+    config: &Config,
+) -> Result<()> {
+    let Some(workspace_manifest_path) =
+        ops::find_workspace_manifest_path(package_path.join(MANIFEST_FILE_NAME))?
+    else {
+        return Ok(());
+    };
+    let workspace_root = workspace_manifest_path
+        .parent()
+        .expect("manifest path must have a parent");
+    let Ok(relative_path) = package_path.strip_prefix(workspace_root) else {
+        return Ok(());
+    };
+    if relative_path.as_str().is_empty() {
+        return Ok(());
+    }
+    // Workspace members are written with forward slashes on all platforms.
+    let member = relative_path.components().join("/");
+
+    let source = fsx::read_to_string(&workspace_manifest_path)?;
+    let mut doc = DocumentMut::from_str(&source)
+        .with_context(|| format!("failed to parse manifest at: {workspace_manifest_path}"))?;
+    let Some(workspace) = doc.get_mut("workspace").and_then(Item::as_table_like_mut) else {
+        return Ok(());
+    };
+
+    match workspace.get_mut("members") {
+        Some(members) => {
+            let members = members
+                .as_array_mut()
+                .context("`workspace.members` must be an array")?;
+            let already_member = members.iter().filter_map(|m| m.as_str()).any(|pattern| {
+                glob::Pattern::new(workspace_root.join(pattern).as_str())
+                    .map(|pattern| pattern.matches_path(package_path.as_std_path()))
+                    .unwrap_or(false)
+            });
+            if already_member {
+                return Ok(());
+            }
+            push_member(members, &member);
+        }
+        None => {
+            let mut members = Array::new();
+            members.push(member.as_str());
+            workspace.insert("members", value(members));
+        }
+    }
+
+    fsx::write(&workspace_manifest_path, doc.to_string())?;
+    config.ui().print(Status::new(
+        "Adding",
+        &format!("`{name}` as member of workspace at `{workspace_root}`"),
+    ));
+    Ok(())
+}
+
+/// Pushes a new item to the array, keeping the layout of multiline arrays.
+fn push_member(members: &mut Array, member: &str) {
+    let multiline_decor = members
+        .iter()
+        .last()
+        .map(|last| last.decor())
+        .filter(|decor| {
+            decor
+                .prefix()
+                .and_then(|prefix| prefix.as_str())
+                .is_some_and(|prefix| prefix.contains('\n'))
+        })
+        .cloned();
+    match multiline_decor {
+        Some(decor) => {
+            let mut value = Value::from(member);
+            *value.decor_mut() = decor;
+            members.push_formatted(value);
+        }
+        None => members.push(member),
+    }
 }
 
 struct Template {
