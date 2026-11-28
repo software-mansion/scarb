@@ -317,6 +317,76 @@ fn quote_format_macro_supports_comments_in_format_string() {
 }
 
 #[test]
+fn quote_macro_supports_doc_comments() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, quote};
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+          let tokens = quote! {
+            /// Doc comment.
+            ///
+            pub fn foo() -> felt252 {
+              21
+            }
+          };
+          ProcMacroResult::new(tokens)
+        }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            some!();
+
+            #[executable]
+            fn main() -> felt252 {
+                foo()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_command()
+        .arg("expand")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+
+    assert_eq!(
+        project.child("target/dev").files(),
+        vec!["hello.expanded.cairo"]
+    );
+    let expanded = project
+        .child("target/dev/hello.expanded.cairo")
+        .read_to_string();
+    Assert::new().eq(
+        expanded,
+        indoc! {r#"
+            mod hello {
+                #[executable]
+                fn main() -> felt252 {
+                    foo()
+                }
+                /// Doc comment.
+                ///
+                pub fn foo() -> felt252 {
+                    21
+                }
+            }
+        "#},
+    );
+}
+
+#[test]
 fn quote_format_macro_supports_comments_in_token_stream() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");

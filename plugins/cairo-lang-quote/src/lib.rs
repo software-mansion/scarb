@@ -36,8 +36,37 @@ impl QuoteToken {
     }
 }
 
+fn extract_doc_comment(group: &proc_macro2::Group) -> Option<String> {
+    if group.delimiter() != Delimiter::Bracket {
+        return None;
+    }
+    let mut iter = group.stream().into_iter();
+    match (iter.next(), iter.next(), iter.next(), iter.next()) {
+        (
+            Some(TokenTree::Ident(ident)),
+            Some(TokenTree::Punct(punct)),
+            Some(TokenTree::Literal(lit)),
+            None,
+        ) if ident == "doc" && punct.as_char() == '=' => {
+            if let Ok(lit_str) = syn::parse2::<LitStr>(TokenTree::Literal(lit).into()) {
+                Some(lit_str.value())
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+fn emit_doc_comment(prefix: &str, doc_content: &str, output: &mut Vec<QuoteToken>) {
+    for line in doc_content.split('\n') {
+        let line = line.trim_end_matches('\r');
+        output.push(QuoteToken::Content(format!("{prefix}{line}\n")));
+    }
+}
+
 fn process_token_stream(
-    mut token_stream: Peekable<impl Iterator<Item = TokenTree>>,
+    mut token_stream: Peekable<impl Iterator<Item = TokenTree> + Clone>,
     output: &mut Vec<QuoteToken>,
 ) {
     // Rust proc macro parser to TokenStream gets rid of all whitespaces.
@@ -61,7 +90,7 @@ fn process_token_stream(
             }
             TokenTree::Punct(punct) => {
                 if punct.as_char() == '#' {
-                    // Only peek, so items processed with punct can be handled in next iteration.
+                    // Check for doc comments, variable interpolation, or attributes.
                     if let Some(TokenTree::Ident(ident)) = token_stream.peek() {
                         if was_previous_ident {
                             output.push(QuoteToken::Whitespace);
@@ -71,6 +100,31 @@ fn process_token_stream(
                         was_previous_ident = true;
                         // Move iterator, as we only did peek before.
                         let _ = token_stream.next();
+                    } else if let Some(TokenTree::Group(group)) = token_stream.peek() {
+                        if let Some(doc_content) = extract_doc_comment(group) {
+                            token_stream.next();
+                            emit_doc_comment("///", &doc_content, output);
+                            was_previous_ident = false;
+                        } else {
+                            output.push(QuoteToken::Content(punct.to_string()));
+                            was_previous_ident = false;
+                        }
+                    } else if let Some(TokenTree::Punct(p)) = token_stream.peek() {
+                        if p.as_char() == '!' {
+                            let mut lookahead = token_stream.clone();
+                            lookahead.next(); // skip '!'
+                            if let Some(TokenTree::Group(group)) = lookahead.next() {
+                                if let Some(doc_content) = extract_doc_comment(&group) {
+                                    token_stream.next(); // consume '!'
+                                    token_stream.next(); // consume group
+                                    emit_doc_comment("//!", &doc_content, output);
+                                    was_previous_ident = false;
+                                    continue;
+                                }
+                            }
+                        }
+                        output.push(QuoteToken::Content(punct.to_string()));
+                        was_previous_ident = false;
                     } else {
                         // E.g. to support Cairo attributes (i.e. punct followed by non-ident `#[`).
                         output.push(QuoteToken::Content(punct.to_string()));
@@ -380,6 +434,169 @@ mod tests {
                 QuoteToken::Var(Ident::new("name_token", Span::call_site())),
                 QuoteToken::Content(">".to_string()),
                 QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("}".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn single_line_doc_comment() {
+        let input: proc_macro2::TokenStream = rust_quote! {
+            /// This is a doc comment.
+            fn some_fun() {}
+        };
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("/// This is a doc comment.\n".to_string()),
+                QuoteToken::Content("fn".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Content("some_fun".to_string()),
+                QuoteToken::Content("(".to_string()),
+                QuoteToken::Content(")".to_string()),
+                QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("}".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn multi_line_doc_comment() {
+        let input: proc_macro2::TokenStream = rust_quote! {
+            /// First line.
+            /// Second line.
+            ///
+            /// Fourth line.
+            fn some_fun() {}
+        };
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("/// First line.\n".to_string()),
+                QuoteToken::Content("/// Second line.\n".to_string()),
+                QuoteToken::Content("///\n".to_string()),
+                QuoteToken::Content("/// Fourth line.\n".to_string()),
+                QuoteToken::Content("fn".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Content("some_fun".to_string()),
+                QuoteToken::Content("(".to_string()),
+                QuoteToken::Content(")".to_string()),
+                QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("}".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn inner_doc_comment() {
+        let input: proc_macro2::TokenStream = rust_quote! {
+            //! Inner module doc comment.
+            //! Second inner line.
+            mod my_mod {}
+        };
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("//! Inner module doc comment.\n".to_string()),
+                QuoteToken::Content("//! Second inner line.\n".to_string()),
+                QuoteToken::Content("mod".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Content("my_mod".to_string()),
+                QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("}".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn doc_comment_with_regular_attributes() {
+        let input: proc_macro2::TokenStream = rust_quote! {
+            /// Function doc.
+            #[derive(Drop)]
+            #[inline]
+            fn some_fun() {}
+        };
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("/// Function doc.\n".to_string()),
+                QuoteToken::Content("#".to_string()),
+                QuoteToken::Content("[".to_string()),
+                QuoteToken::Content("derive".to_string()),
+                QuoteToken::Content("(".to_string()),
+                QuoteToken::Content("Drop".to_string()),
+                QuoteToken::Content(")".to_string()),
+                QuoteToken::Content("]".to_string()),
+                QuoteToken::Content("#".to_string()),
+                QuoteToken::Content("[".to_string()),
+                QuoteToken::Content("inline".to_string()),
+                QuoteToken::Content("]".to_string()),
+                QuoteToken::Content("fn".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Content("some_fun".to_string()),
+                QuoteToken::Content("(".to_string()),
+                QuoteToken::Content(")".to_string()),
+                QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("}".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn inner_regular_attributes_untouched() {
+        let input: proc_macro2::TokenStream = rust_quote! {
+            #![some_inner_attr]
+            mod my_mod {}
+        };
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("#".to_string()),
+                QuoteToken::Content("!".to_string()),
+                QuoteToken::Content("[".to_string()),
+                QuoteToken::Content("some_inner_attr".to_string()),
+                QuoteToken::Content("]".to_string()),
+                QuoteToken::Content("mod".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Content("my_mod".to_string()),
+                QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("}".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn doc_comment_inside_struct() {
+        let input: proc_macro2::TokenStream = rust_quote! {
+            struct MyStruct {
+                /// Field doc.
+                x: felt252,
+            }
+        };
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("struct".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Content("MyStruct".to_string()),
+                QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("/// Field doc.\n".to_string()),
+                QuoteToken::Content("x".to_string()),
+                QuoteToken::Content(":".to_string()),
+                QuoteToken::Content("felt252".to_string()),
+                QuoteToken::Content(",".to_string()),
                 QuoteToken::Content("}".to_string()),
             ]
         );
